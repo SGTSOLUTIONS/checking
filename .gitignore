@@ -30,4 +30,4 @@ Homestead.json
 auth.json
 tests.zip
 *.zip
-/public
+/public/
