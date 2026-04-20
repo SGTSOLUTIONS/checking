@@ -1113,7 +1113,7 @@ class SurveyorController extends Controller
         $zone = strtolower(trim($ward->zone));
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
-        $pointsTableName = "points_{$corp}_{$zone}_{$wardNo}";
+        $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
 
         return DB::table($pointsTableName)->get();
     }

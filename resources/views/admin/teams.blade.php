@@ -194,6 +194,10 @@
             padding: 0.2rem 0.5rem;
             border-radius: 0.25rem;
         }
+
+        .road-select {
+            font-size: 0.85rem;
+        }
     </style>
 @endsection
 
@@ -231,7 +235,7 @@
                                 <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                                 <h5>Failed to Load Data</h5>
                                 <p>Unable to load teams data. Please try again later.</p>
-                                <button class="btn btn-primary mt-2" onclick="loadTeamsData()">
+                                <button class="btn btn-primary mt-2" onclick="location.reload()">
                                     <i class="fas fa-redo me-1"></i> Retry
                                 </button>
                             </div>
@@ -263,28 +267,26 @@
                     const memberCount = team.members ? team.members.length : 0;
                     const statusClass = team.status === 'active' ? 'text-success' : 'text-danger';
                     const hasMembers = memberCount > 0;
-
-                    // Check if team can be deleted (no members)
                     const canDelete = !hasMembers;
 
                     container.append(`
-                    <div class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="col-xl-4 col-lg-6 col-md-6" data-team-card="${team.id}">
                         <div class="team-card p-4">
                             <div class="team-header">
-                                <div class="team-name">${team.name}</div>
+                                <div class="team-name">${escapeHtml(team.name)}</div>
                                 <div class="team-meta text-white-50">
-                                    <i class="fas fa-user-shield me-1"></i>${team.leader_name}
+                                    <i class="fas fa-user-shield me-1"></i>${escapeHtml(team.leader_name)}
                                 </div>
                             </div>
 
                             <div class="team-meta">
                                 <i class="fas fa-map-marker-alt me-1"></i>
                                 Ward ${team.ward ? team.ward.ward_no : 'N/A'}
-                                ${team.ward && team.ward.corporation ? ` - ${team.ward.corporation.name}` : ''}
+                                ${team.ward && team.ward.corporation ? ` - ${escapeHtml(team.ward.corporation.name)}` : ''}
                             </div>
 
                             <div class="team-meta">
-                                <i class="fas fa-phone me-1"></i>${team.contact_number}
+                                <i class="fas fa-phone me-1"></i>${escapeHtml(team.contact_number)}
                             </div>
 
                             <div class="team-meta">
@@ -304,16 +306,22 @@
                                     <div id="members-${team.id}">
                                         ${team.members.slice(0, 3).map(member => `
                                         <span class="member-badge badge-${member.pivot.role}">
-                                            ${member.name}
+                                            ${escapeHtml(member.name)}
                                         </span>
                                     `).join('')}
                                         ${memberCount > 3 ? `<span class="text-muted small">+${memberCount - 3} more</span>` : ''}
                                     </div>
                                 </div>
-                                ` : ''}
-                            <select class="form-select" name="user_id" id="roaddetilas" required>
-                                <option value="">Select Road</option>
-                            </select>
+                            ` : ''}
+
+                            <!-- Road selection dropdown with unique class and data attribute -->
+                            <div class="mt-3">
+                                <label class="form-label small fw-bold">Assigned Roads</label>
+                                <select class="form-select road-select" data-team-id="${team.id}">
+                                    <option value="">Select Road</option>
+                                </select>
+                            </div>
+
                             <div class="team-actions mt-3 pt-3 border-top">
                                 <button class="btn btn-sm btn-outline-info view-team"
                                         data-id="${team.id}">
@@ -321,25 +329,110 @@
                                 </button>
                                 <button class="btn btn-sm btn-outline-success add-member"
                                         data-id="${team.id}"
-                                        data-name="${team.name}">
+                                        data-name="${escapeHtml(team.name)}">
                                     <i class="fas fa-user-plus me-1"></i> Add Member
                                 </button>
                                 <button class="btn btn-sm btn-outline-danger delete-team ${!canDelete ? 'btn-disabled' : ''}"
                                         data-id="${team.id}"
-                                        data-name="${team.name}"
+                                        data-name="${escapeHtml(team.name)}"
                                         ${!canDelete ? 'disabled' : ''}
                                         title="${!canDelete ? 'Cannot delete team with active members' : 'Delete team'}">
                                     <i class="fas fa-trash me-1"></i> Delete
                                 </button>
-                                <button class="btn btn-sm btn-outline-success add-road"
+                                <button class="btn btn-sm btn-outline-success assign-road-btn"
                                         data-id="${team.id}"
-                                        data-name="${team.name}">
+                                        data-name="${escapeHtml(team.name)}">
                                     <i class="fas fa-road me-1"></i> Assign Road
                                 </button>
                             </div>
                         </div>
                     </div>
                 `);
+
+                    // Load roads for this team's dropdown
+                    loadRoadsForTeam(team.id);
+                });
+            }
+
+            // Load roads for a specific team dropdown
+            function loadRoadsForTeam(teamId) {
+                // Find the select element within the specific team card
+                const $select = $(`.team-card`).closest(`[data-team-card="${teamId}"]`).find('.road-select');
+
+                // Alternative approach - find by data attribute
+                const $selectAlt = $(`.road-select[data-team-id="${teamId}"]`);
+                const $targetSelect = $select.length ? $select : $selectAlt;
+
+                $.ajax({
+                    url: `/admin/teams/${teamId}/load-roads`,
+                    type: 'GET',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $targetSelect.html('<option value="">Loading roads...</option>');
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            let options = '<option value="">Select Road</option>';
+
+                            if (response.road_name && Array.isArray(response.road_name) && response.road_name.length > 0) {
+                                response.road_name.forEach(road => {
+                                    options += `<option value="${escapeHtml(road)}">${escapeHtml(road)}</option>`;
+                                });
+                                $targetSelect.html(options);
+                            } else {
+                                $targetSelect.html('<option value="">No roads assigned</option>');
+                            }
+                        } else {
+                            $targetSelect.html('<option value="">Error loading roads</option>');
+                            console.error('Error response:', response);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error loading roads for team', teamId, ':', xhr);
+                        $targetSelect.html('<option value="">Error loading roads</option>');
+                    }
+                });
+            }
+
+            // Assign road to team - FIXED to get correct dropdown value
+            function assignRoadToTeam(teamId, roadName, $button) {
+                if (!roadName || roadName === 'Select Road' || roadName === '') {
+                    showToast('warning', 'Warning!', 'Please select a valid road first.');
+                    return false;
+                }
+
+                $.ajax({
+                    url: `/admin/teams/assigned-roads`,
+                    type: 'POST',
+                    data: {
+                        team_id: teamId,
+                        road_name: roadName,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Assigning...');
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('success', 'Success!', response.message || 'Road assigned successfully.');
+                            // Reload the roads list after assignment
+                            loadRoadsForTeam(teamId);
+                        } else {
+                            showToast('error', 'Error!', response.message || 'Failed to assign road.');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error assigning road:', xhr);
+                        let errorMsg = 'Failed to assign road.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast('error', 'Error!', errorMsg);
+                    },
+                    complete: function() {
+                        $button.prop('disabled', false).html('<i class="fas fa-road me-1"></i> Assign Road');
+                    }
                 });
             }
 
@@ -359,10 +452,8 @@
                             $('#detailTeamLeader').text(team.leader_name);
                             $('#detailTeamContact').text(team.contact_number);
                             $('#detailTeamStatus').text(team.status.toUpperCase());
-                            $('#detailTeamWard').text(team.ward ? `Ward ${team.ward.ward_no}` :
-                                'N/A');
-                            $('#detailTeamCorporation').text(team.ward && team.ward
-                                .corporation ? team.ward.corporation.name : 'N/A');
+                            $('#detailTeamWard').text(team.ward ? `Ward ${team.ward.ward_no}` : 'N/A');
+                            $('#detailTeamCorporation').text(team.ward && team.ward.corporation ? team.ward.corporation.name : 'N/A');
 
                             // Load members
                             let membersHtml = '';
@@ -371,23 +462,22 @@
                                     membersHtml += `
                                     <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                                         <div>
-                                            <strong>${member.name}</strong>
+                                            <strong>${escapeHtml(member.name)}</strong>
                                             <span class="badge badge-${member.pivot.role} ms-2">${member.pivot.role}</span>
                                             <br>
-                                            <small class="text-muted">${member.email}</small>
+                                            <small class="text-muted">${escapeHtml(member.email)}</small>
                                         </div>
                                         <button class="btn btn-sm btn-outline-danger remove-member"
                                                 data-team-id="${team.id}"
                                                 data-user-id="${member.id}"
-                                                data-user-name="${member.name}">
+                                                data-user-name="${escapeHtml(member.name)}">
                                             <i class="fas fa-times"></i> Remove
                                         </button>
                                     </div>
                                 `;
                                 });
                             } else {
-                                membersHtml =
-                                    '<p class="text-muted">No members assigned to this team.</p>';
+                                membersHtml = '<p class="text-muted">No members assigned to this team.</p>';
                             }
                             $('#teamMembersList').html(membersHtml);
 
@@ -395,6 +485,7 @@
                         }
                     },
                     error: function(xhr) {
+                        console.error('Error:', xhr);
                         showToast('error', 'Error!', 'Failed to load team details.');
                     }
                 });
@@ -407,84 +498,38 @@
 
                 $('#addMemberTeamId').val(teamId);
                 $('#addMemberModalLabel').html(
-                    `<i class="fas fa-user-plus me-2"></i>Add Member to ${teamName}`);
+                    `<i class="fas fa-user-plus me-2"></i>Add Member to ${escapeHtml(teamName)}`);
 
                 // Load available surveyors
                 loadAvailableSurveyors(teamId);
 
                 $('#addMemberModal').modal('show');
             });
-            $(document).on('click', '.add-road', function() {
-                const teamId = $(this).data('id');
-                const teamName = $(this).data('name');
-                const roaddetilas = $('#roaddetilas').val();
-                alert(roaddetilas);
-                if (!roaddetilas) {
-                    loadAssignedRoads(teamId);
+
+            // Assign road button click - FIXED to get correct dropdown for the clicked card
+            $(document).on('click', '.assign-road-btn', function() {
+                const $button = $(this);
+                const teamId = $button.data('id');
+                const teamName = $button.data('name');
+
+                // Find the select dropdown within the same team card
+                const $teamCard = $button.closest('.team-card');
+                const $roadSelect = $teamCard.find('.road-select');
+                const selectedRoad = $roadSelect.val();
+
+                console.log('Team ID:', teamId);
+                console.log('Selected Road:', selectedRoad);
+                console.log('Road Select HTML:', $roadSelect.html());
+
+                if (!selectedRoad || selectedRoad === 'Select Road' || selectedRoad === '') {
+                    showToast('warning', 'Warning!', 'Please select a road first.');
+                    return;
                 }
-                else
-                {
-                   assignedRoads(teamId,roaddetilas);
+
+                if (confirm(`Assign "${selectedRoad}" to team "${teamName}"?`)) {
+                    assignRoadToTeam(teamId, selectedRoad, $button);
                 }
             });
-             // assign road
-            function assignedRoads(teamId,roaddetilas) {
-                $.ajax({
-                    url: `/admin/teams/assigned-roads`,
-                    type: 'POST',
-                    data: {
-                        team_id: teamId,
-                        road_name: roaddetilas,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.success) {
-
-                        } else {
-                            $('#roaddetilas').html(
-                            '<option value="">Error loading roads</option>');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error loading surveyors:', xhr);
-                        $('#memberUserId').html('<option value="">Error loading surveyors</option>');
-                    }
-                });
-            }
-            // Load available roads
-            function loadAssignedRoads(teamId) {
-                $.ajax({
-                    url: `/admin/teams/${teamId}/load-roads`,
-                    type: 'GET',
-                    dataType: 'json',
-
-                    success: function(response) {
-                        if (response.success) {
-                            let options = '<option value="">Select Road</option>';
-                            if (response.road_name && response.road_name.length > 0) {
-                                response.road_name.forEach(road => {
-                                    options +=
-                                        `<option value="${road}">${road} </option>`;
-                                });
-                                $('#roaddetilas').html(options);
-                            } else {
-                                $('#roaddetilas').html(
-                                    '<option value="">No assigned roads</option>');
-                                showToast('info', 'Info',
-                                    'No assigned roads found for this team.');
-                            }
-                        } else {
-                            $('#roaddetilas').html(
-                            '<option value="">Error loading roads</option>');
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error('Error loading surveyors:', xhr);
-                        $('#memberUserId').html('<option value="">Error loading surveyors</option>');
-                    }
-                });
-            }
 
             // Load available surveyors
             function loadAvailableSurveyors(teamId) {
@@ -493,33 +538,28 @@
                     type: 'GET',
                     dataType: 'json',
                     beforeSend: function() {
-                        $('#memberUserId').html(
-                            '<option value="">Loading available surveyors...</option>');
+                        $('#memberUserId').html('<option value="">Loading available surveyors...</option>');
                     },
                     success: function(response) {
                         if (response.success) {
                             let options = '<option value="">Select Surveyor</option>';
                             if (response.surveyors && response.surveyors.length > 0) {
                                 response.surveyors.forEach(surveyor => {
-                                    options +=
-                                        `<option value="${surveyor.id}">${surveyor.name} (${surveyor.email})</option>`;
+                                    options += `<option value="${surveyor.id}">${escapeHtml(surveyor.name)} (${escapeHtml(surveyor.email)})</option>`;
                                 });
                                 $('#memberUserId').html(options);
                             } else {
-                                $('#memberUserId').html(
-                                    '<option value="">No available surveyors</option>');
-                                showToast('info', 'Info',
-                                    'No available surveyors found. All surveyors are already assigned to teams.'
-                                    );
+                                $('#memberUserId').html('<option value="">No available surveyors</option>');
+                                showToast('info', 'Info', 'No available surveyors found. All surveyors are already assigned to teams.');
                             }
                         } else {
-                            $('#memberUserId').html(
-                            '<option value="">Error loading surveyors</option>');
+                            $('#memberUserId').html('<option value="">Error loading surveyors</option>');
                         }
                     },
                     error: function(xhr) {
                         console.error('Error loading surveyors:', xhr);
                         $('#memberUserId').html('<option value="">Error loading surveyors</option>');
+                        showToast('error', 'Error!', 'Failed to load surveyors.');
                     }
                 });
             }
@@ -582,6 +622,7 @@
                             }
                         },
                         error: function(xhr) {
+                            console.error('Error:', xhr);
                             showToast('error', 'Error!', 'Failed to remove member.');
                         }
                     });
@@ -593,9 +634,7 @@
                 const teamId = $(this).data('id');
                 const teamName = $(this).data('name');
 
-                if (confirm(
-                        `Are you sure you want to delete team "${teamName}"? This action cannot be undone.`
-                        )) {
+                if (confirm(`Are you sure you want to delete team "${teamName}"? This action cannot be undone.`)) {
                     $.ajax({
                         url: `/admin/teams/${teamId}`,
                         type: 'DELETE',
@@ -622,17 +661,37 @@
                 }
             });
 
-            // Utility functions
+            // Escape HTML to prevent XSS
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            // Show toast notification
             function showToast(type, title, message) {
                 const toast = $('#liveToast');
                 toast.removeClass('success error warning info');
-                toast.addClass(type);
 
+                // Set icon based on type
+                let icon = 'fas fa-circle me-2';
+                if (type === 'success') icon = 'fas fa-check-circle me-2';
+                if (type === 'error') icon = 'fas fa-exclamation-circle me-2';
+                if (type === 'warning') icon = 'fas fa-exclamation-triangle me-2';
+                if (type === 'info') icon = 'fas fa-info-circle me-2';
+
+                toast.find('.toast-icon').attr('class', icon);
                 toast.find('.toast-title').text(title);
                 toast.find('.toast-message').text(message);
-                toast.find('.toast-icon').removeClass().addClass(`fas fa-circle me-2 toast-icon`);
 
-                const toastInstance = new bootstrap.Toast(toast[0]);
+                const toastInstance = new bootstrap.Toast(toast[0], {
+                    autohide: true,
+                    delay: 3000
+                });
                 toastInstance.show();
             }
 

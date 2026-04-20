@@ -397,12 +397,13 @@ class TeamController extends Controller
         }
     }
     // load roads to team
-    public function loadRoads(Request $request, $teamId)
+   public function loadRoads(Request $request, $teamId)
     {
         $teamid = $teamId;
         $teams = Team::with(['ward'])->findOrFail($teamid);
         $ward = $teams->ward;
-        $misTable = 'mis_corporation_' . $teamid;
+        $misTable = 'mis_corporation_' . $ward->corporation_id;
+
         try {
             $misdata = DB::table($misTable)
                 ->where('ward_no', $ward->ward_no)
@@ -430,7 +431,7 @@ class TeamController extends Controller
         $teams = Team::with(['ward'])->findOrFail($teamid);
         $ward = $teams->ward;
 
-        $assinedRoadTable = 'assigned_roads_corporation_' . $teamid;
+        $assinedRoadTable = 'assigned_roads_corporation_' . $ward->corporation_id;
 
         try {
 

@@ -24,7 +24,7 @@ class TeamLeaderController extends Controller
 
         foreach ($teams as $team) {
 
-            $tableName = 'assigned_roads_corporation_' . $team->ward->id;
+            $tableName = 'assigned_roads_corporation_' . $team->corporation->id;
             // ✅ Check table exists (VERY IMPORTANT)
             if (DB::getSchemaBuilder()->hasTable($tableName)) {
                 $assignedRoads = DB::table($tableName)
