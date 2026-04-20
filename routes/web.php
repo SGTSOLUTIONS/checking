@@ -113,8 +113,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/teams/assigned-roads', [TeamController::class, 'assignedRoads'])->name('teams.assigned-roads');
             Route::get('/teams/{team}/can-delete', [TeamController::class, 'canDeleteTeam'])->name('admin.teams.can-delete');
             Route::get('/teams/leader/{leader}', [TeamController::class, 'getTeamsByLeader'])->name('admin.teams.by-leader');
-             Route::get('/tracking/map-view', [TrackingController::class, 'mapView'])->name('tracking.map-view');
-        Route::get('/tracking/data/{userId?}', [TrackingController::class, 'getUserTracking'])->name('admin.tracking.data');
+            Route::get('/tracking/map-view', [TrackingController::class, 'mapView'])->name('tracking.map-view');
+            Route::get('/tracking/data/{userId?}', [TrackingController::class, 'getUserTracking'])->name('admin.tracking.data');
         });
 
         Route::resource('users', UserController::class);
@@ -174,4 +174,4 @@ Route::get('/welcome', function () {
 });
 
 Route::get('/send-whatsapp', [WardController::class, 'send']);
-Route::post('/add-polygon-feature', [SurveyorController::class, 'addPolygonFeature'])->name('surveyor.add.polygon.feature');
+
