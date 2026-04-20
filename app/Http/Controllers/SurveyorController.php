@@ -1117,4 +1117,62 @@ class SurveyorController extends Controller
 
         return DB::table($pointsTableName)->get();
     }
+
+    public function searchPointData(Request $request)
+    {
+        $validator = FacadesValidator::make($request->all(), [
+            'gisid' => 'required|string|max:50',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        $userId = Auth::id();
+
+        $teamMember = TeamMember::with(['team.ward'])
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$teamMember) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not assigned to any team.',
+            ], 403);
+        }
+
+        $ward = $teamMember->team->ward;
+        $zone = strtolower(trim($ward->zone));
+        $wardNo = (int)$ward->ward_no;
+        $corp = (int)$ward->corporation_id;
+        $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
+        $gisid = $request->input('gisid');
+        $pointData = DB::table($pointDataTableName)->where('point_gisid', $gisid)->get();
+
+        if ($pointData->isEmpty()) {
+            $pointassessment = DB::table($pointDataTableName)
+                ->where('assessment', 'like', '%' . $gisid . '%')
+                ->get();
+            if ($pointassessment->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No point data found for the given GIS ID or assessment.',
+                ], 404);
+            } else {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Point data retrieved successfully based on assessment.',
+                    'data' => "assessmentData"
+                ]);
+            }
+        } else {
+            return response()->json([
+                'success' => true,
+                'message' => 'Point data retrieved successfully.',
+                'data' => "pointData"
+            ]);
+        }
+    }
 }

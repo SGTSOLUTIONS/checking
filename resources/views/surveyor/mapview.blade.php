@@ -950,6 +950,7 @@
                 <option value="Point">Draw Point</option>
                 <option value="Modify">Modify Feature</option>
                 <option value="Delete">Delete Feature</option>
+
             </select>
         </div>
     </div>

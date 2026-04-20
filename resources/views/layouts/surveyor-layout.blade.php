@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +17,7 @@
 
     <!-- ✅ jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
 
     <!-- ✅ Bootstrap JS -->
@@ -30,7 +31,7 @@
     <!-- ✅ Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v7.4.0/ol.css">
-<script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v7.4.0/dist/ol.js"></script>
     <style>
         :root {
             --primary-color: #4361ee;
@@ -193,7 +194,19 @@
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
-                <li class="nav-item">
+                <div class="p-3">
+                    <div class="input-group">
+                        <input type="text" id="gis_point_data" class="form-control" placeholder="Search GIS ID...">
+                        <button class="btn btn-primary" id="search_btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="search_result" class="mt-3"></div>
+                </div>
+
+                {{-- <li class="nav-item">
                     <a class="nav-link" href="#">
                         <i class="fas fa-clipboard-list"></i> My Surveys
                     </a>
@@ -212,7 +225,7 @@
                     <a class="nav-link" href="#">
                         <i class="fas fa-users"></i> Respondents
                     </a>
-                </li>
+                </li> --}}
                 <li class="nav-item mt-4">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -237,9 +250,11 @@
 
                 <div class="d-flex align-items-center ms-auto">
                     <div class="dropdown me-3">
-                        <button class="btn btn-light position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown">
+                        <button class="btn btn-light position-relative" type="button" id="notificationDropdown"
+                            data-bs-toggle="dropdown">
                             <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">3</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">New survey assigned</a></li>
@@ -249,15 +264,20 @@
                     </div>
 
                     <div class="dropdown">
-                        <button class="btn btn-light d-flex align-items-center" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <button class="btn btn-light d-flex align-items-center" type="button" id="userDropdown"
+                            data-bs-toggle="dropdown">
                             <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Surveyor User') }}&background=4361ee&color=fff"
-                                 class="rounded-circle me-2" width="32" height="32" alt="User">
+                                class="rounded-circle me-2" width="32" height="32" alt="User">
                             <span>{{ Auth::user()->name ?? 'Surveyor User' }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a>
+                            </li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
@@ -334,36 +354,70 @@
                 showToast('Surveyor dashboard loaded successfully!', 'success');
             }, 800);
         });
-
     </script>
-<script>
-function sendLocation() {
-    navigator.geolocation.getCurrentPosition((position) => {
+    <script>
+        function sendLocation() {
+            navigator.geolocation.getCurrentPosition((position) => {
 
-        fetch('/surveyor/track-location', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-            })
-        })
-        .then(res => res.json())
-        .then(data => console.log("Success:", data))
-        .catch(err => console.error("Error:", err));
+                fetch('/surveyor/track-location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => console.log("Success:", data))
+                    .catch(err => console.error("Error:", err));
 
-    });
-}
+            });
+        }
 
-// first call
-sendLocation();
+        // first call
+        sendLocation();
 
-// every 2 minutes
-setInterval(sendLocation, 120000);
-</script>
+        // every 2 minutes
+        setInterval(sendLocation, 120000);
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+
+            $('#search_btn').click(function() {
+                let gis_id = $('#gis_point_data').val();
+
+                if (gis_id == '') {
+                    alert('Enter GIS ID');
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ route('surveyor.searchpointdata') }}",
+                    type: "GET",
+                    data: {
+                        gis_id: gis_id
+                    },
+                    success: function(response) {
+
+                        let data = response.data;
+                        window.location.href = `/surveyor/point-data/${data}`;
+                    }
+                    error:
+                    function(xhr, status, error) {
+                        console.error("Error:", error);
+                        $('#search_result').html('<div class="alert alert-danger">An error occurred while searching. Please try again.</div>');
+
+                });
+            });
+
+        });
+    </script>
     @yield('script')
 </body>
+
 </html>

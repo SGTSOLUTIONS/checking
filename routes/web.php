@@ -143,6 +143,11 @@ Route::middleware('auth')->group(function () {
             Route::post('/modify-feature', [SurveyorController::class, 'modifyFeature'])->name('surveyor.modify.feature');
             Route::post('/delete-feature', [SurveyorController::class, 'deleteFeature'])->name('surveyor.delete.feature');
             Route::get('/progress', [SurveyorController::class, 'progress'])->name('surveyor.progress');
+
+
+
+            Route::get('/search-ajax', [SurveyorController::class, 'searchPointData'])
+    ->name('searchpointdata');
         });
     });
 
