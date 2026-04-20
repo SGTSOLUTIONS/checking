@@ -146,9 +146,9 @@ Route::middleware('auth')->group(function () {
 
 
 
-            Route::get('/search-ajax', [SurveyorController::class, 'searchPointData'])->name('searchpointdata');
-            Route::get('/point-data/{data}', [SurveyorController::class, 'getPointData'])->name('point.data');
-            Route::post('/update-point-data', [SurveyorController::class, 'updatePointData'])->name('update.point.data');
+            Route::get('/search-ajax', [SurveyorController::class, 'searchPointData'])->name('surveyor.searchpointdata');
+            Route::get('/point-data/{data}', [SurveyorController::class, 'getPointData'])->name('surveyor.point.data');
+            Route::post('/update-point-data', [SurveyorController::class, 'updatePointData'])->name('surveyor.update.point.data');
         });
     });
 
