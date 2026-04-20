@@ -1120,9 +1120,10 @@ class SurveyorController extends Controller
 
     public function searchPointData(Request $request)
     {
-        $validator = FacadesValidator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'gisid' => 'required|string|max:50',
         ]);
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -1130,6 +1131,7 @@ class SurveyorController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+
         $userId = Auth::id();
 
         $teamMember = TeamMember::with(['team.ward'])
@@ -1147,32 +1149,93 @@ class SurveyorController extends Controller
         $zone = strtolower(trim($ward->zone));
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
-        $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
-        $gisid = $request->input('gisid');
-        $pointData = DB::table($pointDataTableName)->where('point_gisid', $gisid)->get();
 
-        if ($pointData->isEmpty()) {
-            $pointassessment = DB::table($pointDataTableName)
+        $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
+
+        $gisid = $request->gisid;
+
+        $pointData = DB::table($table)
+            ->where('point_gisid', $gisid)
+            ->first();
+
+        if (!$pointData) {
+            $pointassessment = DB::table($table)
                 ->where('assessment', 'like', '%' . $gisid . '%')
-                ->get();
-            if ($pointassessment->isEmpty()) {
+                ->first();
+
+            if (!$pointassessment) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No point data found for the given GIS ID or assessment.',
+                    'message' => 'No data found',
                 ], 404);
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Point data retrieved successfully based on assessment.',
-                    'data' => "assessmentData"
-                ]);
             }
-        } else {
+
             return response()->json([
                 'success' => true,
-                'message' => 'Point data retrieved successfully.',
-                'data' => "pointData"
+                'message' => 'Found via assessment',
+                'data' => $gisid
             ]);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Found via GIS ID',
+            'data' => $gisid
+        ]);
+    }
+    public function getPointData(Request $request, $gisid)
+    {
+        $userId = Auth::id();
+
+        $teamMember = TeamMember::with(['team.ward'])
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$teamMember) {
+            return redirect()->back()->with('error', 'You are not assigned to any team.');
+        }
+
+        $ward = $teamMember->team->ward;
+        $zone = strtolower(trim($ward->zone));
+        $wardNo = (int)$ward->ward_no;
+        $corp = (int)$ward->corporation_id;
+
+        $pointTable = "pointdata_{$corp}_{$zone}_{$wardNo}";
+        $shopTable  = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+        // Get ALL points with this GIS ID (multiple records)
+        $points = DB::table($pointTable)
+            ->where('point_gisid', $gisid)
+            ->get();
+
+        if ($points->isEmpty()) {
+            // Try assessment search
+            $points = DB::table($pointTable)
+                ->where('assessment', 'like', '%' . $gisid . '%')
+                ->get();
+        }
+
+        if ($points->isEmpty()) {
+            return redirect()->back()->with('error', 'No data found for GIS ID: ' . $gisid);
+        }
+
+        // Get shops for each point
+        foreach ($points as $point) {
+            $point->shops = DB::table($shopTable)
+                ->where('point_data_id', $point->id)
+                ->get();
+        }
+
+        return view('surveyor.point-data-edit', [
+            'points' => $points,  // Collection of points with their shops
+            'teamMember' => $teamMember,
+            'ward' => $ward,
+            'zone' => $zone,
+            'wardNo' => $wardNo,
+            'corp' => $corp,
+            'gisid' => $gisid,
+            'pointTable' => $pointTable,
+            'shopTable' => $shopTable
+        ]);
     }
 }

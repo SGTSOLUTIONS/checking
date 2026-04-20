@@ -400,19 +400,26 @@
                     url: "{{ route('surveyor.searchpointdata') }}",
                     type: "GET",
                     data: {
-                        gis_id: gis_id
+                        gisid: gis_id
                     },
                     success: function(response) {
 
-                        let data = response.data;
-                        window.location.href = `/surveyor/point-data/${data}`;
-                    }
-                    error:
-                    function(xhr, status, error) {
-                        console.error("Error:", error);
-                        $('#search_result').html('<div class="alert alert-danger">An error occurred while searching. Please try again.</div>');
+                        if (response.success) {
+                            let data = response.data;
+                            window.location.href = `/surveyor/point-data/${data}`;
+                        } else {
+                            alert(response.message);
+                        }
 
+                    },
+                    error: function(xhr) {
+                        console.error("Error:", xhr.responseText);
+                        $('#search_result').html(
+                            '<div class="alert alert-danger">Error occurred</div>'
+                        );
+                    }
                 });
+
             });
 
         });
