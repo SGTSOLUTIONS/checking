@@ -1182,7 +1182,7 @@ class SurveyorController extends Controller
             'data' => $gisid
         ]);
     }
-    public function getPointData(Request $request, $gisid)
+   public function getPointData(Request $request, $gisid)
 {
     $userId = Auth::id();
 
@@ -1202,13 +1202,13 @@ class SurveyorController extends Controller
     $pointTable = "pointdata_{$corp}_{$zone}_{$wardNo}";
     $shopTable = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-    // Get ALL points with this GIS ID
+    // Get ALL points with this GIS ID (NOT just first)
     $points = DB::table($pointTable)
         ->where('point_gisid', $gisid)
         ->get();
 
+    // If not found by GIS ID, try assessment search
     if ($points->isEmpty()) {
-        // Try assessment search
         $points = DB::table($pointTable)
             ->where('assessment', 'like', '%' . $gisid . '%')
             ->get();
@@ -1223,9 +1223,6 @@ class SurveyorController extends Controller
         $point->shops = DB::table($shopTable)
             ->where('point_data_id', $point->id)
             ->get();
-
-        // Convert shops to array for JSON
-        $point->shops_list = $point->shops->toArray();
     }
 
     $surveyor = [
@@ -1234,7 +1231,7 @@ class SurveyorController extends Controller
     ];
 
     return view('surveyor.point-data-edit', [
-        'pointData' => $points->toArray(),
+        'pointData' => $points,  // This is a collection, will be converted to array by @json
         'surveyor' => $surveyor,
         'gisid' => $gisid,
         'corp' => $corp,

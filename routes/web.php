@@ -151,6 +151,7 @@ Route::middleware('auth')->group(function () {
             Route::post('surveyor/update-point-record', [SurveyorController::class, 'updatePointRecord'])->name('surveyor.updatePointRecord');
             Route::post('surveyor/add-shop-record', [SurveyorController::class, 'addShopRecord'])->name('surveyor.addShopRecord');
             Route::post('surveyor/delete-shop-record', [SurveyorController::class, 'deleteShopRecord'])->name('surveyor.deleteShopRecord');
+            Route::post('surveyor/update-point-record', [SurveyorController::class, 'updatePointRecord'])->name('surveyor.updatePointRecord');
             Route::post('surveyor/bulk-update-points', [SurveyorController::class, 'bulkUpdatePoints'])->name('surveyor.bulkUpdatePoints');
         });
     });

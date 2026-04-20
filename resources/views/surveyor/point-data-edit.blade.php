@@ -1,4 +1,4 @@
-@extends('layout.main-layout')
+@extends('layouts.surveyor-layout')
 
 @section('content')
     <div id="flash-message-container"></div>
@@ -48,7 +48,7 @@
             console.log('Point Data:', pointData);
 
             // Define fields to display (exclude sensitive or unnecessary fields)
-            var excludeFields = ['created_at', 'updated_at', 'deleted_at', 'building_data_id'];
+            var excludeFields = ['created_at', 'updated_at', 'deleted_at', 'building_data_id', 'shops', 'shops_list'];
             var pointFields = [];
 
             if (pointData.length > 0) {
@@ -81,7 +81,7 @@
 
                     fields.forEach(function(header) {
                         var readOnly = (header === 'id' || header === 'point_gisid' || header === 'assessment_type') ? 'readonly' : '';
-                        var value = item[header] !== null ? item[header] : '';
+                        var value = item[header] !== null && item[header] !== undefined ? item[header] : '';
 
                         // Special handling for certain fields
                         if (header === 'bill_usage') {
@@ -99,7 +99,6 @@
 
                     // Action buttons
                     var actionHtml = '<button type="button" class="btn btn-sm btn-primary updatePointBtn" data-point-id="' + item.id + '">Update</button>';
-                    actionHtml += ' <button type="button" class="btn btn-sm btn-info viewShopsBtn" data-point-id="' + item.id + '" data-point-index="' + index + '">View Shops</button>';
 
                     if (canEdit(surveyor.name, item.worker_name)) {
                         $("<td>").html(actionHtml).appendTo(row);
@@ -138,8 +137,6 @@
                                                 <th>Mobile</th>
                                                 <th>License</th>
                                                 <th>No of Employees</th>
-                                                <th>Type</th>
-                                                <th>Coordinates</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -171,8 +168,6 @@
                     row.append("<td><input type='text' class='form-control form-control-sm shop-mobile' value='" + escapeHtml(shop.shop_mobile || '') + "' data-shop-id='" + shop.id + "' data-field='shop_mobile'></td>");
                     row.append("<td><input type='text' class='form-control form-control-sm shop-license' value='" + escapeHtml(shop.license || '') + "' data-shop-id='" + shop.id + "' data-field='license'></td>");
                     row.append("<td><input type='number' class='form-control form-control-sm shop-employees' value='" + (shop.number_of_employee || '0') + "' data-shop-id='" + shop.id + "' data-field='number_of_employee'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-type' value='" + escapeHtml(shop.type || '') + "' data-shop-id='" + shop.id + "' data-field='type'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-coords' value='" + escapeHtml(shop.coordinates || '') + "' data-shop-id='" + shop.id + "' data-field='coordinates'></td>");
 
                     var actionHtml = '<button type="button" class="btn btn-sm btn-primary updateShopBtn" data-shop-id="' + shop.id + '">Update</button>';
                     actionHtml += ' <button type="button" class="btn btn-sm btn-danger deleteShopBtn" data-shop-id="' + shop.id + '" data-point-id="' + pointId + '">Delete</button>';
@@ -189,7 +184,10 @@
                 var rowData = {};
 
                 row.find("input, select").each(function() {
-                    rowData[$(this).attr("name")] = $(this).val();
+                    var name = $(this).attr("name");
+                    if (name) {
+                        rowData[name] = $(this).val();
+                    }
                 });
 
                 console.log("Updating Point ID " + pointId + ":", rowData);
@@ -209,7 +207,11 @@
                         ward_no: {{ $wardNo }}
                     },
                     success: function(response) {
-                        showMessage('success', 'Point data updated successfully');
+                        if(response.success) {
+                            showMessage('success', 'Point data updated successfully');
+                        } else {
+                            showMessage('error', response.error || 'Error updating point data');
+                        }
                     },
                     error: function(xhr) {
                         showMessage('error', 'Error updating point data');
@@ -247,7 +249,11 @@
                         ward_no: {{ $wardNo }}
                     },
                     success: function(response) {
-                        showMessage('success', 'Shop data updated successfully');
+                        if(response.success) {
+                            showMessage('success', 'Shop data updated successfully');
+                        } else {
+                            showMessage('error', response.error || 'Error updating shop data');
+                        }
                     },
                     error: function(xhr) {
                         showMessage('error', 'Error updating shop data');
@@ -268,9 +274,7 @@
                     shop_category: '',
                     shop_mobile: '',
                     license: '',
-                    number_of_employee: 0,
-                    type: '',
-                    coordinates: ''
+                    number_of_employee: 0
                 };
 
                 $.ajax({
@@ -287,9 +291,14 @@
                         ward_no: {{ $wardNo }}
                     },
                     success: function(response) {
-                        showMessage('success', 'Shop added successfully');
-                        // Reload the page to show new shop
-                        location.reload();
+                        if(response.success) {
+                            showMessage('success', 'Shop added successfully');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showMessage('error', response.error || 'Error adding shop');
+                        }
                     },
                     error: function(xhr) {
                         showMessage('error', 'Error adding shop');
@@ -318,8 +327,14 @@
                         ward_no: {{ $wardNo }}
                     },
                     success: function(response) {
-                        showMessage('success', 'Shop deleted successfully');
-                        location.reload();
+                        if(response.success) {
+                            showMessage('success', 'Shop deleted successfully');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showMessage('error', response.error || 'Error deleting shop');
+                        }
                     },
                     error: function(xhr) {
                         showMessage('error', 'Error deleting shop');
@@ -333,17 +348,25 @@
 
                 $("#pointBody tr").each(function() {
                     var pointId = $(this).data("point-id");
-                    var pointData = {};
+                    var pointDataObj = {};
 
                     $(this).find("input, select").each(function() {
-                        pointData[$(this).attr("name")] = $(this).val();
+                        var name = $(this).attr("name");
+                        if (name) {
+                            pointDataObj[name] = $(this).val();
+                        }
                     });
 
                     allPointData.push({
                         id: pointId,
-                        data: pointData
+                        data: pointDataObj
                     });
                 });
+
+                if (allPointData.length === 0) {
+                    showMessage('warning', 'No data to save');
+                    return;
+                }
 
                 $.ajax({
                     url: "{{ route('surveyor.bulkUpdatePoints') }}",
@@ -358,10 +381,14 @@
                         ward_no: {{ $wardNo }}
                     },
                     success: function(response) {
-                        showMessage('success', 'All data saved successfully');
-                        setTimeout(function() {
-                            location.reload();
-                        }, 1500);
+                        if(response.success) {
+                            showMessage('success', 'All data saved successfully');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1500);
+                        } else {
+                            showMessage('error', response.error || 'Error saving data');
+                        }
                     },
                     error: function(xhr) {
                         showMessage('error', 'Error saving data');
@@ -390,7 +417,7 @@
             }
 
             function showMessage(type, message) {
-                var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                var alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-danger');
                 var html = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
                     message +
                     '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
