@@ -1,0 +1,754 @@
+/* Base Map Styles */
+#map {
+    width: 100%;
+    height: 90vh;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    #map {
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .container-fluid {
+        padding: 0 !important;
+    }
+
+    .desktop-only {
+        display: none !important;
+    }
+
+    /* Mobile Toolbar */
+    .mobile-toolbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        z-index: 1002;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        padding: 10px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    .mobile-toolbar-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #666;
+        transition: all 0.3s ease;
+        flex: 1;
+        max-width: 80px;
+    }
+
+    .mobile-toolbar-btn.active {
+        background: #0066cc;
+        color: white;
+    }
+
+    .mobile-toolbar-btn i {
+        font-size: 18px;
+        margin-bottom: 4px;
+    }
+
+    /* Mobile Search Overlay */
+    .mobile-search-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1003;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-search-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    /* Bottom Sheets */
+    .bottom-sheet {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
+        z-index: 1002;
+        transition: bottom 0.3s ease;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .bottom-sheet.open {
+        bottom: 0;
+    }
+
+    .swipe-handle {
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 10px auto;
+    }
+
+    .bottom-sheet-content {
+        padding: 20px;
+    }
+
+    /* Navigation UI for Mobile */
+    .navigation-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 15px;
+        z-index: 1001;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+
+    .navigation-eta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .eta-time {
+        font-size: 22px;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .eta-distance {
+        font-size: 16px;
+        color: #666;
+    }
+
+    .navigation-address {
+        font-size: 16px;
+        color: #666;
+    }
+
+    .navigation-instruction {
+        position: fixed;
+        bottom: 80px;
+        left: 20px;
+        right: 20px;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        z-index: 1001;
+        display: none;
+    }
+
+    .instruction-text {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #2c3e50;
+    }
+
+    .instruction-distance {
+        font-size: 16px;
+        color: #666;
+    }
+
+    .instruction-icon {
+        position: absolute;
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0066cc;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Desktop Styles */
+@media (min-width: 769px) {
+    .mobile-toolbar,
+    .mobile-search-overlay,
+    .bottom-sheet,
+    .navigation-header,
+    .navigation-instruction {
+        display: none !important;
+    }
+}
+
+/* Common Styles */
+.ol-layer div {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Layer Switcher */
+.layer-switcher {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 1000;
+    width: 220px;
+}
+
+.layer-switcher h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.layer-group {
+    margin-bottom: 15px;
+}
+
+.layer-group h5 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.layer-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.layer-option input {
+    margin-right: 8px;
+}
+
+.layer-option label {
+    cursor: pointer;
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.layer-option i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Search Box */
+.search-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    width: 300px;
+}
+
+.search-container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.search-box {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 14px;
+}
+
+.search-box button {
+    background: #4a6ee0;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 15px;
+    cursor: pointer;
+}
+
+.search-box button:hover {
+    background: #3a5ed0;
+}
+
+.search-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    display: none;
+}
+
+.search-result-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-result-item:hover {
+    background: #f5f5f5;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+/* Navigation Controls */
+.navigation-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    z-index: 1000;
+    display: none;
+}
+
+.navigation-controls button {
+    background: #4a6ee0;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.navigation-controls button:hover {
+    background: #3a5ed0;
+}
+
+/* Feature Info */
+.feature-info {
+    position: absolute;
+    bottom: 20px;
+    right: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 1000;
+    max-width: 300px;
+    display: none;
+}
+
+.feature-info h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.feature-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.feature-info .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #777;
+}
+
+/* Live Location Button */
+.live-location-btn {
+    position: absolute;
+    top: 10px;
+    left: 320px;
+    z-index: 1000;
+    background: #4a6ee0;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.live-location-btn:hover {
+    background: #3a5ed0;
+}
+
+.live-location-btn.active {
+    background: #28a745;
+}
+
+/* Route Information Panel */
+.route-info {
+    position: absolute;
+    top: 80px;
+    left: 10px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 1000;
+    max-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+}
+
+.route-summary {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.directions-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.direction-step {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.direction-step:last-child {
+    border-bottom: none;
+}
+
+.step-number {
+    background: #0066cc;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-instruction {
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+
+.step-distance {
+    font-size: 12px;
+    color: #666;
+}
+
+.close-directions {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #777;
+}
+
+/* Distance Info */
+.distance-info {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px 15px;
+    z-index: 1000;
+    display: none;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 1004;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile Layer Switcher */
+.mobile-layer-switcher {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1003;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-layer-container {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Editing Tools */
+.editing-tools {
+    position: absolute;
+    top: 10px;
+    right: 250px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    z-index: 1000;
+    width: 200px;
+}
+
+.editing-tools h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+}
+
+.tool-group {
+    margin-bottom: 15px;
+}
+
+.tool-group h5 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.tool-btn:hover {
+    background: #f5f5f5;
+}
+
+.tool-btn.active {
+    background: #4a6ee0;
+    color: white;
+    border-color: #4a6ee0;
+}
+
+.tool-btn i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Mobile Editing Tools */
+.mobile-editing-tools {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    background: white;
+    z-index: 1002;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    display: none;
+}
+
+.mobile-tool-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+}
+
+.mobile-tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 5px;
+    font-size: 11px;
+    color: #666;
+    transition: all 0.3s ease;
+}
+
+.mobile-tool-btn.active {
+    background: #4a6ee0;
+    color: white;
+    border-color: #4a6ee0;
+}
+
+.mobile-tool-btn i {
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+/* Editing Controls */
+.editing-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    z-index: 1000;
+    display: none;
+}
+
+.editing-controls button {
+    background: #4a6ee0;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.editing-controls button:hover {
+    background: #3a5ed0;
+}
+
+.editing-controls button.cancel {
+    background: #dc3545;
+}
+
+.editing-controls button.cancel:hover {
+    background: #c82333;
+}
+
+/* Delete Feature Preview */
+#featurePreview {
+    background-color: #f8f9fa;
+    border-color: #dee2e6 !important;
+}
+
+#previewText {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Delete button loading state */
+.btn-danger:disabled {
+    opacity: 0.7;
+}
+
+/* Highlight for delete preview */
+.ol-layer .ol-delete-highlight {
+    stroke: #dc3545;
+    stroke-width: 5;
+    fill: rgba(220, 53, 69, 0.1);
+}
+
+/* Live Tracking Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.live-tracking-marker {
+    animation: pulse 1.5s infinite;
+}
+
+.location-accuracy-circle {
+    fill: rgba(0, 150, 255, 0.2);
+    stroke: rgba(0, 150, 255, 0.5);
+    stroke-width: 2;
+}
