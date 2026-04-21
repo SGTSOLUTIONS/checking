@@ -32,36 +32,60 @@ class WardController extends Controller
     }
 
     public function index($corporationId)
-    {
-        try {
-            $corporation = Corporation::findOrFail($corporationId);
-            $wards = Ward::where('corporation_id', $corporationId)->get();
-            foreach ($corporation as $corp) {
-                  $road = DB::table("mis_corporation_{$corp->id}")->pluck("road_name")->toArray();
-                    $corp->road = $road;
+{
+    try {
+        $corporation = Corporation::findOrFail($corporationId);
+
+        $wards = Ward::where('corporation_id', $corporationId)->get();
+
+        $tableName = "mis_corporation_{$corporation->id}";
+
+        $misData = [];
+
+        if (Schema::hasTable($tableName)) {
+
+            $misData = DB::table($tableName)
+                ->select('ward_no', DB::raw('GROUP_CONCAT(road_name) as roads'))
+                ->groupBy('ward_no')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'ward_no' => $item->ward_no,
+                        'roads' => explode(',', $item->roads)
+                    ];
+                });
+        }
+
+        // Attach MIS data to each ward
+        $wards->transform(function ($ward) use ($misData) {
+
+            if ($ward->drone_image) {
+                $ward->drone_image_url = asset($ward->drone_image);
             }
 
+            // match ward_no
+            $ward->roads = collect($misData)
+                ->firstWhere('ward_no', $ward->ward_no)['roads'] ?? [];
 
-            $wards->transform(function ($ward) {
-                if ($ward->drone_image) {
-                    $ward->drone_image_url = asset($ward->drone_image);
-                }
-                return $ward;
-            });
+            return $ward;
+        });
 
-            return response()->json([
-                'success' => true,
-                'corporation' => $corporation,
-                'wards' => $wards
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Failed to load ward data: " . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load ward data'
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'corporation' => $corporation,
+            'wards' => $wards
+        ]);
+
+    } catch (\Exception $e) {
+
+        Log::error("Failed to load ward data: " . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to load ward data'
+        ], 500);
     }
+}
 
     public function edit($id)
     {
