@@ -70,7 +70,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Zone</label>
                                 <select class="form-select" name="zone" id="zone" required>
-                                    <!-- Changed to form-select -->
                                     <option value="">Select Zone</option>
                                     <option value="East">East</option>
                                     <option value="West">West</option>
@@ -85,7 +84,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Status</label>
                                 <select class="form-select" name="status" id="status" required>
-                                    <!-- Changed to form-select -->
                                     <option value="">Select Status</option>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
@@ -228,7 +226,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Zone</label>
                                 <select class="form-select" name="zone" id="update_zone" required>
-                                    <!-- Changed to form-select -->
                                     <option value="">Select Zone</option>
                                     <option value="East">East</option>
                                     <option value="West">West</option>
@@ -243,7 +240,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Status</label>
                                 <select class="form-select" name="status" id="update_status" required>
-                                    <!-- Changed to form-select -->
                                     <option value="">Select Status</option>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
@@ -362,6 +358,28 @@
         </div>
     </div>
 
+    <!-- Roads Detail Modal -->
+    <div class="modal fade" id="roadsModal" tabindex="-1" aria-labelledby="roadsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="roadsModalLabel">
+                        <i class="fas fa-road me-2"></i>Ward Roads
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="roadsListContainer">
+                        <!-- Roads will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -386,6 +404,7 @@
             transition: all 0.3s ease-in-out;
             overflow: hidden;
             height: 100%;
+            cursor: pointer;
         }
 
         .ward-card:hover {
@@ -420,6 +439,7 @@
             margin-top: 1rem;
             padding-top: 1rem;
             border-top: 1px solid #e9ecef;
+            cursor: default;
         }
 
         .status-badge {
@@ -467,7 +487,72 @@
             color: #dc3545;
         }
 
-        /* Bootstrap 5 form-select styling */
+        /* Roads styling */
+        .roads-list {
+            max-height: 60px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .road-tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            color: #495057;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .road-tag.more-tag {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .road-tag.more-tag:hover {
+            background-color: #0056b3;
+        }
+
+        .roads-list::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        .roads-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .roads-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .roads-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .road-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+
+        .road-item:last-child {
+            border-bottom: none;
+        }
+
+        .road-item i {
+            color: #007bff;
+            margin-right: 8px;
+        }
+
+        /* Form select styling */
         .form-select {
             display: block;
             width: 100%;
@@ -494,7 +579,7 @@
             let currentDeleteId = null;
 
             // Load ward data on page load
-            function loadWardData() {
+            window.loadWardData = function() {
                 $.ajax({
                     url: `{{ url('admin/wards') }}/{{ $corporationId }}/data`,
                     type: 'GET',
@@ -535,101 +620,140 @@
             }
 
             // Function to render ward cards
-            // Function to render ward cards
-function renderWardCards(wards) {
-    console.log(wards)
-    let container = $('#wardDataContainer');
-    container.empty();
+            function renderWardCards(wards) {
+                let container = $('#wardDataContainer');
+                container.empty();
 
-    if (!wards || wards.length === 0) {
-        container.html(`
-        <div class="col-12">
-            <div class="empty-state">
-                <i class="fas fa-map-marked-alt"></i>
-                <h4>No Wards Found</h4>
-                <p>Get started by adding your first ward for this corporation.</p>
-                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addWardModal">
-                    <i class="fas fa-plus me-1"></i> Add Ward
-                </button>
-            </div>
-        </div>
-    `);
-        return;
-    }
-
-    wards.forEach(ward => {
-        const droneImageUrl = ward.drone_image ?
-            `{{ asset('') }}${ward.drone_image}` :
-            '';
-
-        const statusClass = ward.status === 'active' ? 'status-active' : 'status-inactive';
-
-        // Generate roads HTML if roads exist
-        let roadsHtml = '';
-        if (ward.roads && ward.roads.length > 0) {
-            const roadList = ward.roads.slice(0, 5); // Show first 5 roads
-            const remainingCount = ward.roads.length - 5;
-
-            roadsHtml = `
-                <div class="ward-meta small mt-2">
-                    <strong><i class="fas fa-road me-1"></i> Roads (${ward.roads.length}):</strong>
-                    <div class="roads-list mt-1">
-                        ${roadList.map(road => `<span class="road-tag">${road}</span>`).join('')}
-                        ${remainingCount > 0 ? `<span class="road-tag more-tag">+${remainingCount} more</span>` : ''}
-                    </div>
-                </div>
-            `;
-        } else {
-            roadsHtml = `
-                <div class="ward-meta small mt-2 text-muted">
-                    <i class="fas fa-road me-1"></i> No roads assigned
-                </div>
-            `;
-        }
-
-        container.append(`
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="ward-card text-center p-4">
-                <div class="mb-3">
-                    ${droneImageUrl
-                        ? `<img src="${droneImageUrl}" alt="Ward ${ward.ward_no} Image" class="ward-image">`
-                        : `<div class="ward-image bg-light d-inline-flex align-items-center justify-content-center text-secondary">
-                                    <i class="fas fa-map fa-2x"></i>
-                                </div>`
-                    }
-                </div>
-                <h5 class="ward-name">Ward ${ward.ward_no}</h5>
-                <p class="ward-meta mb-1"><strong>Zone:</strong> ${ward.zone}</p>
-                <p class="ward-meta mb-2">
-                    <span class="status-badge ${statusClass}">${ward.status}</span>
-                </p>
-
-                ${ward.extent_left || ward.extent_right || ward.extent_top || ward.extent_bottom ? `
-                        <div class="ward-meta small">
-                            <strong>Extents:</strong><br>
-                            L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
-                            T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
+                if (!wards || wards.length === 0) {
+                    container.html(`
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="fas fa-map-marked-alt"></i>
+                            <h4>No Wards Found</h4>
+                            <p>Get started by adding your first ward for this corporation.</p>
+                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addWardModal">
+                                <i class="fas fa-plus me-1"></i> Add Ward
+                            </button>
                         </div>
-                        ` : ''}
+                    </div>
+                `);
+                    return;
+                }
 
-                ${roadsHtml}
+                wards.forEach(ward => {
+                    const droneImageUrl = ward.drone_image ?
+                        `{{ asset('') }}${ward.drone_image}` :
+                        '';
 
-                <div class="ward-actions">
-                    <button class="btn btn-sm btn-outline-success update-ward"
-                            data-id="${ward.id}">
-                        <i class="fas fa-edit me-1"></i> Edit
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-ward"
-                            data-id="${ward.id}"
-                            data-name="Ward ${ward.ward_no}">
-                        <i class="fas fa-trash me-1"></i> Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    `);
-    });
-}
+                    const statusClass = ward.status === 'active' ? 'status-active' : 'status-inactive';
+
+                    // Generate roads HTML if roads exist
+                    let roadsHtml = '';
+                    if (ward.roads && ward.roads.length > 0) {
+                        const roadList = ward.roads.slice(0, 3); // Show first 3 roads
+                        const remainingCount = ward.roads.length - 3;
+
+                        roadsHtml = `
+                            <div class="ward-meta small mt-2">
+                                <strong><i class="fas fa-road me-1"></i> Roads (${ward.roads.length}):</strong>
+                                <div class="roads-list">
+                                    ${roadList.map(road => `<span class="road-tag" title="${road}">${road.length > 15 ? road.substring(0, 12) + '...' : road}</span>`).join('')}
+                                    ${remainingCount > 0 ? `<span class="road-tag more-tag" data-ward-id="${ward.id}" data-ward-name="Ward ${ward.ward_no}" data-roads='${JSON.stringify(ward.roads)}'>+${remainingCount} more</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        roadsHtml = `
+                            <div class="ward-meta small mt-2 text-muted">
+                                <i class="fas fa-road me-1"></i> No roads assigned
+                            </div>
+                        `;
+                    }
+
+                    container.append(`
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="ward-card text-center p-4" data-ward-id="${ward.id}" data-ward-name="Ward ${ward.ward_no}" data-roads='${JSON.stringify(ward.roads || [])}'>
+                            <div class="mb-3">
+                                ${droneImageUrl
+                                    ? `<img src="${droneImageUrl}" alt="Ward ${ward.ward_no} Image" class="ward-image">`
+                                    : `<div class="ward-image bg-light d-inline-flex align-items-center justify-content-center text-secondary">
+                                                <i class="fas fa-map fa-2x"></i>
+                                            </div>`
+                                }
+                            </div>
+                            <h5 class="ward-name">Ward ${ward.ward_no}</h5>
+                            <p class="ward-meta mb-1"><strong>Zone:</strong> ${ward.zone}</p>
+                            <p class="ward-meta mb-2">
+                                <span class="status-badge ${statusClass}">${ward.status}</span>
+                            </p>
+
+                            ${ward.extent_left || ward.extent_right || ward.extent_top || ward.extent_bottom ? `
+                                    <div class="ward-meta small">
+                                        <strong>Extents:</strong><br>
+                                        L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
+                                        T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
+                                    </div>
+                                    ` : ''}
+
+                            ${roadsHtml}
+
+                            <div class="ward-actions">
+                                <button class="btn btn-sm btn-outline-success update-ward"
+                                        data-id="${ward.id}">
+                                    <i class="fas fa-edit me-1"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-ward"
+                                        data-id="${ward.id}"
+                                        data-name="Ward ${ward.ward_no}">
+                                    <i class="fas fa-trash me-1"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                });
+            }
+
+            // Show roads modal when clicking on "more" tag or card
+            $(document).on('click', '.more-tag', function(e) {
+                e.stopPropagation();
+                const wardName = $(this).data('ward-name');
+                const roads = $(this).data('roads');
+                showRoadsModal(wardName, roads);
+            });
+
+            // Optional: Show roads modal when clicking on the ward card (excluding buttons)
+            $(document).on('click', '.ward-card', function(e) {
+                // Don't trigger if clicking on buttons or action buttons area
+                if ($(e.target).closest('.ward-actions').length || $(e.target).closest('.more-tag').length) {
+                    return;
+                }
+
+                const wardName = $(this).data('ward-name');
+                const roads = $(this).data('roads');
+
+                if (roads && roads.length > 0) {
+                    showRoadsModal(wardName, roads);
+                }
+            });
+
+            function showRoadsModal(wardName, roads) {
+                if (!roads || roads.length === 0) return;
+
+                $('#roadsModalLabel').text(`${wardName} - Roads (${roads.length})`);
+                let roadsHtml = '<div class="list-group list-group-flush">';
+                roads.forEach(road => {
+                    roadsHtml += `
+                        <div class="list-group-item road-item">
+                            <i class="fas fa-road"></i>
+                            <strong>${road}</strong>
+                        </div>
+                    `;
+                });
+                roadsHtml += '</div>';
+                $('#roadsListContainer').html(roadsHtml);
+                $('#roadsModal').modal('show');
+            }
 
             // Add ward form submission
             $('#wardForm').on('submit', function(e) {
@@ -655,7 +779,6 @@ function renderWardCards(wards) {
                     success: function(response) {
                         if (response.success) {
                             let message = response.message;
-                            // Show detailed message if there were skipped features
                             if (response.polygon_processing && response.polygon_processing
                                 .skipped_features > 0) {
                                 message +=
@@ -736,7 +859,8 @@ function renderWardCards(wards) {
             });
 
             // Handle update button click
-            $(document).on('click', '.update-ward', function() {
+            $(document).on('click', '.update-ward', function(e) {
+                e.stopPropagation();
                 let id = $(this).data('id');
 
                 $.ajax({
@@ -790,7 +914,8 @@ function renderWardCards(wards) {
             });
 
             // Handle delete button click
-            $(document).on('click', '.delete-ward', function() {
+            $(document).on('click', '.delete-ward', function(e) {
+                e.stopPropagation();
                 currentDeleteId = $(this).data('id');
                 const wardName = $(this).data('name');
                 $('#wardNameToDelete').text(wardName);

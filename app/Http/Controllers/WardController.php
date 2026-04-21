@@ -32,60 +32,58 @@ class WardController extends Controller
     }
 
     public function index($corporationId)
-{
-    try {
-        $corporation = Corporation::findOrFail($corporationId);
+    {
+        try {
+            $corporation = Corporation::findOrFail($corporationId);
 
-        $wards = Ward::where('corporation_id', $corporationId)->get();
+            $wards = Ward::where('corporation_id', $corporationId)->get();
 
-        $tableName = "mis_corporation_{$corporation->id}";
+            $tableName = "mis_corporation_{$corporation->id}";
 
-        $misData = [];
+            $misData = [];
 
-        if (Schema::hasTable($tableName)) {
-
-            $misData = DB::table($tableName)
-                ->select('ward_no', DB::raw('GROUP_CONCAT(road_name) as roads'))
-                ->groupBy('ward_no')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'ward_no' => $item->ward_no,
-                        'roads' => explode(',', $item->roads)
-                    ];
-                });
-        }
-
-        // Attach MIS data to each ward
-        $wards->transform(function ($ward) use ($misData) {
-
-            if ($ward->drone_image) {
-                $ward->drone_image_url = asset($ward->drone_image);
+            if (Schema::hasTable($tableName)) {
+                $misData = DB::table($tableName)
+                    ->select('ward_no', DB::raw('GROUP_CONCAT(DISTINCT road_name) as roads'))
+                    ->groupBy('ward_no')
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'ward_no' => $item->ward_no,
+                            'roads' => $item->roads ? explode(',', $item->roads) : []
+                        ];
+                    });
             }
 
-            // match ward_no
-            $ward->roads = collect($misData)
-                ->firstWhere('ward_no', $ward->ward_no)['roads'] ?? [];
+            // Attach MIS data to each ward
+            $wards->transform(function ($ward) use ($misData) {
+                if ($ward->drone_image) {
+                    $ward->drone_image_url = asset($ward->drone_image);
+                }
 
-            return $ward;
-        });
+                // Match ward_no and get roads
+                $matchedData = $misData->firstWhere('ward_no', $ward->ward_no);
+                $ward->roads = $matchedData ? $matchedData['roads'] : [];
+                $ward->roads_count = count($ward->roads);
 
-        return response()->json([
-            'success' => true,
-            'corporation' => $corporation,
-            'wards' => $wards
-        ]);
+                return $ward;
+            });
 
-    } catch (\Exception $e) {
+            return response()->json([
+                'success' => true,
+                'corporation' => $corporation,
+                'wards' => $wards
+            ]);
 
-        Log::error("Failed to load ward data: " . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("Failed to load ward data: " . $e->getMessage());
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to load ward data'
-        ], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load ward data'
+            ], 500);
+        }
     }
-}
 
     public function edit($id)
     {
@@ -96,7 +94,6 @@ class WardController extends Controller
             if ($ward->drone_image) {
                 $ward->drone_image_url = asset($ward->drone_image);
             }
-
 
             return response()->json([
                 'success' => true,
@@ -605,6 +602,4 @@ class WardController extends Controller
             }
         }
     }
-
-
 }
