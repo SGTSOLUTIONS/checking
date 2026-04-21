@@ -536,6 +536,7 @@
 
             // Function to render ward cards
             function renderWardCards(wards) {
+                console.log(wards.road)
                 let container = $('#wardDataContainer');
                 container.empty();
 

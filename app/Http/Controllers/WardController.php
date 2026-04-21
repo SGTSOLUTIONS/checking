@@ -34,10 +34,14 @@ class WardController extends Controller
     public function index($corporationId)
     {
         try {
-            $corporation = Corporation::findOrFail($corporationId);
+            $corporations = Corporation::findOrFail($corporationId);
             $wards = Ward::where('corporation_id', $corporationId)->get();
+            foreach ($corporations as $corporation) {
+                  $road = DB::table("mis_corporation_{$corporation->id}")->pluck("road_name")->toArray();
+                    $corporation->mis = $road;
+            }
 
-            // Add full URL for drone_image to each ward
+
             $wards->transform(function ($ward) {
                 if ($ward->drone_image) {
                     $ward->drone_image_url = asset($ward->drone_image);
@@ -68,6 +72,7 @@ class WardController extends Controller
             if ($ward->drone_image) {
                 $ward->drone_image_url = asset($ward->drone_image);
             }
+
 
             return response()->json([
                 'success' => true,
@@ -568,7 +573,7 @@ class WardController extends Controller
     {
         foreach ($files as $file) {
             try {
-                if (File::exists(public_path($file))) {
+                 if (File::exists(public_path($file))) {
                     File::delete(public_path($file));
                 }
             } catch (\Exception $e) {
