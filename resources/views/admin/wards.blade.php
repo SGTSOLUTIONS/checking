@@ -535,75 +535,101 @@
             }
 
             // Function to render ward cards
-            function renderWardCards(wards) {
-                console.log(wards.road)
-                let container = $('#wardDataContainer');
-                container.empty();
+            // Function to render ward cards
+function renderWardCards(wards) {
+    console.log(wards)
+    let container = $('#wardDataContainer');
+    container.empty();
 
-                if (!wards || wards.length === 0) {
-                    container.html(`
-                    <div class="col-12">
-                        <div class="empty-state">
-                            <i class="fas fa-map-marked-alt"></i>
-                            <h4>No Wards Found</h4>
-                            <p>Get started by adding your first ward for this corporation.</p>
-                            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addWardModal">
-                                <i class="fas fa-plus me-1"></i> Add Ward
-                            </button>
-                        </div>
+    if (!wards || wards.length === 0) {
+        container.html(`
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-map-marked-alt"></i>
+                <h4>No Wards Found</h4>
+                <p>Get started by adding your first ward for this corporation.</p>
+                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addWardModal">
+                    <i class="fas fa-plus me-1"></i> Add Ward
+                </button>
+            </div>
+        </div>
+    `);
+        return;
+    }
+
+    wards.forEach(ward => {
+        const droneImageUrl = ward.drone_image ?
+            `{{ asset('') }}${ward.drone_image}` :
+            '';
+
+        const statusClass = ward.status === 'active' ? 'status-active' : 'status-inactive';
+
+        // Generate roads HTML if roads exist
+        let roadsHtml = '';
+        if (ward.roads && ward.roads.length > 0) {
+            const roadList = ward.roads.slice(0, 5); // Show first 5 roads
+            const remainingCount = ward.roads.length - 5;
+
+            roadsHtml = `
+                <div class="ward-meta small mt-2">
+                    <strong><i class="fas fa-road me-1"></i> Roads (${ward.roads.length}):</strong>
+                    <div class="roads-list mt-1">
+                        ${roadList.map(road => `<span class="road-tag">${road}</span>`).join('')}
+                        ${remainingCount > 0 ? `<span class="road-tag more-tag">+${remainingCount} more</span>` : ''}
                     </div>
-                `);
-                    return;
-                }
+                </div>
+            `;
+        } else {
+            roadsHtml = `
+                <div class="ward-meta small mt-2 text-muted">
+                    <i class="fas fa-road me-1"></i> No roads assigned
+                </div>
+            `;
+        }
 
-                wards.forEach(ward => {
-                    const droneImageUrl = ward.drone_image ?
-                        `{{ asset('') }}${ward.drone_image}` :
-                        '';
+        container.append(`
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="ward-card text-center p-4">
+                <div class="mb-3">
+                    ${droneImageUrl
+                        ? `<img src="${droneImageUrl}" alt="Ward ${ward.ward_no} Image" class="ward-image">`
+                        : `<div class="ward-image bg-light d-inline-flex align-items-center justify-content-center text-secondary">
+                                    <i class="fas fa-map fa-2x"></i>
+                                </div>`
+                    }
+                </div>
+                <h5 class="ward-name">Ward ${ward.ward_no}</h5>
+                <p class="ward-meta mb-1"><strong>Zone:</strong> ${ward.zone}</p>
+                <p class="ward-meta mb-2">
+                    <span class="status-badge ${statusClass}">${ward.status}</span>
+                </p>
 
-                    const statusClass = ward.status === 'active' ? 'status-active' : 'status-inactive';
-
-                    container.append(`
-                    <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="ward-card text-center p-4">
-                            <div class="mb-3">
-                                ${droneImageUrl
-                                    ? `<img src="${droneImageUrl}" alt="Ward ${ward.ward_no} Image" class="ward-image">`
-                                    : `<div class="ward-image bg-light d-inline-flex align-items-center justify-content-center text-secondary">
-                                                <i class="fas fa-map fa-2x"></i>
-                                            </div>`
-                                }
-                            </div>
-                            <h5 class="ward-name">Ward ${ward.ward_no}</h5>
-                            <p class="ward-meta mb-1"><strong>Zone:</strong> ${ward.zone}</p>
-                            <p class="ward-meta mb-2">
-                                <span class="status-badge ${statusClass}">${ward.status}</span>
-                            </p>
-
-                            ${ward.extent_left || ward.extent_right || ward.extent_top || ward.extent_bottom ? `
-                                    <div class="ward-meta small">
-                                        <strong>Extents:</strong><br>
-                                        L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
-                                        T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
-                                    </div>
-                                    ` : ''}
-
-                            <div class="ward-actions">
-                                <button class="btn btn-sm btn-outline-success update-ward"
-                                        data-id="${ward.id}">
-                                    <i class="fas fa-edit me-1"></i> Edit
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-ward"
-                                        data-id="${ward.id}"
-                                        data-name="Ward ${ward.ward_no}">
-                                    <i class="fas fa-trash me-1"></i> Delete
-                                </button>
-                            </div>
+                ${ward.extent_left || ward.extent_right || ward.extent_top || ward.extent_bottom ? `
+                        <div class="ward-meta small">
+                            <strong>Extents:</strong><br>
+                            L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
+                            T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
                         </div>
-                    </div>
-                `);
-                });
-            }
+                        ` : ''}
+
+                ${roadsHtml}
+
+                <div class="ward-actions">
+                    <button class="btn btn-sm btn-outline-success update-ward"
+                            data-id="${ward.id}">
+                        <i class="fas fa-edit me-1"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-ward"
+                            data-id="${ward.id}"
+                            data-name="Ward ${ward.ward_no}">
+                        <i class="fas fa-trash me-1"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    `);
+    });
+}
 
             // Add ward form submission
             $('#wardForm').on('submit', function(e) {
