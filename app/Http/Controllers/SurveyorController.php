@@ -980,7 +980,14 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
-        $shopdatacount = DB::table($shopDataTableName)
+            if (!$buildingData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Building data not found for this GIS ID. Please add building data first.',
+            ], 404);
+        }
+        if($existingPoint ) {
+             $shopdatacount = DB::table($shopDataTableName)
             ->where('point_gisid', $data['point_gisid'])
             ->count();
 
@@ -998,13 +1005,10 @@ class SurveyorController extends Controller
                 ]
             ], 422);
         }
-
-        if (!$buildingData) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Building data not found for this GIS ID. Please add building data first.',
-            ], 404);
         }
+
+
+
 
         // Prepare point data
         $pointData = [
