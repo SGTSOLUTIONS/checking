@@ -988,7 +988,7 @@ class SurveyorController extends Controller
         }
         if($existingPoint ) {
              $shopdatacount = DB::table($shopDataTableName)
-            ->where('point_gisid', $data['point_gisid'])
+            ->where('point_data_id', $existingPoint->id)
             ->count();
 
         if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
