@@ -50,7 +50,6 @@
                         <input type="hidden" name="corporation_id" value="{{ $corporationId }}">
 
                         <div class="row g-3">
-                            <!-- Corporation ID (Display only) -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Corporation</label>
                                 <input type="text" class="form-control bg-light"
@@ -58,7 +57,6 @@
                                 <small class="form-text text-muted">Corporation ID: {{ $corporationId }}</small>
                             </div>
 
-                            <!-- Ward No -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Ward No</label>
                                 <input type="text" class="form-control" name="ward_no" id="ward_no"
@@ -66,7 +64,6 @@
                                 <div class="invalid-feedback">Please enter ward number.</div>
                             </div>
 
-                            <!-- Zone Dropdown -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Zone</label>
                                 <select class="form-select" name="zone" id="zone" required>
@@ -80,7 +77,6 @@
                                 <div class="invalid-feedback">Please select zone.</div>
                             </div>
 
-                            <!-- Status -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Status</label>
                                 <select class="form-select" name="status" id="status" required>
@@ -91,7 +87,6 @@
                                 <div class="invalid-feedback">Please select status.</div>
                             </div>
 
-                            <!-- Extent Fields -->
                             <div class="col-12">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-arrows-alt me-2"></i>Extent
                                     Coordinates</h6>
@@ -122,44 +117,31 @@
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- File Uploads -->
                             <div class="col-12">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-file-upload me-2"></i>File Uploads
                                 </h6>
                             </div>
 
-                            <!-- Drone Image -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Drone Image</label>
                                 <input type="file" class="form-control" name="drone_image" accept="image/*">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Formats: JPG, PNG, GIF. Max: 2MB
-                                </div>
+                                <div class="form-text">Formats: JPG, PNG, GIF. Max: 2MB</div>
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- Boundary File -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Boundary File</label>
                                 <input type="file" class="form-control" name="boundary"
                                     accept=".geojson,application/json">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    GeoJSON format. Max: 5MB
-                                </div>
+                                <div class="form-text">GeoJSON format. Max: 5MB</div>
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- Polygon File -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Polygon File</label>
                                 <input type="file" class="form-control" name="polygon"
                                     accept=".geojson,application/json">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    GeoJSON format. Max: 5MB
-                                </div>
+                                <div class="form-text">GeoJSON format. Max: 5MB</div>
                                 <div class="invalid-feedback"></div>
                             </div>
 
@@ -167,10 +149,7 @@
                                 <label class="form-label fw-bold">Line File</label>
                                 <input type="file" class="form-control" name="line"
                                     accept=".geojson,application/json">
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    GeoJSON format. Max: 5MB
-                                </div>
+                                <div class="form-text">GeoJSON format. Max: 5MB</div>
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
@@ -208,21 +187,18 @@
                         <input type="hidden" name="id" id="update_id">
 
                         <div class="row g-3">
-                            <!-- Corporation ID (Display only) -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Corporation</label>
                                 <input type="text" class="form-control bg-light"
                                     value="{{ $corporation->name }} ({{ $corporation->code }})" readonly>
                             </div>
 
-                            <!-- Ward No -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Ward No</label>
                                 <input type="text" class="form-control" name="ward_no" id="update_ward_no" required>
                                 <div class="invalid-feedback">Please enter ward number.</div>
                             </div>
 
-                            <!-- Zone Dropdown -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Zone</label>
                                 <select class="form-select" name="zone" id="update_zone" required>
@@ -236,7 +212,6 @@
                                 <div class="invalid-feedback">Please select zone.</div>
                             </div>
 
-                            <!-- Status -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold required">Status</label>
                                 <select class="form-select" name="status" id="update_status" required>
@@ -247,7 +222,6 @@
                                 <div class="invalid-feedback">Please select status.</div>
                             </div>
 
-                            <!-- Extent Fields -->
                             <div class="col-12">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-arrows-alt me-2"></i>Extent
                                     Coordinates</h6>
@@ -275,13 +249,11 @@
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- File Uploads -->
                             <div class="col-12">
                                 <h6 class="fw-bold text-primary mb-3"><i class="fas fa-file-upload me-2"></i>File Uploads
                                 </h6>
                             </div>
 
-                            <!-- Drone Image -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Drone Image</label>
                                 <input type="file" class="form-control" name="drone_image" accept="image/*">
@@ -290,7 +262,6 @@
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- Boundary File -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Boundary File</label>
                                 <input type="file" class="form-control" name="boundary"
@@ -299,7 +270,6 @@
                                 <div class="invalid-feedback"></div>
                             </div>
 
-                            <!-- Polygon File -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Polygon File</label>
                                 <input type="file" class="form-control" name="polygon"
@@ -358,28 +328,6 @@
         </div>
     </div>
 
-    <!-- Roads Detail Modal -->
-    <div class="modal fade" id="roadsModal" tabindex="-1" aria-labelledby="roadsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title" id="roadsModalLabel">
-                        <i class="fas fa-road me-2"></i>Ward Roads
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="roadsListContainer">
-                        <!-- Roads will be populated here -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -404,7 +352,6 @@
             transition: all 0.3s ease-in-out;
             overflow: hidden;
             height: 100%;
-            cursor: pointer;
         }
 
         .ward-card:hover {
@@ -439,7 +386,6 @@
             margin-top: 1rem;
             padding-top: 1rem;
             border-top: 1px solid #e9ecef;
-            cursor: default;
         }
 
         .status-badge {
@@ -487,69 +433,36 @@
             color: #dc3545;
         }
 
-        /* Roads styling */
-        .roads-list {
-            max-height: 60px;
-            overflow-y: auto;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            justify-content: center;
-            margin-top: 5px;
-        }
-
-        .road-tag {
-            display: inline-block;
-            background-color: #e9ecef;
-            color: #495057;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 12px;
-            white-space: nowrap;
-        }
-
-        .road-tag.more-tag {
-            background-color: #007bff;
-            color: white;
+        /* Roads Select Dropdown Styling */
+        .roads-select {
+            width: 100%;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
             cursor: pointer;
         }
 
-        .road-tag.more-tag:hover {
-            background-color: #0056b3;
+        .roads-select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
         }
 
-        .roads-list::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
+        .selected-road-display {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background-color: #e7f1ff;
+            border-left: 3px solid #007bff;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #004085;
+            display: none;
         }
 
-        .roads-list::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .roads-list::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-
-        .roads-list::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        .road-item {
-            padding: 8px 12px;
-            border-bottom: 1px solid #e9ecef;
-            font-size: 0.9rem;
-        }
-
-        .road-item:last-child {
-            border-bottom: none;
-        }
-
-        .road-item i {
-            color: #007bff;
-            margin-right: 8px;
+        .selected-road-display i {
+            margin-right: 5px;
         }
 
         /* Form select styling */
@@ -647,18 +560,23 @@
 
                     const statusClass = ward.status === 'active' ? 'status-active' : 'status-inactive';
 
-                    // Generate roads HTML if roads exist
+                    // Generate roads select dropdown if roads exist
                     let roadsHtml = '';
                     if (ward.roads && ward.roads.length > 0) {
-                        const roadList = ward.roads.slice(0, 3); // Show first 3 roads
-                        const remainingCount = ward.roads.length - 3;
-
                         roadsHtml = `
                             <div class="ward-meta small mt-2">
-                                <strong><i class="fas fa-road me-1"></i> Roads (${ward.roads.length}):</strong>
-                                <div class="roads-list">
-                                    ${roadList.map(road => `<span class="road-tag" title="${road}">${road.length > 15 ? road.substring(0, 12) + '...' : road}</span>`).join('')}
-                                    ${remainingCount > 0 ? `<span class="road-tag more-tag" data-ward-id="${ward.id}" data-ward-name="Ward ${ward.ward_no}" data-roads='${JSON.stringify(ward.roads)}'>+${remainingCount} more</span>` : ''}
+                                <strong>
+                                    <i class="fas fa-road me-1"></i>
+                                    Roads (${ward.roads.length})
+                                </strong>
+                                <div class="mt-2">
+                                    <select class="roads-select form-select-sm" data-ward-id="${ward.id}" id="roadsSelect_${ward.id}" onchange="displaySelectedRoad(this, '${ward.ward_no}')">
+                                        <option value="">-- Select a road to view --</option>
+                                        ${ward.roads.map(road => `<option value="${road.replace(/"/g, '&quot;')}">${road.length > 40 ? road.substring(0, 37) + '...' : road}</option>`).join('')}
+                                    </select>
+                                    <div class="selected-road-display" id="selectedRoadDisplay_${ward.id}">
+                                        <i class="fas fa-road"></i> <span class="selected-road-text"></span>
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -672,13 +590,13 @@
 
                     container.append(`
                     <div class="col-xl-3 col-lg-4 col-md-6">
-                        <div class="ward-card text-center p-4" data-ward-id="${ward.id}" data-ward-name="Ward ${ward.ward_no}" data-roads='${JSON.stringify(ward.roads || [])}'>
+                        <div class="ward-card text-center p-4">
                             <div class="mb-3">
                                 ${droneImageUrl
                                     ? `<img src="${droneImageUrl}" alt="Ward ${ward.ward_no} Image" class="ward-image">`
                                     : `<div class="ward-image bg-light d-inline-flex align-items-center justify-content-center text-secondary">
-                                                <i class="fas fa-map fa-2x"></i>
-                                            </div>`
+                                                            <i class="fas fa-map fa-2x"></i>
+                                                        </div>`
                                 }
                             </div>
                             <h5 class="ward-name">Ward ${ward.ward_no}</h5>
@@ -688,12 +606,12 @@
                             </p>
 
                             ${ward.extent_left || ward.extent_right || ward.extent_top || ward.extent_bottom ? `
-                                    <div class="ward-meta small">
-                                        <strong>Extents:</strong><br>
-                                        L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
-                                        T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
-                                    </div>
-                                    ` : ''}
+                                                <div class="ward-meta small">
+                                                    <strong>Extents:</strong><br>
+                                                    L: ${ward.extent_left || 'N/A'} | R: ${ward.extent_right || 'N/A'}<br>
+                                                    T: ${ward.extent_top || 'N/A'} | B: ${ward.extent_bottom || 'N/A'}
+                                                </div>
+                                                ` : ''}
 
                             ${roadsHtml}
 
@@ -707,6 +625,16 @@
                                         data-name="Ward ${ward.ward_no}">
                                     <i class="fas fa-trash me-1"></i> Delete
                                 </button>
+                                <button class="btn btn-sm btn-outline-primary download-polygon"
+                                        data-id="${ward.id}"
+                                        data-name="Ward ${ward.ward_no}">
+                                    <i class="fas fa-download me-1"></i> Download Polygon
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary missing-bill"
+                                        data-id="${ward.id}"
+                                        data-name="Ward ${ward.ward_no}">
+                                    <i class="fas fa-download me-1"></i> Download Missing Bill
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -714,45 +642,16 @@
                 });
             }
 
-            // Show roads modal when clicking on "more" tag or card
-            $(document).on('click', '.more-tag', function(e) {
-                e.stopPropagation();
-                const wardName = $(this).data('ward-name');
-                const roads = $(this).data('roads');
-                showRoadsModal(wardName, roads);
-            });
-
-            // Optional: Show roads modal when clicking on the ward card (excluding buttons)
-            $(document).on('click', '.ward-card', function(e) {
-                // Don't trigger if clicking on buttons or action buttons area
-                if ($(e.target).closest('.ward-actions').length || $(e.target).closest('.more-tag').length) {
-                    return;
+            window.displaySelectedRoad = function(selectElement, wardNo) {
+                const selectedRoad = selectElement.value;
+                const wardId = $(selectElement).data('ward-id');
+                const displayDiv = $(`#selectedRoadDisplay_${wardId}`);
+                if (selectedRoad) {
+                    displayDiv.find('.selected-road-text').text(selectedRoad);
+                    displayDiv.fadeIn();
+                } else {
+                    displayDiv.fadeOut();
                 }
-
-                const wardName = $(this).data('ward-name');
-                const roads = $(this).data('roads');
-
-                if (roads && roads.length > 0) {
-                    showRoadsModal(wardName, roads);
-                }
-            });
-
-            function showRoadsModal(wardName, roads) {
-                if (!roads || roads.length === 0) return;
-
-                $('#roadsModalLabel').text(`${wardName} - Roads (${roads.length})`);
-                let roadsHtml = '<div class="list-group list-group-flush">';
-                roads.forEach(road => {
-                    roadsHtml += `
-                        <div class="list-group-item road-item">
-                            <i class="fas fa-road"></i>
-                            <strong>${road}</strong>
-                        </div>
-                    `;
-                });
-                roadsHtml += '</div>';
-                $('#roadsListContainer').html(roadsHtml);
-                $('#roadsModal').modal('show');
             }
 
             // Add ward form submission
@@ -960,6 +859,78 @@
                 });
             });
 
+            // Handle download polygon button click
+            $(document).on('click', '.download-polygon', function(e) {
+                e.stopPropagation();
+                const wardId = $(this).data('id');
+                const wardName = $(this).data('name');
+
+                // Show loading toast
+                showToast('info', 'Processing', `Preparing download for ${wardName}...`);
+
+                // Trigger download
+                window.location.href = `/admin/wards/${wardId}/download-polygon`;
+            });
+            $(document).on('click', '.missing-bill', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const wardId = $(this).data('id');
+                const wardName = $(this).data('name');
+                const roadname = $(`#roadsSelect_${wardId}`).val();
+
+                if (!roadname) {
+                    showToast('warning', 'No Road Selected',
+                        'Please select a road to download missing bill.');
+                    return;
+                }
+
+                showToast('info', 'Processing', `Preparing missing bill download for ${roadname}...`);
+
+                $.ajax({
+                    url: `/admin/wards/${wardId}/download-missing-bill?roadname=${encodeURIComponent(roadname)}`,
+                    type: 'GET',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        roadname: roadname
+                    },
+                    xhrFields: {
+                        responseType: 'blob' // Important for file download
+                    },
+                    success: function(response, status, xhr) {
+                        // Get filename from Content-Disposition header
+                        const disposition = xhr.getResponseHeader('Content-Disposition');
+                        let filename = 'missing_bill_data.csv';
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+
+                        // Create blob link to download
+                        const url = window.URL.createObjectURL(new Blob([response]));
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.setAttribute('download', filename);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+
+                        showToast('success', 'Success!',
+                            'Missing bill data downloaded successfully.');
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Failed to download missing bill.';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            errorMessage = response.message || errorMessage;
+                        } catch (e) {}
+                        showToast('error', 'Error!', errorMessage);
+                    }
+                });
+            });
             // Utility functions
             function clearValidationErrors() {
                 $('.is-invalid').removeClass('is-invalid');
@@ -982,9 +953,19 @@
 
                 toast.find('.toast-title').text(title);
                 toast.find('.toast-message').text(message);
-                toast.find('.toast-icon').removeClass().addClass(`fas fa-circle me-2 toast-icon`);
 
-                const toastInstance = new bootstrap.Toast(toast[0]);
+                // Change icon color based on type
+                let iconColor = '';
+                if (type === 'success') iconColor = '#198754';
+                if (type === 'error') iconColor = '#dc3545';
+                if (type === 'info') iconColor = '#0dcaf0';
+
+                toast.find('.toast-icon').css('color', iconColor);
+
+                const toastInstance = new bootstrap.Toast(toast[0], {
+                    autohide: true,
+                    delay: 3000
+                });
                 toastInstance.show();
             }
 

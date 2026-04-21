@@ -74,7 +74,6 @@ class WardController extends Controller
                 'corporation' => $corporation,
                 'wards' => $wards
             ]);
-
         } catch (\Exception $e) {
             Log::error("Failed to load ward data: " . $e->getMessage());
 
@@ -589,12 +588,160 @@ class WardController extends Controller
             ], 500);
         }
     }
+    /**
+     * Download Missing Bill Data
+     */
+    public function downloadMissingBill($id, Request $request)
+    {
+        try {
+            $ward = Ward::findOrFail($id);
+            $roadname = $request->input('roadname');
+
+            if (!$roadname) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select a road name'
+                ], 400);
+            }
+
+            $tableName = "mis_corporation_{$ward->corporation_id}";
+
+            if (!Schema::hasTable($tableName)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'MIS data not found for this corporation'
+                ], 404);
+            }
+
+            $pointTable = "pointdata_{$ward->corporation_id}_{$ward->zone}_{$ward->ward_no}";
+
+            // Check if point table exists
+            if (!Schema::hasTable($pointTable)) {
+                // If point table doesn't exist, all MIS records are missing
+                $data = DB::table($tableName)
+                    ->where('ward_no', $ward->ward_no)
+                    ->where('road_name', $roadname)
+                    ->get();
+            } else {
+                // Use NOT EXISTS for better performance
+                $data = DB::table($tableName . ' as mis')
+                    ->where('mis.ward_no', $ward->ward_no)
+                    ->where('mis.road_name', $roadname)
+                    ->whereNotExists(function ($query) use ($pointTable) {
+                        $query->select(DB::raw(1))
+                            ->from($pointTable . ' as pt')
+                            ->whereRaw('pt.assessment = mis.assessment');
+                    })
+                    ->select('mis.*')
+                    ->get();
+            }
+
+            if ($data->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No missing bill data found for this ward and road'
+                ], 404);
+            }
+
+            // Generate CSV file name
+            $fileName = "missing_bill_ward_{$ward->ward_no}_road_" . str_replace(' ', '_', $roadname) . "_" . date('Y-m-d') . ".csv";
+
+            $callback = function () use ($data) {
+                $file = fopen('php://output', 'w');
+                fwrite($file, "\xEF\xBB\xBF");
+
+                if ($data->count() > 0) {
+                    $headers = array_keys((array)$data[0]);
+                    fputcsv($file, $headers);
+
+                    foreach ($data as $row) {
+                        fputcsv($file, (array)$row);
+                    }
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to download missing bill data: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to download missing bill data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Download Polygon (Optimized)
+     */
+    public function downloadPolygon($id)
+    {
+        try {
+            $ward = Ward::findOrFail($id);
+
+            $polygonTable = "polygon_{$ward->corporation_id}_{$ward->zone}_{$ward->ward_no}";
+
+            if (!Schema::hasTable($polygonTable)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Polygon data not found for this ward'
+                ], 404);
+            }
+
+            $polygons = DB::table($polygonTable)->get();
+
+            if ($polygons->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No polygon data found for this ward'
+                ], 404);
+            }
+
+            // Generate GeoJSON
+            $features = [];
+            foreach ($polygons as $polygon) {
+                $geometry = json_decode($polygon->geometry, true);
+                if ($geometry) {
+                    $features[] = [
+                        'type' => 'Feature',
+                        'geometry' => $geometry,
+                        'properties' => [
+                            'gis_id' => $polygon->gis_id,
+                            'assessment' => $polygon->assessment,
+                            'created_at' => $polygon->created_at
+                        ]
+                    ];
+                }
+            }
+
+            $geojson = [
+                'type' => 'FeatureCollection',
+                'features' => $features
+            ];
+
+            $fileName = "polygon_ward_{$ward->ward_no}_{$ward->zone}_" . date('Y-m-d') . ".geojson";
+
+            return response()->json($geojson, 200, [
+                'Content-Type' => 'application/json',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to download polygon: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to download polygon: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
     private function cleanupFiles($files)
     {
         foreach ($files as $file) {
             try {
-                 if (File::exists(public_path($file))) {
+                if (File::exists(public_path($file))) {
                     File::delete(public_path($file));
                 }
             } catch (\Exception $e) {
