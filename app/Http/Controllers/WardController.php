@@ -34,11 +34,11 @@ class WardController extends Controller
     public function index($corporationId)
     {
         try {
-            $corporations = Corporation::findOrFail($corporationId);
+            $corporation = Corporation::findOrFail($corporationId);
             $wards = Ward::where('corporation_id', $corporationId)->get();
-            foreach ($corporations as $corporation) {
-                  $road = DB::table("mis_corporation_{$corporation->id}")->pluck("road_name")->toArray();
-                    $corporation->mis = $road;
+            foreach ($corporation as $corp) {
+                  $road = DB::table("mis_corporation_{$corp->id}")->pluck("road_name")->toArray();
+                    $corp->road = $road;
             }
 
 
