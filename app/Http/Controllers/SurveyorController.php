@@ -939,6 +939,7 @@ class SurveyorController extends Controller
             'total_shops' => 'required|integer|min:0',
         ]);
 
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -979,6 +980,24 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
+        $shopdatacount = DB::table($shopDataTableName)
+            ->where('point_gisid', $data['point_gisid'])
+            ->count();
+
+        if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
+
+            $remaining = $buildingData->number_shop - $shopdatacount;
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => [
+                    'no_of_shop' => [
+                        "Only $remaining shops can be added"
+                    ]
+                ]
+            ], 422);
+        }
 
         if (!$buildingData) {
             return response()->json([
@@ -1182,141 +1201,141 @@ class SurveyorController extends Controller
             'data' => $gisid
         ]);
     }
-   public function getPointData(Request $request, $gisid)
-{
-    $userId = Auth::id();
+    public function getPointData(Request $request, $gisid)
+    {
+        $userId = Auth::id();
 
-    $teamMember = TeamMember::with(['team.ward', 'user'])
-        ->where('user_id', $userId)
-        ->first();
+        $teamMember = TeamMember::with(['team.ward', 'user'])
+            ->where('user_id', $userId)
+            ->first();
 
-    if (!$teamMember) {
-        return redirect()->back()->with('error', 'You are not assigned to any team.');
-    }
+        if (!$teamMember) {
+            return redirect()->back()->with('error', 'You are not assigned to any team.');
+        }
 
-    $ward = $teamMember->team->ward;
-    $zone = strtolower(trim($ward->zone));
-    $wardNo = (int)$ward->ward_no;
-    $corp = (int)$ward->corporation_id;
+        $ward = $teamMember->team->ward;
+        $zone = strtolower(trim($ward->zone));
+        $wardNo = (int)$ward->ward_no;
+        $corp = (int)$ward->corporation_id;
 
-    $pointTable = "pointdata_{$corp}_{$zone}_{$wardNo}";
-    $shopTable = "shopdata_{$corp}_{$zone}_{$wardNo}";
+        $pointTable = "pointdata_{$corp}_{$zone}_{$wardNo}";
+        $shopTable = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-    // Get ALL points with this GIS ID (NOT just first)
-    $points = DB::table($pointTable)
-        ->where('point_gisid', $gisid)
-        ->get();
-
-    // If not found by GIS ID, try assessment search
-    if ($points->isEmpty()) {
+        // Get ALL points with this GIS ID (NOT just first)
         $points = DB::table($pointTable)
-            ->where('assessment', 'like', '%' . $gisid . '%')
+            ->where('point_gisid', $gisid)
             ->get();
+
+        // If not found by GIS ID, try assessment search
+        if ($points->isEmpty()) {
+            $points = DB::table($pointTable)
+                ->where('assessment', 'like', '%' . $gisid . '%')
+                ->get();
+        }
+
+        if ($points->isEmpty()) {
+            return redirect()->back()->with('error', 'No data found for GIS ID: ' . $gisid);
+        }
+
+        // Get shops for each point
+        foreach ($points as $point) {
+            $point->shops = DB::table($shopTable)
+                ->where('point_data_id', $point->id)
+                ->get();
+        }
+
+        $surveyor = [
+            'name' => $teamMember->user->name,
+            'id' => $teamMember->user->id
+        ];
+
+        return view('surveyor.point-data-edit', [
+            'pointData' => $points,  // This is a collection, will be converted to array by @json
+            'surveyor' => $surveyor,
+            'gisid' => $gisid,
+            'corp' => $corp,
+            'zone' => $zone,
+            'wardNo' => $wardNo
+        ]);
+    }
+    public function updatePointRecord(Request $request)
+    {
+        try {
+            $corp = $request->corp;
+            $zone = $request->zone;
+            $wardNo = $request->ward_no;
+
+            if ($request->type === 'point') {
+                $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
+                DB::table($table)
+                    ->where('id', $request->id)
+                    ->update($request->data);
+            } else {
+                $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
+                DB::table($table)
+                    ->where('id', $request->id)
+                    ->update($request->data);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 
-    if ($points->isEmpty()) {
-        return redirect()->back()->with('error', 'No data found for GIS ID: ' . $gisid);
-    }
-
-    // Get shops for each point
-    foreach ($points as $point) {
-        $point->shops = DB::table($shopTable)
-            ->where('point_data_id', $point->id)
-            ->get();
-    }
-
-    $surveyor = [
-        'name' => $teamMember->user->name,
-        'id' => $teamMember->user->id
-    ];
-
-    return view('surveyor.point-data-edit', [
-        'pointData' => $points,  // This is a collection, will be converted to array by @json
-        'surveyor' => $surveyor,
-        'gisid' => $gisid,
-        'corp' => $corp,
-        'zone' => $zone,
-        'wardNo' => $wardNo
-    ]);
-}
-public function updatePointRecord(Request $request)
-{
-    try {
-        $corp = $request->corp;
-        $zone = $request->zone;
-        $wardNo = $request->ward_no;
-
-        if ($request->type === 'point') {
-            $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
-            DB::table($table)
-                ->where('id', $request->id)
-                ->update($request->data);
-        } else {
+    public function addShopRecord(Request $request)
+    {
+        try {
+            $corp = $request->corp;
+            $zone = $request->zone;
+            $wardNo = $request->ward_no;
             $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
-            DB::table($table)
-                ->where('id', $request->id)
-                ->update($request->data);
+
+            $shopData = $request->shop_data;
+            $shopData['created_at'] = now();
+            $shopData['updated_at'] = now();
+
+            $id = DB::table($table)->insertGetId($shopData);
+
+            return response()->json(['success' => true, 'id' => $id]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
     }
-}
 
-public function addShopRecord(Request $request)
-{
-    try {
-        $corp = $request->corp;
-        $zone = $request->zone;
-        $wardNo = $request->ward_no;
-        $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
+    public function deleteShopRecord(Request $request)
+    {
+        try {
+            $corp = $request->corp;
+            $zone = $request->zone;
+            $wardNo = $request->ward_no;
+            $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-        $shopData = $request->shop_data;
-        $shopData['created_at'] = now();
-        $shopData['updated_at'] = now();
+            DB::table($table)->where('id', $request->shop_id)->delete();
 
-        $id = DB::table($table)->insertGetId($shopData);
-
-        return response()->json(['success' => true, 'id' => $id]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function deleteShopRecord(Request $request)
-{
-    try {
-        $corp = $request->corp;
-        $zone = $request->zone;
-        $wardNo = $request->ward_no;
-        $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
-
-        DB::table($table)->where('id', $request->shop_id)->delete();
-
-        return response()->json(['success' => true]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    }
-}
-
-public function bulkUpdatePoints(Request $request)
-{
-    try {
-        $corp = $request->corp;
-        $zone = $request->zone;
-        $wardNo = $request->ward_no;
-        $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
-
-        foreach ($request->points as $point) {
-            DB::table($table)
-                ->where('id', $point['id'])
-                ->update($point['data']);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true]);
-    } catch (\Exception $e) {
-        return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
     }
-}
+
+    public function bulkUpdatePoints(Request $request)
+    {
+        try {
+            $corp = $request->corp;
+            $zone = $request->zone;
+            $wardNo = $request->ward_no;
+            $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
+
+            foreach ($request->points as $point) {
+                DB::table($table)
+                    ->where('id', $point['id'])
+                    ->update($point['data']);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
 }

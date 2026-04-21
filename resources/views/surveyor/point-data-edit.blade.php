@@ -46,9 +46,10 @@
             var pointData = @json($pointData);
             var surveyor = @json($surveyor);
             console.log('Point Data:', pointData);
+            console.log('Surveyor:', surveyor);
 
             // Define fields to display (exclude sensitive or unnecessary fields)
-            var excludeFields = ['created_at', 'updated_at', 'deleted_at', 'building_data_id', 'shops', 'shops_list'];
+            var excludeFields = ['created_at', 'updated_at', 'deleted_at', 'building_data_id', 'shops'];
             var pointFields = [];
 
             if (pointData.length > 0) {
@@ -85,7 +86,7 @@
 
                         // Special handling for certain fields
                         if (header === 'bill_usage') {
-                            var selectHtml = '<select name="' + header + '" class="form-control form-control-sm">';
+                            var selectHtml = '<select name="' + header + '" class="form-control form-control-sm" ' + (readOnly ? 'disabled' : '') + '>';
                             selectHtml += '<option value="">Select</option>';
                             selectHtml += '<option value="Residential" ' + (value === 'Residential' ? 'selected' : '') + '>Residential</option>';
                             selectHtml += '<option value="Commercial" ' + (value === 'Commercial' ? 'selected' : '') + '>Commercial</option>';
@@ -97,13 +98,15 @@
                         }
                     });
 
-                    // Action buttons
-                    var actionHtml = '<button type="button" class="btn btn-sm btn-primary updatePointBtn" data-point-id="' + item.id + '">Update</button>';
+                    // Check if user can edit this record
+                    var canEditRecord = canEdit(surveyor.name, item.worker_name);
 
-                    if (canEdit(surveyor.name, item.worker_name)) {
+                    // Action buttons
+                    if (canEditRecord) {
+                        var actionHtml = '<button type="button" class="btn btn-sm btn-primary updatePointBtn" data-point-id="' + item.id + '">Update</button>';
                         $("<td>").html(actionHtml).appendTo(row);
                     } else {
-                        $("<td>").html('<span class="badge bg-secondary">Read Only</span>').appendTo(row);
+                        $("<td>").html('<span class="badge bg-secondary">Read Only (Created by: ' + (item.worker_name || 'Unknown') + ')</span>').appendTo(row);
                     }
 
                     $("#pointBody").append(row);
@@ -114,15 +117,21 @@
                 $("#shopsSection").empty();
 
                 data.forEach(function(point, pointIndex) {
+                    // Check if user can edit shops for this point
+                    var canEditShops = canEdit(surveyor.name, point.worker_name);
+
                     if (point.shops && point.shops.length > 0) {
+                        var addShopButton = canEditShops ?
+                            '<button type="button" class="btn btn-sm btn-success float-end addShopBtn" data-point-id="' + point.id + '" data-point-index="' + pointIndex + '">' +
+                                '<i class="fas fa-plus"></i> Add Shop' +
+                            '</button>' : '';
+
                         var shopsCard = `
                             <div class="card mb-4" id="shops-card-${point.id}">
                                 <div class="card-header bg-warning">
                                     <h6 class="mb-0">
                                         Shops for Point ID: ${point.id} (Assessment: ${point.assessment || 'N/A'})
-                                        <button type="button" class="btn btn-sm btn-success float-end addShopBtn" data-point-id="${point.id}" data-point-index="${pointIndex}">
-                                            <i class="fas fa-plus"></i> Add Shop
-                                        </button>
+                                        ${addShopButton}
                                     </h6>
                                 </div>
                                 <div class="card-body table-responsive">
@@ -149,29 +158,51 @@
                         $("#shopsSection").append(shopsCard);
 
                         // Render shops for this point
-                        renderShopsTable(point.id, point.shops, surveyor, pointIndex);
+                        renderShopsTable(point.id, point.shops, surveyor, pointIndex, canEditShops);
+                    } else if (canEditShops) {
+                        // Show card with add button even if no shops exist
+                        var shopsCard = `
+                            <div class="card mb-4" id="shops-card-${point.id}">
+                                <div class="card-header bg-warning">
+                                    <h6 class="mb-0">
+                                        Shops for Point ID: ${point.id} (Assessment: ${point.assessment || 'N/A'})
+                                        <button type="button" class="btn btn-sm btn-success float-end addShopBtn" data-point-id="${point.id}" data-point-index="${pointIndex}">
+                                            <i class="fas fa-plus"></i> Add Shop
+                                        </button>
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info text-center">No shops added yet. Click "Add Shop" to add.</div>
+                                </div>
+                            </div>
+                        `;
+                        $("#shopsSection").append(shopsCard);
                     }
                 });
             }
 
-            function renderShopsTable(pointId, shops, surveyor, pointIndex) {
+            function renderShopsTable(pointId, shops, surveyor, pointIndex, canEditShops) {
                 var tbody = $("#shops-body-" + pointId);
                 tbody.empty();
 
                 shops.forEach(function(shop, shopIndex) {
                     var row = $("<tr id='shop-row-" + shop.id + "'>");
                     row.append("<td><input type='text' class='form-control form-control-sm' value='" + (shop.id || '') + "' readonly style='width:60px'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-floor' value='" + escapeHtml(shop.shop_floor || '') + "' data-shop-id='" + shop.id + "' data-field='shop_floor'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-name' value='" + escapeHtml(shop.shop_name || '') + "' data-shop-id='" + shop.id + "' data-field='shop_name'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-owner' value='" + escapeHtml(shop.shop_owner_name || '') + "' data-shop-id='" + shop.id + "' data-field='shop_owner_name'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-category' value='" + escapeHtml(shop.shop_category || '') + "' data-shop-id='" + shop.id + "' data-field='shop_category'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-mobile' value='" + escapeHtml(shop.shop_mobile || '') + "' data-shop-id='" + shop.id + "' data-field='shop_mobile'></td>");
-                    row.append("<td><input type='text' class='form-control form-control-sm shop-license' value='" + escapeHtml(shop.license || '') + "' data-shop-id='" + shop.id + "' data-field='license'></td>");
-                    row.append("<td><input type='number' class='form-control form-control-sm shop-employees' value='" + (shop.number_of_employee || '0') + "' data-shop-id='" + shop.id + "' data-field='number_of_employee'></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-floor' value='" + escapeHtml(shop.shop_floor || '') + "' data-shop-id='" + shop.id + "' data-field='shop_floor' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-name' value='" + escapeHtml(shop.shop_name || '') + "' data-shop-id='" + shop.id + "' data-field='shop_name' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-owner' value='" + escapeHtml(shop.shop_owner_name || '') + "' data-shop-id='" + shop.id + "' data-field='shop_owner_name' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-category' value='" + escapeHtml(shop.shop_category || '') + "' data-shop-id='" + shop.id + "' data-field='shop_category' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-mobile' value='" + escapeHtml(shop.shop_mobile || '') + "' data-shop-id='" + shop.id + "' data-field='shop_mobile' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='text' class='form-control form-control-sm shop-license' value='" + escapeHtml(shop.license || '') + "' data-shop-id='" + shop.id + "' data-field='license' " + (canEditShops ? '' : 'readonly') + "></td>");
+                    row.append("<td><input type='number' class='form-control form-control-sm shop-employees' value='" + (shop.number_of_employee || '0') + "' data-shop-id='" + shop.id + "' data-field='number_of_employee' " + (canEditShops ? '' : 'readonly') + "></td>");
 
-                    var actionHtml = '<button type="button" class="btn btn-sm btn-primary updateShopBtn" data-shop-id="' + shop.id + '">Update</button>';
-                    actionHtml += ' <button type="button" class="btn btn-sm btn-danger deleteShopBtn" data-shop-id="' + shop.id + '" data-point-id="' + pointId + '">Delete</button>';
-                    row.append($("<td>").html(actionHtml));
+                    if (canEditShops) {
+                        var actionHtml = '<button type="button" class="btn btn-sm btn-primary updateShopBtn" data-shop-id="' + shop.id + '">Update</button>';
+                        actionHtml += ' <button type="button" class="btn btn-sm btn-danger deleteShopBtn" data-shop-id="' + shop.id + '" data-point-id="' + pointId + '">Delete</button>';
+                        row.append($("<td>").html(actionHtml));
+                    } else {
+                        row.append($("<td>").html('<span class="badge bg-secondary">Read Only</span>'));
+                    }
 
                     tbody.append(row);
                 });
@@ -266,6 +297,13 @@
                 var pointId = $(this).data("point-id");
                 var pointIndex = $(this).data("point-index");
 
+                // Find the point to check permissions
+                var point = pointData.find(p => p.id == pointId);
+                if (!canEdit(surveyor.name, point.worker_name)) {
+                    showMessage('error', 'You do not have permission to add shops to this record');
+                    return;
+                }
+
                 var newShopData = {
                     point_data_id: pointId,
                     shop_floor: '',
@@ -342,29 +380,36 @@
                 });
             });
 
-            // Save All Changes (Bulk Update)
+            // Save All Changes (Bulk Update) - Only show for editable records
             $("#saveAllBtn").click(function() {
                 var allPointData = [];
+                var hasEditableRecords = false;
 
                 $("#pointBody tr").each(function() {
                     var pointId = $(this).data("point-id");
-                    var pointDataObj = {};
+                    var updateBtn = $(this).find('.updatePointBtn');
 
-                    $(this).find("input, select").each(function() {
-                        var name = $(this).attr("name");
-                        if (name) {
-                            pointDataObj[name] = $(this).val();
-                        }
-                    });
+                    // Only include if there's an update button (meaning user can edit)
+                    if (updateBtn.length > 0) {
+                        hasEditableRecords = true;
+                        var pointDataObj = {};
 
-                    allPointData.push({
-                        id: pointId,
-                        data: pointDataObj
-                    });
+                        $(this).find("input, select").each(function() {
+                            var name = $(this).attr("name");
+                            if (name && !$(this).prop('readonly')) {
+                                pointDataObj[name] = $(this).val();
+                            }
+                        });
+
+                        allPointData.push({
+                            id: pointId,
+                            data: pointDataObj
+                        });
+                    }
                 });
 
                 if (allPointData.length === 0) {
-                    showMessage('warning', 'No data to save');
+                    showMessage('warning', 'No editable records to save');
                     return;
                 }
 
@@ -412,8 +457,25 @@
             }
 
             function canEdit(surveyorName, workerName) {
-                var editableUsers = ['sgt', 'malaqc', 'mala57sgtqc', 'MALA QC SGT', 'malasgt', 'mala51qc', 'sir', 'Anand', 'anandnew', 'malanew', 'anandnew91', 'Anandnew55', 'SGT', 'ward90', 'anandnew89', 'malanew51', 'officeqc52', 'Anandnew51'];
-                return editableUsers.includes(surveyorName) || surveyorName === workerName;
+                // Admin/Supervisor users who can edit everything
+                var adminUsers = ['sgt', 'malaqc', 'mala57sgtqc', 'MALA QC SGT', 'malasgt', 'mala51qc', 'sir', 'Anand', 'anandnew', 'malanew', 'anandnew91', 'Anandnew55', 'SGT', 'ward90', 'anandnew89', 'malanew51', 'officeqc52', 'Anandnew51'];
+
+                // Check if surveyor is admin OR worker_name matches surveyor name
+                if (adminUsers.includes(surveyorName)) {
+                    return true;
+                }
+
+                // Check if worker_name matches surveyor name (case insensitive)
+                if (workerName && surveyorName && workerName.toLowerCase() === surveyorName.toLowerCase()) {
+                    return true;
+                }
+
+                // Check if worker_name contains surveyor name (for format like "123-SurveyorName")
+                if (workerName && surveyorName && workerName.toLowerCase().includes(surveyorName.toLowerCase())) {
+                    return true;
+                }
+
+                return false;
             }
 
             function showMessage(type, message) {
