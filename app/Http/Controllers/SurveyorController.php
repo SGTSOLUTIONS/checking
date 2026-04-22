@@ -968,13 +968,13 @@ class SurveyorController extends Controller
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
         $allmistable = "mis_corporation_{$corp}";
-        if($validator['type'] == "OLD"){
-            $typecheck = DB::table($allmistable)->where('assessment',$validator['assessment'])->where('ward_no',$wardNo)->first();
-            if(!$typecheck){
-                    return response()->json([
-                        'success' => false,
-                        'message' => "ender old assesment type but the assessment not found in this ward "]
-                    );
+        if ($validator['type'] == "OLD") {
+            $typecheck = DB::table($allmistable)->where('assessment', $validator['assessment'])->where('ward_no', $wardNo)->first();
+            if (!$typecheck) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Entered old assessment type, but the assessment was not found in this ward."
+                ], 404);
             }
         }
 
@@ -1016,8 +1016,7 @@ class SurveyorController extends Controller
                     ]
                 ], 422);
             }
-        }
-        else{
+        } else {
             if (($data['no_of_shop']) > $buildingData->number_shop) {
 
                 $remaining = $buildingData->number_shop - $data['no_of_shop'];
