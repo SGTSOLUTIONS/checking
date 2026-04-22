@@ -618,6 +618,10 @@ class WardController extends Controller
             // Check if point table exists
             if (!Schema::hasTable($pointTable)) {
                 // If point table doesn't exist, all MIS records are missing
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Point data not found for this ward. All MIS records are considered missing.'
+                ], 404);
                 $data = DB::table($tableName)
                     ->where('ward_no', $ward->ward_no)
                     ->where('road_name', $roadname)
