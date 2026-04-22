@@ -150,7 +150,6 @@ class WardController extends Controller
                     'message' => 'Ward number already exists for this corporation.'
                 ], 422);
             }
-
             // Handle drone image - store directly in public path
             if ($request->hasFile('drone_image')) {
                 $uploadDir = 'uploads/wards/drone_images';
@@ -618,7 +617,7 @@ class WardController extends Controller
                 ], 404);
             }
 
-            $zone = strtolower(trim($ward->zone));   // east → south
+            $zone = strtolower(trim($ward->zone));   // easts → south
             $zone = preg_replace('/\s+/', '_', $zone); // handle spaces
 
             $pointTable = "pointdata_{$ward->corporation_id}_{$zone}_{$ward->ward_no}";
@@ -695,12 +694,17 @@ class WardController extends Controller
         try {
             $ward = Ward::findOrFail($id);
 
-            $polygonTable = "polygon_{$ward->corporation_id}_{$ward->zone}_{$ward->ward_no}";
+            $zone = strtolower(trim($ward->zone));
+            $zone = preg_replace('/\s+/', '_', $zone);
 
-            if (!Schema::hasTable($polygonTable)) {
+            $polygonTable  = "polygon_{$ward->corporation_id}_{$zone}_{$ward->ward_no}";
+            $pointTable    = "pointdata_{$ward->corporation_id}_{$zone}_{$ward->ward_no}";
+            $buildingTable = "polygondata_{$ward->corporation_id}_{$zone}_{$ward->ward_no}";
+
+            if (!DB::getSchemaBuilder()->hasTable($polygonTable)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Polygon data not found for this ward'
+                    'message' => 'Polygon table not found'
                 ], 404);
             }
 
@@ -709,43 +713,71 @@ class WardController extends Controller
             if ($polygons->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No polygon data found for this ward'
+                    'message' => 'No polygon data found'
                 ], 404);
             }
 
-            // Generate GeoJSON
-            $features = [];
-            foreach ($polygons as $polygon) {
-                $geometry = json_decode($polygon->geometry, true);
-                if ($geometry) {
-                    $features[] = [
-                        'type' => 'Feature',
-                        'geometry' => $geometry,
-                        'properties' => [
-                            'gis_id' => $polygon->gis_id,
-                            'assessment' => $polygon->assessment,
-                            'created_at' => $polygon->created_at
-                        ]
-                    ];
-                }
-            }
+            $features = $polygons->map(function ($polygon) use ($pointTable, $buildingTable) {
+
+                $coordinates = json_decode($polygon->coordinates, true);
+
+                // ✅ Ensure float values
+                $processed = array_map(function ($ring) {
+                    return array_map(function ($point) {
+                        return array_map('floatval', $point);
+                    }, $ring);
+                }, $coordinates);
+
+                // ✅ Point check
+                $pointExists = DB::getSchemaBuilder()->hasTable($pointTable)
+                    ? DB::table($pointTable)->where('point_gisid', $polygon->gisid)->exists()
+                    : false;
+
+                // ✅ Building remarks
+                $building = DB::getSchemaBuilder()->hasTable($buildingTable)
+                    ? DB::table($buildingTable)->where('gisid', $polygon->gisid)->first()
+                    : null;
+
+                return [
+                    'type' => 'Feature',
+                    'properties' => [
+                        'OBJECTID' => $polygon->id,
+                        'GIS_ID' => $polygon->gisid,
+                        'POINT_GISID' => $pointExists ? $polygon->gisid : null,
+                        'BUILDING_REMARKS' => $building->remarks ?? null,
+                        'created_at' => $polygon->created_at
+                    ],
+                    'geometry' => [
+                        'type' => 'Polygon',
+                        'coordinates' => $processed
+                    ]
+                ];
+            });
 
             $geojson = [
                 'type' => 'FeatureCollection',
-                'features' => $features
+                'name' => "ward_{$ward->ward_no}_polygons",
+                'crs' => [
+                    'type' => 'name',
+                    'properties' => [
+                        'name' => 'urn:ogc:def:crs:EPSG::3857'
+                    ]
+                ],
+                'features' => $features->values()->all()
             ];
 
-            $fileName = "polygon_ward_{$ward->ward_no}_{$ward->zone}_" . date('Y-m-d') . ".geojson";
+            $fileName = "polygon_ward_{$ward->ward_no}_{$zone}_" . date('Y-m-d') . ".geojson";
 
             return response()->json($geojson, 200, [
-                'Content-Type' => 'application/json',
-                'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
+                'Content-Type' => 'application/geo+json',
+                'Content-Disposition' => "attachment; filename={$fileName}"
             ]);
         } catch (\Exception $e) {
-            Log::error("Failed to download polygon: " . $e->getMessage());
+            Log::error("Polygon download error: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to download polygon: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

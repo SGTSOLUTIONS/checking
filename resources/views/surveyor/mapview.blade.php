@@ -1150,6 +1150,12 @@
                                             min="0" step="1" value="0">
                                         <div id="no_of_shop_error" class="error-message text-danger"></div>
                                     </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="number_persons" class="form-label">Number persons</label>
+                                        <input type="number" name="number_persons" class="form-control" id="number_persons"
+                                            min="0" step="1" value="0">
+                                        <div id="number_persons_error" class="error-message text-danger"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

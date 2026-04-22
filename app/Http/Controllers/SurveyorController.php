@@ -919,6 +919,7 @@ class SurveyorController extends Controller
             'no_of_shop' => 'required|integer|min:0',
             'floor' => 'required|integer|min:0',
             'old_door_no' => 'nullable|string|max:50',
+            'number_persons' => 'nullable',
             'new_door_no' => 'nullable|string|max:50',
             'bill_usage' => 'nullable|in:Residential,Commercial,Mixed',
             'eb' => 'nullable|string|max:50',
@@ -980,36 +981,48 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
-            if (!$buildingData) {
+        if (!$buildingData) {
             return response()->json([
                 'success' => false,
                 'message' => 'Building data not found for this GIS ID. Please add building data first.',
             ], 404);
         }
-        if($existingPoint ) {
-             $shopdatacount = DB::table($shopDataTableName)
-            ->where('point_data_id', $existingPoint->id)
-            ->count();
+        if ($existingPoint) {
+            $shopdatacount = DB::table($shopDataTableName)
+                ->where('point_data_id', $existingPoint->id)
+                ->count();
 
-        if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
+            if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
 
-            $remaining = $buildingData->number_shop - $shopdatacount;
+                $remaining = $buildingData->number_shop - $shopdatacount;
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => [
-                    'no_of_shop' => [
-                        "Only $remaining shops can be added"
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'no_of_shop' => [
+                            "Only $remaining shops can be added"
+                        ]
                     ]
-                ]
-            ], 422);
+                ], 422);
+            }
         }
+        else{
+            if (($data['no_of_shop']) > $buildingData->number_shop) {
+
+                $remaining = $buildingData->number_shop - $data['no_of_shop'];
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'no_of_shop' => [
+                            "Only $remaining shops can be added"
+                        ]
+                    ]
+                ], 422);
+            }
         }
-
-
-
-
         // Prepare point data
         $pointData = [
             'point_gisid' => $data['point_gisid'],
@@ -1023,6 +1036,7 @@ class SurveyorController extends Controller
             'new_door_no' => $data['new_door_no'] ?? null,
             'bill_usage' => $data['bill_usage'] ?? null,
             'eb' => $data['eb'] ?? null,
+            'number_persons' => $data['number_persons'] ?? 0,
             'water_tax' => $data['water_tax'] ?? null,
             'old_water_tax' => $data['old_water_tax'] ?? null,
             'professional_tax' => $data['professional_tax'] ?? null,

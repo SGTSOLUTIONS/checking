@@ -140,6 +140,8 @@ class GeoDataService
                     $table->string('old_assessment')->nullable();
                     $table->string('owner_name')->nullable();
                     $table->string('present_owner_name')->nullable();
+
+                    $table->string('number_persons')->nullable();
                     $table->string('eb')->nullable();
                     $table->string('floor')->nullable();
                     $table->string('bill_usage')->nullable();

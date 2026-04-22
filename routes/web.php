@@ -91,6 +91,7 @@ Route::middleware('auth')->group(function () {
             Route::delete('/wards/{id}', [WardController::class, 'destroy'])->name('admin.wards.destroy');
             // Missing Bill Download Route
             Route::get('/wards/{id}/download-missing-bill', [WardController::class, 'downloadMissingBill']);
+            Route::get('/wards/{id}/download-polygon', [WardController::class, 'downloadPolygon']);
             // User Management Routes
             Route::get('/users', [UserController::class, 'showUsers'])->name('admin.users');
             Route::get('/users/data', [UserController::class, 'index'])->name('admin.users.data');
