@@ -618,7 +618,7 @@ class WardController extends Controller
                 ], 404);
             }
 
-            $zone = strtolower(trim($ward->zone));   // South → south
+            $zone = strtolower(trim($ward->zone));   // east → south
             $zone = preg_replace('/\s+/', '_', $zone); // handle spaces
 
             $pointTable = "pointdata_{$ward->corporation_id}_{$zone}_{$ward->ward_no}";
