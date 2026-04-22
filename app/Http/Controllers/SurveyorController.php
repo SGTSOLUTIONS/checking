@@ -967,20 +967,7 @@ class SurveyorController extends Controller
         $zone = strtolower(trim($ward->zone));
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
-        $allmistable = "mis_corporation_{$corp}";
-        if ($request->input('type') == "OLD") {
-            $typecheck = DB::table($allmistable)
-                ->where('assessment', $request->input('assessment'))
-                ->where('ward_no', $wardNo)
-                ->first();
 
-            if (!$typecheck) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Entered old assessment type, but the assessment was not found in this ward."
-                ], 404);
-            }
-        }
 
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
@@ -1020,7 +1007,8 @@ class SurveyorController extends Controller
                     ]
                 ], 422);
             }
-        } else {
+        }
+        else{
             if (($data['no_of_shop']) > $buildingData->number_shop) {
 
                 $remaining = $buildingData->number_shop - $data['no_of_shop'];
