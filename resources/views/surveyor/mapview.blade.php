@@ -12,6 +12,7 @@
             border-radius: 10px;
             border: 2px solid #ddd;
         }
+
         /* Card Styles */
         .card {
             border: none;
@@ -1152,8 +1153,8 @@
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="number_persons" class="form-label">Number persons</label>
-                                        <input type="number" name="number_persons" class="form-control" id="number_persons"
-                                            min="0" step="1" value="0">
+                                        <input type="number" name="number_persons" class="form-control"
+                                            id="number_persons" min="0" step="1" value="0">
                                         <div id="number_persons_error" class="error-message text-danger"></div>
                                     </div>
                                 </div>
@@ -2196,7 +2197,7 @@
                     if (header.length) {
                         header.html(
                             `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
-                            );
+                        );
                     }
 
                     // Remove card if no shops left
@@ -2285,7 +2286,7 @@
                 if (header.length) {
                     header.html(
                         `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
-                        );
+                    );
                 }
             }
 
@@ -3252,10 +3253,14 @@
                     },
                     error: function(xhr) {
                         let errorMsg = "An error occurred while processing your request.";
-                        if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr
-                            .responseJSON.message;
-                        showFlashMessage(errorMsg, "error");
-                    },
+
+                        if (xhr.responseJSON?.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+
+                        console.log(xhr);
+                        showFlashMessage(errorMsg, "message");
+                    }
                     complete: function() {
                         $("#pointSubmit").prop("disabled", false).html(
                             '<i class="fas fa-save me-2"></i>Save Point Data');
