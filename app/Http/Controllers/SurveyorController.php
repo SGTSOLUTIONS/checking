@@ -969,18 +969,18 @@ class SurveyorController extends Controller
         $corp = (int)$ward->corporation_id;
         $allmistable = "mis_corporation_{$corp}";
         if ($request->input('type') == "OLD") {
-            $typecheck = DB::table($allmistable)
-                ->where('assessment', $request->input('assessment'))
-                ->where('ward_no', $wardNo)
-                ->first();
+    $typecheck = DB::table($allmistable)
+        ->where('assessment', $request->input('assessment'))
+        ->where('ward_no', $wardNo)
+        ->first();
 
-            if (!$typecheck) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Entered old assessment type, but the assessment was not found in this ward."
-                ], 404);
-            }
-        }
+    if (!$typecheck) {
+        return response()->json([
+            'success' => false,
+            'message' => "Entered old assessment type, but the assessment was not found in this ward."
+        ], 404);
+    }
+}
 
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";

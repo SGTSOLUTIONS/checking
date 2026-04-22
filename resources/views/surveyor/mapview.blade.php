@@ -3254,7 +3254,6 @@
                         let errorMsg = "An error occurred while processing your request.";
                         if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr
                             .responseJSON.message;
-                        console.log(xhr);
                         showFlashMessage(errorMsg, "message");
                     },
                     complete: function() {
