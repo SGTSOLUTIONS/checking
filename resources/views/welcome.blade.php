@@ -1,672 +1,249 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D World Map - No Token Required</title>
-    <script src="https://cdn.jsdelivr.net/npm/cesium@1.105/Build/Cesium/Cesium.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/cesium@1.105/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <title>Coimbatore Corporation - Name Transfer (Property + Water) - Full Field Digital Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #2a3c7a);
-            color: white;
-            overflow: hidden;
-        }
-        
-        #cesiumContainer {
-            width: 100%;
-            height: 100vh;
-            position: relative;
-        }
-        
-        .header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            background: linear-gradient(90deg, #00c6ff, #0072ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .header p {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        .controls {
-            position: absolute;
-            top: 80px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 12px;
-            width: 280px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .control-group {
-            margin-bottom: 15px;
-        }
-        
-        .control-group h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #00c6ff;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 5px;
-        }
-        
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 8px;
-            background: rgba(0, 120, 215, 0.7);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            text-align: left;
-        }
-        
-        .btn:hover {
-            background: rgba(0, 150, 255, 0.9);
-            transform: translateY(-2px);
-        }
-        
-        .btn:active {
-            transform: translateY(0);
-        }
-        
-        .btn i {
-            margin-right: 8px;
-        }
-        
-        .info-panel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 12px;
-            width: 300px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: none;
-        }
-        
-        .info-panel h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: #00c6ff;
-        }
-        
-        .info-panel p {
-            margin-bottom: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-        }
-        
-        .status-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 8px 15px;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .coordinates {
-            font-family: monospace;
-        }
-        
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px 30px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid #00c6ff;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 1001;
-            display: none;
-        }
-        
-        .legend {
-            position: absolute;
-            top: 80px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 12px;
-            width: 200px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            border-radius: 3px;
-        }
+        body { background: #eef2f9; font-family: 'Segoe UI', Roboto, 'Noto Sans Tamil', sans-serif; }
+        .form-container { max-width: 1400px; margin: 2rem auto; background: white; border-radius: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header-custom { background: #0a3a4f; color: white; padding: 1.5rem 2rem; border-bottom: 5px solid #f4a261; }
+        .section-card { background: #fff; border-radius: 1.2rem; margin-bottom: 1.8rem; border: 1px solid #e0e9f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+        .section-title { background: #f4f9fe; padding: 0.9rem 1.5rem; border-bottom: 2px solid #cbdde9; font-weight: 700; font-size: 1.2rem; color: #1f5068; border-radius: 1.2rem 1.2rem 0 0; }
+        .mandatory:after { content: " *"; color: #e03a3a; font-weight: bold; }
+        .form-label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem; color: #1e4663; }
+        .btn-section { border-radius: 40px; padding: 6px 18px; font-weight: 500; margin-top: 12px; background: #f0f4f9; border: 1px solid #cbdde9; }
+        .btn-section i { margin-right: 6px; }
+        .btn-section:hover { background: #e2eaf1; transform: translateY(-1px); }
+        .footer-note { font-size: 0.7rem; text-align: center; border-top: 1px solid #dce5ec; padding: 1rem; margin-top: 1rem; color: #5f7d9c; }
+        .badge-custom { background: #ffedd5; color: #b45309; padding: 5px 12px; border-radius: 30px; font-size: 0.7rem; }
+        @media (max-width: 768px) { .section-title { font-size: 1rem; } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>3D Terrain Map - No Token Required</h1>
-        <p>Natural landscape visualization • No API token needed</p>
-    </div>
-    
-    <div id="cesiumContainer"></div>
-    
-    <div class="controls">
-        <div class="control-group">
-            <h3>Navigation</h3>
-            <button class="btn" id="flyToNY"><i>🗽</i> New York</button>
-            <button class="btn" id="flyToParis"><i>🗼</i> Paris</button>
-            <button class="btn" id="flyToTokyo"><i>🗾</i> Tokyo</button>
-            <button class="btn" id="flyToSydney"><i>⚓</i> Sydney</button>
-            <button class="btn" id="resetView"><i>🌎</i> Reset View</button>
-        </div>
-        
-        <div class="control-group">
-            <h3>Terrain & Visualization</h3>
-            <button class="btn" id="toggleTerrain"><i>⛰️</i> Toggle Terrain</button>
-            <button class="btn" id="changeBaseMap"><i>🗺️</i> Change Base Map</button>
-            <button class="btn" id="toggleDayNight"><i>🌙</i> Toggle Day/Night</button>
-        </div>
-        
-        <div class="control-group">
-            <h3>Map Features</h3>
-            <button class="btn" id="toggleMarkers"><i>📍</i> Toggle Markers</button>
-            <button class="btn" id="toggleLabels"><i>🔤</i> Toggle Labels</button>
-            <button class="btn" id="addRandomMarker"><i>➕</i> Add Random Marker</button>
+<div class="form-container">
+    <div class="header-custom">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-tint me-2"></i> Coimbatore Corporation</h2>
+                <p class="mb-0">Property Tax + Water Connection Name Transfer – Complete Digital Form (As per All Fields)</p>
+                <small><i class="fas fa-gavel"></i> Coimbatore City Municipal Corporation Act, 1981 & Water By-laws</small>
+            </div>
+            <div><span class="badge-custom"><i class="fas fa-stamp"></i> நீதிமன்ற கட்டணம் ₹1</span> <span class="badge bg-light text-dark ms-2">Form CMC/NT/ALL-FIELDS</span></div>
         </div>
     </div>
-    
-    <div class="legend">
-        <h3 style="color: #00c6ff; margin-bottom: 10px; font-size: 16px;">Map Legend</h3>
-        <div class="legend-item">
-            <div class="legend-color" style="background-color: #1e90ff;"></div>
-            <span>City Markers</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background-color: #32cd32;"></div>
-            <span>Natural Features</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background-color: #ff4500;"></div>
-            <span>Landmarks</span>
-        </div>
-    </div>
-    
-    <div class="info-panel" id="infoPanel">
-        <button class="close-btn" id="closeInfo">×</button>
-        <h3 id="infoTitle">Location Information</h3>
-        <p id="infoCoordinates">Coordinates: </p>
-        <p id="infoElevation">Elevation: </p>
-        <p id="infoDescription">Description: </p>
-    </div>
-    
-    <div class="status-bar">
-        <div class="coordinates">Longitude: 0.0000° • Latitude: 0.0000° • Elevation: 0m</div>
-        <div class="fps">FPS: 60</div>
-    </div>
-    
-    <div class="loading" id="loading">
-        <div class="loading-spinner"></div>
-        <p>Loading 3D Terrain Map...</p>
-    </div>
-    
-    <div class="tooltip" id="tooltip"></div>
+    <div class="p-4 p-xl-5">
+        <form id="masterForm">
+            <!-- SECTION A: METADATA + OFFICE REF (Image 1 top) -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-file-alt me-2 text-warning"></i> A. பதிவு & அலுவலக குறிப்பு (Registration & Office Reference)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-3"><label class="form-label mandatory">தேசப்பு எண் / கோப்பு எண் (File No.)</label><input type="text" class="form-control" id="fileNo" placeholder="e.g., CMC/NT/2026/123"></div>
+                        <div class="col-md-3"><label class="form-label mandatory">C.F. No. / படிவ எண்</label><input type="text" class="form-control" id="cfNo" value="037905" placeholder="037905"></div>
+                        <div class="col-md-3"><label class="form-label">விண்ணப்ப தேதி (Application Date)</label><input type="date" class="form-control" id="appDate"></div>
+                        <div class="col-md-3"><label class="form-label">அனுவக குறிப்பு (Department Reference)</label><input type="text" class="form-control" id="deptRef" placeholder="Dept ref"></div>
+                        <div class="col-md-4"><label class="form-label mandatory">குறிப்பு இணைப்பு எண் (Ref Attachment No.)</label><input type="text" class="form-control" id="refAttachNo"></div>
+                        <div class="col-md-4"><label class="form-label mandatory">துறையோடு உறவுமையான பெயர் (Dept Related Name)</label><input type="text" class="form-control" id="deptRelatedName"></div>
+                        <div class="col-md-4"><label class="form-label">சாட்சி கூறிய இளைஞரின் பெயர் / திருமதி (Witness Name)</label><input type="text" class="form-control" id="witnessName" placeholder="Witness name"></div>
+                    </div>
+                </div>
+            </div>
 
-    <script>
-        // No Cesium Ion token needed - using OpenStreetMap and other free data sources
-        // No 3D buildings included - only terrain and imagery
-        
-        // Wait for Cesium to load
-        window.addEventListener('load', function() {
-            // Hide loading screen after a short delay
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
-                initCesium();
-            }, 1500);
+            <!-- SECTION B: PROPERTY IDENTIFICATION + ASSESSMENT (GIS mapping core) -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-map-marker-alt me-2 text-warning"></i> B. சொத்து அடையாளம் (Property Identification - GIS Key)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label mandatory">மதிப்பீட்டு எண் / Assessment No. (🔥 GIS Link)</label><input type="text" class="form-control" id="assessmentNo" placeholder="Property Tax Assessment No."></div>
+                        <div class="col-md-4"><label class="form-label mandatory">GIS ID / சொத்து அடையாள எண்</label><input type="text" class="form-control" id="gisId" placeholder="Polygon ID / GIS Key"></div>
+                        <div class="col-md-4"><label class="form-label mandatory">கதவு எண் (Door No.)</label><input type="text" class="form-control" id="doorNo"></div>
+                        <div class="col-md-3"><label class="form-label mandatory">வார்டு எண் (Ward No.)</label><input type="text" class="form-control" id="wardNo"></div>
+                        <div class="col-md-3"><label class="form-label mandatory">தெரு பெயர் (Street)</label><input type="text" class="form-control" id="streetName"></div>
+                        <div class="col-md-3"><label class="form-label">மண்டலம் (Zone)</label><input type="text" class="form-control" id="zone"></div>
+                        <div class="col-md-3"><label class="form-label">பகுதி / ஊர் (Locality)</label><input type="text" class="form-control" id="locality"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION C: OLD & NEW OWNER + RELATIONSHIP -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-users me-2 text-warning"></i> C. உரிமையாளர் விவரம் (Old Owner & New Owner)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label mandatory">தற்போதைய உரிமையாளர் பெயர் (Current Owner)</label><input type="text" class="form-control" id="currentOwner"></div>
+                        <div class="col-md-6"><label class="form-label mandatory">புதிய உரிமையாளர் / விண்ணப்பதாரர் (New Owner)</label><input type="text" class="form-control" id="newOwner"></div>
+                        <div class="col-md-4"><label class="form-label">தந்தை / கணவர் பெயர் (Father/Husband)</label><input type="text" class="form-control" id="fatherName"></div>
+                        <div class="col-md-4"><label class="form-label">இணைப்புள்ள முகவரி (Address with connection)</label><input type="text" class="form-control" id="connAddress"></div>
+                        <div class="col-md-4"><label class="form-label mandatory">உறவு முறை (Relationship)</label><select class="form-select" id="relationshipType"><option>விற்பனை (Sale)</option><option>பரம்பரை (Inheritance)</option><option>தானம் (Gift)</option><option>நீதிமன்ற உத்தரவு</option></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION D: TRANSFER DETAILS + DOCUMENT -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-file-signature me-2 text-warning"></i> D. மாற்றம் & பத்திரம் (Transfer Basis & Documents)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label mandatory">மாற்றம் கோரப்படும் காரணம் / சான்று</label><input type="text" class="form-control" id="transferReason" placeholder="Sale deed / Will / Gift"></div>
+                        <div class="col-md-4"><label class="form-label">மாற்றம் கோருவதற்கான சான்று விளக்கம்</label><input type="text" class="form-control" id="transferProof"></div>
+                        <div class="col-md-4"><label class="form-label">விற்பனை தொகை / சொத்து மதிப்பு</label><input type="text" class="form-control" id="saleAmount" placeholder="₹"></div>
+                        <div class="col-md-4"><label class="form-label">பெயருக்கு மாதமும் பெயரளவும் (Month & Extent)</label><input type="text" class="form-control" id="monthExtent"></div>
+                        <div class="col-md-4"><label class="form-label">பத்திர எண் (Document No.)</label><input type="text" class="form-control" id="docNumber"></div>
+                        <div class="col-md-4"><label class="form-label">பத்திர தேதி</label><input type="date" class="form-control" id="docDate"></div>
+                        <div class="col-md-6"><label class="form-label">பதிவாளர் அலுவலகம் (Sub-Registrar Office)</label><input type="text" class="form-control" id="registrarOffice"></div>
+                        <div class="col-md-6"><label class="form-label">பதிவு செய்யப்பட்டதா? (Is Registered)</label><select class="form-select" id="isRegistered"><option>ஆம்</option><option>இல்லை</option></select></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION E: PROPERTY TAX NAME TRANSFER ORDER (As per image fields) -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-file-invoice-dollar me-2 text-warning"></i> E. செத்துவரி பெயர் மாற்ற உத்தரவு (Property Tax Transfer Order)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">அ) செத்துவி பெயர் மாற்றம் உத்திரவின் நகல் இணைக்கப்பட்டுள்ளதா?</label><select class="form-select" id="taxOrderCopyAttached"><option>ஆம்</option><option>இல்லை</option></select></div>
+                        <div class="col-md-6"><label class="form-label">ஆ) அசல் உத்திரவுடன் நகல் சரிபார்க்கப்பட்டுள்ளதா?</label><select class="form-select" id="certifiedWithOriginal"><option>ஆம்</option><option>இல்லை</option></select></div>
+                        <div class="col-md-4"><label class="form-label">இ) உத்தரவு எண் மற்றும் தேதி</label><input type="text" class="form-control" id="orderNoDate" placeholder="Order No. & Date"></div>
+                        <div class="col-md-8"><label class="form-label mandatory">உத்தரவு இல்லையெனில் எந்த அடிப்படையில் பெயர் மாற்றம் கோரப்பட்டுள்ளது?</label><input type="text" class="form-control" id="basisWithoutOrder" placeholder="Sale deed / Will / Succession / Affidavit"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION F: WATER CONNECTION SPECIFIC DETAILS (Assessment, Tariff) -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-hand-holding-water me-2 text-warning"></i> F. நீர் இணைப்பு விபரம் (Water Connection Details)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label mandatory">குழாய் இணைப்பு எண் (Water Connection No.)</label><input type="text" class="form-control" id="waterConnNo"></div>
+                        <div class="col-md-4"><label class="form-label mandatory">நீர் இணைப்பு வகை (Usage Type)</label><select class="form-select" id="usageType"><option>குடியிருப்பு (Domestic)</option><option>குடியிருப்பு அல்லாத (Non-Domestic)</option></select></div>
+                        <div class="col-md-4"><label class="form-label">தற்போதைய இணைப்பு பெயர் (Current Connection Name)</label><input type="text" class="form-control" id="currentConnName"></div>
+                        <div class="col-md-4"><label class="form-label">மாற்ற வேண்டிய பெயர் (New Connection Name)</label><input type="text" class="form-control" id="newConnName"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION G: WATER CHARGES & ARREARS (Meter reading) -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-charging-station me-2 text-warning"></i> G. நீர் கட்டண நிலுவை (Water Charges / Arrears)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label mandatory">7. அ) நீர்மானி கணக்கெடுப்பு அட்டையில் கட்டணம் நிலுவையின்றி செலுத்தப்பட்டுள்ளதா?</label><select class="form-select" id="meterClearStatus"><option>ஆம், முழுமையாக செலுத்தப்பட்டது</option><option>இல்லை, நிலுவை உள்ளது</option></select></div>
+                        <div class="col-md-6"><label class="form-label">ஆ) நீர்மானி அட்டை வழங்குவதற்கு முந்தைய கால கட்டணம் நிலுவையின்றி செலுத்தப்பட்டுள்ளதா?</label><select class="form-select" id="preMeterClear"><option>ஆம்</option><option>இல்லை, விபரம் தருக</option></select></div>
+                        <div class="col-12"><label class="form-label">நிலுவை விவரம் / எடுக்கப்பட்ட நடவடிக்கை</label><textarea class="form-control" rows="2" id="arrearsDetail" placeholder="Pending amount, action taken"></textarea></div>
+                        <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="noDuesConfirm"> <label class="form-check-label">விண்ணப்ப தேதிக்கு முன் அனைத்து கட்டணமும் நிலுவையின்றி செலுத்தப்பட்டுள்ளது என உறுதி.</label></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION H: REGISTER ENTRY & TAX YEAR ARREARS -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-book-open me-2 text-warning"></i> H. குழாய் இணைப்பு பதிவேடு & வரி நிலுவை</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">பெயர் மாற்றம் பதிவேட்டில் பதியப்பட்டுள்ளதா?</label><select class="form-select" id="registerEntryStatus"><option>ஆம்</option><option>இல்லை</option></select></div>
+                        <div class="col-md-6"><label class="form-label">பதிவேடு எண் (Register No.)</label><input type="text" class="form-control" id="registerNumber"></div>
+                        <div class="col-md-6"><label class="form-label">வரி நிலுவை (Tax status upto current year)</label><select class="form-select" id="taxYearStatus"><option>செலுத்தப்பட்டது (Paid)</option><option>நிலுவை உள்ளது (Pending)</option></select></div>
+                        <div class="col-md-6"><label class="form-label">கடைசியாக வரி செலுத்திய தேதி</label><input type="date" class="form-control" id="lastTaxPaidDate"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION I: LEGAL / DISPUTE + INSPECTOR VERIFICATION -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-gavel me-2 text-warning"></i> I. சொத்து உரிமம், வழக்கு & ஆய்வாளர் (Legal Dispute / Inspector)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">சொத்தில் ஏதேனும் வழக்கு நிலுவையில் உள்ளதா?</label><select class="form-select" id="disputeStatus"><option>இல்லை</option><option>ஆம் (விபரம் கீழே)</option></select></div>
+                        <div class="col-md-6"><label class="form-label">வழக்கு விபரம் (if any)</label><input type="text" class="form-control" id="disputeDetails"></div>
+                        <div class="col-md-4"><label class="form-label">உரிமம் ஆய்வாளர் பெயர்</label><input type="text" class="form-control" id="inspectorName"></div>
+                        <div class="col-md-4"><label class="form-label">ஆய்வு நிலை (Inspection Status)</label><select class="form-select" id="inspectionStatus"><option>நிலுவை (Pending)</option><option>முடிவுற்றது (Completed)</option></select></div>
+                        <div class="col-md-4"><label class="form-label">ஒப்புதல் பெற்ற தேதி (Approval Date)</label><input type="date" class="form-control" id="approvalDate"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION J: AFFIDAVIT & DECLARATION + SIGNATURE -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-file-signature me-2 text-warning"></i> J. உறுதிமொழி & ஒப்புதல் (Affidavit + Declaration)</div>
+                <div class="p-4">
+                    <div class="bg-light p-3 rounded-3 border mb-3">
+                        <p><i class="fas fa-check-circle text-success"></i> 1981-ம் ஆண்டின் கோயம்புத்தூர் மாநகராட்சி சட்டம் & நீர் வழங்கல் விதிகளுக்கு கட்டுப்படுவேன். நீரை தவறாக பயன்படுத்தவும் மாட்டேன்; பிறருக்கு வழங்கமாட்டேன். தரப்பட்ட விபரங்கள் அனைத்தும் உண்மை.</p>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" id="affidavitAccept"> <label class="form-check-label fw-bold">மேற்படி உறுதிமொழியை ஏற்று ஒப்புக்கொள்கிறேன்.</label></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4"><label class="form-label">இடம் (Place)</label><input type="text" class="form-control" id="place" value="Coimbatore"></div>
+                        <div class="col-md-4"><label class="form-label">தேதி (Date)</label><input type="date" class="form-control" id="declarationDate"></div>
+                        <div class="col-md-4"><label class="form-label">விண்ணப்பதாரர் கையொப்பம் (Signature)</label><input type="text" class="form-control" id="signatureName" placeholder="Applicant full name"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION K: OFFICE USE ONLY REMARKS + PROCESSING FEE -->
+            <div class="section-card">
+                <div class="section-title"><i class="fas fa-stamp me-2 text-warning"></i> K. அலுவலக பயன்பாட்டுக்கு மட்டும் (Office Use Only)</div>
+                <div class="p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Inward No. / உள்வரும் எண்</label><input type="text" class="form-control" id="inwardNo"></div>
+                        <div class="col-md-4"><label class="form-label">செயலாக்க கட்டணம் (Processing Fee)</label><input type="text" class="form-control" id="processingFee" placeholder="₹"></div>
+                        <div class="col-md-4"><label class="form-label">அபராத கட்டணம் (Penalty Fee)</label><input type="text" class="form-control" id="penaltyFee"></div>
+                        <div class="col-md-6"><label class="form-label">எழுத்தர் / கண்காணிப்பாளர் கையொப்பம்</label><input type="text" class="form-control" id="clerkSign" placeholder="Clerk/Supervisor"></div>
+                        <div class="col-md-6"><label class="form-label">ஆணையாளருக்காக (For Commissioner)</label><input type="text" class="form-control" id="commissionerSign"></div>
+                        <div class="col-12"><label class="form-label">அலுவலக குறிப்பு: மேல்நடவடிக்கை அவசியமில்லை / 3 ஆண்டு முடிவாக முடிக்கலாம்</label><textarea class="form-control" rows="2" id="officeRemark" placeholder="No further action / closed after 3 years"></textarea></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS : Different Buttons to open DIFFERENT MODALS (section-wise) -->
+            <div class="d-flex flex-wrap gap-3 mt-4 mb-3 justify-content-center">
+                <button type="button" class="btn btn-outline-primary btn-section" data-section-modal="modalProperty"><i class="fas fa-home"></i> A-C: சொத்து & உரிமையாளர்</button>
+                <button type="button" class="btn btn-outline-primary btn-section" data-section-modal="modalTaxWater"><i class="fas fa-file-invoice"></i> D-G: மாற்று & நீர்மானி</button>
+                <button type="button" class="btn btn-outline-primary btn-section" data-section-modal="modalLegalAffidavit"><i class="fas fa-gavel"></i> H-J: பதிவேடு & உறுதிமொழி</button>
+                <button type="button" class="btn btn-outline-primary btn-section" data-section-modal="modalOfficeOnly"><i class="fas fa-building"></i> K: அலுவலக பயன்பாடு</button>
+                <button type="button" class="btn btn-success btn-section" id="viewAllModalBtn"><i class="fas fa-eye"></i> முழு விண்ணப்பத்தையும் காண்க (All fields)</button>
+            </div>
+        </form>
+        <footer class="footer-note"><i class="fas fa-tint"></i> கோயம்புத்தூர் மாநகராட்சி - இணைப்பு பெயர் மாற்றம் | அனைத்து புலங்களும் GIS & வரி அமைப்புக்கு ஏற்றவாறு | C.F.No.037905</footer>
+    </div>
+</div>
+
+<!-- MODALS (4 section modals + one all-in-one) -->
+<div id="modalProperty" class="modal fade" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5><i class="fas fa-home"></i> சொத்து & உரிமையாளர் (Sections A-C)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="propModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">மூடு</button><button class="btn btn-primary printModalBtn" data-print-content="propModalBody">அச்சிடு</button></div></div></div></div>
+<div id="modalTaxWater" class="modal fade" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5><i class="fas fa-file-invoice-dollar"></i> மாற்று & நீர்மானி (D-G)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="taxWaterModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">மூடு</button><button class="btn btn-primary printModalBtn" data-print-content="taxWaterModalBody">அச்சிடு</button></div></div></div></div>
+<div id="modalLegalAffidavit" class="modal fade" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5><i class="fas fa-gavel"></i> பதிவேடு & உறுதிமொழி (H-J)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="legalModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">மூடு</button><button class="btn btn-primary printModalBtn" data-print-content="legalModalBody">அச்சிடு</button></div></div></div></div>
+<div id="modalOfficeOnly" class="modal fade" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5><i class="fas fa-stamp"></i> அலுவலக பயன்பாடு (Section K)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="officeModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">மூடு</button><button class="btn btn-primary printModalBtn" data-print-content="officeModalBody">அச்சிடு</button></div></div></div></div>
+<div id="allFieldsModal" class="modal fade" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5><i class="fas fa-database"></i> முழுமையான விண்ணப்பம் - Coimbatore Corporation (All Fields)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body" id="allModalBody"></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">மூடு</button><button class="btn btn-primary" id="printAllFieldsBtn">PDF / அச்சிடு</button></div></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function getField(id) { return document.getElementById(id)?.value || ''; }
+    function getCheckText(id, trueText="✔️ உறுதி செய்யப்பட்டது", falseText="❌ உறுதி செய்யவில்லை") { return document.getElementById(id)?.checked ? trueText : falseText; }
+
+    function getPropHtml() { return `<div class="border p-3 rounded"><strong>📂 File No:</strong> ${getField('fileNo')}<br><strong>Assessment No (GIS):</strong> ${getField('assessmentNo')}<br><strong>GIS ID:</strong> ${getField('gisId')}<br><strong>Door/Ward/Street:</strong> ${getField('doorNo')}, ${getField('wardNo')}, ${getField('streetName')}<br><strong>Current Owner:</strong> ${getField('currentOwner')}<br><strong>New Owner:</strong> ${getField('newOwner')}<br><strong>Relationship:</strong> ${getField('relationshipType')}<br><strong>Witness Name:</strong> ${getField('witnessName')}</div>`; }
+    function getTaxWaterHtml() { return `<div class="border p-3 rounded"><strong>Transfer Reason:</strong> ${getField('transferReason')}<br><strong>Document No/Date:</strong> ${getField('docNumber')} / ${getField('docDate')}<br><strong>Tax Order Copy:</strong> ${getField('taxOrderCopyAttached')}<br><strong>Basis Without Order:</strong> ${getField('basisWithoutOrder')}<br><strong>Water Connection No:</strong> ${getField('waterConnNo')}<br><strong>Meter Arrears Status:</strong> ${getField('meterClearStatus')}<br><strong>Arrears details:</strong> ${getField('arrearsDetail')}<br><strong>No dues confirmed:</strong> ${getCheckText('noDuesConfirm')}</div>`; }
+    function getLegalAffHtml() { return `<div class="border p-3 rounded"><strong>Register Entry:</strong> ${getField('registerEntryStatus')} | Reg No: ${getField('registerNumber')}<br><strong>Tax Year Status:</strong> ${getField('taxYearStatus')}<br><strong>Dispute:</strong> ${getField('disputeStatus')} - ${getField('disputeDetails')}<br><strong>Inspector:</strong> ${getField('inspectorName')}<br><strong>Approval Date:</strong> ${getField('approvalDate')}<br><strong>Affidavit Accept:</strong> ${getCheckText('affidavitAccept')}<br><strong>Place/Sign:</strong> ${getField('place')}, ${getField('signatureName')}</div>`; }
+    function getOfficeHtml() { return `<div class="border p-3 rounded"><strong>Inward No:</strong> ${getField('inwardNo')}<br><strong>Processing Fee:</strong> ${getField('processingFee')}<br><strong>Clerk Sign:</strong> ${getField('clerkSign')}<br><strong>Commissioner Sign:</strong> ${getField('commissionerSign')}<br><strong>Office Remark:</strong> ${getField('officeRemark')}</div>`; }
+    function getAllHtml() { return `<div class="row"><div class="col-md-6">${getPropHtml()}</div><div class="col-md-6">${getTaxWaterHtml()}</div><div class="col-12 mt-2">${getLegalAffHtml()}</div><div class="col-12 mt-2">${getOfficeHtml()}</div><div class="alert alert-info mt-3"><strong>✅ GIS / Tax Integration Ready:</strong> Assessment No: ${getField('assessmentNo')} | GIS ID: ${getField('gisId')} | Ward: ${getField('wardNo')}</div></div>`; }
+
+    document.querySelectorAll('button[data-section-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            let target = btn.getAttribute('data-section-modal');
+            let modalId, contentBody, htmlContent;
+            if (target === 'modalProperty') { modalId = 'modalProperty'; contentBody = 'propModalBody'; htmlContent = getPropHtml(); }
+            else if (target === 'modalTaxWater') { modalId = 'modalTaxWater'; contentBody = 'taxWaterModalBody'; htmlContent = getTaxWaterHtml(); }
+            else if (target === 'modalLegalAffidavit') { modalId = 'modalLegalAffidavit'; contentBody = 'legalModalBody'; htmlContent = getLegalAffHtml(); }
+            else if (target === 'modalOfficeOnly') { modalId = 'modalOfficeOnly'; contentBody = 'officeModalBody'; htmlContent = getOfficeHtml(); }
+            document.getElementById(contentBody).innerHTML = htmlContent + `<div class="mt-3 small text-muted"><i class="fas fa-stamp"></i> Coimbatore Corporation - மாற்ற விண்ணப்பம்</div>`;
+            new bootstrap.Modal(document.getElementById(modalId)).show();
         });
-        
-        let viewer;
-        let terrainEnabled = false;
-        let markersEnabled = true;
-        let labelsEnabled = true;
-        let dayMode = true;
-        let baseMapIndex = 0;
-        
-        // Base map providers (no token required)
-        const baseMaps = [
-            { name: "OpenStreetMap", provider: new Cesium.OpenStreetMapImageryProvider({ 
-                url: 'https://a.tile.openstreetmap.org/'
-            })},
-            { name: "ESRI World Imagery", provider: new Cesium.ArcGisMapServerImageryProvider({
-                url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'
-            })},
-            { name: "Stamen Terrain", provider: new Cesium.OpenStreetMapImageryProvider({
-                url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/',
-                credit: 'Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL'
-            })},
-            { name: "CartoDB Dark", provider: new Cesium.UrlTemplateImageryProvider({
-                url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                credit: '© OpenStreetMap contributors, © CartoDB'
-            })}
-        ];
-        
-        // Sample locations with coordinates and descriptions
-        const locations = [
-            { name: "New York City", lon: -74.006, lat: 40.7128, desc: "The most populous city in the United States.", type: "city" },
-            { name: "Paris", lon: 2.3522, lat: 48.8566, desc: "Capital city of France, known as the City of Light.", type: "city" },
-            { name: "Tokyo", lon: 139.6917, lat: 35.6895, desc: "Capital of Japan, the most populous metropolitan area in the world.", type: "city" },
-            { name: "Sydney", lon: 151.2093, lat: -33.8688, desc: "Largest city in Australia, known for its iconic opera house.", type: "city" },
-            { name: "Mount Everest", lon: 86.9250, lat: 27.9881, desc: "Earth's highest mountain above sea level.", type: "natural" },
-            { name: "Grand Canyon", lon: -112.1121, lat: 36.1069, desc: "Steep-sided canyon carved by the Colorado River.", type: "natural" },
-            { name: "Amazon River", lon: -55.0000, lat: -2.0000, desc: "Largest river by discharge volume of water in the world.", type: "natural" },
-            { name: "Sahara Desert", lon: 0.0000, lat: 25.0000, desc: "Largest hot desert in the world.", type: "natural" },
-            { name: "Statue of Liberty", lon: -74.0445, lat: 40.6892, desc: "Iconic neoclassical sculpture on Liberty Island.", type: "landmark" },
-            { name: "Eiffel Tower", lon: 2.2945, lat: 48.8584, desc: "Wrought-iron lattice tower in Paris, France.", type: "landmark" }
-        ];
-        
-        // Initialize Cesium without requiring a token
-        function initCesium() {
-            // Create the Cesium Viewer with OpenStreetMap as the default base layer
-            viewer = new Cesium.Viewer('cesiumContainer', {
-                imageryProvider: baseMaps[0].provider,
-                terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-                timeline: false,
-                animation: false,
-                baseLayerPicker: false,
-                geocoder: false,
-                homeButton: false,
-                sceneModePicker: true,
-                navigationHelpButton: false,
-                infoBox: false,
-                selectionIndicator: false,
-                skyBox: false,
-                skyAtmosphere: false
-            });
-            
-            // Set initial view to show the whole Earth
-            viewer.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(-74.006, 40.7128, 10000000)
-            });
-            
-            // Add sample markers
-            addSampleMarkers();
-            
-            // Setup event handlers
-            setupEventHandlers();
-            
-            // Update coordinates in real-time
-            viewer.scene.postRender.addEventListener(updateCoordinates);
-            
-            // Setup FPS counter
-            setupFPSCounter();
-        }
-        
-        // Add sample markers to the map
-        function addSampleMarkers() {
-            const pinBuilder = new Cesium.PinBuilder();
-            
-            locations.forEach(location => {
-                // Choose color based on type
-                let color;
-                if (location.type === "city") color = Cesium.Color.ROYALBLUE;
-                else if (location.type === "natural") color = Cesium.Color.LIME;
-                else color = Cesium.Color.ORANGE;
-                
-                viewer.entities.add({
-                    name: location.name,
-                    position: Cesium.Cartesian3.fromDegrees(location.lon, location.lat),
-                    billboard: {
-                        image: pinBuilder.fromColor(color, 48).toDataURL(),
-                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                        scale: 1.2,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                    },
-                    description: location.desc,
-                    label: {
-                        text: location.name,
-                        font: '14pt sans-serif',
-                        pixelOffset: new Cesium.Cartesian2(0, -40),
-                        fillColor: Cesium.Color.WHITE,
-                        outlineColor: Cesium.Color.BLACK,
-                        outlineWidth: 2,
-                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                        show: labelsEnabled
-                    }
-                });
-            });
-        }
-        
-        // Setup all event handlers
-        function setupEventHandlers() {
-            // Navigation buttons
-            document.getElementById('flyToNY').addEventListener('click', () => {
-                flyToLocation(-74.006, 40.7128, 5000, "New York City");
-            });
-            
-            document.getElementById('flyToParis').addEventListener('click', () => {
-                flyToLocation(2.3522, 48.8566, 5000, "Paris");
-            });
-            
-            document.getElementById('flyToTokyo').addEventListener('click', () => {
-                flyToLocation(139.6917, 35.6895, 5000, "Tokyo");
-            });
-            
-            document.getElementById('flyToSydney').addEventListener('click', () => {
-                flyToLocation(151.2093, -33.8688, 5000, "Sydney");
-            });
-            
-            document.getElementById('resetView').addEventListener('click', () => {
-                viewer.camera.setView({
-                    destination: Cesium.Cartesian3.fromDegrees(-74.006, 40.7128, 10000000)
-                });
-            });
-            
-            // Map features buttons
-            document.getElementById('toggleTerrain').addEventListener('click', () => {
-                terrainEnabled = !terrainEnabled;
-                if (terrainEnabled) {
-                    // For demonstration, we'll use a simple ellipsoid terrain
-                    // In a real implementation with token, you would use Cesium.createWorldTerrain()
-                    viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                    viewer.scene.globe.depthTestAgainstTerrain = true;
-                } else {
-                    viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                    viewer.scene.globe.depthTestAgainstTerrain = false;
-                }
-                document.getElementById('toggleTerrain').innerHTML = terrainEnabled ? 
-                    '<i>⛰️</i> Disable Terrain' : '<i>⛰️</i> Enable Terrain';
-            });
-            
-            document.getElementById('toggleMarkers').addEventListener('click', () => {
-                markersEnabled = !markersEnabled;
-                // Show/hide all billboards (markers)
-                viewer.entities.values.forEach(entity => {
-                    if (entity.billboard) {
-                        entity.billboard.show = markersEnabled;
-                    }
-                });
-                document.getElementById('toggleMarkers').innerHTML = markersEnabled ? 
-                    '<i>📍</i> Hide Markers' : '<i>📍</i> Show Markers';
-            });
-            
-            document.getElementById('toggleLabels').addEventListener('click', () => {
-                labelsEnabled = !labelsEnabled;
-                // Show/hide all labels
-                viewer.entities.values.forEach(entity => {
-                    if (entity.label) {
-                        entity.label.show = labelsEnabled;
-                    }
-                });
-                document.getElementById('toggleLabels').innerHTML = labelsEnabled ? 
-                    '<i>🔤</i> Hide Labels' : '<i>🔤</i> Show Labels';
-            });
-            
-            document.getElementById('addRandomMarker').addEventListener('click', () => {
-                addRandomMarker();
-            });
-            
-            // Visualization buttons
-            document.getElementById('toggleDayNight').addEventListener('click', () => {
-                dayMode = !dayMode;
-                if (dayMode) {
-                    viewer.scene.light = new Cesium.SunLight();
-                    viewer.scene.skyAtmosphere.show = true;
-                    viewer.scene.skyBox.show = true;
-                } else {
-                    viewer.scene.light = new Cesium.DirectionalLight({
-                        direction: new Cesium.Cartesian3(0.5, 0.5, 1.0)
-                    });
-                    viewer.scene.skyAtmosphere.show = false;
-                    viewer.scene.skyBox.show = false;
-                }
-                document.getElementById('toggleDayNight').innerHTML = dayMode ? 
-                    '<i>🌙</i> Switch to Night' : '<i>☀️</i> Switch to Day';
-            });
-            
-            document.getElementById('changeBaseMap').addEventListener('click', () => {
-                baseMapIndex = (baseMapIndex + 1) % baseMaps.length;
-                viewer.imageryLayers.removeAll();
-                viewer.imageryLayers.addImageryProvider(baseMaps[baseMapIndex].provider);
-                document.getElementById('changeBaseMap').innerHTML = 
-                    `<i>🗺️</i> Base: ${baseMaps[baseMapIndex].name}`;
-            });
-            
-            // Close info panel
-            document.getElementById('closeInfo').addEventListener('click', () => {
-                document.getElementById('infoPanel').style.display = 'none';
-            });
-            
-            // Click handler for the globe
-            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function onLeftClick(event) {
-                const picked = viewer.scene.pick(event.position);
-                if (Cesium.defined(picked) && Cesium.defined(picked.id)) {
-                    // If a marker was clicked, show its info
-                    showLocationInfo(picked.id);
-                } else {
-                    // Otherwise, get the position on the globe
-                    const ray = viewer.camera.getPickRay(event.position);
-                    const position = viewer.scene.globe.pick(ray, viewer.scene);
-                    
-                    if (position) {
-                        const cartographic = Cesium.Cartographic.fromCartesian(position);
-                        const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(4);
-                        const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(4);
-                        const height = cartographic.height.toFixed(2);
-                        
-                        // Show position info
-                        showPositionInfo(lon, lat, height);
-                    }
-                }
-            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
-            
-            // Mouse move handler for tooltips
-            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function onMouseMove(movement) {
-                const picked = viewer.scene.pick(movement.endPosition);
-                const tooltip = document.getElementById('tooltip');
-                
-                if (Cesium.defined(picked) && Cesium.defined(picked.id)) {
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (movement.endPosition.x + 10) + 'px';
-                    tooltip.style.top = (movement.endPosition.y + 10) + 'px';
-                    tooltip.textContent = picked.id.name;
-                } else {
-                    tooltip.style.display = 'none';
-                }
-            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-        }
-        
-        // Fly to a specific location
-        function flyToLocation(longitude, latitude, height, locationName) {
-            viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
-                orientation: {
-                    heading: Cesium.Math.toRadians(0.0),
-                    pitch: Cesium.Math.toRadians(-30.0),
-                    roll: 0.0
-                },
-                duration: 3,
-                complete: function() {
-                    console.log(`Arrived at ${locationName}`);
-                }
-            });
-        }
-        
-        // Add a random marker to the map
-        function addRandomMarker() {
-            const pinBuilder = new Cesium.PinBuilder();
-            
-            // Generate random coordinates
-            const lon = (Math.random() * 360) - 180;
-            const lat = (Math.random() * 180) - 90;
-            
-            viewer.entities.add({
-                name: "Random Location",
-                position: Cesium.Cartesian3.fromDegrees(lon, lat),
-                billboard: {
-                    image: pinBuilder.fromColor(Cesium.Color.PURPLE, 48).toDataURL(),
-                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    scale: 1.2,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
-                },
-                description: "This is a randomly placed marker.",
-                label: {
-                    text: "Random Location",
-                    font: '14pt sans-serif',
-                    pixelOffset: new Cesium.Cartesian2(0, -40),
-                    fillColor: Cesium.Color.WHITE,
-                    outlineColor: Cesium.Color.BLACK,
-                    outlineWidth: 2,
-                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-                    show: labelsEnabled
-                }
-            });
-            
-            // Fly to the new marker
-            flyToLocation(lon, lat, 5000, "Random Location");
-        }
-        
-        // Show location information in the info panel
-        function showLocationInfo(entity) {
-            const location = locations.find(loc => loc.name === entity.name);
-            if (location) {
-                document.getElementById('infoTitle').textContent = location.name;
-                document.getElementById('infoCoordinates').textContent = 
-                    `Coordinates: ${location.lon.toFixed(4)}, ${location.lat.toFixed(4)}`;
-                document.getElementById('infoElevation').textContent = 'Elevation: Varies';
-                document.getElementById('infoDescription').textContent = `Description: ${location.desc}`;
-                document.getElementById('infoPanel').style.display = 'block';
-            } else if (entity.name === "Random Location") {
-                const position = entity.position.getValue(Cesium.JulianDate.now());
-                const cartographic = Cesium.Cartographic.fromCartesian(position);
-                const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(4);
-                const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(4);
-                
-                document.getElementById('infoTitle').textContent = "Random Location";
-                document.getElementById('infoCoordinates').textContent = `Coordinates: ${lon}, ${lat}`;
-                document.getElementById('infoElevation').textContent = 'Elevation: Varies';
-                document.getElementById('infoDescription').textContent = "This is a randomly placed marker.";
-                document.getElementById('infoPanel').style.display = 'block';
-            }
-        }
-        
-        // Show position information in the info panel
-        function showPositionInfo(lon, lat, height) {
-            document.getElementById('infoTitle').textContent = 'Selected Location';
-            document.getElementById('infoCoordinates').textContent = `Coordinates: ${lon}, ${lat}`;
-            document.getElementById('infoElevation').textContent = `Elevation: ${height} meters`;
-            document.getElementById('infoDescription').textContent = 'Description: Click on a marker for more information';
-            document.getElementById('infoPanel').style.display = 'block';
-        }
-        
-        // Update coordinates in the status bar
-        function updateCoordinates() {
-            const cartographic = viewer.camera.positionCartographic;
-            const lon = Cesium.Math.toDegrees(cartographic.longitude).toFixed(4);
-            const lat = Cesium.Math.toDegrees(cartographic.latitude).toFixed(4);
-            const height = cartographic.height.toFixed(0);
-            
-            document.querySelector('.coordinates').textContent = 
-                `Longitude: ${lon}° • Latitude: ${lat}° • Elevation: ${height}m`;
-        }
-        
-        // Setup FPS counter
-        function setupFPSCounter() {
-            const fpsElement = document.querySelector('.fps');
-            
-            viewer.scene.postRender.addEventListener(function() {
-                const fps = viewer.scene.frameState.lastFramesPerSecond;
-                fpsElement.textContent = `FPS: ${Math.round(fps)}`;
-            });
-        }
-    </script>
+    });
+    document.getElementById('viewAllModalBtn').addEventListener('click', () => { document.getElementById('allModalBody').innerHTML = getAllHtml(); new bootstrap.Modal(document.getElementById('allFieldsModal')).show(); });
+    document.getElementById('printAllFieldsBtn').addEventListener('click', () => { let win = window.open('', '_blank'); win.document.write(`<html><head><title>Coimbatore Full Form</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"></head><body><div class="container mt-4">${getAllHtml()}</div></body></html>`); win.document.close(); win.print(); });
+    document.querySelectorAll('.printModalBtn').forEach(btn => { btn.addEventListener('click', (e) => { let contentId = btn.getAttribute('data-print-content'); let content = document.getElementById(contentId).innerHTML; let win = window.open('', '_blank'); win.document.write(`<html><head><title>Coimbatore Section</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"></head><body><div class="container mt-4">${content}</div></body></html>`); win.document.close(); win.print(); }); });
+    if(!document.getElementById('appDate').value) document.getElementById('appDate').valueAsDate = new Date();
+    if(!document.getElementById('declarationDate').value) document.getElementById('declarationDate').valueAsDate = new Date();
+</script>
 </body>
 </html>
