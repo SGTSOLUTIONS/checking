@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Schema\Blueprint;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -89,96 +88,6 @@ class CorporationController extends Controller
                 'success' => false,
                 'message' => 'Something went wrong.',
                 'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /** ✅ Update corporation */
-    public function update(Request $request, $id)
-    {
-        try {
-            $corporation = Corporation::findOrFail($id);
-
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:50|unique:corporations,code,' . $id,
-                'district' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
-                'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-                'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
-                'mis' => 'nullable|file|mimes:xls,xlsx,csv',
-                'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
-                'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
-            ]);
-
-            // ================= LOGO UPLOAD =================
-            if ($request->hasFile('logo')) {
-                // Delete old logo if exists
-                if ($corporation->logo) {
-                    $this->deleteLogo($corporation->logo);
-                }
-
-                // Upload new logo
-                $logoPath = $this->uploadLogo($request->file('logo'));
-                $validatedData['logo'] = $logoPath;
-            }
-
-            // ================= BOUNDARY =================
-            if ($request->hasFile('boundary')) {
-                $geojson = json_decode(
-                    file_get_contents($request->file('boundary')->getRealPath()),
-                    true
-                );
-
-                if (isset($geojson['features'][0]['geometry']['coordinates'])) {
-                    $validatedData['boundary'] = json_encode(
-                        $geojson['features'][0]['geometry']['coordinates']
-                    );
-                }
-            }
-
-            // ================= UPDATE =================
-            $corporation->update($validatedData);
-
-            // ================= TABLE CREATION =================
-            $this->createDynamicTables($corporation->id);
-
-            $importStats = [];
-
-            // ================= MIS IMPORT =================
-            if ($request->hasFile('mis')) {
-                $misImport = new MisImport('mis_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($misImport, $request->file('mis'));
-                $importStats['mis'] = $misImport->getImportStats();
-            }
-
-            // ================= WATER TAX =================
-            if ($request->hasFile('watertax')) {
-                $watertaxImport = new WatertaxImport('watertax_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($watertaxImport, $request->file('watertax'));
-                $importStats['watertax'] = $watertaxImport->getImportStats();
-            }
-
-            // ================= UGD =================
-            if ($request->hasFile('ugd')) {
-                $ugdImport = new UgdImport('ugd_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($ugdImport, $request->file('ugd'));
-                $importStats['ugd'] = $ugdImport->getImportStats();
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Corporation updated successfully!',
-                'data' => $corporation,
-                'import_stats' => $importStats
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Corporation update error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating corporation.',
-                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -318,6 +227,7 @@ class CorporationController extends Controller
         }
     }
 
+    /** ✅ Get corporation list */
     public function corporationList()
     {
         try {
@@ -341,6 +251,102 @@ class CorporationController extends Controller
         }
     }
 
+    /** ✅ Update corporation */
+    public function update(Request $request, $id)
+    {
+        try {
+            $corporation = Corporation::findOrFail($id);
+
+            $validatedData = $request->validate([
+                'name' => 'required|string|max:255',
+                'code' => 'required|string|max:50|unique:corporations,code,' . $id,
+                'district' => 'required|string|max:100',
+                'state' => 'required|string|max:100',
+                'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+                'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
+                'mis' => 'nullable|file|mimes:xls,xlsx,csv',
+                'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
+                'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
+            ]);
+
+            // ================= LOGO UPLOAD =================
+            if ($request->hasFile('logo')) {
+                // Delete old logo if exists
+                if ($corporation->logo) {
+                    $this->deleteLogo($corporation->logo);
+                }
+
+                // Upload new logo
+                $logoPath = $this->uploadLogo($request->file('logo'));
+                $validatedData['logo'] = $logoPath;
+            }
+
+            // ================= BOUNDARY =================
+            if ($request->hasFile('boundary')) {
+                $geojson = json_decode(
+                    file_get_contents($request->file('boundary')->getRealPath()),
+                    true
+                );
+
+                if (isset($geojson['features'][0]['geometry']['coordinates'])) {
+                    $validatedData['boundary'] = json_encode(
+                        $geojson['features'][0]['geometry']['coordinates']
+                    );
+                }
+            }
+
+            // ================= UPDATE =================
+            $corporation->update($validatedData);
+
+            // ================= TABLE CREATION =================
+            $this->createDynamicTables($corporation->id);
+
+            $importStats = [];
+
+            // ================= MIS IMPORT =================
+            if ($request->hasFile('mis')) {
+                $misImport = new MisImport('mis_corporation_' . $corporation->id, $corporation->id);
+                Excel::import($misImport, $request->file('mis'));
+                $importStats['mis'] = $misImport->getImportStats();
+            }
+
+            // ================= WATER TAX =================
+            if ($request->hasFile('watertax')) {
+                $watertaxImport = new WatertaxImport('watertax_corporation_' . $corporation->id, $corporation->id);
+                Excel::import($watertaxImport, $request->file('watertax'));
+                $importStats['watertax'] = $watertaxImport->getImportStats();
+            }
+
+            // ================= UGD =================
+            if ($request->hasFile('ugd')) {
+                $ugdImport = new UgdImport('ugd_corporation_' . $corporation->id, $corporation->id);
+                Excel::import($ugdImport, $request->file('ugd'));
+                $importStats['ugd'] = $ugdImport->getImportStats();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Corporation updated successfully!',
+                'data' => $corporation,
+                'import_stats' => $importStats
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Corporation update error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating corporation.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /** ✅ Delete corporation (SoftDelete) */
     public function destroy($id)
     {
@@ -350,14 +356,21 @@ class CorporationController extends Controller
             // Note: Don't delete logo on soft delete, only on force delete
             $corporation->delete();
 
-            return response()->json(['success' => true, 'message' => 'Corporation deleted successfully!']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Corporation deleted successfully!'
+            ]);
         } catch (\Exception $e) {
             Log::error('Corporation delete error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error deleting corporation.', 'error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting corporation.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
-    /** ✅ Force delete corporation */
+    /** ✅ Force delete corporation (Permanent) */
     public function forceDelete($id)
     {
         try {
@@ -395,6 +408,46 @@ class CorporationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error permanently deleting corporation.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /** ✅ Restore soft deleted corporation */
+    public function restore($id)
+    {
+        try {
+            $corporation = Corporation::withTrashed()->findOrFail($id);
+            $corporation->restore();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Corporation restored successfully!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Corporation restore error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error restoring corporation.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /** ✅ Get soft deleted corporations list */
+    public function trashed()
+    {
+        try {
+            $corporations = Corporation::onlyTrashed()->get();
+            return response()->json([
+                'success' => true,
+                'data' => $corporations
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Corporation trashed list error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching trashed corporations.',
                 'error' => $e->getMessage()
             ], 500);
         }
