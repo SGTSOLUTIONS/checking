@@ -70,21 +70,21 @@
                         <!-- MIS -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">MIS</label>
-                            <input type="file" class="form-control" name="mis" >                           
+                            <input type="file" class="form-control" name="mis" >
                             <div class="form-text">Upload MIS Excel file</div>
                             <div class="invalid-feedback"></div>
                         </div>
                         <!-- Watertax -->
                          <div class="col-md-6">
                             <label class="form-label fw-bold">Watertax</label>
-                            <input type="file" class="form-control" name="watertax" >                           
+                            <input type="file" class="form-control" name="watertax" >
                             <div class="form-text">Upload Watertax Excel file</div>
                             <div class="invalid-feedback"></div>
                         </div>
                         <!-- UGD - FIXED NAME -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">UGD</label>
-                            <input type="file" class="form-control" name="ugd" >                           
+                            <input type="file" class="form-control" name="ugd" >
                             <div class="form-text">Upload UGD Excel file</div>
                             <div class="invalid-feedback"></div>
                         </div>
@@ -157,21 +157,21 @@
                         <!-- MIS -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">MIS</label>
-                            <input type="file" class="form-control" name="mis" >                           
+                            <input type="file" class="form-control" name="mis" >
                             <div class="form-text">Leave empty to keep current MIS</div>
                             <div class="invalid-feedback"></div>
                         </div>
                         <!-- Watertax -->
                          <div class="col-md-6">
                             <label class="form-label fw-bold">Watertax</label>
-                            <input type="file" class="form-control" name="watertax" >                           
+                            <input type="file" class="form-control" name="watertax" >
                             <div class="form-text">Leave empty to keep current Watertax</div>
                             <div class="invalid-feedback"></div>
                         </div>
                         <!-- UGD - FIXED NAME -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold">UGD</label>
-                            <input type="file" class="form-control" name="ugd" >                           
+                            <input type="file" class="form-control" name="ugd" >
                             <div class="form-text">Leave empty to keep current UGD</div>
                             <div class="invalid-feedback"></div>
                         </div>
@@ -385,7 +385,7 @@
                     <div class="col-xl-3 col-lg-4 col-md-6">
                         <div class="corp-card text-center p-4">
                             <div class="mb-3">
-                                ${logoUrl 
+                                ${logoUrl
                                     ? `<img src="${logoUrl}" alt="${corp.name} Logo" class="corp-logo">`
                                     : `<div class="corp-logo bg-light d-inline-flex align-items-center justify-content-center text-secondary">
                                         <i class="fas fa-building fa-2x"></i>
@@ -396,19 +396,19 @@
                             <p class="corp-meta mb-1"><strong>Code:</strong> ${corp.code}</p>
                             <p class="corp-meta mb-1"><strong>District:</strong> ${corp.district}</p>
                             <p class="corp-meta mb-3"><strong>State:</strong> ${corp.state}</p>
-                            
+
                             <div class="corp-actions">
-                                <button class="btn btn-sm btn-outline-success update-corporation" 
-                                        data-id="${corp.id}" 
+                                <button class="btn btn-sm btn-outline-success update-corporation"
+                                        data-id="${corp.id}"
                                         data-name="${corp.name}">
                                     <i class="fas fa-edit me-1"></i> Edit
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger delete-corporation" 
-                                        data-id="${corp.id}" 
+                                <button class="btn btn-sm btn-outline-danger delete-corporation"
+                                        data-id="${corp.id}"
                                         data-name="${corp.name}">
                                     <i class="fas fa-trash me-1"></i> Delete
                                 </button>
-                                
+
                                 <a class="btn btn-sm btn-outline-primary "
                                     href="{{ url('admin/ward') }}/${corp.id}"
                                     data-id="${corp.id}"
@@ -428,22 +428,22 @@
             const toastIcon = toast.find('.toast-icon');
             const toastTitle = toast.find('.toast-title');
             const toastMessage = toast.find('.toast-message');
-            
+
             // Remove all existing classes and add the appropriate ones
             toast.removeClass('success error warning info').addClass(type);
-            
+
             // Set icon color based on type
             const iconColors = {
                 'success': '#198754',
-                'error': '#dc3545', 
+                'error': '#dc3545',
                 'warning': '#ffc107',
                 'info': '#0dcaf0'
             };
-            
+
             toastIcon.css('color', iconColors[type] || '#6c757d');
             toastTitle.text(title);
             toastMessage.text(message);
-            
+
             // Show the toast
             const bsToast = new bootstrap.Toast(toast[0]);
             bsToast.show();
@@ -562,7 +562,7 @@
                     // Show current logo if exists
                     if (response.logo) {
                         $('#updateLogoPreview').html(`
-                            <img src="{{ Storage::url('') }}${response.logo}" class="mt-2" width="100" height="100" 
+                            <img src="{{ Storage::url('') }}${response.logo}" class="mt-2" width="100" height="100"
                                  style="border-radius:10px;object-fit:cover;border:2px solid #28a745;">
                             <p class="small text-muted mt-1">Current logo</p>
                         `);

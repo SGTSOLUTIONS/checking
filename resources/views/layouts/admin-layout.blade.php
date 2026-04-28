@@ -12,17 +12,8 @@
     <!-- ✅ Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- ✅ OpenLayers CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
-
-    <!-- ✅ Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- ✅ jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- ✅ OpenLayers JS -->
-    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
     <!-- ✅ Bootstrap 5 JS (Bundle includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -54,7 +45,6 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%);
-            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--warning) 100%);
         }
 
         /* Toast Notification Styles */
@@ -163,7 +153,6 @@
             color: #666;
         }
 
-        /* Progress Bar */
         .toast-progress {
             position: absolute;
             bottom: 0;
@@ -195,14 +184,6 @@
             color: var(--gray-800);
             min-height: 100vh;
             overflow-x: hidden;
-        }
-
-        /* Glassmorphism Effect */
-        .glass {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: var(--shadow);
         }
 
         /* Layout */
@@ -539,7 +520,6 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -592,7 +572,6 @@
             font-size: 1.1rem;
         }
 
-        /* Logout Form Styles */
         .logout-form {
             display: contents;
         }
@@ -612,397 +591,13 @@
             font-family: inherit;
         }
 
-        /* Main Content */
         .main-content {
             grid-area: main;
             padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
             overflow-y: auto;
         }
 
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 10px;
-        }
-
-        /* Stats Cards */
-        .stat-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            transition: var(--transition);
-            border-left: 5px solid var(--primary);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient-primary);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .stat-card.primary {
-            border-left-color: var(--primary);
-        }
-
-        .stat-card.success {
-            border-left-color: var(--success);
-        }
-
-        .stat-card.warning {
-            border-left-color: var(--warning);
-        }
-
-        .stat-card.danger {
-            border-left-color: var(--danger);
-        }
-
-        .stat-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            color: white;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-icon.primary {
-            background: var(--gradient-primary);
-        }
-
-        .stat-icon.success {
-            background: var(--success);
-        }
-
-        .stat-icon.warning {
-            background: var(--warning);
-        }
-
-        .stat-icon.danger {
-            background: var(--danger);
-        }
-
-        .stat-info {
-            flex: 1;
-        }
-
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 5px;
-            color: var(--dark);
-            line-height: 1;
-        }
-
-        .stat-label {
-            color: var(--gray-600);
-            font-size: 0.95rem;
-            margin-bottom: 8px;
-        }
-
-        .stat-trend {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .trend-up {
-            color: var(--success);
-        }
-
-        .trend-down {
-            color: var(--danger);
-        }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-        }
-
-        .chart-container {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .chart-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .chart-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chart-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 8px 15px;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-        }
-
-        .chart-btn:hover {
-            background: rgba(67, 97, 238, 0.1);
-        }
-
-        .chart-wrapper {
-            flex: 1;
-            position: relative;
-        }
-
-
-
-        .control-btn {
-            background: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: var(--border-radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: var(--transition);
-            color: var(--dark);
-            font-size: 1.1rem;
-        }
-
-        .control-btn:hover {
-            background: var(--primary);
-            color: white;
-            transform: scale(1.05);
-        }
-
-        .layer-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: white;
-            border-radius: var(--border-radius-sm);
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            z-index: 100;
-            width: 220px;
-        }
-
-        .layer-title {
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: var(--dark);
-            font-size: 1.1rem;
-        }
-
-        .layer-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .layer-checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
-        }
-
-        /* Recent Activity */
-        .activity-container {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-        }
-
-        .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .activity-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .activity-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .activity-item {
-            display: flex;
-            gap: 15px;
-            padding: 18px;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-            border-left: 4px solid transparent;
-        }
-
-        .activity-item:hover {
-            background: var(--gray-100);
-            border-left-color: var(--primary);
-        }
-
-        .activity-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
-            flex-shrink: 0;
-        }
-
-        .activity-icon.primary {
-            background: var(--gradient-primary);
-        }
-
-        .activity-icon.success {
-            background: var(--success);
-        }
-
-        .activity-icon.warning {
-            background: var(--warning);
-        }
-
-        .activity-icon.danger {
-            background: var(--danger);
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title-text {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--dark);
-        }
-
-        .activity-desc {
-            color: var(--gray-600);
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            line-height: 1.5;
-        }
-
-        .activity-time {
-            font-size: 0.8rem;
-            color: var(--gray-600);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Quick Actions */
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .action-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: white;
-            margin-bottom: 15px;
-            background: var(--gradient-primary);
-        }
-
-        .action-title {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--dark);
-        }
-
-        .action-desc {
-            color: var(--gray-600);
-            font-size: 0.9rem;
-        }
-
         /* Responsive Design */
-        @media (max-width: 1200px) {
-
-            .charts-section,
-            .map-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
         @media (max-width: 992px) {
             .admin-container {
                 grid-template-columns: 1fr;
@@ -1018,17 +613,9 @@
             .sidebar.active {
                 transform: translateX(0);
             }
-
-            .dashboard-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
 
         @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
             .header {
                 padding: 0 20px;
             }
@@ -1065,8 +652,8 @@
 
 <body>
     <div class="admin-container">
-        <!-- Sidebar -->
         <div id="toast-container" class="toast-container"></div>
+
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -1078,33 +665,20 @@
             </div>
 
             <nav class="sidebar-nav">
-                {{-- Main Section --}}
                 <div class="nav-section">
                     <div class="nav-section-title">Main</div>
-
-                    <a href="{{ route('admin.dashboard') }}"
-                        class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home"></i>
                         <span class="nav-text">Dashboard</span>
                     </a>
-
-                    <a href="{{ route('admin.mapExplore') }}"
-                        class="nav-item {{ request()->routeIs('admin.mapExplore') ? 'active' : '' }}">
+                    <a href="{{ route('admin.mapExplore') }}" class="nav-item {{ request()->routeIs('admin.mapExplore') ? 'active' : '' }}">
                         <i class="fas fa-map-marked-alt"></i>
                         <span class="nav-text">Map Explorer</span>
                     </a>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-layer-group"></i>
-                        <span class="nav-text">Data Layers</span>
-                        <span class="nav-badge">12</span>
-                    </a>
                 </div>
 
-                {{-- Analytics Section --}}
                 <div class="nav-section">
                     <div class="nav-section-title">Corporations</div>
-
                     <a href="{{ route('admin.corporationdata')}}" class="nav-item">
                         <i class="fas fa-chart-bar"></i>
                         <span class="nav-text">Corporation Data</span>
@@ -1112,101 +686,44 @@
                     <a href="{{ route('admin.users')}}" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Users</span>
-                        <span class="nav-badge">3</span>
                     </a>
                     <a href="{{ route('admin.team.index')}}" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Teams</span>
-                        <span class="nav-badge">3</span>
-                    </a>
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-database"></i>
-                        <span class="nav-text">Data Management</span>
-                    </a>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-chart-pie"></i>
-                        <span class="nav-text">Insights</span>
                     </a>
                 </div>
 
-                {{-- Administration Section --}}
                 <div class="nav-section">
                     <div class="nav-section-title">Administration</div>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-users"></i>
-                        <span class="nav-text">Users</span>
-                        <span class="nav-badge">3</span>
-                    </a>
-
                     <a href="#" class="nav-item">
                         <i class="fas fa-cog"></i>
                         <span class="nav-text">Settings</span>
                     </a>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <span class="nav-text">Security</span>
-                    </a>
-                </div>
-
-                {{-- Support Section --}}
-                <div class="nav-section">
-                    <div class="nav-section-title">Support</div>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-question-circle"></i>
-                        <span class="nav-text">Help Center</span>
-                    </a>
-
-                    <a href="#" class="nav-item">
-                        <i class="fas fa-life-ring"></i>
-                        <span class="nav-text">Support Tickets</span>
-                    </a>
                 </div>
             </nav>
-
 
             <div class="sidebar-footer">
                 GeoVision v3.0.1
             </div>
         </aside>
 
-        <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <button class="action-btn" id="toggle-sidebar">
                     <i class="fas fa-bars"></i>
                 </button>
                 <div>
-                    <h1 class="page-title">Dashboard Overview</h1>
+                    <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
                     <div class="breadcrumb">
-                        <span>Home</span>
-                        <i class="fas fa-chevron-right"></i>
-                        <span>Dashboard</span>
+                        @yield('breadcrumb', '<span>Home</span><i class="fas fa-chevron-right"></i><span>Dashboard</span>')
                     </div>
                 </div>
             </div>
 
             <div class="header-right">
                 <div class="search-bar">
-                    <input type="text" class="search-input" placeholder="Search maps, data, reports...">
+                    <input type="text" class="search-input" placeholder="Search...">
                     <i class="fas fa-search search-icon"></i>
-                </div>
-
-                <div class="header-actions">
-                    <button class="action-btn" title="Notifications">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">5</span>
-                    </button>
-                    <button class="action-btn" title="Messages">
-                        <i class="fas fa-envelope"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                    <button class="action-btn" title="Settings">
-                        <i class="fas fa-cog"></i>
-                    </button>
                 </div>
 
                 <div class="user-profile" id="user-profile">
@@ -1227,7 +744,6 @@
                     </div>
                     <i class="fas fa-chevron-down"></i>
 
-                    <!-- Profile Dropdown -->
                     <div class="profile-dropdown" id="profile-dropdown">
                         <div class="dropdown-header">
                             <div class="dropdown-avatar">
@@ -1244,240 +760,133 @@
                             <div class="user-name">{{ Auth::user()->name }}</div>
                             <div class="user-role">{{ Auth::user()->role }}</div>
                         </div>
-                        <div class="dropdown-item">
+                        <a href="{{ route('profile.show') }}" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             <span>My Profile</span>
-                        </div>
-                        <div class="dropdown-item">
+                        </a>
+                        <a href="{{ route('profile.settings') }}" class="dropdown-item">
                             <i class="fas fa-cog"></i>
                             <span>Account Settings</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-bell"></i>
-                            <span>Notifications</span>
-                            <span class="nav-badge">5</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Privacy & Security</span>
-                        </div>
-                        <div class="dropdown-item">
-                            <i class="fas fa-question-circle"></i>
-                            <span>Help & Support</span>
-                        </div>
-                        <!-- Logout Form -->
+                        </a>
                         <form method="POST" action="{{ route('logout') }}" class="logout-form">
                             @csrf
-                            <div class="dropdown-item">
+                            <button type="submit" class="dropdown-item logout-btn">
                                 <i class="fas fa-sign-out-alt"></i>
-                                <button type="submit" class="logout-btn">
-                                    Logout
-                                </button>
-                            </div>
+                                <span>Logout</span>
+                            </button>
                         </form>
                     </div>
                 </div>
             </div>
         </header>
-        <!-- Main Content -->
+
         <main class="main-content">
-            <!-- Stats Cards -->
             @yield('content')
         </main>
     </div>
 
     <script>
-        // Initialize the map
+    // Profile Dropdown
+    (function() {
+        function setupDropdown() {
+            var userProfile = document.getElementById('user-profile');
+            var profileDropdown = document.getElementById('profile-dropdown');
 
-        function showToast(type, title, message, duration = 5000) {
-            const toastContainer = document.getElementById('toast-container');
+            if (userProfile && profileDropdown) {
+                var newUserProfile = userProfile.cloneNode(true);
+                userProfile.parentNode.replaceChild(newUserProfile, userProfile);
+                var finalUserProfile = document.getElementById('user-profile');
 
-            // Create toast element
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-
-            // Icons for different toast types
-            const icons = {
-                success: 'fa-circle-check',
-                error: 'fa-circle-xmark',
-                warning: 'fa-triangle-exclamation',
-                info: 'fa-circle-info'
-            };
-
-            toast.innerHTML = `
-        <i class="fas ${icons[type]} toast-icon"></i>
-        <div class="toast-content">
-            <div class="toast-title">${title}</div>
-            <p class="toast-message">${message}</p>
-        </div>
-        <button class="toast-close">
-            <i class="fas fa-times"></i>
-        </button>
-        <div class="toast-progress"></div>
-    `;
-
-            // Add to container
-            toastContainer.appendChild(toast);
-
-            // Animate in
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 100);
-
-            // Close button event
-            const closeBtn = toast.querySelector('.toast-close');
-            closeBtn.addEventListener('click', () => {
-                removeToast(toast);
-            });
-
-            // Auto remove after duration
-            if (duration > 0) {
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        removeToast(toast);
+                finalUserProfile.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    var dropdown = document.getElementById('profile-dropdown');
+                    if (dropdown) {
+                        dropdown.classList.toggle('active');
                     }
-                }, duration);
-            }
+                });
 
-            return toast;
-        }
-
-        function removeToast(toast) {
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 500);
-        }
-        // Initialize Charts
-        const usageCtx = document.getElementById('usageChart').getContext('2d');
-        const usageChart = new Chart(usageCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                datasets: [{
-                    label: 'Data Requests',
-                    data: [320, 450, 580, 720, 840, 920, 1100],
-                    backgroundColor: 'rgba(67, 97, 238, 0.8)',
-                    borderColor: 'rgba(67, 97, 238, 1)',
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }, {
-                    label: 'Map Views',
-                    data: [280, 380, 520, 650, 780, 850, 980],
-                    backgroundColor: 'rgba(76, 201, 240, 0.8)',
-                    borderColor: 'rgba(76, 201, 240, 1)',
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false,
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
+                document.addEventListener('click', function(e) {
+                    var dropdown = document.getElementById('profile-dropdown');
+                    var userProf = document.getElementById('user-profile');
+                    if (dropdown && dropdown.classList.contains('active')) {
+                        if (userProf && !userProf.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.remove('active');
                         }
                     }
-                }
+                });
             }
-        });
+        }
 
-        const activityCtx = document.getElementById('activityChart').getContext('2d');
-        const activityChart = new Chart(activityCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Data Upload', 'Map Creation', 'Analysis', 'Exports', 'User Management'],
-                datasets: [{
-                    data: [35, 25, 20, 15, 5],
-                    backgroundColor: [
-                        '#4361ee',
-                        '#4cc9f0',
-                        '#f72585',
-                        '#7209b7',
-                        '#f8961e'
-                    ],
-                    borderWidth: 0,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
-                },
-                cutout: '70%'
-            }
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupDropdown);
+        } else {
+            setupDropdown();
+        }
+    })();
 
-
-
-        // Sidebar toggle
-        document.getElementById('toggle-sidebar').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-
-        // Navigation functionality
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.addEventListener('click', function() {
-                navItems.forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-
-                // Close sidebar on mobile after selection
-                if (window.innerWidth < 992) {
-                    document.querySelector('.sidebar').classList.remove('active');
+    // Sidebar Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        var toggleSidebarBtn = document.getElementById('toggle-sidebar');
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.addEventListener('click', function() {
+                var sidebar = document.querySelector('.sidebar');
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
                 }
             });
-        });
+        }
+    });
 
-        // Profile dropdown functionality
-        const userProfile = document.getElementById('user-profile');
-        const profileDropdown = document.getElementById('profile-dropdown');
+    // Toast notification functions
+    window.showToast = function(type, title, message, duration = 5000) {
+        var toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) return null;
 
-        userProfile.addEventListener('click', function(e) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('active');
-        });
+        var toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function() {
-            profileDropdown.classList.remove('active');
-        });
+        var icons = {
+            success: 'fa-circle-check',
+            error: 'fa-circle-xmark',
+            warning: 'fa-triangle-exclamation',
+            info: 'fa-circle-info'
+        };
 
-        // Prevent dropdown from closing when clicking inside it
-        profileDropdown.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
+        toast.innerHTML = `
+            <i class="fas ${icons[type]} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <p class="toast-message">${message}</p>
+            </div>
+            <button class="toast-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="toast-progress"></div>
+        `;
 
-        // Layer controls
-        document.getElementById('base-layer').addEventListener('change', function() {
-            map.getLayers().item(0).setVisible(this.checked);
-        });
+        toastContainer.appendChild(toast);
+        setTimeout(function() { toast.classList.add('show'); }, 100);
 
-        document.getElementById('marker-layer').addEventListener('change', function() {
-            vectorLayer.setVisible(this.checked);
-        });
+        var closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() { window.removeToast(toast); });
+        }
+
+        if (duration > 0) {
+            setTimeout(function() { if (toast.parentNode) window.removeToast(toast); }, duration);
+        }
+
+        return toast;
+    };
+
+    window.removeToast = function(toast) {
+        toast.classList.remove('show');
+        toast.classList.add('hide');
+        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 500);
+    };
     </script>
+
     @yield('script')
 </body>
 
