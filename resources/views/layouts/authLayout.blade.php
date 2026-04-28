@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>AeroCore | Secure Drone Command Access</title>
+    <title>TN Municipal | Property Tax & Revenue Portal</title>
 
     {{-- Bootstrap 5 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,9 +12,9 @@
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    {{-- Google Fonts: Inter & Plus Jakarta Sans --}}
+    {{-- Google Fonts: Inter & Poppins for official look --}}
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
     <style>
@@ -26,7 +26,7 @@
         }
 
         body {
-            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', 'Poppins', sans-serif;
             min-height: 100vh;
             position: relative;
             display: flex;
@@ -36,8 +36,8 @@
             padding: 1.5rem;
         }
 
-        /* FULLSCREEN DRONE BACKGROUND with low brightness overlay */
-        .drone-bg {
+        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with low brightness */
+        .heritage-bg {
             position: fixed;
             top: 0;
             left: 0;
@@ -47,13 +47,13 @@
             overflow: hidden;
         }
 
-        .drone-bg img {
+        .heritage-bg img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.35) contrast(1.1);
+            filter: brightness(0.45) contrast(1.05) saturate(1.1);
             transform: scale(1.02);
-            animation: slowZoom 25s ease infinite alternate;
+            animation: slowZoom 28s ease infinite alternate;
         }
 
         @keyframes slowZoom {
@@ -62,22 +62,22 @@
             }
 
             100% {
-                transform: scale(1.08);
+                transform: scale(1.06);
             }
         }
 
-        /* Dark gradient overlay for depth and readability */
-        .drone-overlay {
+        /* Dark gradient overlay for readability */
+        .bg-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.85));
+            background: radial-gradient(circle at 30% 40%, rgba(10, 131, 187, 0.788), rgba(252, 250, 250, 0.85));
             z-index: -1;
         }
 
-        /* Sophisticated pattern overlay (subtle tech grid) */
+        /* Subtle pattern overlay (temple/kolam inspired grid) */
         body::before {
             content: "";
             position: fixed;
@@ -86,14 +86,14 @@
             width: 100%;
             height: 100%;
             background-image:
-                linear-gradient(rgba(0, 255, 255, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 255, 0.04) 1px, transparent 1px);
+                linear-gradient(rgba(255, 215, 120, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 215, 120, 0.03) 1px, transparent 1px);
             background-size: 45px 45px;
             pointer-events: none;
             z-index: -1;
         }
 
-        /* floating particles - subtle tech ambiance */
+        /* floating particles - subtle */
         .particles {
             position: fixed;
             top: 0;
@@ -106,11 +106,10 @@
 
         .particle {
             position: absolute;
-            background: rgba(0, 255, 255, 0.25);
+            background: rgba(255, 200, 100, 0.2);
             border-radius: 50%;
             pointer-events: none;
             animation: floatParticle linear infinite;
-            box-shadow: 0 0 4px rgba(0, 255, 255, 0.5);
         }
 
         @keyframes floatParticle {
@@ -120,11 +119,11 @@
             }
 
             10% {
-                opacity: 0.6;
+                opacity: 0.5;
             }
 
             90% {
-                opacity: 0.4;
+                opacity: 0.3;
             }
 
             100% {
@@ -133,7 +132,7 @@
             }
         }
 
-        /* ===== TOAST SYSTEM (premium glass) ===== */
+        /* ===== TOAST SYSTEM (official style) ===== */
         .toast-container {
             position: fixed;
             bottom: 2rem;
@@ -147,11 +146,11 @@
         }
 
         .toast {
-            background: rgba(10, 20, 30, 0.92);
-            backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
             border-radius: 20px;
             border-left: 4px solid;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
             padding: 0.9rem 1rem;
             display: flex;
             align-items: center;
@@ -161,7 +160,7 @@
             transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
             position: relative;
             overflow: hidden;
-            color: #eef5ff;
+            color: #1e2f3e;
             font-family: 'Inter', sans-serif;
         }
 
@@ -192,21 +191,20 @@
 
         .toast-message {
             font-size: 0.8rem;
-            opacity: 0.85;
+            opacity: 0.8;
             margin: 0;
         }
 
         .toast-close {
             background: none;
             border: none;
-            color: #8aa2c0;
+            color: #7e8b9e;
             cursor: pointer;
             font-size: 0.8rem;
-            transition: all 0.2s ease;
         }
 
         .toast-close:hover {
-            color: #0ff;
+            color: #1e2f3e;
             transform: scale(1.05);
         }
 
@@ -215,7 +213,7 @@
             bottom: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, #0ff, #00aaff);
+            background: linear-gradient(90deg, #e67e22, #f39c12);
             width: 0%;
             animation: progressShrink linear forwards;
         }
@@ -231,34 +229,33 @@
         }
 
         .toast-success {
-            border-left-color: #10b981;
+            border-left-color: #27ae60;
         }
 
         .toast-error {
-            border-left-color: #ef4444;
+            border-left-color: #e74c3c;
         }
 
         .toast-warning {
-            border-left-color: #f59e0b;
+            border-left-color: #f39c12;
         }
 
         .toast-info {
-            border-left-color: #0ff;
+            border-left-color: #2980b9;
         }
 
-        /* ===== MAIN CARD: Dark-glass tactical design ===== */
+        /* ===== MAIN CARD: Light & Official Municipal Design ===== */
         .auth-card {
             width: 100%;
             max-width: 1280px;
-            background: rgba(6, 16, 28, 0.65);
-            backdrop-filter: blur(18px);
-            border-radius: 2.5rem;
-            box-shadow: 0 30px 50px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 2rem;
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.3);
             display: flex;
             overflow: hidden;
             transition: all 0.3s ease;
             z-index: 10;
-            animation: fadeSlideUp 0.6s ease-out;
+            animation: fadeSlideUp 0.5s ease-out;
         }
 
         @keyframes fadeSlideUp {
@@ -273,93 +270,89 @@
             }
         }
 
-        /* LEFT SIDE: Drone/Aerospace Branding */
+        /* LEFT SIDE: Tamil Nadu Municipal Branding (white background for header text clarity) */
         .login-hero {
             flex: 1.2;
-            background: linear-gradient(125deg, rgba(0, 20, 40, 0.85) 0%, rgba(0, 35, 55, 0.9) 100%);
+            background: linear-gradient(135deg, #f9f3e0 0%, #fff8ed 100%);
             padding: 3rem 2.5rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            color: white;
+            color: #2c3e4e;
             position: relative;
             overflow: hidden;
-            backdrop-filter: blur(4px);
         }
 
         .login-hero::after {
-            content: "⚡";
+            content: "🏛️";
             position: absolute;
             bottom: 20px;
             right: 20px;
             font-size: 80px;
-            opacity: 0.08;
+            opacity: 0.06;
             pointer-events: none;
-            font-family: monospace;
         }
 
         .brand {
             display: flex;
             align-items: center;
             gap: 14px;
-            margin-bottom: 2.5rem;
+            margin-bottom: 2rem;
             z-index: 2;
         }
 
         .brand-icon {
-            background: rgba(0, 255, 255, 0.2);
-            backdrop-filter: blur(6px);
-            width: 52px;
-            height: 52px;
+            background: #e67e22;
+            width: 55px;
+            height: 55px;
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.8rem;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            border: 1px solid rgba(0, 255, 255, 0.4);
+            color: white;
+            box-shadow: 0 8px 16px rgba(230, 126, 34, 0.2);
         }
 
         .brand-text {
-            font-size: 1.9rem;
+            font-size: 1.6rem;
             font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff, #88ddff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            letter-spacing: -0.3px;
+            color: #2c3e50;
         }
 
-        .hero-content {
-            z-index: 2;
+        .brand-sub {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #e67e22;
+            letter-spacing: 0.5px;
         }
 
         .hero-content h1 {
-            font-size: 2.6rem;
+            font-size: 2.4rem;
             font-weight: 800;
             line-height: 1.2;
-            margin-bottom: 1.2rem;
-            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+            color: #1e3a5f;
         }
 
         .hero-highlight {
-            color: #0ff;
-            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
-            border-bottom: 2px solid #0ff;
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            display: inline-block;
         }
 
         .hero-description {
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.5;
-            opacity: 0.85;
-            max-width: 90%;
-            margin-bottom: 2rem;
+            color: #4a627a;
+            margin-bottom: 1.8rem;
         }
 
         .trust-badge {
             display: flex;
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 1rem;
             flex-wrap: wrap;
         }
 
@@ -367,12 +360,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.8rem;
-            background: rgba(0, 255, 255, 0.12);
+            font-size: 0.75rem;
+            background: #fef5e8;
             padding: 6px 14px;
             border-radius: 40px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(0, 255, 255, 0.25);
+            color: #b45f1b;
+            font-weight: 500;
         }
 
         .quote-area {
@@ -383,18 +376,17 @@
         .quote {
             font-style: normal;
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             line-height: 1.4;
-            border-left: 3px solid #0ff;
+            border-left: 3px solid #e67e22;
             padding-left: 1rem;
-            opacity: 0.9;
+            color: #5d6f83;
         }
 
-        /* RIGHT SIDE: FORM SECTION (corporate command center style) */
+        /* RIGHT SIDE: FORM SECTION (white card area) */
         .login-form-section {
             flex: 1;
-            background: rgba(2, 12, 22, 0.7);
-            backdrop-filter: blur(12px);
+            background: white;
             padding: 3rem 2.5rem;
             display: flex;
             flex-direction: column;
@@ -402,25 +394,24 @@
         }
 
         .form-header h2 {
-            font-size: 2rem;
+            font-size: 1.9rem;
             font-weight: 700;
-            color: #ffffff;
+            color: #1e3a5f;
             letter-spacing: -0.3px;
         }
 
         .form-header p {
-            color: #9ab3d0;
-            margin-top: 8px;
-            font-size: 0.95rem;
+            color: #5e7a93;
+            margin-top: 6px;
+            font-size: 0.9rem;
         }
 
         .input-label {
             display: block;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #ccdeff;
+            color: #2c4c6e;
             margin-bottom: 8px;
-            letter-spacing: 0.3px;
         }
 
         .input-field {
@@ -432,33 +423,26 @@
         .input-field i {
             position: absolute;
             left: 16px;
-            color: #4a9eff;
+            color: #e67e22;
             font-size: 1.1rem;
-            transition: color 0.2s;
         }
 
         .input-field input {
             width: 100%;
             padding: 14px 16px 14px 46px;
             font-size: 0.95rem;
-            font-family: 'Inter', sans-serif;
-            border: 1.5px solid rgba(0, 150, 255, 0.4);
+            border: 1.5px solid #e2e8f0;
             border-radius: 16px;
-            background: rgba(2, 20, 35, 0.7);
-            transition: all 0.2s ease;
+            background: #ffffff;
+            transition: all 0.2s;
             outline: none;
-            color: #f0f9ff;
+            color: #1e2f3e;
             font-weight: 500;
         }
 
         .input-field input:focus {
-            border-color: #0ff;
-            box-shadow: 0 0 0 4px rgba(0, 255, 255, 0.2);
-            background: rgba(5, 25, 45, 0.9);
-        }
-
-        .input-field input::placeholder {
-            color: #6a8bb0;
+            border-color: #e67e22;
+            box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.15);
         }
 
         .form-options {
@@ -472,70 +456,68 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
             font-size: 0.85rem;
-            color: #bdd4ff;
+            color: #2c4c6e;
         }
 
         .checkbox input {
+            accent-color: #e67e22;
             width: 16px;
             height: 16px;
-            cursor: pointer;
-            accent-color: #0ff;
         }
 
         .forgot-link {
             font-size: 0.85rem;
-            font-weight: 500;
-            color: #0ff;
+            font-weight: 600;
+            color: #e67e22;
             text-decoration: none;
         }
 
         .forgot-link:hover {
-            color: #88f0ff;
             text-decoration: underline;
+            color: #c0392b;
         }
 
         .login-btn {
-            background: linear-gradient(95deg, #004466, #0088aa, #00ccff);
-            background-size: 200% auto;
+            background: linear-gradient(95deg, #e67e22, #f39c12);
             color: white;
             width: 100%;
             padding: 14px 0;
             border: none;
-            border-radius: 40px;
+            border-radius: 44px;
             font-weight: 700;
             font-size: 1rem;
-            font-family: 'Inter', sans-serif;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            box-shadow: 0 6px 18px rgba(0, 160, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
 
         .login-btn:hover {
             transform: translateY(-2px);
-            background-position: right center;
-            box-shadow: 0 12px 24px -8px rgba(0, 200, 255, 0.5);
+            box-shadow: 0 10px 20px rgba(230, 126, 34, 0.4);
         }
 
         .divider {
             display: flex;
             align-items: center;
-            text-align: center;
             margin: 1.8rem 0 1.5rem;
-            color: #6c8db0;
-            font-size: 0.8rem;
+            color: #a0b8d0;
+            font-size: 0.75rem;
         }
 
         .divider::before,
         .divider::after {
             content: "";
             flex: 1;
-            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        .divider span {
+            margin: 0 12px;
         }
 
         .sso-buttons {
@@ -549,33 +531,32 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            background: rgba(10, 40, 60, 0.7);
-            border: 1px solid rgba(0, 200, 255, 0.4);
+            gap: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 44px;
             padding: 11px 0;
             font-weight: 600;
-            font-size: 0.85rem;
-            color: #e0f0ff;
+            font-size: 0.8rem;
+            color: #1e3a5f;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .sso-btn:hover {
-            background: rgba(0, 120, 180, 0.6);
-            border-color: #0ff;
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
+            background: #fff4e6;
+            border-color: #e67e22;
         }
 
         .register-prompt {
             text-align: center;
             margin-top: 2rem;
             font-size: 0.85rem;
-            color: #9ab3cf;
+            color: #5e7a93;
         }
 
         .register-prompt a {
-            color: #0ff;
+            color: #e67e22;
             font-weight: 700;
             text-decoration: none;
         }
@@ -584,11 +565,10 @@
             text-decoration: underline;
         }
 
-        /* Ripple effect */
         .ripple-effect {
             position: absolute;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 255, 255, 0.6), rgba(0, 255, 255, 0));
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
             transform: scale(0);
             animation: rippleAnim 0.5s ease-out;
             pointer-events: none;
@@ -612,7 +592,7 @@
             }
 
             .hero-content h1 {
-                font-size: 2rem;
+                font-size: 1.9rem;
             }
 
             .login-form-section {
@@ -631,84 +611,89 @@
 
 <body>
 
-    <!-- Fullscreen Drone Background (low brightness) -->
-    <div class="drone-bg">
-        <img src="https://picsum.photos/id/96/1920/1080" alt="Drone fleet surveillance background"
-            onerror="this.src='https://images.pexels.com/photos/4425877/pexels-photo-4425877.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+    <!-- Fullscreen Tamil Nadu Government Background (low brightness) -->
+    <div class="heritage-bg">
+        <img src="https://images.pexels.com/photos/1594473/pexels-photo-1594473.jpeg?auto=compress&cs=tinysrgb&w=1600"
+            alt="Tamil Nadu Corporation Building"
+            onerror="this.src='https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
-    <div class="drone-overlay"></div>
+    <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
 
     <div id="toast-container" class="toast-container"></div>
 
     <div class="auth-card">
-        <!-- Left Side: Aerospace & Defense Branding -->
+        <!-- LEFT SIDE: Tamil Nadu Municipal Tax Branding -->
         <div class="login-hero">
             <div class="brand">
-                <div class="brand-icon"><i class="fas fa-drone"></i></div>
-                <div class="brand-text">AEROCORE<span style="font-weight:500; font-size:1rem;"> | UAS</span></div>
+                <div class="brand-icon"><i class="fas fa-landmark"></i></div>
+                <div>
+                    <div class="brand-text">Greater Chennai Corporation</div>
+                    <div class="brand-sub">Tamil Nadu • Tax Recognition Portal</div>
+                </div>
             </div>
             <div class="hero-content">
-                <h1>Drone<br>Command <span class="hero-highlight">Access</span></h1>
+                <h1>Property Tax<br><span class="hero-highlight">Digital Seva</span></h1>
                 <p class="hero-description">
-                    Next-gen fleet management & autonomous mission control. Secure authentication for defense-grade
-                    drone operations.
+                    Official municipal portal for property tax assessment, online payment, and e-recognition
+                    certificates.
+                    Government of Tamil Nadu initiative for transparent governance.
                 </p>
                 <div class="trust-badge">
-                    <div class="trust-item"><i class="fas fa-shield-virus"></i> <span>Quantum Secure</span></div>
-                    <div class="trust-item"><i class="fas fa-satellite-dish"></i> <span>Military Grade</span></div>
-                    <div class="trust-item"><i class="fas fa-fingerprint"></i> <span>Bio-Metric Ready</span></div>
+                    <div class="trust-item"><i class="fas fa-shield-alt"></i> <span>e-Governance</span></div>
+                    <div class="trust-item"><i class="fas fa-file-certificate"></i> <span>Tax Recognition</span></div>
+                    <div class="trust-item"><i class="fas fa-hand-holding-usd"></i> <span>Online Collection</span></div>
                 </div>
             </div>
             <div class="quote-area">
-                <div class="quote">“Trusted by 300+ global defense & logistics operators — real-time drone
-                    orchestration.”</div>
+                <div class="quote">“நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு” — Hon'ble Minister of Municipal
+                    Administration</div>
             </div>
         </div>
 
-        <!-- Right Side: Access Panel (modern) -->
+        <!-- RIGHT SIDE: Taxpayer Login Panel -->
         <div class="login-form-section">
             @yield('content')
             @hasSection('content')
             @else
                 <div class="form-header">
-                    <h2>Operator access</h2>
-                    <p>Authenticate to command drone fleet & intelligence hub</p>
+                    <h2>Taxpayer Access</h2>
+                    <p>Sign in to view property tax, file returns & download e-receipts</p>
                 </div>
                 <form id="loginForm" action="#" method="post">
                     <div class="input-group">
-                        <label class="input-label" for="email">Tactical email / ID</label>
+                        <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu)</label>
                         <div class="input-field">
                             <i class="fas fa-envelope"></i>
-                            <input type="email" id="email" name="email" placeholder="pilot.call@aerocore.com"
-                                autocomplete="email" required>
+                            <input type="email" id="email" name="email"
+                                placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
                         </div>
                     </div>
                     <div class="input-group">
-                        <label class="input-label" for="password">Secure access key</label>
+                        <label class="input-label" for="password">Tax Portal Password / OTP PIN</label>
                         <div class="input-field">
-                            <i class="fas fa-key"></i>
+                            <i class="fas fa-lock"></i>
                             <input type="password" id="password" name="password" placeholder="••••••••"
                                 autocomplete="current-password" required>
                         </div>
                     </div>
                     <div class="form-options">
                         <label class="checkbox">
-                            <input type="checkbox" id="rememberCheck"> <span>Trust this command terminal</span>
+                            <input type="checkbox" id="rememberCheck"> <span>Keep me signed in (secured device)</span>
                         </label>
-                        <a href="#" class="forgot-link" id="forgotPwdLink">Regen access token?</a>
+                        <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password / PID?</a>
                     </div>
-                    <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-drone"></i> Authenticate &
-                        Launch</button>
+                    <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-file-invoice-dollar"></i>
+                        Access Tax Dashboard</button>
                 </form>
-                <div class="divider"><span>OR FEDERATED SSO</span></div>
+                <div class="divider"><span>OR SIGN IN WITH</span></div>
                 <div class="sso-buttons">
-                    <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> Gov Cloud</button>
-                    <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> DOD SSO</button>
-                    <button class="sso-btn" id="ssoMsftBtn"><i class="fab fa-microsoft"></i> Azure FedRAMP</button>
+                    <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
+                    <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
+                    <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
                 </div>
-                <div class="register-prompt">New mission profile? <a href="#" id="signupLink">Request security
-                        clearance</a></div>
+                <div class="register-prompt">New taxpayer? <a href="#" id="signupLink">Register your property for
+                        tax recognition</a></div>
             @endif
         </div>
     </div>
@@ -717,7 +702,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ========== TOAST SYSTEM (preserved & upgraded) ==========
+        // ========== TOAST SYSTEM (preserved) ==========
         function showToast(type, title, message, duration = 5000) {
             const toastContainer = document.getElementById('toast-container');
             const icons = {
@@ -775,7 +760,7 @@
                 ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
                 ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
                 ripple.style.position = 'absolute';
-                ripple.style.background = 'radial-gradient(circle, rgba(0,255,255,0.5), rgba(0,255,255,0))';
+                ripple.style.background = 'radial-gradient(circle, rgba(230,126,34,0.5), rgba(230,126,34,0))';
                 ripple.style.borderRadius = '50%';
                 ripple.style.pointerEvents = 'none';
                 ripple.style.transform = 'scale(0)';
@@ -791,52 +776,55 @@
             }
         });
 
-        // Particles creation (drone-ish)
-        function createTechParticles() {
+        // Particles generation (light festive)
+        function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
-            for (let i = 0; i < 80; i++) {
+            for (let i = 0; i < 60; i++) {
                 const p = document.createElement('div');
                 p.classList.add('particle');
-                const size = Math.random() * 4 + 1.5;
-                p.style.width = size + 'px';
-                p.style.height = size + 'px';
+                p.style.width = (Math.random() * 4 + 2) + 'px';
+                p.style.height = p.style.width;
                 p.style.left = Math.random() * 100 + '%';
-                p.style.animationDuration = Math.random() * 14 + 7 + 's';
+                p.style.animationDuration = Math.random() * 14 + 8 + 's';
                 p.style.animationDelay = Math.random() * 15 + 's';
-                p.style.opacity = Math.random() * 0.4 + 0.1;
-                p.style.background = `rgba(0, 200, 255, ${Math.random() * 0.5 + 0.2})`;
+                p.style.opacity = Math.random() * 0.3 + 0.1;
+                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
                 container.appendChild(p);
             }
         }
-        createTechParticles();
+        createParticles();
 
-        // LOGIC: AEROCORE authentication simulation
+        // MUNICIPAL TAX RECOGNITION LOGIC
         function handleLogin(email, password) {
             if (!email || !password) {
-                showToast("error", "Authentication failure", "Fill all security fields", 3500);
+                showToast("error", "Authentication failed", "Please enter your registered ID / password", 3500);
                 return false;
             }
             if (!email.includes('@') || !email.includes('.')) {
-                showToast("error", "Invalid callsign", "Enter valid tactical email", 3500);
+                showToast("error", "Invalid email", "Enter valid taxpayer email or mobile number", 3500);
                 return false;
             }
             if (password.length < 4) {
-                showToast("error", "Access denied", "Security token too short (demo requires 4+ chars)", 3500);
+                showToast("error", "Access denied", "Invalid credentials (demo requires 4+ characters)", 3500);
                 return false;
             }
+
             const domain = email.split('@')[1] || '';
-            if (domain && (domain.includes('aerocore') || domain.includes('drone') || domain.includes('tactical') || domain
-                    .includes('defense'))) {
-                showToast("success", "🔐 Command Authorized", `Welcome ${email.split('@')[0]}, drone telemetry loading...`,
-                    3200);
-                setTimeout(() => showToast("info", "Live Feed", "Fleet status: ACTIVE | 4 drones online", 2800), 1300);
+            if (domain && (domain.includes('tn.gov') || domain.includes('municipality') || domain.includes('chennai') ||
+                    domain.includes('tax'))) {
+                showToast("success", "🏛️ Taxpayer Verified",
+                    `Welcome ${email.split('@')[0]}, property tax dashboard loading...`, 3500);
+                setTimeout(() => showToast("info", "e-Recognition", "Your PTIN: TN-2025-XXXX | Last payment: ₹4,250", 4000),
+                    1400);
             } else {
-                showToast("success", "✅ Secure Entry", `Operator ${email.split('@')[0]}, demo mission ready.`, 3000);
+                showToast("success", "✅ Tamil Nadu Tax Portal",
+                    `Welcome ${email.split('@')[0]}! Demo assessment —  property tax e-services active.`, 3200);
             }
             return true;
         }
 
+        // Bind events
         const form = document.getElementById('loginForm');
         if (form) form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -847,28 +835,31 @@
 
         document.getElementById('forgotPwdLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showToast("info", "Token reset", "Recovery link sent to encrypted channel (demo)", 3500);
+            showToast("info", "Password recovery", "Reset link sent to registered mobile (TN e-Seva)", 3800);
         });
         document.getElementById('signupLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showToast("info", "Clearance request", "Security team will verify your credentials", 4000);
+            showToast("info", "Property Registration",
+                "New tax assessment request initiated. Visit nearest corporation office or complete e-KYC.",
+                4500);
         });
         document.getElementById('ssoGoogleBtn')?.addEventListener('click', () => {
-            showToast("info", "Gov Cloud SSO", "Redirect to secure identity provider", 2500);
-            setTimeout(() => showToast("success", "SSO handshake", "Access granted: Joint forces portal", 2000),
-                1200);
+            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2500);
+            setTimeout(() => showToast("success", "SSO Connected", "Taxpayer records fetched", 2200), 1300);
         });
         document.getElementById('ssoOktaBtn')?.addEventListener('click', () => {
-            showToast("info", "DOD SSO", "Initiating SAML with PKI", 2500);
-            setTimeout(() => showToast("success", "Verified", "Mission dashboard unlocked", 2000), 1200);
+            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2500);
+            setTimeout(() => showToast("success", "Verified", "Property tax summary available", 2200), 1200);
         });
         document.getElementById('ssoMsftBtn')?.addEventListener('click', () => {
-            showToast("info", "Azure FedRAMP", "Connecting to entra ID", 2500);
-            setTimeout(() => showToast("success", "Session active", "Drone telemetry ready", 2000), 1200);
+            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2600);
+            setTimeout(() => showToast("success", "Authorized", "Tax certificates accessible", 2000), 1200);
         });
-        document.getElementById('rememberCheck')?.addEventListener('change', (e) => {
-            if (e.target.checked) showToast("info", "Terminal trust", "Device registered for 30 days (encrypted)",
-                2800);
+
+        const rememberCheck = document.getElementById('rememberCheck');
+        if (rememberCheck) rememberCheck.addEventListener('change', (e) => {
+            if (e.target.checked) showToast("info", "Session persistence",
+                "Secured cookie enabled for 30 days (government policy)", 2800);
         });
 
         const rightPanel = document.querySelector('.login-form-section');
@@ -877,14 +868,15 @@
             const emailF = document.getElementById('email');
             const pwdF = document.getElementById('password');
             if (emailF && pwdF) {
-                emailF.value = 'commander@aerocore.com';
-                pwdF.value = 'droneOps2025';
-                showToast("success", "Demo profile", "Tactical operator credentials injected", 1800);
+                emailF.value = 'taxpayer@tn.gov.in';
+                pwdF.value = 'TNtax2025';
+                showToast("success", "Demo Credentials", "Sample taxpayer account loaded (for preview)", 2000);
             }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            showToast("info", "🛸 AeroCore UAS", "Quantum-encrypted channel established", 3200);
+            showToast("info", "📜 Tamil Nadu Municipal Tax",
+                "Welcome to property tax e-portal | Secure GSTN integration", 3800);
         });
     </script>
     @yield('js')
