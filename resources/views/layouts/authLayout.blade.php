@@ -32,7 +32,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow-x: hidden;
+
             padding: 1.5rem;
         }
 
@@ -86,8 +86,8 @@
             width: 100%;
             height: 100%;
             background-image:
-                linear-gradient(rgba(255, 215, 120, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 215, 120, 0.03) 1px, transparent 1px);
+                linear-gradient(rgba(119, 119, 119, 0.897) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(12, 162, 221, 0.877) 1px, transparent 1px);
             background-size: 45px 45px;
             pointer-events: none;
             z-index: -1;
