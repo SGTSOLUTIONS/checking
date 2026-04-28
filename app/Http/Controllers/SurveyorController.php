@@ -967,6 +967,32 @@ class SurveyorController extends Controller
         $zone = strtolower(trim($ward->zone));
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
+        $allMisTable = "mis_corporation_{$corp}";
+
+        switch ($request->type()) {
+            case "NEW":
+                return response()->json(
+                    DB::table($allMisTable)->where('assessment', $request->assessment())->first(),
+                    200
+                );
+
+            case "OLD":
+                DB::table($allMisTable)->where('assessment', $request->assessment())->update($request->all());
+                return response()->json(['success' => true, 'message' => 'Updated successfully'], 200);
+
+            case "OTHER":
+                DB::table($allMisTable)->where('assessment', $request->assessment())->delete();
+                return response()->json(['success' => true, 'message' => 'Deleted successfully'], 200);
+
+            case "VACCAND":
+                return response()->json(
+                    DB::table($allMisTable)->where('assessment', $request->assessment())->get(),
+                    200
+                );
+
+            default:
+                return response()->json(['error' => 'Invalid request type: ' . $request->type()], 400);
+        }
 
 
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
@@ -1007,8 +1033,7 @@ class SurveyorController extends Controller
                     ]
                 ], 422);
             }
-        }
-        else{
+        } else {
             if (($data['no_of_shop']) > $buildingData->number_shop) {
 
                 $remaining = $buildingData->number_shop - $data['no_of_shop'];
