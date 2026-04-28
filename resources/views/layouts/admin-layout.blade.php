@@ -1265,9 +1265,14 @@
                             <span>Help & Support</span>
                         </a>
                         <li class="nav-item mt-4">
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                                 @csrf
-                                <button type="submit" class="nav-link logout-btn">submit</button>
+                                <a href="#" class="dropdown-item"
+                                    onclick="event.preventDefault(); document.getElementById('logoutForm').submit();"
+                                    style="text-decoration: none;">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </a>
                             </form>
                         </li>
                     </div>
