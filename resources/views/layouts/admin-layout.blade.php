@@ -760,11 +760,11 @@
                             <div class="user-name">{{ Auth::user()->name }}</div>
                             <div class="user-role">{{ Auth::user()->role }}</div>
                         </div>
-                        <a href="{{ route('profile.show') }}" class="dropdown-item">
+                        <a href="#" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             <span>My Profile</span>
                         </a>
-                        <a href="{{ route('profile.settings') }}" class="dropdown-item">
+                        <a href="#" class="dropdown-item">
                             <i class="fas fa-cog"></i>
                             <span>Account Settings</span>
                         </a>
