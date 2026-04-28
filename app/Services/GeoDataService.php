@@ -111,6 +111,7 @@ class GeoDataService
                     $table->string('image2')->nullable();
                     $table->string('sqfeet')->nullable();
                     $table->string('merge')->nullable();
+                    $table->string('zone')->nullable();
                     $table->string('split')->nullable();
                     $table->string('worker_name')->nullable();
                     $table->string('remarks')->nullable();
@@ -166,7 +167,7 @@ class GeoDataService
                     $table->string('water_tax')->nullable();
                     $table->string('halfyeartax')->nullable();
                     $table->string('balance')->nullable();
-                     $table->string('no_of_peoples')->nullable();
+                     $table->string('no_of_persons')->nullable();
                     // REMOVED: $table->string('building_data_id')->nullable(); // This was the duplicate
                     $table->string('qc_area')->nullable();
                     $table->string('qc_usage')->nullable();

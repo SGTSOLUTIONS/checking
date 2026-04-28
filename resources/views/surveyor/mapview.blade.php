@@ -1151,6 +1151,12 @@
                                         <div id="no_of_shop_error" class="error-message text-danger"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
+                                        <label for="no_of_persons" class="form-label">Number of Persons</label>
+                                        <input type="number" name="no_of_persons" class="form-control" id="no_of_persons"
+                                            min="0" step="1" value="0">
+                                        <div id="no_of_persons_error" class="error-message text-danger"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
                                         <label for="number_persons" class="form-label">Number persons</label>
                                         <input type="number" name="number_persons" class="form-control" id="number_persons"
                                             min="0" step="1" value="0">
@@ -1388,6 +1394,11 @@
                             <div class="col-md-3 mb-3">
                                 <label>Gisid</label>
                                 <input type="text" class="form-control" name="building_gisid" id="building_gisid"
+                                    readonly>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label>Zone</label>
+                                <input type="text" class="form-control" name="building_zone" id="building_zone"
                                     readonly>
                             </div>
                             <div class="col-md-3 mb-3">
@@ -2320,7 +2331,7 @@
 
             // Update resetPointFormFields to properly clear shops
             function resetPointFormFields() {
-                $("#pointgis, #assessment, #old_assessment, #owner_name, #present_owner_name, #worker_name, #building_data_id")
+                $("#pointgis, #assessment, #old_assessment, #owner_name, #present_owner_name, #worker_name, #building_data_id,#no_of_persons")
                     .val("");
                 $("#floor, #old_door_no, #new_door_no, #plot_area, #eb, #otsarea").val("");
                 $("#water_tax, #old_water_tax, #halfyeartax, #balance, #professional_tax, #gst, #trade_income").val(
@@ -2388,6 +2399,7 @@
                 $("#percentage").val("");
                 $("#remarks_building").val("");
                 $("#corporationremarks").val("");
+                $("#zone").val("");
 
                 // Reset both image previews
                 $("#buildingImagePreview").hide().attr("src", "");
@@ -2452,6 +2464,7 @@
                 $("#building_name").val(item.building_name || "");
                 $("#point_road_name").val(item.road_name || "");
                 $("#phone_building").val(item.phone || "");
+                 $("#zone_building").val(item.zone || "");
 
                 // Building Details
                 $("#building_usage").val(item.building_usage || "");
