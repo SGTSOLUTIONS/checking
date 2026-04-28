@@ -1086,7 +1086,7 @@ class SurveyorController extends Controller
             'new_door_no' => $data['new_door_no'] ?? null,
             'bill_usage' => $data['bill_usage'] ?? null,
             'eb' => $data['eb'] ?? null,
-            'number_persons' => $data['number_persons'] ?? 0,
+            'no_of_persons' => $data['number_persons'] ?? 0,
             'water_tax' => $data['water_tax'] ?? null,
             'old_water_tax' => $data['old_water_tax'] ?? null,
             'professional_tax' => $data['professional_tax'] ?? null,
