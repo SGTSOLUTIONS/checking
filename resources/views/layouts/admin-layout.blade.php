@@ -1267,7 +1267,7 @@
                         <li class="nav-item mt-4">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="nav-link logout-btn">...</button>
+                                <button type="submit" class="nav-link logout-btn">submit</button>
                             </form>
                         </li>
                     </div>
