@@ -32,11 +32,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-
             padding: 1.5rem;
+            background-color: #f4f2ef;
         }
 
-        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with light brightness (adjusted filter) */
+        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with light brightness (soft, airy feel) */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -52,7 +52,7 @@
             height: 100%;
             object-fit: cover;
             /* Light brightness: increased brightness and reduced contrast for a softer, lighter look */
-            filter: brightness(0.80) contrast(1.02) saturate(1.05);
+            filter: brightness(0.82) contrast(1.02) saturate(1.05);
             transform: scale(1.02);
             animation: slowZoom 28s ease infinite alternate;
         }
@@ -67,30 +67,18 @@
             }
         }
 
-        /* Light overlay: more subtle to maintain light brightness feel */
+        /* Light overlay: subtle gradient to maintain light brightness feel and text readability */
         .bg-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(255, 248, 235, 0.3) 0%, rgba(255, 245, 225, 0.2) 100%);
+            background: linear-gradient(135deg, rgba(255, 248, 235, 0.35) 0%, rgba(255, 245, 225, 0.25) 100%);
             z-index: -1;
         }
 
-        /* Subtle pattern overlay (temple/kolam inspired grid) - kept original comment but no active pattern */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        /* floating particles - subtle */
+        /* floating particles - subtle festive effect */
         .particles {
             position: fixed;
             top: 0;
@@ -241,7 +229,7 @@
             border-left-color: #2980b9;
         }
 
-        /* ===== MAIN CARD: Light & Official Municipal Design ===== */
+        /* ===== MAIN CARD: Full Bootstrap responsive, modern municipal design ===== */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -249,6 +237,7 @@
             border-radius: 2rem;
             box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.3);
             display: flex;
+            flex-wrap: wrap;
             overflow: hidden;
             transition: all 0.3s ease;
             z-index: 10;
@@ -267,11 +256,12 @@
             }
         }
 
-        /* LEFT SIDE: Tamil Nadu Municipal Branding (white background for header text clarity) */
+        /* LEFT SIDE: Tamil Nadu Municipal Branding */
         .login-hero {
             flex: 1.2;
+            min-width: 280px;
             background: linear-gradient(135deg, #f9f3e0 0%, #fff8ed 100%);
-            padding: 3rem 2.5rem;
+            padding: 2.5rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -296,6 +286,7 @@
             gap: 14px;
             margin-bottom: 2rem;
             z-index: 2;
+            flex-wrap: wrap;
         }
 
         .brand-icon {
@@ -312,25 +303,36 @@
         }
 
         .brand-text {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 800;
             letter-spacing: -0.3px;
             color: #2c3e50;
+            line-height: 1.2;
         }
 
         .brand-sub {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 500;
             color: #e67e22;
             letter-spacing: 0.5px;
         }
 
         .hero-content h1 {
-            font-size: 2.4rem;
+            font-size: 2rem;
             font-weight: 800;
             line-height: 1.2;
             margin-bottom: 1rem;
             color: #1e3a5f;
+        }
+
+        @media (min-width: 992px) {
+            .hero-content h1 {
+                font-size: 2.4rem;
+            }
+
+            .brand-text {
+                font-size: 1.6rem;
+            }
         }
 
         .hero-highlight {
@@ -340,16 +342,16 @@
         }
 
         .hero-description {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.5;
             color: #4a627a;
-            margin-bottom: 1.8rem;
+            margin-bottom: 1.5rem;
         }
 
         .trust-badge {
             display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
             flex-wrap: wrap;
         }
 
@@ -357,9 +359,9 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             background: #fef5e8;
-            padding: 6px 14px;
+            padding: 5px 12px;
             border-radius: 40px;
             color: #b45f1b;
             font-weight: 500;
@@ -373,25 +375,32 @@
         .quote {
             font-style: normal;
             font-weight: 500;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             line-height: 1.4;
             border-left: 3px solid #e67e22;
             padding-left: 1rem;
             color: #5d6f83;
         }
 
-        /* RIGHT SIDE: FORM SECTION (white card area) */
+        /* RIGHT SIDE: FORM SECTION (fully Bootstrap-ready) */
         .login-form-section {
             flex: 1;
+            min-width: 320px;
             background: white;
-            padding: 3rem 2.5rem;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
+        @media (min-width: 768px) {
+            .login-form-section {
+                padding: 3rem 2.5rem;
+            }
+        }
+
         .form-header h2 {
-            font-size: 1.9rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #1e3a5f;
             letter-spacing: -0.3px;
@@ -422,11 +431,12 @@
             left: 16px;
             color: #e67e22;
             font-size: 1.1rem;
+            z-index: 2;
         }
 
         .input-field input {
             width: 100%;
-            padding: 14px 16px 14px 46px;
+            padding: 12px 16px 12px 46px;
             font-size: 0.95rem;
             border: 1.5px solid #e2e8f0;
             border-radius: 16px;
@@ -447,6 +457,8 @@
             justify-content: space-between;
             align-items: center;
             margin: 1rem 0 1.8rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .checkbox {
@@ -479,7 +491,7 @@
             background: linear-gradient(95deg, #e67e22, #f39c12);
             color: white;
             width: 100%;
-            padding: 14px 0;
+            padding: 12px 0;
             border: none;
             border-radius: 44px;
             font-weight: 700;
@@ -501,7 +513,7 @@
         .divider {
             display: flex;
             align-items: center;
-            margin: 1.8rem 0 1.5rem;
+            margin: 1.5rem 0 1.2rem;
             color: #a0b8d0;
             font-size: 0.75rem;
         }
@@ -519,25 +531,34 @@
 
         .sso-buttons {
             display: flex;
-            gap: 1rem;
+            gap: 0.8rem;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .sso-btn {
             flex: 1;
+            min-width: 110px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 44px;
-            padding: 11px 0;
+            padding: 10px 8px;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #1e3a5f;
             cursor: pointer;
             transition: all 0.2s;
+        }
+
+        @media (min-width: 576px) {
+            .sso-btn {
+                font-size: 0.8rem;
+                padding: 11px 0;
+            }
         }
 
         .sso-btn:hover {
@@ -547,7 +568,7 @@
 
         .register-prompt {
             text-align: center;
-            margin-top: 2rem;
+            margin-top: 1.8rem;
             font-size: 0.85rem;
             color: #5e7a93;
         }
@@ -578,28 +599,52 @@
             }
         }
 
-        @media (max-width: 900px) {
-            .auth-card {
-                flex-direction: column;
-                max-width: 550px;
+        /* Bootstrap responsive overrides for small devices */
+        @media (max-width: 767px) {
+            body {
+                padding: 1rem;
             }
 
-            .login-hero {
-                padding: 2rem 1.5rem;
+            .auth-card {
+                border-radius: 1.5rem;
+            }
+
+            .login-hero,
+            .login-form-section {
+                padding: 1.8rem;
+            }
+
+            .brand-text {
+                font-size: 1.2rem;
+            }
+
+            .brand-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
             }
 
             .hero-content h1 {
-                font-size: 1.9rem;
+                font-size: 1.6rem;
             }
 
-            .login-form-section {
-                padding: 2rem 1.5rem;
+            .trust-item {
+                font-size: 0.65rem;
             }
         }
 
         @media (max-width: 480px) {
             .sso-buttons {
                 flex-direction: column;
+            }
+
+            .sso-btn {
+                width: 100%;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -608,9 +653,8 @@
 
 <body>
 
-    <!-- Fullscreen Tamil Nadu Government Background with light brightness (updated image and filter for bright, airy feel) -->
+    <!-- Fullscreen Tamil Nadu Government Background with light brightness (optimized for both mobile/web) -->
     <div class="heritage-bg">
-        <!-- Replaced with a brighter, more vibrant yet professional Tamil Nadu government building / heritage background -->
         <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
             alt="Tamil Nadu Government Heritage Building"
             onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
@@ -649,7 +693,7 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDE: Taxpayer Login Panel -->
+        <!-- RIGHT SIDE: Taxpayer Login Panel (Fully Bootstrap-compatible responsive form) -->
         <div class="login-form-section">
             @yield('content')
             @hasSection('content')
@@ -659,7 +703,7 @@
                     <p>Sign in to view property tax, file returns & download e-receipts</p>
                 </div>
                 <form id="loginForm" action="#" method="post">
-                    <div class="input-group">
+                    <div class="mb-3">
                         <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu)</label>
                         <div class="input-field">
                             <i class="fas fa-envelope"></i>
@@ -667,7 +711,7 @@
                                 placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
                         </div>
                     </div>
-                    <div class="input-group">
+                    <div class="mb-3">
                         <label class="input-label" for="password">Tax Portal Password / OTP PIN</label>
                         <div class="input-field">
                             <i class="fas fa-lock"></i>
@@ -793,7 +837,7 @@
         }
         createParticles();
 
-        // MUNICIPAL TAX RECOGNITION LOGIC
+        // MUNICIPAL TAX RECOGNITION LOGIC (unchanged)
         function handleLogin(email, password) {
             if (!email || !password) {
                 showToast("error", "Authentication failed", "Please enter your registered ID / password", 3500);
