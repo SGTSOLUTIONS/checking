@@ -18,7 +18,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0f2f5, #e2e8f0);
+            background: linear-gradient(135deg, #1c4b92, #1354a8);
             min-height: 100vh;
             display: flex;
             align-items: center;
