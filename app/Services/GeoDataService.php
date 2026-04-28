@@ -166,6 +166,7 @@ class GeoDataService
                     $table->string('water_tax')->nullable();
                     $table->string('halfyeartax')->nullable();
                     $table->string('balance')->nullable();
+                     $table->string('no_of_peoples')->nullable();
                     // REMOVED: $table->string('building_data_id')->nullable(); // This was the duplicate
                     $table->string('qc_area')->nullable();
                     $table->string('qc_usage')->nullable();

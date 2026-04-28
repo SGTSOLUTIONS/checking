@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\Mime\Message;
 
 class SurveyorController extends Controller
 {
@@ -940,7 +941,6 @@ class SurveyorController extends Controller
             'total_shops' => 'required|integer|min:0',
         ]);
 
-
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -969,32 +969,54 @@ class SurveyorController extends Controller
         $corp = (int)$ward->corporation_id;
         $allMisTable = "mis_corporation_{$corp}";
 
-        switch ($request->type()) {
+        // Handle type validation before proceeding
+        switch ($request->type) {
             case "NEW":
-                return response()->json(
-                    DB::table($allMisTable)->where('assessment', $request->assessment())->first(),
-                    200
-                );
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->first();
+                if ($checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment already exists. This is not new data.'
+                    ], 422);
+                }
+                break;
 
             case "OLD":
-                DB::table($allMisTable)->where('assessment', $request->assessment())->update($request->all());
-                return response()->json(['success' => true, 'message' => 'Updated successfully'], 200);
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', $wardNo)
+                    ->first();
+                if (!$checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not exist in this ward. Please check the data.'
+                    ], 422);
+                }
+                break;
 
             case "OTHER":
-                DB::table($allMisTable)->where('assessment', $request->assessment())->delete();
-                return response()->json(['success' => true, 'message' => 'Deleted successfully'], 200);
-
-            case "VACCAND":
-                return response()->json(
-                    DB::table($allMisTable)->where('assessment', $request->assessment())->get(),
-                    200
-                );
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', '!=', $wardNo)
+                    ->first();
+                if (!$checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not belong to other ward.'
+                    ], 422);
+                }
+                break;
 
             default:
-                return response()->json(['error' => 'Invalid request type: ' . $request->type()], 400);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid request type'
+                ], 400);
         }
 
-
+        // Proceed with main logic only if switch validation passes
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
         $shopDataTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
@@ -1008,21 +1030,22 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
+
         if (!$buildingData) {
             return response()->json([
                 'success' => false,
                 'message' => 'Building data not found for this GIS ID. Please add building data first.',
             ], 404);
         }
+
+        // Shop count validation
         if ($existingPoint) {
             $shopdatacount = DB::table($shopDataTableName)
                 ->where('point_data_id', $existingPoint->id)
                 ->count();
 
             if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
-
                 $remaining = $buildingData->number_shop - $shopdatacount;
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1035,9 +1058,7 @@ class SurveyorController extends Controller
             }
         } else {
             if (($data['no_of_shop']) > $buildingData->number_shop) {
-
                 $remaining = $buildingData->number_shop - $data['no_of_shop'];
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1049,6 +1070,7 @@ class SurveyorController extends Controller
                 ], 422);
             }
         }
+
         // Prepare point data
         $pointData = [
             'point_gisid' => $data['point_gisid'],
@@ -1084,12 +1106,25 @@ class SurveyorController extends Controller
 
         try {
             DB::beginTransaction();
-            // Insert new point data
-            $pointData['created_at'] = now();
-            $pointId = DB::table($pointDataTableName)->insertGetId($pointData);
-            $message = 'Point data saved successfully';
+
+            // Insert or update point data
+            if ($existingPoint) {
+                // Update existing point
+                DB::table($pointDataTableName)
+                    ->where('id', $existingPoint->id)
+                    ->update($pointData);
+                $pointId = $existingPoint->id;
+                $message = 'Point data updated successfully';
+            } else {
+                // Insert new point data
+                $pointData['created_at'] = now();
+                $pointId = DB::table($pointDataTableName)->insertGetId($pointData);
+                $message = 'Point data saved successfully';
+            }
+
             // Handle shop details
             $totalShops = (int)($data['total_shops'] ?? 0);
+
             // Get existing shop IDs for this point
             $existingShopIds = DB::table($shopDataTableName)
                 ->where('point_data_id', $pointId)
@@ -1152,13 +1187,16 @@ class SurveyorController extends Controller
                 ->where('point_data_id', $pointId)
                 ->get();
 
+            // Helper method to get points data (implement if needed)
+            $pointsData = $this->getPointsData($ward);
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'pointData' => $updatedPointData,
                 'shops' => $updatedShops,
                 'pointDatas' => DB::table($pointDataTableName)->get(),
-                'points' => $this->getPointsData($ward) // You'll need to implement this method
+                'points' => $pointsData
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
