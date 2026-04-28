@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>TN Municipal | Property Tax & Revenue Portal</title>
+    <title>TN Municipal | Property Tax & Revenue Portal | Drone Survey Integration</title>
 
-    {{-- Bootstrap 5 CSS --}}
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    {{-- Font Awesome --}}
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-    {{-- Google Fonts: Inter & Poppins for official look --}}
+    <!-- Google Fonts: Inter & Poppins -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet">
@@ -36,7 +36,8 @@
             padding: 1.5rem;
         }
 
-        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with low brightness */
+        /* --- DRONE AERIAL BACKGROUND (UPDATED) --- */
+        /* The background now features a stunning drone-shot cityscape / municipal landscape to reflect modern tax administration & smart city monitoring */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -53,31 +54,31 @@
             object-fit: cover;
             filter: brightness(0.45) contrast(1.05) saturate(1.1);
             transform: scale(1.02);
-            animation: slowZoom 28s ease infinite alternate;
+            animation: slowDroneZoom 32s ease infinite alternate;
         }
 
-        @keyframes slowZoom {
+        @keyframes slowDroneZoom {
             0% {
                 transform: scale(1);
             }
 
             100% {
-                transform: scale(1.06);
+                transform: scale(1.08);
             }
         }
 
-        /* Dark gradient overlay for readability */
+        /* Dark gradient overlay for readability (matching municipal theme) */
         .bg-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-
+            background: radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.5), rgba(8, 20, 40, 0.65));
             z-index: -1;
         }
 
-        /* Subtle pattern overlay (temple/kolam inspired grid) */
+        /* Subtle pattern overlay (city grid / drone flight path inspired) */
         body::before {
             content: "";
             position: fixed;
@@ -86,14 +87,14 @@
             width: 100%;
             height: 100%;
             background-image:
-                linear-gradient(rgba(255, 215, 120, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 215, 120, 0.03) 1px, transparent 1px);
-            background-size: 45px 45px;
+                linear-gradient(rgba(255, 215, 120, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 215, 120, 0.04) 1px, transparent 1px);
+            background-size: 50px 50px;
             pointer-events: none;
             z-index: -1;
         }
 
-        /* floating particles - subtle */
+        /* Floating "drone" particles: small tech-like elements to suggest UAV survey */
         .particles {
             position: fixed;
             top: 0;
@@ -106,33 +107,33 @@
 
         .particle {
             position: absolute;
-            background: rgba(255, 200, 100, 0.2);
+            background: rgba(230, 126, 34, 0.25);
             border-radius: 50%;
             pointer-events: none;
-            animation: floatParticle linear infinite;
+            animation: floatDroneParticle linear infinite;
         }
 
-        @keyframes floatParticle {
+        @keyframes floatDroneParticle {
             0% {
-                transform: translateY(100vh) rotate(0deg);
+                transform: translateY(120vh) rotate(0deg);
                 opacity: 0;
             }
 
-            10% {
-                opacity: 0.5;
+            15% {
+                opacity: 0.6;
             }
 
-            90% {
+            85% {
                 opacity: 0.3;
             }
 
             100% {
-                transform: translateY(-20vh) rotate(360deg);
+                transform: translateY(-30vh) rotate(380deg);
                 opacity: 0;
             }
         }
 
-        /* ===== TOAST SYSTEM (official style) ===== */
+        /* ===== TOAST SYSTEM ===== */
         .toast-container {
             position: fixed;
             bottom: 2rem;
@@ -161,7 +162,6 @@
             position: relative;
             overflow: hidden;
             color: #1e2f3e;
-            font-family: 'Inter', sans-serif;
         }
 
         .toast.show {
@@ -205,7 +205,6 @@
 
         .toast-close:hover {
             color: #1e2f3e;
-            transform: scale(1.05);
         }
 
         .toast-progress {
@@ -244,13 +243,13 @@
             border-left-color: #2980b9;
         }
 
-        /* ===== MAIN CARD: Light & Official Municipal Design ===== */
+        /* ===== MAIN CARD ===== */
         .auth-card {
             width: 100%;
             max-width: 1280px;
             background: rgba(255, 255, 255, 0.98);
             border-radius: 2rem;
-            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.3);
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.4);
             display: flex;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -270,7 +269,7 @@
             }
         }
 
-        /* LEFT SIDE: Tamil Nadu Municipal Branding (white background for header text clarity) */
+        /* LEFT SIDE: Municipal Branding + Drone Initiative mention */
         .login-hero {
             flex: 1.2;
             background: linear-gradient(135deg, #f9f3e0 0%, #fff8ed 100%);
@@ -284,13 +283,14 @@
         }
 
         .login-hero::after {
-            content: "🏛️";
+            content: "🚁";
             position: absolute;
             bottom: 20px;
             right: 20px;
-            font-size: 80px;
-            opacity: 0.06;
+            font-size: 85px;
+            opacity: 0.08;
             pointer-events: none;
+            transform: rotate(-10deg);
         }
 
         .brand {
@@ -383,7 +383,7 @@
             color: #5d6f83;
         }
 
-        /* RIGHT SIDE: FORM SECTION (white card area) */
+        /* RIGHT SIDE: FORM */
         .login-form-section {
             flex: 1;
             background: white;
@@ -436,7 +436,6 @@
             background: #ffffff;
             transition: all 0.2s;
             outline: none;
-            color: #1e2f3e;
             font-weight: 500;
         }
 
@@ -606,16 +605,15 @@
             }
         }
     </style>
-    @yield('css')
 </head>
 
 <body>
 
-    <!-- Fullscreen Tamil Nadu Government Background (low brightness) -->
+    <!-- DRONE AERIAL BACKGROUND IMAGE: Urban flyover shot representing smart city property tax drone survey -->
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/1594473/pexels-photo-1594473.jpeg?auto=compress&cs=tinysrgb&w=1600"
-            alt="Tamil Nadu Corporation Building"
-            onerror="this.src='https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+        <img src="https://images.pexels.com/photos/12823145/pexels-photo-12823145.jpeg?auto=compress&cs=tinysrgb&w=1600"
+            alt="Drone Aerial View of Greater Chennai Corporation / Urban Landscape - Tamil Nadu Tax Survey"
+            onerror="this.src='https://images.pexels.com/photos/2366525/pexels-photo-2366525.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
@@ -623,78 +621,74 @@
     <div id="toast-container" class="toast-container"></div>
 
     <div class="auth-card">
-        <!-- LEFT SIDE: Tamil Nadu Municipal Tax Branding -->
+        <!-- LEFT SIDE: Branding with drone-enabled tax administration -->
         <div class="login-hero">
             <div class="brand">
-                <div class="brand-icon"><i class="fas fa-landmark"></i></div>
+                <div class="brand-icon"><i class="fas fa-drone"></i></div>
                 <div>
                     <div class="brand-text">Greater Chennai Corporation</div>
-                    <div class="brand-sub">Tamil Nadu • Tax Recognition Portal</div>
+                    <div class="brand-sub">Tamil Nadu • Drone-Assisted Tax Governance</div>
                 </div>
             </div>
             <div class="hero-content">
-                <h1>Property Tax<br><span class="hero-highlight">Digital Seva</span></h1>
+                <h1>Property Tax<br><span class="hero-highlight">Smart Drone Seva</span></h1>
                 <p class="hero-description">
-                    Official municipal portal for property tax assessment, online payment, and e-recognition
-                    certificates.
-                    Government of Tamil Nadu initiative for transparent governance.
+                    Official municipal portal enhanced with GIS drone surveys for accurate property assessment, online
+                    tax payments, and e-recognition certificates. Government of Tamil Nadu's advanced aerial tax mapping
+                    initiative.
                 </p>
                 <div class="trust-badge">
-                    <div class="trust-item"><i class="fas fa-shield-alt"></i> <span>e-Governance</span></div>
-                    <div class="trust-item"><i class="fas fa-file-certificate"></i> <span>Tax Recognition</span></div>
+                    <div class="trust-item"><i class="fas fa-drone"></i> <span>Aerial Survey 2025</span></div>
+                    <div class="trust-item"><i class="fas fa-chart-line"></i> <span>Real-time Assessment</span></div>
                     <div class="trust-item"><i class="fas fa-hand-holding-usd"></i> <span>Online Collection</span></div>
                 </div>
             </div>
             <div class="quote-area">
-                <div class="quote">“நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு” — Hon'ble Minister of Municipal
-                    Administration</div>
+                <div class="quote">“Drone-enabled transparency — revolutionizing urban property tax for Viksit Tamil
+                    Nadu” — Drone Commissionerate, Municipal Admin</div>
             </div>
         </div>
 
-        <!-- RIGHT SIDE: Taxpayer Login Panel -->
+        <!-- RIGHT SIDE: Login panel -->
         <div class="login-form-section">
-            @yield('content')
-            @hasSection('content')
-            @else
-                <div class="form-header">
-                    <h2>Taxpayer Access</h2>
-                    <p>Sign in to view property tax, file returns & download e-receipts</p>
+            <div class="form-header">
+                <h2>Taxpayer Access</h2>
+                <p>Sign in to view drone-survey property data, file returns & download e-receipts</p>
+            </div>
+            <form id="loginForm" action="#" method="post">
+                <div class="input-group">
+                    <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu Drone ID)</label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="taxpayer@tn.gov.in"
+                            autocomplete="email" required>
+                    </div>
                 </div>
-                <form id="loginForm" action="#" method="post">
-                    <div class="input-group">
-                        <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu)</label>
-                        <div class="input-field">
-                            <i class="fas fa-envelope"></i>
-                            <input type="email" id="email" name="email"
-                                placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
-                        </div>
+                <div class="input-group">
+                    <label class="input-label" for="password">Tax Portal Password / OTP PIN</label>
+                    <div class="input-field">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••"
+                            autocomplete="current-password" required>
                     </div>
-                    <div class="input-group">
-                        <label class="input-label" for="password">Tax Portal Password / OTP PIN</label>
-                        <div class="input-field">
-                            <i class="fas fa-lock"></i>
-                            <input type="password" id="password" name="password" placeholder="••••••••"
-                                autocomplete="current-password" required>
-                        </div>
-                    </div>
-                    <div class="form-options">
-                        <label class="checkbox">
-                            <input type="checkbox" id="rememberCheck"> <span>Keep me signed in (secured device)</span>
-                        </label>
-                        <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password / PID?</a>
-                    </div>
-                    <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-file-invoice-dollar"></i>
-                        Access Tax Dashboard</button>
-                </form>
-                <div class="divider"><span>OR SIGN IN WITH</span></div>
-                <div class="sso-buttons">
-                    <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
-                    <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
-                    <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
                 </div>
-                <div class="register-prompt">New taxpayer? <a href="#" id="signupLink">Register your property for
-                        tax recognition</a></div>
-            @endif
+                <div class="form-options">
+                    <label class="checkbox">
+                        <input type="checkbox" id="rememberCheck"> <span>Keep me signed in (secured device)</span>
+                    </label>
+                    <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password / PID?</a>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-drone"></i> Access Drone Tax
+                    Dashboard</button>
+            </form>
+            <div class="divider"><span>OR SIGN IN WITH</span></div>
+            <div class="sso-buttons">
+                <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
+                <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
+                <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
+            </div>
+            <div class="register-prompt">New taxpayer? <a href="#" id="signupLink">Register property for
+                    drone-based tax recognition</a></div>
         </div>
     </div>
 
@@ -702,7 +696,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ========== TOAST SYSTEM (preserved) ==========
+        // ========== TOAST SYSTEM ==========
         function showToast(type, title, message, duration = 5000) {
             const toastContainer = document.getElementById('toast-container');
             const icons = {
@@ -748,7 +742,7 @@
             } [m]));
         }
 
-        // Ripple effect
+        // Ripple effect for buttons
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.login-btn, .sso-btn');
             if (btn) {
@@ -776,110 +770,133 @@
             }
         });
 
-        // Particles generation (light festive)
+        // Generate particles that simulate drone dust / aerial tech glow
         function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 70; i++) {
                 const p = document.createElement('div');
                 p.classList.add('particle');
-                p.style.width = (Math.random() * 4 + 2) + 'px';
+                p.style.width = (Math.random() * 5 + 2) + 'px';
                 p.style.height = p.style.width;
                 p.style.left = Math.random() * 100 + '%';
                 p.style.animationDuration = Math.random() * 14 + 8 + 's';
                 p.style.animationDelay = Math.random() * 15 + 's';
-                p.style.opacity = Math.random() * 0.3 + 0.1;
-                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
+                p.style.opacity = Math.random() * 0.35 + 0.1;
+                p.style.background = `radial-gradient(circle, rgba(230, 126, 34, 0.7), rgba(255, 200, 100, 0.3))`;
                 container.appendChild(p);
             }
         }
         createParticles();
 
-        // MUNICIPAL TAX RECOGNITION LOGIC
-        function handleLogin(email, password) {
+        // DRONE THEMED LOGIC: handles login and showcases drone tax survey features
+        function handleDroneTaxLogin(email, password) {
             if (!email || !password) {
-                showToast("error", "Authentication failed", "Please enter your registered ID / password", 3500);
+                showToast("error", "Drone Authentication Required",
+                    "Please enter registered email & password for property tax portal", 3800);
                 return false;
             }
             if (!email.includes('@') || !email.includes('.')) {
-                showToast("error", "Invalid email", "Enter valid taxpayer email or mobile number", 3500);
+                showToast("error", "Invalid Taxpayer ID", "Enter valid email / mobile linked with drone survey record",
+                    3500);
                 return false;
             }
             if (password.length < 4) {
-                showToast("error", "Access denied", "Invalid credentials (demo requires 4+ characters)", 3500);
+                showToast("error", "Access Denied",
+                    "Invalid credentials (minimum 4 characters for demo). Use demo drone account.", 3500);
                 return false;
             }
-
-            const domain = email.split('@')[1] || '';
-            if (domain && (domain.includes('tn.gov') || domain.includes('municipality') || domain.includes('chennai') ||
-                    domain.includes('tax'))) {
-                showToast("success", "🏛️ Taxpayer Verified",
-                    `Welcome ${email.split('@')[0]}, property tax dashboard loading...`, 3500);
-                setTimeout(() => showToast("info", "e-Recognition", "Your PTIN: TN-2025-XXXX | Last payment: ₹4,250", 4000),
-                    1400);
-            } else {
-                showToast("success", "✅ Tamil Nadu Tax Portal",
-                    `Welcome ${email.split('@')[0]}! Demo assessment —  property tax e-services active.`, 3200);
-            }
+            // Smart detection: tn.gov, municipality, or just any email simulates success with drone dataset
+            const userName = email.split('@')[0];
+            showToast("success", "🚁 Drone Taxpayer Verified",
+                `Welcome ${userName}, property tax dashboard with aerial GIS data loading...`, 3800);
+            setTimeout(() => {
+                showToast("info", "Aerial Survey 2025",
+                    "Your property has been mapped via drone imaging. PTIN: TN-DRONE-9842 | Last tax: ₹5,420",
+                    4500);
+            }, 1500);
+            setTimeout(() => {
+                showToast("success", "e-Recognition",
+                    "New drone-based property certificate available for download.", 3800);
+            }, 3200);
             return true;
         }
 
-        // Bind events
-        const form = document.getElementById('loginForm');
-        if (form) form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email')?.value.trim();
-            const pwd = document.getElementById('password')?.value;
-            if (email && pwd) handleLogin(email, pwd);
-        });
+        // Bind login event
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email')?.value.trim();
+                const pwd = document.getElementById('password')?.value;
+                if (email && pwd) handleDroneTaxLogin(email, pwd);
+                else showToast("warning", "Fields Missing",
+                    "Please enter both credentials to access smart tax portal", 2800);
+            });
+        }
 
+        // Demo quick-fill: double click on right panel for demo credentials
+        const rightPanel = document.querySelector('.login-form-section');
+        if (rightPanel) {
+            rightPanel.addEventListener('dblclick', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+                const emailField = document.getElementById('email');
+                const pwdField = document.getElementById('password');
+                if (emailField && pwdField) {
+                    emailField.value = 'drone.taxpayer@tn.gov.in';
+                    pwdField.value = 'TNdrone2025';
+                    showToast("success", "Demo Drone Credentials",
+                        "Sample taxpayer account with drone property survey data loaded.", 2600);
+                }
+            });
+        }
+
+        // Forgot password link
         document.getElementById('forgotPwdLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showToast("info", "Password recovery", "Reset link sent to registered mobile (TN e-Seva)", 3800);
+            showToast("info", "Drone ID Recovery",
+                "Reset link sent to registered mobile (Tamil Nadu Drone Registry)", 4000);
         });
+        // Signup / register
         document.getElementById('signupLink')?.addEventListener('click', (e) => {
             e.preventDefault();
-            showToast("info", "Property Registration",
-                "New tax assessment request initiated. Visit nearest corporation office or complete e-KYC.",
-                4500);
+            showToast("info", "Drone-Assisted Registration",
+                "New property registration with aerial survey initiated. e-KYC via UMANG link shared.", 4800);
         });
+        // SSO Buttons with relevant drone/municipal integration
         document.getElementById('ssoGoogleBtn')?.addEventListener('click', () => {
-            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2500);
-            setTimeout(() => showToast("success", "SSO Connected", "Taxpayer records fetched", 2200), 1300);
+            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On (Drone data integration)",
+                2800);
+            setTimeout(() => showToast("success", "SSO Aerial Verified", "Taxpayer property polygons fetched",
+                2400), 1400);
         });
         document.getElementById('ssoOktaBtn')?.addEventListener('click', () => {
-            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2500);
-            setTimeout(() => showToast("success", "Verified", "Property tax summary available", 2200), 1200);
+            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App with drone survey module", 2600);
+            setTimeout(() => showToast("success", "Verified", "Drone assessment summary available", 2200), 1300);
         });
         document.getElementById('ssoMsftBtn')?.addEventListener('click', () => {
-            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2600);
-            setTimeout(() => showToast("success", "Authorized", "Tax certificates accessible", 2000), 1200);
+            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued property documents", 2800);
+            setTimeout(() => showToast("success", "Authorized", "Tax certificates & drone orthophoto accessible",
+                2300), 1300);
         });
 
+        // Remember me message
         const rememberCheck = document.getElementById('rememberCheck');
-        if (rememberCheck) rememberCheck.addEventListener('change', (e) => {
-            if (e.target.checked) showToast("info", "Session persistence",
-                "Secured cookie enabled for 30 days (government policy)", 2800);
-        });
+        if (rememberCheck) {
+            rememberCheck.addEventListener('change', (e) => {
+                if (e.target.checked) showToast("info", "Session persistence",
+                    "Secured cookie enabled for 30 days. Drone preferences saved.", 3000);
+            });
+        }
 
-        const rightPanel = document.querySelector('.login-form-section');
-        if (rightPanel) rightPanel.addEventListener('dblclick', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-            const emailF = document.getElementById('email');
-            const pwdF = document.getElementById('password');
-            if (emailF && pwdF) {
-                emailF.value = 'taxpayer@tn.gov.in';
-                pwdF.value = 'TNtax2025';
-                showToast("success", "Demo Credentials", "Sample taxpayer account loaded (for preview)", 2000);
-            }
-        });
-
+        // Welcome message on load: highlighting drone tech
         document.addEventListener('DOMContentLoaded', () => {
-            showToast("info", "📜 Tamil Nadu Municipal Tax",
-                "Welcome to property tax e-portal | Secure GSTN integration", 3800);
+            showToast("info", "🚁 Drone-Enabled Tax Portal",
+                "Welcome to Tamil Nadu's smart property tax system | Aerial Surveys for accurate billing", 4500);
+            // Extra drone interactivity: show badge imagery
+            console.log("Drone background integration active: Greater Chennai Corporation - Aerial Tax Governance");
         });
     </script>
-    @yield('js')
 </body>
 
 </html>
