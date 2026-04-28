@@ -839,7 +839,7 @@ class SurveyorController extends Controller
             'ramp' => $data['ramp'] ?? 'No',
             'hoarding' => $data['hoarding'] ?? 'No',
             'cctv' => $data['cctv'] ?? 'No',
-             'zone' => $data['zone'] ?? 'No',
+            'zone' => $data['zone'] ?? 'No',
             'cell_tower' => $data['cell_tower'] ?? 'No',
             'solar_panel' => $data['solar_panel'] ?? 'No',
             'basement' => $data['basement'],
@@ -971,52 +971,7 @@ class SurveyorController extends Controller
         $corp = (int)$ward->corporation_id;
         $allMisTable = "mis_corporation_{$corp}";
 
-        // Handle type validation before proceeding
-        switch ($request->type) {
-            case "NEW":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->first();
-                if ($checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment already exists. This is not new data.'
-                    ], 422);
-                }
-                break;
 
-            case "OLD":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->where('ward_no', $wardNo)
-                    ->first();
-                if (!$checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment does not exist in this ward. Please check the data.'
-                    ], 422);
-                }
-                break;
-
-            case "OTHER":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->where('ward_no', '!=', $wardNo)
-                    ->first();
-                if (!$checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment does not belong to other ward.'
-                    ], 422);
-                }
-                break;
-
-            default:
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid request type'
-                ], 400);
-        }
 
         // Proceed with main logic only if switch validation passes
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
@@ -1032,14 +987,30 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
-
+        //building data check
         if (!$buildingData) {
             return response()->json([
                 'success' => false,
                 'message' => 'Building data not found for this GIS ID. Please add building data first.',
             ], 404);
         }
+        // building usage check
+        if ($buildingData->building_usage != $validator['bill_usage']) {
+            if ($buildingData->building_usage != "MIXED") {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Building data usage and bill usage is different ',
+                ], 422);
+            }
+        }
+        //building floor check
+        if ($buildingData->number_floor >= $validator['floor']) {
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Building data floor is less thn now you entered ',
+            ], 422);
+        }
         // Shop count validation
         if ($existingPoint) {
             $shopdatacount = DB::table($shopDataTableName)
@@ -1072,7 +1043,6 @@ class SurveyorController extends Controller
                 ], 422);
             }
         }
-
         // Prepare point data
         $pointData = [
             'point_gisid' => $data['point_gisid'],
@@ -1105,7 +1075,59 @@ class SurveyorController extends Controller
             'assessment_type' => $data['type'] ?? 'OLD',
             'updated_at' => now(),
         ];
+        // Handle type validation before proceeding
+        switch ($request->type) {
+            case "NEW":
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->first();
+                if ($checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment already exists. This is not new data.'
+                    ], 422);
+                }
+                break;
 
+            case "OLD":
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', $wardNo)
+                    ->first();
+                if (!$checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not exist in this ward. Please check the data.'
+                    ], 422);
+                }
+                $alredyExist = DB::table($pointDataTableName)->where('assessmen', $pointData['assessment'])->first();
+                if ($alredyExist) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "This assessment is alredy entered"
+                    ], 422);
+                }
+                break;
+
+            case "OTHER":
+                $checkNew = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', '!=', $wardNo)
+                    ->first();
+                if (!$checkNew) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not belong to other ward.'
+                    ], 422);
+                }
+                break;
+
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid request type'
+                ], 400);
+        }
         try {
             DB::beginTransaction();
 

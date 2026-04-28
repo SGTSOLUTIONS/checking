@@ -134,7 +134,7 @@ class GeoDataService
                         ->on($polygonDataTable)
                         ->onUpdate('cascade')
                         ->onDelete('cascade');
-
+                    $table->string('assessment_type')->nullable();
                     $table->string('point_gisid')->nullable();
                     $table->string('worker_name')->nullable();
                     $table->string('assessment')->nullable();
@@ -167,7 +167,7 @@ class GeoDataService
                     $table->string('water_tax')->nullable();
                     $table->string('halfyeartax')->nullable();
                     $table->string('balance')->nullable();
-                     $table->string('no_of_persons')->nullable();
+                    $table->string('no_of_persons')->nullable();
                     // REMOVED: $table->string('building_data_id')->nullable(); // This was the duplicate
                     $table->string('qc_area')->nullable();
                     $table->string('qc_usage')->nullable();

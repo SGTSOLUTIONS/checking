@@ -1110,6 +1110,8 @@
                                             <option value="OLD">OLD</option>
                                             <option value="NEW">NEW</option>
                                             <option value="OTHER">OTHER WARD</option>
+                                            <option value="NO_TAX">NO TAX</option>
+                                            <option value="VACCAND">VACCAND</option>
                                         </select>
                                         <div id="type_error" class="error-message text-danger"></div>
                                     </div>
