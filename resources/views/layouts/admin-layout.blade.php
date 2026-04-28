@@ -534,6 +534,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1013,6 +1014,7 @@
         }
 
         @media (max-width: 1200px) {
+
             .charts-section,
             .map-section {
                 grid-template-columns: 1fr;
@@ -1096,11 +1098,13 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div class="nav-section-title">Main</div>
-                    <a href="{{ route('admin.dashboard') }}" class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                         <i class="fas fa-home"></i>
                         <span class="nav-text">Dashboard</span>
                     </a>
-                    <a href="{{ route('admin.mapExplore') }}" class="nav-item {{ request()->routeIs('admin.mapExplore') ? 'active' : '' }}">
+                    <a href="{{ route('admin.mapExplore') }}"
+                        class="nav-item {{ request()->routeIs('admin.mapExplore') ? 'active' : '' }}">
                         <i class="fas fa-map-marked-alt"></i>
                         <span class="nav-text">Map Explorer</span>
                     </a>
@@ -1113,16 +1117,16 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">Corporations</div>
-                    <a href="{{ route('admin.corporationdata')}}" class="nav-item">
+                    <a href="{{ route('admin.corporationdata') }}" class="nav-item">
                         <i class="fas fa-chart-bar"></i>
                         <span class="nav-text">Corporation Data</span>
                     </a>
-                    <a href="{{ route('admin.users')}}" class="nav-item">
+                    <a href="{{ route('admin.users') }}" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Users</span>
                         <span class="nav-badge">3</span>
                     </a>
-                    <a href="{{ route('admin.team.index')}}" class="nav-item">
+                    <a href="{{ route('admin.team.index') }}" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Teams</span>
                         <span class="nav-badge">3</span>
@@ -1179,9 +1183,9 @@
                 </button>
                 <div>
                     <h1 class="page-title">@yield('page-title', 'Dashboard Overview')</h1>
-                    <div class="breadcrumb">
+                    {{-- <div class="breadcrumb">
                         @yield('breadcrumb', '<span>Home</span><i class="fas fa-chevron-right"></i><span>Dashboard</span>')
-                    </div>
+                    </div> --}}
                 </div>
             </div>
 
@@ -1207,14 +1211,14 @@
 
                 <div class="user-profile" id="user-profile">
                     <div class="user-avatar">
-                        @if(Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
-                        <img src="{{ asset(Auth::user()->profile) }}"
-                            alt="User Profile"
-                            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        @if (Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
+                            <img src="{{ asset(Auth::user()->profile) }}" alt="User Profile"
+                                style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                         @else
-                        <div style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
-                            {{ substr(Auth::user()->name, 0, 1) }}
-                        </div>
+                            <div
+                                style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                {{ substr(Auth::user()->name, 0, 1) }}
+                            </div>
                         @endif
                     </div>
                     <div class="user-info">
@@ -1226,14 +1230,14 @@
                     <div class="profile-dropdown" id="profile-dropdown">
                         <div class="dropdown-header">
                             <div class="dropdown-avatar">
-                                @if(Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
-                                <img src="{{ asset(Auth::user()->profile) }}"
-                                    alt="User Profile"
-                                    style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                @if (Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
+                                    <img src="{{ asset(Auth::user()->profile) }}" alt="User Profile"
+                                        style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                 @else
-                                <div style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.4rem;">
-                                    {{ substr(Auth::user()->name, 0, 1) }}
-                                </div>
+                                    <div
+                                        style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.4rem;">
+                                        {{ substr(Auth::user()->name, 0, 1) }}
+                                    </div>
                                 @endif
                             </div>
                             <div class="user-name">{{ Auth::user()->name }}</div>
@@ -1261,13 +1265,11 @@
                             <span>Help & Support</span>
                         </a>
                         <li class="nav-item mt-4">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="nav-link logout-btn">
-                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                        </button>
-                    </form>
-                </li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="nav-link logout-btn">...</button>
+                            </form>
+                        </li>
                     </div>
                 </div>
             </div>
@@ -1279,22 +1281,22 @@
     </div>
 
     <script>
-    // Make showToast available globally
-    window.showToast = function(type, title, message, duration = 5000) {
-        var toastContainer = document.getElementById('toast-container');
-        if (!toastContainer) return null;
+        // Make showToast available globally
+        window.showToast = function(type, title, message, duration = 5000) {
+            var toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return null;
 
-        var toast = document.createElement('div');
-        toast.className = 'toast toast-' + type;
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
 
-        var icons = {
-            success: 'fa-circle-check',
-            error: 'fa-circle-xmark',
-            warning: 'fa-triangle-exclamation',
-            info: 'fa-circle-info'
-        };
+            var icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
 
-        toast.innerHTML = `
+            toast.innerHTML = `
             <i class="fas ${icons[type]} toast-icon"></i>
             <div class="toast-content">
                 <div class="toast-title">${title}</div>
@@ -1306,79 +1308,87 @@
             <div class="toast-progress"></div>
         `;
 
-        toastContainer.appendChild(toast);
+            toastContainer.appendChild(toast);
 
-        setTimeout(function() { toast.classList.add('show'); }, 100);
+            setTimeout(function() {
+                toast.classList.add('show');
+            }, 100);
 
-        var closeBtn = toast.querySelector('.toast-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() { window.removeToast(toast); });
-        }
-
-        if (duration > 0) {
-            setTimeout(function() { if (toast.parentNode) window.removeToast(toast); }, duration);
-        }
-
-        return toast;
-    };
-
-    window.removeToast = function(toast) {
-        toast.classList.remove('show');
-        toast.classList.add('hide');
-        setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 500);
-    };
-
-    // Profile Dropdown
-    (function() {
-        function setupDropdown() {
-            var userProfile = document.getElementById('user-profile');
-            var profileDropdown = document.getElementById('profile-dropdown');
-
-            if (userProfile && profileDropdown) {
-                var newUserProfile = userProfile.cloneNode(true);
-                userProfile.parentNode.replaceChild(newUserProfile, userProfile);
-                var finalUserProfile = document.getElementById('user-profile');
-
-                finalUserProfile.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    var dropdown = document.getElementById('profile-dropdown');
-                    if (dropdown) {
-                        dropdown.classList.toggle('active');
-                    }
+            var closeBtn = toast.querySelector('.toast-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    window.removeToast(toast);
                 });
+            }
 
-                document.addEventListener('click', function(e) {
-                    var dropdown = document.getElementById('profile-dropdown');
-                    var userProf = document.getElementById('user-profile');
-                    if (dropdown && dropdown.classList.contains('active')) {
-                        if (userProf && !userProf.contains(e.target) && !dropdown.contains(e.target)) {
-                            dropdown.classList.remove('active');
+            if (duration > 0) {
+                setTimeout(function() {
+                    if (toast.parentNode) window.removeToast(toast);
+                }, duration);
+            }
+
+            return toast;
+        };
+
+        window.removeToast = function(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 500);
+        };
+
+        // Profile Dropdown
+        (function() {
+            function setupDropdown() {
+                var userProfile = document.getElementById('user-profile');
+                var profileDropdown = document.getElementById('profile-dropdown');
+
+                if (userProfile && profileDropdown) {
+                    var newUserProfile = userProfile.cloneNode(true);
+                    userProfile.parentNode.replaceChild(newUserProfile, userProfile);
+                    var finalUserProfile = document.getElementById('user-profile');
+
+                    finalUserProfile.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        var dropdown = document.getElementById('profile-dropdown');
+                        if (dropdown) {
+                            dropdown.classList.toggle('active');
                         }
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        var dropdown = document.getElementById('profile-dropdown');
+                        var userProf = document.getElementById('user-profile');
+                        if (dropdown && dropdown.classList.contains('active')) {
+                            if (userProf && !userProf.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.classList.remove('active');
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupDropdown);
+            } else {
+                setupDropdown();
+            }
+        })();
+
+        // Sidebar Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            var toggleSidebarBtn = document.getElementById('toggle-sidebar');
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.addEventListener('click', function() {
+                    var sidebar = document.querySelector('.sidebar');
+                    if (sidebar) {
+                        sidebar.classList.toggle('active');
                     }
                 });
             }
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupDropdown);
-        } else {
-            setupDropdown();
-        }
-    })();
-
-    // Sidebar Toggle
-    document.addEventListener('DOMContentLoaded', function() {
-        var toggleSidebarBtn = document.getElementById('toggle-sidebar');
-        if (toggleSidebarBtn) {
-            toggleSidebarBtn.addEventListener('click', function() {
-                var sidebar = document.querySelector('.sidebar');
-                if (sidebar) {
-                    sidebar.classList.toggle('active');
-                }
-            });
-        }
-    });
+        });
     </script>
 
     @yield('script')
