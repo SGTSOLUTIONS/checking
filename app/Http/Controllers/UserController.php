@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Enums\RoleEnum;
 use App\Enums\GenderEnum;
@@ -10,9 +9,9 @@ use App\Enums\ActiveStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -24,8 +23,10 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::select('id', 'name', 'email', 'role', 'profile', 'phone', 'city', 'gender', 'date_of_birth', 'status', 'created_at')
-                ->get();
+            $users = User::select(
+                'id','name','email','role','profile',
+                'phone','city','gender','date_of_birth','status','created_at'
+            )->get();
 
             return response()->json([
                 'success' => true,
@@ -33,6 +34,7 @@ class UserController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error("Failed to load users: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load users'
@@ -50,14 +52,16 @@ class UserController extends Controller
                 'user' => $user
             ]);
         } catch (\Exception $e) {
-            Log::error("Failed to fetch user details: " . $e->getMessage());
+            Log::error("Failed to fetch user: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch user details'
+                'message' => 'Failed to fetch user'
             ], 500);
         }
     }
 
+    // ================= CREATE =================
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -76,7 +80,6 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -85,19 +88,24 @@ class UserController extends Controller
         $uploadedFiles = [];
 
         try {
-            // Handle profile image - Store in profile folder
+
+            // ✅ Upload profile image
             if ($request->hasFile('profile')) {
-                // Generate a unique filename
-                $filename = time() . '_' . uniqid() . '.' . $request->file('profile')->getClientOriginalExtension();
-                $data['profile'] = $request->file('profile')
-                    ->storeAs('profile', $filename, 'public');
+
+                $file = $request->file('profile');
+
+                $filename = Str::slug($request->name) . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path('profile'), $filename);
+
+                $data['profile'] = 'profile/' . $filename;
+
                 $uploadedFiles[] = $data['profile'];
             }
 
-            // Hash password
+            // 🔐 Hash password
             $data['password'] = Hash::make($request->password);
 
-            // Set storage path
             $data['storage_path'] = 'users/' . uniqid();
 
             $user = User::create($data);
@@ -107,16 +115,21 @@ class UserController extends Controller
                 'message' => 'User created successfully',
                 'user' => $user
             ]);
+
         } catch (\Exception $e) {
+
             $this->cleanupFiles($uploadedFiles);
-            Log::error("Failed to create user: " . $e->getMessage());
+
+            Log::error("Create user error: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create user: ' . $e->getMessage()
+                'message' => 'Failed to create user'
             ], 500);
         }
     }
 
+    // ================= UPDATE =================
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -137,91 +150,75 @@ class UserController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
 
         try {
+
             $data = $request->only([
-                'name',
-                'email',
-                'role',
-                'phone',
-                'city',
-                'gender',
-                'date_of_birth',
-                'status'
+                'name','email','role','phone','city',
+                'gender','date_of_birth','status'
             ]);
 
             $newFiles = [];
 
-            // 🖼️ Handle Profile Image - Store in profile folder
+            // ✅ Update profile image
             if ($request->hasFile('profile')) {
-                // Delete old profile image if exists
-                if ($user->profile) {
-                    Storage::disk('public')->delete($user->profile);
+
+                // Delete old
+                if ($user->profile && file_exists(public_path($user->profile))) {
+                    unlink(public_path($user->profile));
                 }
 
-                // Generate a unique filename
-                $filename = time() . '_' . uniqid() . '.' . $request->file('profile')->getClientOriginalExtension();
-                $path = $request->file('profile')->storeAs('profile', $filename, 'public');
-                $data['profile'] = $path;
-                $newFiles[] = $path;
+                $file = $request->file('profile');
+
+                $filename = Str::slug($request->name) . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path('profile'), $filename);
+
+                $data['profile'] = 'profile/' . $filename;
+
+                $newFiles[] = $data['profile'];
             } else {
                 $data['profile'] = $user->profile;
             }
 
-            // 🔐 Handle Password (optional)
+            // 🔐 Password update
             if ($request->filled('password')) {
                 $data['password'] = Hash::make($request->password);
             }
 
-            // 🧠 Fix: if status, role, or gender come as array
-            foreach (['status', 'role', 'gender'] as $field) {
-                if (isset($data[$field]) && is_array($data[$field])) {
-                    $data[$field] = $data[$field][0];
-                }
-            }
-
-            // 🧩 Make sure status is properly assigned
-            if (isset($data['status'])) {
-                $user->status = $data['status'];
-            }
-
-            // 🧩 Fill other details and save
-            $user->fill($data);
-            $user->save();
+            $user->update($data);
 
             return response()->json([
                 'success' => true,
                 'message' => 'User updated successfully',
                 'user' => $user
             ]);
+
         } catch (\Exception $e) {
-            // Rollback uploaded files on error
+
             foreach ($newFiles as $file) {
-                Storage::disk('public')->delete($file);
+                $this->deleteFile($file);
             }
 
-            Log::error("Failed to update user", ['error' => $e->getMessage()]);
+            Log::error("Update user error: " . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user: ' . $e->getMessage()
+                'message' => 'Failed to update user'
             ], 500);
         }
     }
 
+    // ================= DELETE =================
     public function destroy($id)
     {
         try {
             $user = User::findOrFail($id);
 
-            // Delete profile image if exists
-            if ($user->profile) {
-                Storage::disk('public')->delete($user->profile);
-            }
+            $this->deleteFile($user->profile);
 
             $user->delete();
 
@@ -229,26 +226,32 @@ class UserController extends Controller
                 'success' => true,
                 'message' => 'User deleted successfully'
             ]);
+
         } catch (\Exception $e) {
-            Log::error("Failed to delete user: " . $e->getMessage());
+            Log::error("Delete error: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete user: ' . $e->getMessage()
+                'message' => 'Failed to delete user'
             ], 500);
         }
     }
 
-    /**
-     * Clean up uploaded files
-     */
+    // ================= HELPERS =================
+    private function deleteFile($file)
+    {
+        if ($file) {
+            $path = public_path($file);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
+    }
+
     private function cleanupFiles($files)
     {
         foreach ($files as $file) {
-            try {
-                Storage::disk('public')->delete($file);
-            } catch (\Exception $e) {
-                Log::error("Failed to delete file {$file}: " . $e->getMessage());
-            }
+            $this->deleteFile($file);
         }
     }
 }

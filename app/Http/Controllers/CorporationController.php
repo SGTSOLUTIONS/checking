@@ -41,7 +41,11 @@ class CorporationController extends Controller
 
             // ✅ Upload logo
             if ($request->hasFile('logo')) {
-                $validatedData['logo'] = $request->file('logo')->store('corporation_logos', 'public');
+                $file = $request->file('logo');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('corporation_logos'), $filename);
+
+                $validatedData['logo'] = 'corporation_logos/' . $filename;
             }
 
             // ✅ Extract GeoJSON
@@ -100,7 +104,7 @@ class CorporationController extends Controller
         $ugdTable = 'ugd_corporation_' . $corporationId;
         $assinedRoadsTable = 'assigned_roads_corporation_' . $corporationId;
 
-         // ✅ Assigned Roads table
+        // ✅ Assigned Roads table
         if (!Schema::hasTable($assinedRoadsTable)) {
             Schema::create($assinedRoadsTable, function (Blueprint $table) {
                 $table->id();
@@ -237,10 +241,20 @@ class CorporationController extends Controller
             ]);
 
             if ($request->hasFile('logo')) {
-                if ($corporation->logo && Storage::disk('public')->exists($corporation->logo)) {
-                    Storage::disk('public')->delete($corporation->logo);
+
+                // Delete old file from public folder
+                if ($corporation->logo && file_exists(public_path($corporation->logo))) {
+                    unlink(public_path($corporation->logo));
                 }
-                $validatedData['logo'] = $request->file('logo')->store('corporation_logos', 'public');
+
+                // Upload new file
+                $file = $request->file('logo');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+
+                $file->move(public_path('corporation_logos'), $filename);
+
+                // Save path
+                $validatedData['logo'] = 'corporation_logos/' . $filename;
             }
 
             if ($request->hasFile('boundary')) {
@@ -309,21 +323,39 @@ class CorporationController extends Controller
         try {
             $corporation = Corporation::withTrashed()->findOrFail($id);
 
-            if ($corporation->logo && Storage::disk('public')->exists($corporation->logo)) {
-                Storage::disk('public')->delete($corporation->logo);
+            // ✅ Delete logo from public folder
+            if ($corporation->logo && file_exists(public_path($corporation->logo))) {
+                unlink(public_path($corporation->logo));
             }
 
-            foreach (['mis_corporation_' . $id, 'watertax_corporation_' . $id, 'ugd_corporation_' . $id] as $table) {
+            // ✅ Drop dynamic tables
+            foreach (
+                [
+                    'mis_corporation_' . $id,
+                    'watertax_corporation_' . $id,
+                    'ugd_corporation_' . $id
+                ] as $table
+            ) {
                 if (Schema::hasTable($table)) {
                     Schema::drop($table);
                 }
             }
 
+            // ✅ Permanently delete record
             $corporation->forceDelete();
-            return response()->json(['success' => true, 'message' => 'Corporation permanently deleted!']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Corporation permanently deleted!'
+            ]);
         } catch (\Exception $e) {
             Log::error('Corporation force delete error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error permanently deleting corporation.', 'error' => $e->getMessage()], 500);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error permanently deleting corporation.',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

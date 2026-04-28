@@ -1011,6 +1011,7 @@ class SurveyorController extends Controller
                 'message' => 'Building data floor is less thn now you entered ',
             ], 422);
         }
+
         // Shop count validation
         if ($existingPoint) {
             $shopdatacount = DB::table($shopDataTableName)
@@ -1080,6 +1081,9 @@ class SurveyorController extends Controller
             case "NEW":
                 $checkNew = DB::table($allMisTable)
                     ->where('assessment', $request->assessment)
+                    ->first();
+                $checkNew = DB::table($allMisTable)
+                    ->where('gisid', $request->point_gisid)
                     ->first();
                 if ($checkNew) {
                     return response()->json([
@@ -1364,6 +1368,30 @@ class SurveyorController extends Controller
             'wardNo' => $wardNo
         ]);
     }
+    // public function updatePointRecord(Request $request)
+    // {
+    //     try {
+    //         $corp = $request->corp;
+    //         $zone = $request->zone;
+    //         $wardNo = $request->ward_no;
+
+    //         if ($request->type === 'point') {
+    //             $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
+    //             DB::table($table)
+    //                 ->where('id', $request->id)
+    //                 ->update($request->data);
+    //         } else {
+    //             $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
+    //             DB::table($table)
+    //                 ->where('id', $request->id)
+    //                 ->update($request->data);
+    //         }
+
+    //         return response()->json(['success' => true]);
+    //     } catch (\Exception $e) {
+    //         return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+    //     }
+    // }
     public function updatePointRecord(Request $request)
     {
         try {
@@ -1373,11 +1401,165 @@ class SurveyorController extends Controller
 
             if ($request->type === 'point') {
                 $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
+                $shopTable = "shopdata_{$corp}_{$zone}_{$wardNo}";
+                $polygonTable = "polygondata_{$corp}_{$zone}_{$wardNo}";
+
+                // Get the existing point data
+                $existingPoint = DB::table($table)
+                    ->where('id', $request->id)
+                    ->first();
+
+                if (!$existingPoint) {
+                    return response()->json(['success' => false, 'error' => 'Point data not found'], 404);
+                }
+
+                // Get building data
+                $buildingData = DB::table($polygonTable)
+                    ->where('id', $existingPoint->building_data_id)
+                    ->first();
+
+                // Validate building usage
+                if ($buildingData && isset($request->data['bill_usage'])) {
+                    if ($buildingData->building_usage != $request->data['bill_usage']) {
+                        if ($buildingData->building_usage != "MIXED") {
+                            return response()->json([
+                                'success' => false,
+                                'error' => 'Building data usage and bill usage are different',
+                                'message' => 'Validation failed'
+                            ], 422);
+                        }
+                    }
+                }
+
+                // Validate floor count
+                if ($buildingData && isset($request->data['floor'])) {
+                    if ($buildingData->number_floor < $request->data['floor']) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'Building data floor is less than entered value',
+                            'message' => 'Validation failed'
+                        ], 422);
+                    }
+                }
+
+                // Validate shop count if no_of_shop is being updated
+                if (isset($request->data['no_of_shop'])) {
+                    $existingShopsCount = DB::table($shopTable)
+                        ->where('point_data_id', $existingPoint->id)
+                        ->count();
+
+                    if ($buildingData && ($request->data['no_of_shop'] + $existingShopsCount) > $buildingData->number_shop) {
+                        $remaining = $buildingData->number_shop - $existingShopsCount;
+                        return response()->json([
+                            'success' => false,
+                            'error' => "Only $remaining shops can be added",
+                            'message' => 'Validation failed'
+                        ], 422);
+                    }
+                }
+
+                // Validate assessment type if being updated
+                if (isset($request->data['assessment_type']) && isset($request->data['assessment'])) {
+                    $allMisTable = "mis_corporation_{$corp}";
+                    $wardNo = (int)$wardNo;
+
+                    switch ($request->data['assessment_type']) {
+                        case "NEW":
+                            $checkNew = DB::table($allMisTable)
+                                ->where('assessment', $request->data['assessment'])
+                                ->first();
+                            $checkNewGis = DB::table($allMisTable)
+                                ->where('gisid', $existingPoint->point_gisid)
+                                ->first();
+                            if ($checkNew || $checkNewGis) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => 'This assessment already exists. This is not new data.'
+                                ], 422);
+                            }
+                            break;
+
+                        case "OLD":
+                            $checkOld = DB::table($allMisTable)
+                                ->where('assessment', $request->data['assessment'])
+                                ->where('ward_no', $wardNo)
+                                ->first();
+                            if (!$checkOld) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => 'This assessment does not exist in this ward. Please check the data.'
+                                ], 422);
+                            }
+
+                            // Check if assessment already exists in pointdata (excluding current record)
+                            $alreadyExist = DB::table($table)
+                                ->where('assessment', $request->data['assessment'])
+                                ->where('id', '!=', $request->id)
+                                ->first();
+                            if ($alreadyExist) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => "This assessment is already entered"
+                                ], 422);
+                            }
+                            break;
+
+                        case "OTHER":
+                            $checkOther = DB::table($allMisTable)
+                                ->where('assessment', $request->data['assessment'])
+                                ->where('ward_no', '!=', $wardNo)
+                                ->first();
+                            if (!$checkOther) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => 'This assessment does not belong to other ward.'
+                                ], 422);
+                            }
+                            break;
+                    }
+                }
+
+                // Update the point data
                 DB::table($table)
                     ->where('id', $request->id)
                     ->update($request->data);
             } else {
                 $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+                // Get existing shop data
+                $existingShop = DB::table($table)
+                    ->where('id', $request->id)
+                    ->first();
+
+                if (!$existingShop) {
+                    return response()->json(['success' => false, 'error' => 'Shop data not found'], 404);
+                }
+
+                // Get related point data for validation
+                $pointTable = "pointdata_{$corp}_{$zone}_{$wardNo}";
+                $pointData = DB::table($pointTable)
+                    ->where('id', $existingShop->point_data_id)
+                    ->first();
+
+                // Validate shop count if point data exists
+                if ($pointData && isset($request->data['shop_floor']) && isset($request->data['shop_name'])) {
+                    // Check if updating shop would exceed building capacity
+                    $polygonTable = "polygondata_{$corp}_{$zone}_{$wardNo}";
+                    $buildingData = DB::table($polygonTable)
+                        ->where('id', $pointData->building_data_id)
+                        ->first();
+
+                    if ($buildingData) {
+                        $totalShopsForPoint = DB::table($table)
+                            ->where('point_data_id', $pointData->id)
+                            ->count();
+
+                        // If this is not creating a new shop, we don't need to check count
+                        // Only check if no_of_shop in point data is being validated elsewhere
+                    }
+                }
+
+                // Update the shop data
                 DB::table($table)
                     ->where('id', $request->id)
                     ->update($request->data);
@@ -1388,7 +1570,6 @@ class SurveyorController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
     public function addShopRecord(Request $request)
     {
         try {
