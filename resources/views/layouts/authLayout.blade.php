@@ -36,7 +36,7 @@
             padding: 1.5rem;
         }
 
-        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with low brightness */
+        /* FULLSCREEN TAMIL NADU HERITAGE BACKGROUND with light brightness (adjusted filter) */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -51,7 +51,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.45) contrast(1.05) saturate(1.1);
+            /* Light brightness: increased brightness and reduced contrast for a softer, lighter look */
+            filter: brightness(0.80) contrast(1.02) saturate(1.05);
             transform: scale(1.02);
             animation: slowZoom 28s ease infinite alternate;
         }
@@ -66,18 +67,18 @@
             }
         }
 
-        /* Dark gradient overlay for readability */
+        /* Light overlay: more subtle to maintain light brightness feel */
         .bg-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-
+            background: linear-gradient(135deg, rgba(255, 248, 235, 0.3) 0%, rgba(255, 245, 225, 0.2) 100%);
             z-index: -1;
         }
 
-        /* Subtle pattern overlay (temple/kolam inspired grid) */
+        /* Subtle pattern overlay (temple/kolam inspired grid) - kept original comment but no active pattern */
         body::before {
             content: "";
             position: fixed;
@@ -85,8 +86,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: ;
-
             pointer-events: none;
             z-index: -1;
         }
@@ -609,11 +608,12 @@
 
 <body>
 
-    <!-- Fullscreen Tamil Nadu Government Background (low brightness) -->
+    <!-- Fullscreen Tamil Nadu Government Background with light brightness (updated image and filter for bright, airy feel) -->
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/1594473/pexels-photo-1594473.jpeg?auto=compress&cs=tinysrgb&w=1600"
-            alt="Tamil Nadu Corporation Building"
-            onerror="this.src='https://images.pexels.com/photos/699466/pexels-photo-699466.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+        <!-- Replaced with a brighter, more vibrant yet professional Tamil Nadu government building / heritage background -->
+        <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
+            alt="Tamil Nadu Government Heritage Building"
+            onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
