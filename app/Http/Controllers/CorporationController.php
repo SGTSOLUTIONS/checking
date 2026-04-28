@@ -223,82 +223,107 @@ class CorporationController extends Controller
     }
 
     /** ✅ Update corporation */
-    public function update(Request $request, $id)
-    {
-        try {
-            $corporation = Corporation::findOrFail($id);
+public function update(Request $request, $id)
+{
+    try {
+        $corporation = Corporation::findOrFail($id);
 
-            $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
-                'code' => 'required|string|max:50|unique:corporations,code,' . $id,
-                'district' => 'required|string|max:100',
-                'state' => 'required|string|max:100',
-                'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-                'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
-                'mis' => 'nullable|file|mimes:xls,xlsx,csv',
-                'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
-                'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
-            ]);
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:corporations,code,' . $id,
+            'district' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
+            'mis' => 'nullable|file|mimes:xls,xlsx,csv',
+            'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
+            'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
+        ]);
 
-            if ($request->hasFile('logo')) {
+        // ================= LOGO UPLOAD =================
+        if ($request->hasFile('logo')) {
 
-                // Delete old file from public folder
-                if ($corporation->logo && file_exists(public_path($corporation->logo))) {
-                    unlink(public_path($corporation->logo));
-                }
-
-                // Upload new file
-                $file = $request->file('logo');
-                $filename = time() . '.' . $file->getClientOriginalExtension();
-
-                $file->move(public_path('corporation_logos'), $filename);
-
-                // Save path
-                $validatedData['logo'] = 'corporation_logos/' . $filename;
-            }
-
-            if ($request->hasFile('boundary')) {
-                $geojsonData = json_decode(file_get_contents($request->file('boundary')->getRealPath()), true);
-                if (isset($geojsonData['features'][0]['geometry']['coordinates'])) {
-                    $validatedData['boundary'] = json_encode($geojsonData['features'][0]['geometry']['coordinates']);
+            // Delete old logo
+            if ($corporation->logo) {
+                $oldPath = public_path($corporation->logo);
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
                 }
             }
 
-            $corporation->update($validatedData);
-            $this->createDynamicTables($corporation->id);
+            $file = $request->file('logo');
 
-            $importStats = [];
+            // Better unique filename
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
-            if ($request->hasFile('mis')) {
-                $misImport = new MisImport('mis_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($misImport, $request->file('mis'));
-                $importStats['mis'] = $misImport->getImportStats();
-            }
+            // Move to public folder
+            $file->move(public_path('corporation_logos'), $filename);
 
-            if ($request->hasFile('watertax')) {
-                $watertaxImport = new WatertaxImport('watertax_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($watertaxImport, $request->file('watertax'));
-                $importStats['watertax'] = $watertaxImport->getImportStats();
-            }
-
-            if ($request->hasFile('ugd')) {
-                $ugdImport = new UgdImport('ugd_corporation_' . $corporation->id, $corporation->id);
-                Excel::import($ugdImport, $request->file('ugd'));
-                $importStats['ugd'] = $ugdImport->getImportStats();
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Corporation updated successfully!',
-                'data' => $corporation,
-                'import_stats' => $importStats
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Corporation update error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error updating corporation.', 'error' => $e->getMessage()], 500);
+            // Save relative path
+            $validatedData['logo'] = 'corporation_logos/' . $filename;
         }
-    }
 
+        // ================= BOUNDARY =================
+        if ($request->hasFile('boundary')) {
+            $geojson = json_decode(
+                file_get_contents($request->file('boundary')->getRealPath()),
+                true
+            );
+
+            if (isset($geojson['features'][0]['geometry']['coordinates'])) {
+                $validatedData['boundary'] = json_encode(
+                    $geojson['features'][0]['geometry']['coordinates']
+                );
+            }
+        }
+
+        // ================= UPDATE =================
+        $corporation->update($validatedData);
+
+        // ================= TABLE CREATION =================
+        $this->createDynamicTables($corporation->id);
+
+        $importStats = [];
+
+        // ================= MIS IMPORT =================
+        if ($request->hasFile('mis')) {
+            $misImport = new MisImport('mis_corporation_' . $corporation->id, $corporation->id);
+            Excel::import($misImport, $request->file('mis'));
+            $importStats['mis'] = $misImport->getImportStats();
+        }
+
+        // ================= WATER TAX =================
+        if ($request->hasFile('watertax')) {
+            $watertaxImport = new WatertaxImport('watertax_corporation_' . $corporation->id, $corporation->id);
+            Excel::import($watertaxImport, $request->file('watertax'));
+            $importStats['watertax'] = $watertaxImport->getImportStats();
+        }
+
+        // ================= UGD =================
+        if ($request->hasFile('ugd')) {
+            $ugdImport = new UgdImport('ugd_corporation_' . $corporation->id, $corporation->id);
+            Excel::import($ugdImport, $request->file('ugd'));
+            $importStats['ugd'] = $ugdImport->getImportStats();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Corporation updated successfully!',
+            'data' => $corporation,
+            'import_stats' => $importStats
+        ]);
+
+    } catch (\Exception $e) {
+
+        Log::error('Corporation update error: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error updating corporation.',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
     /** ✅ Delete corporation (SoftDelete) */
     public function destroy($id)
     {
