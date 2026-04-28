@@ -73,7 +73,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 30% 40%, rgba(10, 131, 187, 0.788), rgba(252, 250, 250, 0.85));
+
             z-index: -1;
         }
 
