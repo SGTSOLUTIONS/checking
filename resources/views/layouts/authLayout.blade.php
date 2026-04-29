@@ -52,7 +52,7 @@
             object-fit: cover;
             filter: brightness(0.82) contrast(1.02) saturate(1.05);
             transform: scale(1.02);
-            animation: slowZoom 28s ease infinite alternate;
+            animation: slowZoom 22s ease infinite alternate;
         }
 
         @keyframes slowZoom {
