@@ -59,11 +59,13 @@
         $('#loginForm').on('submit', function(e) {
             e.preventDefault();
 
+            // Reset error states
             $('#alert-container').html('');
             $('#email, #password').removeClass('is-invalid');
             $('#email_error, #password_error').text('');
 
-            $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+            // Show loading state
+            $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Authenticating...');
             $('#btnSpinner').removeClass('d-none');
             $('#loginBtn').prop('disabled', true);
 
@@ -80,17 +82,26 @@
                 data: formData,
                 dataType: "json",
                 success: function(res) {
-                    $('#loginBtn').prop('disabled', false);
-                    $('#btnSpinner').addClass('d-none');
-                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+                    console.log('Login response:', res);
 
                     if (res.status === 'success') {
-                        showToast('success', 'Success!', res.message, 3000);
-                        setTimeout(() => {
-                            if (res.redirect) window.location.href = res.redirect;
-                            else showToast('info', 'Redirect', 'Dashboard loading...', 2000);
-                        }, 1500);
+                        showToast('success', 'Success!', res.message, 2000);
+
+                        // IMPORTANT FIX: Handle redirect properly
+                        if (res.redirect) {
+                            setTimeout(function() {
+                                window.location.href = res.redirect;
+                            }, 1500);
+                        } else {
+                            // Fallback redirect
+                            setTimeout(function() {
+                                window.location.href = "{{ route('admin.dashboard') }}";
+                            }, 1500);
+                        }
                     } else {
+                        $('#loginBtn').prop('disabled', false);
+                        $('#btnSpinner').addClass('d-none');
+                        $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
                         showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
                     }
                 },
@@ -111,9 +122,17 @@
                         }
                         showToast('error', 'Validation Error!', 'Please check the form for errors.', 5000);
                     } else if (xhr.status === 401) {
-                        showToast('error', 'Authentication Failed!', xhr.responseJSON?.message || 'Invalid credentials.', 5000);
+                        showToast('error', 'Authentication Failed!', xhr.responseJSON?.message || 'Invalid password.', 5000);
+                    } else if (xhr.status === 403) {
+                        showToast('error', 'Account Inactive!', xhr.responseJSON?.message || 'Your account is not active.', 5000);
+                    } else if (xhr.status === 404) {
+                        showToast('error', 'Account Not Found!', xhr.responseJSON?.message || 'No account found with this email.', 5000);
                     } else {
-                        showToast('error', 'Connection issue', 'Unable to reach server. Please try again.', 5000);
+                        let errorMsg = 'Unable to reach server. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast('error', 'Connection issue', errorMsg, 5000);
                     }
                 }
             });
@@ -122,15 +141,24 @@
         // SSO Buttons Demo
         $('#ssoGoogleBtn').on('click', function() {
             showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2800);
-            setTimeout(() => showToast("success", "SSO Connected", "Taxpayer records fetched", 2400), 1400);
+            setTimeout(() => {
+                // Simulate SSO success with redirect
+                window.location.href = "{{ route('login') }}?sso=tnseva";
+            }, 1500);
         });
+
         $('#ssoOktaBtn').on('click', function() {
             showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2700);
-            setTimeout(() => showToast("success", "Verified", "Property tax summary available", 2300), 1300);
+            setTimeout(() => {
+                window.location.href = "{{ route('login') }}?sso=umang";
+            }, 1500);
         });
+
         $('#ssoMsftBtn').on('click', function() {
             showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2800);
-            setTimeout(() => showToast("success", "Authorized", "Tax certificates accessible", 2200), 1400);
+            setTimeout(() => {
+                window.location.href = "{{ route('login') }}?sso=digilocker";
+            }, 1500);
         });
 
         // Demo credentials on double-click

@@ -50,6 +50,9 @@
             <div class="input-field">
                 <i class="fas fa-lock"></i>
                 <input type="password" id="password" name="password" placeholder="Create a strong password">
+                <button type="button" class="toggle-password" data-target="password" style="position: absolute; right: 12px; background: transparent; border: none; color: #e67e22;">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
             <div class="invalid-feedback-custom" id="password_error"></div>
         </div>
@@ -60,6 +63,9 @@
             <div class="input-field">
                 <i class="fas fa-check-circle"></i>
                 <input type="password" id="password_confirmation" name="password_confirmation" placeholder="Re-enter password">
+                <button type="button" class="toggle-password" data-target="password_confirmation" style="position: absolute; right: 12px; background: transparent; border: none; color: #e67e22;">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
             <div class="invalid-feedback-custom" id="password_confirmation_error"></div>
         </div>
@@ -129,6 +135,21 @@
 @section('scripts')
 <script>
     $(function() {
+        // Password visibility toggle
+        $('.toggle-password').on('click', function() {
+            const targetId = $(this).data('target');
+            const input = $('#' + targetId);
+            const icon = $(this).find('i');
+
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+
         // File upload handling
         let selectedFile = null;
 
@@ -196,11 +217,13 @@
         $('#registerForm').on('submit', function(e) {
             e.preventDefault();
 
+            // Reset error states
             $('#alert-container').html('');
             $('.input-field input, .input-field select').removeClass('is-invalid');
             $('.invalid-feedback-custom').text('');
 
-            $('#btnText').text('Registering...');
+            // Show loading state
+            $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Registering...');
             $('#btnSpinner').removeClass('d-none');
             $('#registerBtn').prop('disabled', true);
 
@@ -219,23 +242,32 @@
                 processData: false,
                 contentType: false,
                 success: function(res) {
-                    $('#registerBtn').prop('disabled', false);
-                    $('#btnText').text('Register for Tax Recognition');
-                    $('#btnSpinner').addClass('d-none');
+                    console.log('Register response:', res);
 
                     if (res.status === 'success') {
-                        showToast('success', 'Registration Successful!', res.message, 3000);
-                        setTimeout(() => {
-                            if (res.redirect) window.location.href = res.redirect;
-                            else window.location.href = "{{ route('login') }}";
-                        }, 2000);
+                        showToast('success', 'Registration Successful!', res.message, 2000);
+
+                        // Handle redirect properly
+                        if (res.redirect) {
+                            setTimeout(function() {
+                                window.location.href = res.redirect;
+                            }, 2000);
+                        } else {
+                            // Fallback redirect to login page
+                            setTimeout(function() {
+                                window.location.href = "{{ route('login') }}";
+                            }, 2000);
+                        }
                     } else {
+                        $('#registerBtn').prop('disabled', false);
+                        $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Register for Tax Recognition');
+                        $('#btnSpinner').addClass('d-none');
                         showToast('error', 'Registration Failed!', res.message || 'Please try again.', 5000);
                     }
                 },
                 error: function(xhr) {
                     $('#registerBtn').prop('disabled', false);
-                    $('#btnText').text('Register for Tax Recognition');
+                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Register for Tax Recognition');
                     $('#btnSpinner').addClass('d-none');
 
                     if (xhr.status === 422) {
@@ -252,7 +284,11 @@
                     } else if (xhr.status === 409) {
                         showToast('error', 'Account Exists!', xhr.responseJSON?.message || 'Email already registered.', 5000);
                     } else {
-                        showToast('error', 'Error!', 'Something went wrong. Please try again.', 5000);
+                        let errorMsg = 'Something went wrong. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showToast('error', 'Error!', errorMsg, 5000);
                     }
                 }
             });
@@ -262,6 +298,71 @@
         $('input, select').on('focus', function() {
             $(this).removeClass('is-invalid');
             $(this).siblings('.invalid-feedback-custom').text('');
+        });
+
+        // Real-time password validation
+        $('#password').on('input', function() {
+            const password = $(this).val();
+            if (password.length > 0 && password.length < 8) {
+                $('#password_error').text('Password must be at least 8 characters long.');
+                $(this).addClass('is-invalid');
+            } else {
+                $('#password_error').text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Real-time password confirmation validation
+        $('#password_confirmation').on('input', function() {
+            const password = $('#password').val();
+            const confirm = $(this).val();
+            if (confirm.length > 0 && password !== confirm) {
+                $('#password_confirmation_error').text('Passwords do not match.');
+                $(this).addClass('is-invalid');
+            } else {
+                $('#password_confirmation_error').text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Email validation
+        $('#email').on('input', function() {
+            const email = $(this).val();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.length > 0 && !emailRegex.test(email)) {
+                $('#email_error').text('Please enter a valid email address.');
+                $(this).addClass('is-invalid');
+            } else {
+                $('#email_error').text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Phone validation (10 digits)
+        $('#phone').on('input', function() {
+            const phone = $(this).val();
+            const phoneRegex = /^\d{10}$/;
+            if (phone.length > 0 && !phoneRegex.test(phone)) {
+                $('#phone_error').text('Please enter a valid 10-digit mobile number.');
+                $(this).addClass('is-invalid');
+            } else {
+                $('#phone_error').text('');
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        // Demo credentials on double-click (optional)
+        $('.login-form-section').on('dblclick', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+            $('#name').val('Demo Taxpayer');
+            $('#email').val('demo@tn.gov.in');
+            $('#password').val('Password@123');
+            $('#password_confirmation').val('Password@123');
+            $('#gender').val('male');
+            $('#phone').val('9876543210');
+            $('#date_of_birth').val('1990-01-01');
+            $('#city').val('Chennai');
+            showToast("info", "Demo Data", "Sample taxpayer data loaded for testing", 2200);
         });
     });
 </script>

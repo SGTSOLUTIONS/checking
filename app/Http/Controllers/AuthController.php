@@ -67,12 +67,11 @@ class AuthController extends Controller
             // Role-based redirect
             if ($user->role === RoleEnum::ADMIN->value) {
                 $redirect = route('admin.dashboard');
-            }
-              elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
+            } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
                 $redirect = route('teamleader.dashboard');
             } elseif ($user->role === RoleEnum::SURVEYOR->value) {
                 $redirect = route('surveyor.dashboard');
-            }else {
+            } else {
                 $redirect = route('/'); // fallback
             }
 
@@ -109,35 +108,35 @@ class AuthController extends Controller
         ]);
 
         // Handle file upload
+        $profilePath = null;
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
-            $filename = $request->email . $file->getClientOriginalName();
-
-            // Store in public/profile directory
-            $filePath = $file->move('profile', $filename, 'public');
-            $validated['profile_picture'] = $filePath;
+            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $request->email) . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('profile_pictures', $filename, 'public');
+            $profilePath = $filePath;
         }
 
-        // Hash password
-        $validated['profile'] = $filePath ?? null;
-        $validated['password'] = Hash::make($validated['password']);
-
         // Create user
-        $user = User::create($validated);
-
-        // You can add login logic here if needed
-        // Auth::login($user);
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'gender' => $validated['gender'],
+            'phone' => $validated['phone'],
+            'date_of_birth' => $validated['date_of_birth'],
+            'city' => $validated['city'],
+            'profile_picture' => $profilePath,
+            'status' => ActiveStatusEnum::ACTIVE->value,
+            'role' => RoleEnum::SURVEYOR->value, // Set default role
+        ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Registration successful! Welcome to our community.',
-            'redirect' => route('login') // or admin.dashboard
+            'message' => 'Registration successful! Please login to continue.',
+            'redirect' => route('login')
         ]);
     }
-
-
     /** Dashboard (after login) */
-
     public function dashboards()
     {
         return view('admin.dashboard');
