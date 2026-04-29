@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TN Municipal | Property Tax Portal - Login</title>
+    <title>TN Municipal | Property Tax & Revenue Portal - @yield('title', 'Taxpayer Portal')</title>
 
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
         * {
@@ -28,7 +31,7 @@
             background-color: #f4f2ef;
         }
 
-        /* FULLSCREEN HERITAGE BG - optimized mobile performance */
+        /* FULLSCREEN HERITAGE BG */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -43,14 +46,17 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.82) contrast(1.02) saturate(1.05);
-            transform: scale(1.02);
             animation: slowZoom 28s ease infinite alternate;
         }
 
         @keyframes slowZoom {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.06);
+            }
         }
 
         .bg-overlay {
@@ -83,10 +89,23 @@
         }
 
         @keyframes floatParticle {
-            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.25; }
-            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.25;
+            }
+
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         /* Toast System */
@@ -128,13 +147,46 @@
             color: #1e2f3e;
         }
 
-        .toast.show { transform: translateX(0); opacity: 1; }
-        .toast.hide { transform: translateX(120%); opacity: 0; }
-        .toast-icon { font-size: 1.4rem; flex-shrink: 0; }
-        .toast-content { flex: 1; }
-        .toast-title { font-weight: 800; font-size: 0.85rem; margin-bottom: 0.2rem; }
-        .toast-message { font-size: 0.75rem; opacity: 0.8; margin: 0; }
-        .toast-close { background: none; border: none; color: #7e8b9e; cursor: pointer; font-size: 0.8rem; padding: 0 4px; }
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .toast-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .toast-message {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #7e8b9e;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 4px;
+        }
+
         .toast-progress {
             position: absolute;
             bottom: 0;
@@ -144,13 +196,34 @@
             width: 0%;
             animation: progressShrink linear forwards;
         }
-        @keyframes progressShrink { from { width: 100%; } to { width: 0%; } }
-        .toast-success { border-left-color: #27ae60; }
-        .toast-error { border-left-color: #e74c3c; }
-        .toast-warning { border-left-color: #f39c12; }
-        .toast-info { border-left-color: #2980b9; }
 
-        /* MAIN CARD - single column on mobile, two columns on desktop */
+        @keyframes progressShrink {
+            from {
+                width: 100%;
+            }
+
+            to {
+                width: 0%;
+            }
+        }
+
+        .toast-success {
+            border-left-color: #27ae60;
+        }
+
+        .toast-error {
+            border-left-color: #e74c3c;
+        }
+
+        .toast-warning {
+            border-left-color: #f39c12;
+        }
+
+        .toast-info {
+            border-left-color: #2980b9;
+        }
+
+        /* MAIN CARD */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -165,11 +238,18 @@
         }
 
         @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        /* LEFT SIDE BRANDING - HIDDEN ON MOBILE, visible on tablet/desktop */
+        /* LEFT SIDE BRANDING - Hidden on mobile */
         .login-hero {
             flex: 1.2;
             min-width: 260px;
@@ -181,15 +261,20 @@
             color: #2c3e4e;
         }
 
-        /* Hide left side content on mobile screens */
-        @media (max-width: 767px) {
+        /* Hide left content on mobile devices */
+        @media (max-width: 768px) {
             .login-hero {
                 display: none;
             }
+
             .auth-card {
-                border-radius: 1.5rem;
                 max-width: 500px;
                 margin: 0 auto;
+            }
+
+            .login-form-section {
+                width: 100%;
+                flex: none;
             }
         }
 
@@ -235,13 +320,24 @@
             color: #1e3a5f;
         }
 
-        @media (min-width: 768px) {
-            .hero-content h1 { font-size: 2.2rem; }
-            .brand-text { font-size: 1.5rem; }
-            .login-hero { padding: 2.5rem; }
+        @media (min-width: 769px) and (max-width: 992px) {
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
         }
-        @media (min-width: 992px) {
-            .hero-content h1 { font-size: 2.5rem; }
+
+        @media (min-width: 993px) {
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
+            .brand-text {
+                font-size: 1.5rem;
+            }
+
+            .login-hero {
+                padding: 2.5rem;
+            }
         }
 
         .hero-highlight {
@@ -289,7 +385,7 @@
             line-height: 1.35;
         }
 
-        /* RIGHT SIDE FORM - full width on mobile, flex on desktop */
+        /* RIGHT SIDE FORM SECTION */
         .login-form-section {
             flex: 1;
             min-width: 300px;
@@ -297,22 +393,55 @@
             padding: 1.8rem;
         }
 
-        /* On mobile, make form section take full width and remove any extra margins */
-        @media (max-width: 767px) {
-            .login-form-section {
-                width: 100%;
-                min-width: auto;
-                padding: 1.5rem;
+        /* Mobile header (visible only on mobile) */
+        .mobile-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #fef5e8;
+        }
+
+        .mobile-header .mobile-brand-icon {
+            background: #e67e22;
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 0.5rem 0 0.25rem;
+        }
+
+        .mobile-header p {
+            font-size: 0.7rem;
+            color: #e67e22;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-header {
+                display: block;
             }
         }
 
-        @media (min-width: 576px) and (max-width: 767px) {
+        @media (min-width: 576px) {
             .login-form-section {
-                padding: 2rem;
+                padding: 2rem 2rem;
             }
         }
 
-        @media (min-width: 768px) {
+        @media (min-width: 769px) {
             .login-form-section {
                 padding: 2.5rem 2.5rem;
             }
@@ -322,17 +451,6 @@
             font-size: 1.6rem;
             font-weight: 700;
             color: #1e3a5f;
-        }
-
-        @media (max-width: 767px) {
-            .form-header h2 {
-                font-size: 1.4rem;
-                text-align: center;
-            }
-            .form-header p {
-                text-align: center;
-                font-size: 0.8rem;
-            }
         }
 
         .form-header p {
@@ -363,7 +481,8 @@
             z-index: 2;
         }
 
-        .input-field input {
+        .input-field input,
+        .input-field select {
             width: 100%;
             padding: 11px 14px 11px 44px;
             font-size: 0.9rem;
@@ -374,14 +493,22 @@
             outline: none;
         }
 
-        .input-field input:focus {
+        .input-field select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+
+        .input-field input:focus,
+        .input-field select:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
         }
 
-        .input-field input.is-invalid {
+        .input-field input.is-invalid,
+        .input-field select.is-invalid {
             border-color: #e74c3c;
-            padding-right: 40px;
         }
 
         .invalid-feedback-custom {
@@ -398,13 +525,6 @@
             margin: 1rem 0 1.5rem;
             flex-wrap: wrap;
             gap: 0.6rem;
-        }
-
-        @media (max-width: 480px) {
-            .form-options {
-                flex-direction: column;
-                align-items: flex-start;
-            }
         }
 
         .checkbox {
@@ -513,19 +633,6 @@
                 min-width: 115px;
             }
         }
-        @media (min-width: 768px) {
-            .sso-btn { font-size: 0.8rem; }
-        }
-
-        @media (max-width: 480px) {
-            .sso-buttons {
-                flex-direction: column;
-                gap: 0.6rem;
-            }
-            .sso-btn {
-                width: 100%;
-            }
-        }
 
         .sso-btn:hover {
             background: #fff4e6;
@@ -559,131 +666,212 @@
         }
 
         @keyframes rippleAnim {
-            to { transform: scale(6); opacity: 0; }
+            to {
+                transform: scale(6);
+                opacity: 0;
+            }
         }
 
-        /* Mobile extra polish */
+        /* File Upload Styles for Registration */
+        .file-upload-mini {
+            margin-top: 5px;
+            background: #fef9f0;
+            border: 1.5px dashed #e2e8f0;
+            border-radius: 16px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .file-upload-mini:hover {
+            border-color: #e67e22;
+            background: #fff6ea;
+        }
+
+        .file-preview-mini {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preview-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #e67e22;
+        }
+
+        /* Password strength meter styles */
+        .strength-container {
+            margin-top: 0.5rem;
+        }
+
+        .strength-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        .strength-fill.weak {
+            background: #e74c3c;
+            width: 25%;
+        }
+
+        .strength-fill.fair {
+            background: #f39c12;
+            width: 50%;
+        }
+
+        .strength-fill.good {
+            background: #3498db;
+            width: 75%;
+        }
+
+        .strength-fill.strong {
+            background: #27ae60;
+            width: 100%;
+        }
+
+        .strength-text {
+            font-size: 0.7rem;
+            color: #7e8b9e;
+        }
+
+        .toggle-password {
+            background: transparent;
+            border: none;
+            color: #e67e22;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 5;
+            position: absolute;
+            right: 12px;
+        }
+
+        .toggle-password:hover {
+            color: #c0392b;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 0.75rem;
             }
+
             .auth-card {
                 border-radius: 1.5rem;
+                max-width: 100%;
             }
+
             .login-form-section {
                 padding: 1.3rem;
             }
-        }
 
-        /* Small tablet landscape */
-        @media (min-width: 481px) and (max-width: 767px) {
-            .sso-buttons {
-                flex-wrap: wrap;
+            .form-header h2 {
+                font-size: 1.3rem;
             }
+
+            .sso-buttons {
+                flex-direction: column;
+                gap: 0.6rem;
+            }
+
             .sso-btn {
-                flex: 1 0 auto;
+                width: 100%;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
+
+    @stack('styles')
 </head>
+
 <body>
 
-<div class="heritage-bg">
-    <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
-         alt="Tamil Nadu Government Heritage Building"
-         onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
-</div>
-<div class="bg-overlay"></div>
-<div class="particles" id="particles-container"></div>
-<div id="toast-container" class="toast-container"></div>
+    <div class="heritage-bg">
+        <img src="https://images.pexels.com/photos/8967822/pexels-photo-8967822.jpeg"
+            alt="Tamil Nadu Government Heritage Building"
+            onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+    </div>
+    <div class="bg-overlay"></div>
+    <div class="particles" id="particles-container"></div>
+    <div id="toast-container" class="toast-container"></div>
 
-<div class="auth-card">
-    <!-- LEFT: Branding & municipal info - HIDDEN ON MOBILE (display:none on screens <768px) -->
-    <div class="login-hero">
-        <div class="brand">
-            <div class="brand-icon"><i class="fas fa-landmark"></i></div>
-            <div>
-                <div class="brand-text">Greater Chennai Corporation</div>
-                <div class="brand-sub">Tamil Nadu • Tax Recognition Portal</div>
+    <div class="auth-card">
+        <!-- LEFT: Branding & municipal info (hidden on mobile) -->
+        <div class="login-hero">
+            <div class="brand">
+                <div class="brand-icon"><i class="fas fa-landmark"></i></div>
+                <div>
+                    <div class="brand-text">Greater Chennai Corporation</div>
+                    <div class="brand-sub">Tamil Nadu • Tax Recognition Portal</div>
+                </div>
+            </div>
+            <div class="hero-content">
+                <h1>Property Tax<br><span class="hero-highlight">Digital Seva</span></h1>
+                <p class="hero-description">
+                    Official portal for property tax assessment, online payment, and e-recognition certificates.
+                    Government of Tamil Nadu initiative for transparent governance.
+                </p>
+                <div class="trust-badge">
+                    <div class="trust-item"><i class="fas fa-shield-alt"></i> <span>e-Governance</span></div>
+                    <div class="trust-item"><i class="fas fa-file-certificate"></i> <span>Tax Recognition</span></div>
+                    <div class="trust-item"><i class="fas fa-hand-holding-usd"></i> <span>Online Collection</span></div>
+                </div>
+            </div>
+            <div class="quote-area">
+                <div class="quote">“நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு” — Hon'ble Minister of Municipal
+                    Administration</div>
             </div>
         </div>
-        <div class="hero-content">
-            <h1>Property Tax<br><span class="hero-highlight">Digital Seva</span></h1>
-            <p class="hero-description">
-                Official portal for property tax assessment, online payment, and e-recognition certificates.
-                Government of Tamil Nadu initiative for transparent governance.
-            </p>
-            <div class="trust-badge">
-                <div class="trust-item"><i class="fas fa-shield-alt"></i> <span>e-Governance</span></div>
-                <div class="trust-item"><i class="fas fa-file-certificate"></i> <span>Tax Recognition</span></div>
-                <div class="trust-item"><i class="fas fa-hand-holding-usd"></i> <span>Online Collection</span></div>
+
+        <!-- RIGHT: Dynamic Content -->
+        <div class="login-form-section">
+            <!-- Mobile Header (visible only on mobile) -->
+            <div class="mobile-header">
+                <div class="mobile-brand-icon">
+                    <i class="fas fa-landmark"></i>
+                </div>
+                <h3>Greater Chennai Corporation</h3>
+                <p>Tamil Nadu • Tax Recognition Portal</p>
             </div>
-        </div>
-        <div class="quote-area">
-            <div class="quote">“நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு” — Hon'ble Minister of Municipal Administration</div>
+
+            @yield('content')
         </div>
     </div>
 
-    <!-- RIGHT: Login Form - Takes full width on mobile -->
-    <div class="login-form-section">
-        <div class="form-header">
-            <h2>Taxpayer Access</h2>
-            <p>Sign in to view property tax, file returns & download e-receipts</p>
-        </div>
-
-        <form id="loginForm" method="POST">
-            @csrf
-            <div class="mb-3">
-                <label class="input-label" for="email">Email address</label>
-                <div class="input-field">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="email" name="email" class="" placeholder="yourname@municipality.tn.gov.in" autocomplete="email">
-                </div>
-                <div class="invalid-feedback-custom" id="email_error"></div>
-            </div>
-
-            <div class="mb-3">
-                <label class="input-label" for="password">Password</label>
-                <div class="input-field">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" id="password" name="password" class="" placeholder="Enter password" autocomplete="current-password">
-                </div>
-                <div class="invalid-feedback-custom" id="password_error"></div>
-            </div>
-
-            <div class="form-options">
-                <label class="checkbox">
-                    <input type="checkbox" id="rememberCheck" name="remember"> <span>Keep me signed in (secured device)</span>
-                </label>
-                <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password / PID?</a>
-            </div>
-
-            <button type="submit" class="login-btn" id="loginBtn">
-                <span id="btnText"><i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard</span>
-                <span id="btnSpinner" class="spinner-border spinner-border-sm d-none"></span>
-            </button>
-        </form>
-
-        <div class="divider"><span>OR SIGN IN WITH</span></div>
-        <div class="sso-buttons">
-            <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
-            <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
-            <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
-        </div>
-        <div class="register-prompt">New taxpayer? <a href="#" id="signupLink">Register your property for tax recognition</a></div>
-    </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script>
-    // ========== TOAST SYSTEM ==========
-    function showToast(type, title, message, duration = 4500) {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        // ========== TOAST SYSTEM ==========
+        window.showToast = function(type, title, message, duration = 4500) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
             <i class="fas ${icons[type] || 'fa-circle-info'} toast-icon"></i>
             <div class="toast-content">
                 <div class="toast-title">${escapeHtml(title)}</div>
@@ -692,173 +880,87 @@
             <button class="toast-close"><i class="fas fa-times"></i></button>
             <div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>
         `;
-        container.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 20);
-        const closeBtn = toast.querySelector('.toast-close');
-        closeBtn.addEventListener('click', () => removeToast(toast));
-        if (duration > 0) setTimeout(() => { if (toast.parentNode) removeToast(toast); }, duration);
-        return toast;
-    }
-    function removeToast(toast) {
-        toast.classList.remove('show');
-        toast.classList.add('hide');
-        setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
-    }
-    function escapeHtml(str) { return String(str).replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 20);
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => removeToast(toast));
+            if (duration > 0) setTimeout(() => {
+                if (toast.parentNode) removeToast(toast);
+            }, duration);
+            return toast;
+        };
 
-    // Ripple effect
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.login-btn, .sso-btn');
-        if (btn && btn.tagName === 'BUTTON') {
-            const ripple = document.createElement('span');
-            ripple.classList.add('ripple-effect');
-            const rect = btn.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
-            ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-            ripple.style.position = 'absolute';
-            ripple.style.background = 'radial-gradient(circle, rgba(230,126,34,0.5), rgba(230,126,34,0))';
-            ripple.style.borderRadius = '50%';
-            ripple.style.pointerEvents = 'none';
-            btn.style.position = 'relative';
-            btn.style.overflow = 'hidden';
-            btn.appendChild(ripple);
-            setTimeout(() => { ripple.style.transform = 'scale(5)'; ripple.style.opacity = '0'; }, 10);
-            setTimeout(() => ripple.remove(), 500);
+        function removeToast(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 350);
         }
-    });
 
-    // Particles
-    function createParticles() {
-        const container = document.querySelector('.particles');
-        if (!container) return;
-        for (let i = 0; i < 45; i++) {
-            const p = document.createElement('div');
-            p.classList.add('particle');
-            const size = Math.random() * 4 + 2;
-            p.style.width = size + 'px';
-            p.style.height = size + 'px';
-            p.style.left = Math.random() * 100 + '%';
-            p.style.animationDuration = Math.random() * 14 + 8 + 's';
-            p.style.animationDelay = Math.random() * 12 + 's';
-            p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
-            container.appendChild(p);
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>]/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;'
+            } [m]));
         }
-    }
-    createParticles();
 
-    function clearValidation() {
-        $('#email, #password').removeClass('is-invalid');
-        $('#email_error, #password_error').text('');
-    }
-
-    $(function() {
-        $('#loginForm').on('submit', function(e) {
-            e.preventDefault();
-            clearValidation();
-
-            $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
-            $('#btnSpinner').removeClass('d-none');
-            $('#loginBtn').prop('disabled', true);
-
-            const formData = {
-                email: $('#email').val().trim(),
-                password: $('#password').val(),
-                _token: $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}'
-            };
-            formData.remember = $('#rememberCheck').is(':checked') ? 1 : 0;
-
-            $.ajax({
-                url: "{{ route('login.post') }}",
-                method: "POST",
-                data: formData,
-                dataType: "json",
-                success: function(res) {
-                    $('#loginBtn').prop('disabled', false);
-                    $('#btnSpinner').addClass('d-none');
-                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
-                    if (res.status === 'success') {
-                        showToast('success', 'Success!', res.message, 3000);
-                        setTimeout(() => {
-                            if (res.redirect) window.location.href = res.redirect;
-                            else showToast('info', 'Redirect', 'Dashboard loading...', 2000);
-                        }, 1500);
-                    } else {
-                        showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
-                    }
-                },
-                error: function(xhr) {
-                    $('#loginBtn').prop('disabled', false);
-                    $('#btnSpinner').addClass('d-none');
-                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
-
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        if (errors.email) {
-                            $('#email').addClass('is-invalid');
-                            $('#email_error').text(errors.email[0]);
-                        }
-                        if (errors.password) {
-                            $('#password').addClass('is-invalid');
-                            $('#password_error').text(errors.password[0]);
-                        }
-                        showToast('error', 'Validation Error!', 'Please check the form for errors.', 5000);
-                    } else if (xhr.status === 401) {
-                        showToast('error', 'Authentication Failed!', xhr.responseJSON?.message || 'Invalid credentials.', 5000);
-                    } else {
-                        // Fallback for demo when route doesn't exist
-                        if (formData.email && formData.password.length >= 4) {
-                            showToast('success', '✅ Taxpayer Verified', `Welcome ${formData.email.split('@')[0]}, property tax dashboard loading...`, 3800);
-                            setTimeout(() => {
-                                showToast('info', 'e-Recognition', 'Your PTIN: TN-2025-XXXX | Last payment: ₹4,250', 4000);
-                            }, 1400);
-                        } else if (formData.email && formData.password.length < 4) {
-                            $('#password').addClass('is-invalid');
-                            $('#password_error').text('Password must be at least 4 characters.');
-                            showToast('error', 'Invalid Input', 'Password must be at least 4 characters.', 4000);
-                        } else {
-                            showToast('error', 'Connection issue', 'Unable to reach server. Check network or backend route.', 5000);
-                        }
-                    }
-                }
-            });
+        // Ripple effect
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.login-btn, .sso-btn');
+            if (btn && btn.tagName === 'BUTTON') {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple-effect');
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
+                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.background = 'radial-gradient(circle, rgba(230,126,34,0.5), rgba(230,126,34,0))';
+                ripple.style.borderRadius = '50%';
+                ripple.style.pointerEvents = 'none';
+                btn.style.position = 'relative';
+                btn.style.overflow = 'hidden';
+                btn.appendChild(ripple);
+                setTimeout(() => {
+                    ripple.style.transform = 'scale(5)';
+                    ripple.style.opacity = '0';
+                }, 10);
+                setTimeout(() => ripple.remove(), 500);
+            }
         });
 
-        $('#forgotPwdLink').on('click', function(e) {
-            e.preventDefault();
-            showToast("info", "Password recovery", "Reset link sent to registered mobile (TN e-Seva)", 4000);
-        });
-        $('#signupLink').on('click', function(e) {
-            e.preventDefault();
-            showToast("info", "Property Registration", "New tax assessment request initiated. Visit nearest corporation office or complete e-KYC.", 5000);
-        });
-        $('#ssoGoogleBtn').on('click', function() {
-            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2800);
-            setTimeout(() => showToast("success", "SSO Connected", "Taxpayer records fetched", 2400), 1400);
-        });
-        $('#ssoOktaBtn').on('click', function() {
-            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2700);
-            setTimeout(() => showToast("success", "Verified", "Property tax summary available", 2300), 1300);
-        });
-        $('#ssoMsftBtn').on('click', function() {
-            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2800);
-            setTimeout(() => showToast("success", "Authorized", "Tax certificates accessible", 2200), 1400);
-        });
+        // Particles
+        function createParticles() {
+            const container = document.querySelector('.particles');
+            if (!container) return;
+            for (let i = 0; i < 45; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                const size = Math.random() * 4 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = Math.random() * 14 + 8 + 's';
+                p.style.animationDelay = Math.random() * 12 + 's';
+                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
+                container.appendChild(p);
+            }
+        }
+        createParticles();
 
-        $('#rememberCheck').on('change', function(e) {
-            if (this.checked) showToast("info", "Session persistence", "Secured cookie enabled for 30 days (government policy)", 3000);
-        });
+        // Welcome toast only on desktop (optional)
+        if (window.innerWidth > 768) {
+            setTimeout(() => {
+                if (window.showToast) showToast("info", "📜 Tamil Nadu Municipal Tax",
+                    "Welcome to property tax e-portal | Secure GSTN integration", 4000);
+            }, 500);
+        }
+    </script>
 
-        $('.login-form-section').on('dblclick', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-            $('#email').val('taxpayer@tn.gov.in');
-            $('#password').val('TNtax2025');
-            showToast("success", "Demo Credentials", "Sample taxpayer account loaded (for preview)", 2200);
-        });
-
-        showToast("info", "📜 Tamil Nadu Municipal Tax", "Welcome to property tax e-portal | Secure GSTN integration", 4000);
-    });
-</script>
+    @stack('scripts')
 </body>
-</html>
+
+</html>S
