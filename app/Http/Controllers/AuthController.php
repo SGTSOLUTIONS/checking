@@ -35,59 +35,60 @@ class AuthController extends Controller
     }
 
     /** Handle Login (AJAX) */
-   public function login(Request $request)
-{
-    $validated = $request->validate([
-        'email' => 'required|email',
-        'password' => 'required|min:6',
-    ]);
+    public function login(Request $request)
+    {
+        // Only accept AJAX requests
+        if (!$request->ajax() && !$request->wantsJson()) {
+            return response()->json(['error' => 'Invalid request'], 400);
+        }
 
-    // Find user by email
-    $user = User::where('email', $validated['email'])->first();
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
 
-    if (!$user) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'No account found with this email.'
-        ], 404);
-    }
+        // Find user by email
+        $user = User::where('email', $validated['email'])->first();
 
-    // Ensure user is active
-    if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Your account is not active. Please contact the administrator.'
-        ], 403);
-    }
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No account found with this email.'
+            ], 404);
+        }
 
-    // Attempt login
-    if (Auth::attempt($validated)) {
-        $request->session()->regenerate();
+        // Ensure user is active
+        if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Your account is not active. Please contact the administrator.'
+            ], 403);
+        }
 
-        // Role-based redirect - use named routes
-        $redirect = route('admin.dashboard'); // Default
+        // Attempt login
+        if (Auth::attempt($validated)) {
+            $request->session()->regenerate();
 
-        if ($user->role === RoleEnum::ADMIN->value) {
-            $redirect = route('admin.dashboard');
-        } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
-            $redirect = route('teamleader.dashboard');
-        } elseif ($user->role === RoleEnum::SURVEYOR->value) {
-            $redirect = route('surveyor.dashboard');
+            // Role-based redirect
+            $redirect = match ($user->role) {
+                RoleEnum::ADMIN->value => route('admin.dashboard'),
+                RoleEnum::TEAM_LEADER->value => route('teamleader.dashboard'),
+                RoleEnum::SURVEYOR->value => route('surveyor.dashboard'),
+                default => route('admin.dashboard')
+            };
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Login successful!',
+                'redirect' => $redirect,
+            ])->header('Content-Type', 'application/json');
         }
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Login successful!',
-            'redirect' => $redirect, // This will be a relative URL like /dashboard
-        ]);
+            'status' => 'error',
+            'message' => 'Invalid password.'
+        ], 401);
     }
-
-    return response()->json([
-        'status' => 'error',
-        'message' => 'Invalid password.'
-    ], 401);
-}
-
 
 
     /** Show Register Page */
