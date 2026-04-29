@@ -10,7 +10,7 @@
 
     <div id="alert-container"></div>
 
-    <form id="loginForm" method="POST" action="javascript:void(0);">
+    <form id="loginForm" method="POST" >
         @csrf
 
         <div class="mb-3">
