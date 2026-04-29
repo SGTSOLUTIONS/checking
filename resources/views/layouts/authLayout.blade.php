@@ -193,26 +193,21 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Left Side Branding - Responsive */
+        /* Left Side Branding - Hidden on mobile, visible on desktop */
         .login-hero {
             flex: 1.2;
             background: linear-gradient(135deg, #fbf7ef 0%, #fffaf2 100%);
-            padding: 2rem 1.5rem;
+            padding: 2rem 1.8rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             color: #2c3e4e;
-            width: 100%;
-        }
-
-        @media (min-width: 768px) {
-            .login-hero {
-                padding: 2rem 1.8rem;
-            }
+            display: none; /* Hidden by default on mobile */
         }
 
         @media (min-width: 992px) {
             .login-hero {
+                display: flex; /* Show on desktop */
                 min-width: 260px;
             }
         }
@@ -333,7 +328,7 @@
             .quote { font-size: 0.75rem; }
         }
 
-        /* Right Side Form - Responsive */
+        /* Right Side Form - Full width on mobile */
         .login-form-section {
             flex: 1;
             background: white;
@@ -351,6 +346,33 @@
 
         @media (min-width: 992px) {
             .login-form-section { padding: 2.5rem; }
+        }
+
+        /* Mobile Header - Only visible on mobile */
+        .mobile-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #fef5e8;
+        }
+
+        @media (max-width: 991px) {
+            .mobile-header {
+                display: block;
+            }
+            .mobile-header .brand-icon {
+                margin: 0 auto 10px;
+                width: 55px;
+                height: 55px;
+                font-size: 1.8rem;
+            }
+            .mobile-header .brand-text {
+                font-size: 1.2rem;
+            }
+            .mobile-header .brand-sub {
+                font-size: 0.7rem;
+            }
         }
 
         .form-header h2 {
@@ -391,7 +413,8 @@
             z-index: 2;
         }
 
-        .input-field input {
+        .input-field input,
+        .input-field select {
             width: 100%;
             padding: 10px 14px 10px 44px;
             font-size: 0.9rem;
@@ -400,20 +423,24 @@
             background: #ffffff;
             transition: all 0.2s;
             outline: none;
+            font-family: 'Inter', 'Poppins', sans-serif;
         }
 
         @media (min-width: 768px) {
-            .input-field input {
+            .input-field input,
+            .input-field select {
                 padding: 11px 14px 11px 44px;
             }
         }
 
-        .input-field input:focus {
+        .input-field input:focus,
+        .input-field select:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
         }
 
-        .input-field input.is-invalid {
+        .input-field input.is-invalid,
+        .input-field select.is-invalid {
             border-color: #e74c3c;
         }
 
@@ -580,6 +607,108 @@
             to { transform: scale(6); opacity: 0; }
         }
 
+        /* File Upload Styles */
+        .file-upload-container {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-upload-area {
+            cursor: pointer;
+            border: 2px dashed #e2e8f0;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fef9f0;
+        }
+
+        .file-upload-area:hover {
+            border-color: #e67e22;
+            background: #fff6ea;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #e67e22;
+            background: #fef0e0;
+            transform: scale(1.01);
+        }
+
+        .file-upload-icon {
+            margin-bottom: 12px;
+            color: #e67e22;
+        }
+
+        .file-upload-text .primary {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c4c6e;
+            font-size: 0.9rem;
+        }
+
+        .file-upload-text .secondary {
+            color: #7e8b9e;
+            font-size: 11px;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .file-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #e67e22;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .file-remove {
+            border: none;
+            background: transparent;
+            color: #dc3545;
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .file-remove:hover {
+            color: #c82333;
+            text-decoration: underline;
+        }
+
+        .btn-outline-success {
+            border: 1px solid #e67e22;
+            color: #e67e22;
+            background: white;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-success:hover {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
         /* Extra small devices */
         @media (max-width: 480px) {
             body {
@@ -590,31 +719,12 @@
                 border-radius: 1.2rem;
             }
 
-            .login-hero, .login-form-section {
+            .login-form-section {
                 padding: 1.2rem;
             }
 
-            .brand-icon {
-                width: 38px;
-                height: 38px;
-                font-size: 1.2rem;
-            }
-
-            .brand-text {
-                font-size: 1rem;
-            }
-
-            .hero-content h1 {
-                font-size: 1.2rem;
-            }
-
-            .trust-item {
-                font-size: 0.65rem;
-                padding: 3px 10px;
-            }
-
-            .quote {
-                font-size: 0.65rem;
+            .file-upload-area {
+                padding: 15px;
             }
 
             .sso-buttons {
@@ -623,11 +733,6 @@
 
             .sso-btn {
                 width: 100%;
-            }
-
-            .form-options {
-                flex-direction: column;
-                align-items: flex-start;
             }
         }
     </style>
@@ -703,7 +808,7 @@
 
         // Ripple effect
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.login-btn, .sso-btn, .btn-primary, .btn-success');
+            const btn = e.target.closest('.login-btn, .sso-btn, .btn-primary, .btn-success, .btn-outline-success');
             if (btn && !btn.disabled) {
                 const ripple = document.createElement('span');
                 ripple.classList.add('ripple-effect');
