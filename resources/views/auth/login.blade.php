@@ -10,7 +10,7 @@
 
     <div id="alert-container"></div>
 
-    <form id="loginForm" method="POST" action="javascript:void(0);">
+    <form id="loginForm" action="javascript:void(0);" method="POST">
         @csrf
 
         <div class="mb-3">
@@ -58,121 +58,188 @@
 
 @section('scripts')
     <script>
-        $(document).ready(function() {
-            // Make sure to unbind any existing handlers
-            $('#loginForm').off('submit').on('submit', function(e) {
+        // Make sure everything runs after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, setting up login handler');
+
+            // Get form element
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const rememberCheck = document.getElementById('rememberCheck');
+            const emailError = document.getElementById('email_error');
+            const passwordError = document.getElementById('password_error');
+            const alertContainer = document.getElementById('alert-container');
+
+            // Remove any existing event listeners by replacing the form
+            const newForm = loginForm.cloneNode(true);
+            loginForm.parentNode.replaceChild(newForm, loginForm);
+
+            // Get the new form reference
+            const finalForm = document.getElementById('loginForm');
+
+            // Add submit event listener
+            finalForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Reset error states
-                $('#alert-container').html('');
-                $('#email, #password').removeClass('is-invalid');
-                $('#email_error, #password_error').text('');
+                console.log('Form submitted via AJAX');
+
+                // Clear previous errors
+                if (alertContainer) alertContainer.innerHTML = '';
+                emailInput.classList.remove('is-invalid');
+                passwordInput.classList.remove('is-invalid');
+                if (emailError) emailError.textContent = '';
+                if (passwordError) passwordError.textContent = '';
 
                 // Show loading state
-                $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Authenticating...');
-                $('#btnSpinner').removeClass('d-none');
-                $('#loginBtn').prop('disabled', true);
+                if (btnText) btnText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                if (btnSpinner) btnSpinner.classList.remove('d-none');
+                if (loginBtn) loginBtn.disabled = true;
 
-                const formData = {
-                    email: $('#email').val().trim(),
-                    password: $('#password').val(),
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    remember: $('#rememberCheck').is(':checked') ? 1 : 0
-                };
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute(
+                'content');
 
-                console.log('Sending AJAX request to login...');
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('email', emailInput.value.trim());
+                formData.append('password', passwordInput.value);
+                formData.append('_token', csrfToken);
+                formData.append('remember', rememberCheck.checked ? '1' : '0');
 
-                $.ajax({
-                    url: "{{ route('login.post') }}",
-                    method: "POST",
-                    data: formData,
-                    dataType: "json",
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    success: function(res) {
-                        console.log('Login response:', res);
+                // Make AJAX request
+                fetch("{{ route('login.post') }}", {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        return response.json().then(data => ({
+                            status: response.status,
+                            data
+                        }));
+                    })
+                    .then(({
+                        status,
+                        data
+                    }) => {
+                        console.log('Response data:', data);
 
-                        if (res.status === 'success') {
-                            showToast('success', 'Success!', res.message, 1500);
+                        if (data.status === 'success') {
+                            // Show success message
+                            if (window.showToast) {
+                                window.showToast('success', 'Success!', data.message, 1500);
+                            } else {
+                                console.log('Success:', data.message);
+                            }
 
-                            // Handle redirect
-                            if (res.redirect) {
-                                console.log('Redirecting to:', res.redirect);
+                            // Redirect after short delay
+                            if (data.redirect) {
                                 setTimeout(function() {
-                                    window.location.href = res.redirect;
+                                    window.location.href = data.redirect;
                                 }, 1500);
                             } else {
-                                console.error('No redirect URL in response');
-                                resetLoginButton();
+                                resetButton();
+                                if (window.showToast) {
+                                    window.showToast('error', 'Error!', 'No redirect URL provided',
+                                        3000);
+                                }
                             }
                         } else {
-                            resetLoginButton();
-                            showToast('error', 'Error!', res.message || 'Invalid credentials',
-                                5000);
+                            resetButton();
+                            if (window.showToast) {
+                                window.showToast('error', 'Error!', data.message || 'Login failed',
+                                    4000);
+                            } else {
+                                alert(data.message || 'Login failed');
+                            }
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('AJAX Error Details:', {
-                            status: xhr.status,
-                            statusText: xhr.statusText,
-                            responseText: xhr.responseText,
-                            error: error
-                        });
-
-                        resetLoginButton();
-
-                        // Try to parse error response
-                        if (xhr.responseJSON) {
-                            const errorMsg = xhr.responseJSON.message ||
-                            'Authentication failed';
-                            showToast('error', 'Error', errorMsg, 5000);
-
-                            // Handle validation errors
-                            if (xhr.responseJSON.errors) {
-                                const errors = xhr.responseJSON.errors;
-                                if (errors.email) {
-                                    $('#email').addClass('is-invalid');
-                                    $('#email_error').text(errors.email[0]);
-                                }
-                                if (errors.password) {
-                                    $('#password').addClass('is-invalid');
-                                    $('#password_error').text(errors.password[0]);
-                                }
-                            }
-                        } else {
-                            showToast('error', 'Error',
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        resetButton();
+                        if (window.showToast) {
+                            window.showToast('error', 'Connection Error',
                                 'Unable to connect to server. Please try again.', 5000);
+                        } else {
+                            alert('Unable to connect to server. Please try again.');
                         }
-                    }
-                });
+                    });
 
-                function resetLoginButton() {
-                    $('#loginBtn').prop('disabled', false);
-                    $('#btnSpinner').addClass('d-none');
-                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+                function resetButton() {
+                    if (loginBtn) loginBtn.disabled = false;
+                    if (btnSpinner) btnSpinner.classList.add('d-none');
+                    if (btnText) btnText.innerHTML =
+                        '<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard';
                 }
             });
 
             // SSO Buttons
-            $('#ssoGoogleBtn, #ssoOktaBtn, #ssoMsftBtn').on('click', function() {
-                let service = $(this).text().trim();
-                showToast("info", service, "Redirecting to " + service, 2000);
-                setTimeout(() => {
-                    window.location.href = "{{ route('login') }}?sso=" + service.toLowerCase()
-                        .replace(/\s+/g, '');
-                }, 1500);
-            });
+            const ssoGoogle = document.getElementById('ssoGoogleBtn');
+            const ssoOkta = document.getElementById('ssoOktaBtn');
+            const ssoMsft = document.getElementById('ssoMsftBtn');
+
+            if (ssoGoogle) {
+                ssoGoogle.addEventListener('click', function() {
+                    if (window.showToast) window.showToast("info", "TN e-Seva",
+                        "Redirecting to Tamil Nadu Single Sign-On", 2000);
+                    setTimeout(() => {
+                        window.location.href = "{{ route('login') }}?sso=tnseva";
+                    }, 1500);
+                });
+            }
+
+            if (ssoOkta) {
+                ssoOkta.addEventListener('click', function() {
+                    if (window.showToast) window.showToast("info", "UMANG Platform",
+                        "Connecting to Unified Mobile App", 2000);
+                    setTimeout(() => {
+                        window.location.href = "{{ route('login') }}?sso=umang";
+                    }, 1500);
+                });
+            }
+
+            if (ssoMsft) {
+                ssoMsft.addEventListener('click', function() {
+                    if (window.showToast) window.showToast("info", "DigiLocker",
+                        "Authenticating via DigiLocker issued documents", 2000);
+                    setTimeout(() => {
+                        window.location.href = "{{ route('login') }}?sso=digilocker";
+                    }, 1500);
+                });
+            }
 
             // Demo credentials on double-click
-            $('.form-header').on('dblclick', function(e) {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-                $('#email').val('taxpayer@tn.gov.in');
-                $('#password').val('TNtax2025');
-                showToast("success", "Demo Credentials", "Sample taxpayer account loaded", 2200);
-            });
+            const formHeader = document.querySelector('.form-header');
+            if (formHeader) {
+                formHeader.addEventListener('dblclick', function(e) {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+                    if (emailInput) emailInput.value = 'taxpayer@tn.gov.in';
+                    if (passwordInput) passwordInput.value = 'TNtax2025';
+                    if (window.showToast) window.showToast("success", "Demo Credentials",
+                        "Sample taxpayer account loaded", 2200);
+                });
+            }
         });
+
+        // Reset button function for global use
+        function resetLoginButton() {
+            const loginBtn = document.getElementById('loginBtn');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnText = document.getElementById('btnText');
+
+            if (loginBtn) loginBtn.disabled = false;
+            if (btnSpinner) btnSpinner.classList.add('d-none');
+            if (btnText) btnText.innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard';
+        }
     </script>
 @endsection

@@ -34,12 +34,14 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    /** Handle Login (AJAX) */
-    public function login(Request $request)
+    /** Handle Login (AJAX) */    public function login(Request $request)
     {
-        // Only accept AJAX requests
+        // Ensure this endpoint only responds to AJAX requests
         if (!$request->ajax() && !$request->wantsJson()) {
-            return response()->json(['error' => 'Invalid request'], 400);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid request type'
+            ], 400);
         }
 
         $validated = $request->validate([
@@ -66,16 +68,19 @@ class AuthController extends Controller
         }
 
         // Attempt login
-        if (Auth::attempt($validated)) {
+        if (Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']], $request->remember ? true : false)) {
             $request->session()->regenerate();
 
             // Role-based redirect
-            $redirect = match ($user->role) {
-                RoleEnum::ADMIN->value => route('admin.dashboard'),
-                RoleEnum::TEAM_LEADER->value => route('teamleader.dashboard'),
-                RoleEnum::SURVEYOR->value => route('surveyor.dashboard'),
-                default => route('admin.dashboard')
-            };
+            $redirect = route('admin.dashboard'); // Default
+
+            if ($user->role === RoleEnum::ADMIN->value) {
+                $redirect = route('admin.dashboard');
+            } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
+                $redirect = route('teamleader.dashboard');
+            } elseif ($user->role === RoleEnum::SURVEYOR->value) {
+                $redirect = route('surveyor.dashboard');
+            }
 
             return response()->json([
                 'status' => 'success',
