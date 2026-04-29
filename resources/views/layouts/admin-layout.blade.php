@@ -31,7 +31,7 @@
     <style>
         :root {
             --primary: #f8961e;
-            --primary-light: #4895ef;
+            --primary-light: #f8961e;
             --primary-dark: #3a0ca3;
             --secondary: #7209b7;
             --accent: #f72585;
