@@ -1,16 +1,18 @@
+{{-- resources/views/layouts/auth-layout.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TN Municipal | Property Tax & Revenue Portal - @yield('title', 'Taxpayer Portal')</title>
+    <title>@yield('title', 'TN Municipal | Property Tax Portal')</title>
 
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    @stack('styles')
 
     <style>
         * {
@@ -27,8 +29,11 @@
             justify-content: center;
             padding: 1rem;
             background-color: #f4f2ef;
+            position: relative;
+            overflow-x: hidden;
         }
 
+        /* Heritage Background */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -43,6 +48,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            filter: brightness(0.82) contrast(1.02) saturate(1.05);
+            transform: scale(1.02);
             animation: slowZoom 28s ease infinite alternate;
         }
 
@@ -61,6 +68,7 @@
             z-index: -1;
         }
 
+        /* Particles */
         .particles {
             position: fixed;
             top: 0;
@@ -86,6 +94,7 @@
             100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
         }
 
+        /* Toast Container */
         .toast-container {
             position: fixed;
             bottom: 1.5rem;
@@ -122,6 +131,7 @@
             opacity: 0;
             transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
             color: #1e2f3e;
+            font-size: 0.9rem;
         }
 
         .toast.show {
@@ -134,12 +144,16 @@
             opacity: 0;
         }
 
+        .toast-success { border-left-color: #27ae60; }
+        .toast-error { border-left-color: #e74c3c; }
+        .toast-warning { border-left-color: #f39c12; }
+        .toast-info { border-left-color: #2980b9; }
+
         .toast-icon { font-size: 1.4rem; flex-shrink: 0; }
         .toast-content { flex: 1; }
         .toast-title { font-weight: 800; font-size: 0.85rem; margin-bottom: 0.2rem; }
         .toast-message { font-size: 0.75rem; opacity: 0.8; margin: 0; }
         .toast-close { background: none; border: none; color: #7e8b9e; cursor: pointer; font-size: 0.8rem; padding: 0 4px; }
-
         .toast-progress {
             position: absolute;
             bottom: 0;
@@ -149,17 +163,12 @@
             width: 0%;
             animation: progressShrink linear forwards;
         }
-
         @keyframes progressShrink {
             from { width: 100%; }
             to { width: 0%; }
         }
 
-        .toast-success { border-left-color: #27ae60; }
-        .toast-error { border-left-color: #e74c3c; }
-        .toast-warning { border-left-color: #f39c12; }
-        .toast-info { border-left-color: #2980b9; }
-
+        /* Main Card */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -170,6 +179,7 @@
             flex-wrap: wrap;
             overflow: hidden;
             z-index: 10;
+            position: relative;
             animation: fadeSlideUp 0.5s ease-out;
         }
 
@@ -178,6 +188,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Left Side Branding */
         .login-hero {
             flex: 1.2;
             min-width: 260px;
@@ -187,12 +198,6 @@
             flex-direction: column;
             justify-content: space-between;
             color: #2c3e4e;
-        }
-
-        @media (max-width: 768px) {
-            .login-hero { display: none; }
-            .auth-card { max-width: 500px; margin: 0 auto; }
-            .login-form-section { width: 100%; flex: none; }
         }
 
         .brand {
@@ -216,53 +221,17 @@
             box-shadow: 0 8px 16px rgba(230, 126, 34, 0.2);
         }
 
-        .brand-text {
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: -0.2px;
-            line-height: 1.2;
-            color: #1e3a5f;
-        }
+        .brand-text { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.2px; line-height: 1.2; color: #1e3a5f; }
+        .brand-sub { font-size: 0.7rem; font-weight: 600; color: #e67e22; }
 
-        .brand-sub {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #e67e22;
-        }
+        .hero-content h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.8rem; color: #1e3a5f; }
+        @media (min-width: 768px) { .hero-content h1 { font-size: 2.2rem; } .brand-text { font-size: 1.5rem; } }
+        @media (min-width: 992px) { .hero-content h1 { font-size: 2.5rem; } }
 
-        .hero-content h1 {
-            font-size: 1.7rem;
-            font-weight: 800;
-            margin-bottom: 0.8rem;
-            color: #1e3a5f;
-        }
+        .hero-highlight { color: #e67e22; border-bottom: 2px solid #f39c12; display: inline-block; }
+        .hero-description { font-size: 0.85rem; line-height: 1.45; color: #4a627a; margin-bottom: 1rem; }
 
-        @media (min-width: 993px) {
-            .hero-content h1 { font-size: 2.2rem; }
-            .brand-text { font-size: 1.5rem; }
-            .login-hero { padding: 2.5rem; }
-        }
-
-        .hero-highlight {
-            color: #e67e22;
-            border-bottom: 2px solid #f39c12;
-            display: inline-block;
-        }
-
-        .hero-description {
-            font-size: 0.85rem;
-            line-height: 1.45;
-            color: #4a627a;
-            margin-bottom: 1rem;
-        }
-
-        .trust-badge {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin-top: 0.2rem;
-        }
-
+        .trust-badge { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.2rem; }
         .trust-item {
             display: flex;
             align-items: center;
@@ -276,7 +245,6 @@
         }
 
         .quote-area { margin-top: 1.8rem; }
-
         .quote {
             font-weight: 500;
             font-size: 0.75rem;
@@ -286,6 +254,7 @@
             line-height: 1.35;
         }
 
+        /* Right Side Form */
         .login-form-section {
             flex: 1;
             min-width: 300px;
@@ -293,85 +262,17 @@
             padding: 1.8rem;
         }
 
-        .mobile-header {
-            display: none;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #fef5e8;
-        }
+        @media (min-width: 576px) { .login-form-section { padding: 2rem; } }
+        @media (min-width: 768px) { .login-form-section { padding: 2.5rem; } }
 
-        .mobile-header .mobile-brand-icon {
-            background: #e67e22;
-            width: 45px;
-            height: 45px;
-            border-radius: 14px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            color: white;
-            margin-bottom: 0.5rem;
-        }
+        .form-header h2 { font-size: 1.6rem; font-weight: 700; color: #1e3a5f; }
+        .form-header p { color: #5e7a93; font-size: 0.85rem; margin-top: 4px; }
 
-        .mobile-header h3 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #1e3a5f;
-            margin: 0.5rem 0 0.25rem;
-        }
+        .input-label { font-size: 0.8rem; font-weight: 600; color: #2c4c6e; margin-bottom: 6px; display: block; }
 
-        .mobile-header p {
-            font-size: 0.7rem;
-            color: #e67e22;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        @media (max-width: 768px) {
-            .mobile-header { display: block; }
-        }
-
-        @media (min-width: 576px) {
-            .login-form-section { padding: 2rem 2rem; }
-        }
-
-        .form-header h2 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #1e3a5f;
-        }
-
-        .form-header p {
-            color: #5e7a93;
-            font-size: 0.85rem;
-            margin-top: 4px;
-        }
-
-        .input-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #2c4c6e;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .input-field {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-field i {
-            position: absolute;
-            left: 14px;
-            color: #e67e22;
-            font-size: 1rem;
-            z-index: 2;
-        }
-
-        .input-field input,
-        .input-field select {
+        .input-field { position: relative; display: flex; align-items: center; }
+        .input-field i { position: absolute; left: 14px; color: #e67e22; font-size: 1rem; z-index: 2; }
+        .input-field input {
             width: 100%;
             padding: 11px 14px 11px 44px;
             font-size: 0.9rem;
@@ -381,30 +282,9 @@
             transition: all 0.2s;
             outline: none;
         }
-
-        .input-field select {
-            appearance: none;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-        }
-
-        .input-field input:focus,
-        .input-field select:focus {
+        .input-field input:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
-        }
-
-        .input-field input.is-invalid,
-        .input-field select.is-invalid {
-            border-color: #e74c3c;
-        }
-
-        .invalid-feedback-custom {
-            font-size: 0.7rem;
-            color: #e74c3c;
-            margin-top: 4px;
-            display: block;
         }
 
         .form-options {
@@ -416,32 +296,10 @@
             gap: 0.6rem;
         }
 
-        .checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            color: #2c4c6e;
-        }
-
-        .checkbox input {
-            accent-color: #e67e22;
-            width: 16px;
-            height: 16px;
-            margin: 0;
-        }
-
-        .forgot-link {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #e67e22;
-            text-decoration: none;
-        }
-
-        .forgot-link:hover {
-            text-decoration: underline;
-            color: #c0392b;
-        }
+        .checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #2c4c6e; }
+        .checkbox input { accent-color: #e67e22; width: 16px; height: 16px; margin: 0; }
+        .forgot-link { font-size: 0.8rem; font-weight: 600; color: #e67e22; text-decoration: none; }
+        .forgot-link:hover { text-decoration: underline; color: #c0392b; }
 
         .login-btn {
             background: linear-gradient(95deg, #e67e22, #f39c12);
@@ -460,16 +318,8 @@
             gap: 8px;
             box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
-
-        .login-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4);
-        }
-
-        .login-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4); }
+        .login-btn:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
 
         .divider {
             display: flex;
@@ -478,25 +328,14 @@
             color: #a0b8d0;
             font-size: 0.7rem;
         }
-
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: "";
             flex: 1;
             border-bottom: 1px solid #e9edf2;
         }
+        .divider span { margin: 0 12px; }
 
-        .divider span {
-            margin: 0 12px;
-        }
-
-        .sso-buttons {
-            display: flex;
-            gap: 0.7rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
+        .sso-buttons { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
         .sso-btn {
             flex: 1;
             min-width: 100px;
@@ -514,143 +353,67 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+        .sso-btn:hover { background: #fff4e6; border-color: #e67e22; }
 
-        @media (min-width: 480px) {
-            .sso-btn {
-                font-size: 0.75rem;
-                padding: 10px 0;
-                min-width: 115px;
-            }
+        .register-prompt { text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: #5e7a93; }
+        .register-prompt a { color: #e67e22; font-weight: 700; text-decoration: none; }
+        .register-prompt a:hover { text-decoration: underline; }
+
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+            transform: scale(0);
+            animation: rippleAnim 0.5s ease-out;
+            pointer-events: none;
         }
-
-        .sso-btn:hover {
-            background: #fff4e6;
-            border-color: #e67e22;
-        }
-
-        .register-prompt {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.8rem;
-            color: #5e7a93;
-        }
-
-        .register-prompt a {
-            color: #e67e22;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .register-prompt a:hover {
-            text-decoration: underline;
-        }
-
-        .file-upload-mini {
-            margin-top: 5px;
-            background: #fef9f0;
-            border: 1.5px dashed #e2e8f0;
-            border-radius: 16px;
-            padding: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .file-upload-mini:hover {
-            border-color: #e67e22;
-            background: #fff6ea;
-        }
-
-        .file-preview-mini {
-            margin-top: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .preview-img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 2px solid #e67e22;
+        @keyframes rippleAnim {
+            to { transform: scale(6); opacity: 0; }
         }
 
         @media (max-width: 480px) {
             body { padding: 0.75rem; }
-            .auth-card { border-radius: 1.5rem; max-width: 100%; }
-            .login-form-section { padding: 1.3rem; }
-            .form-header h2 { font-size: 1.3rem; }
-            .sso-buttons { flex-direction: column; gap: 0.6rem; }
+            .auth-card { border-radius: 1.5rem; }
+            .login-hero, .login-form-section { padding: 1.3rem; }
+            .brand-icon { width: 42px; height: 42px; font-size: 1.3rem; }
+            .brand-text { font-size: 1rem; }
+            .hero-content h1 { font-size: 1.3rem; }
+            .sso-buttons { flex-direction: column; }
             .sso-btn { width: 100%; }
             .form-options { flex-direction: column; align-items: flex-start; }
         }
     </style>
 
-    @stack('styles')
+    @stack('additional-styles')
 </head>
-
 <body>
+
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/8967822/pexels-photo-8967822.jpeg"
-            alt="Tamil Nadu Government Heritage Building"
-            onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+        <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
+             alt="Tamil Nadu Government Heritage Building"
+             onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
     <div id="toast-container" class="toast-container"></div>
 
-    <div class="auth-card">
-        <div class="login-hero">
-            <div class="brand">
-                <div class="brand-icon"><i class="fas fa-landmark"></i></div>
-                <div>
-                    <div class="brand-text">Greater Chennai Corporation</div>
-                    <div class="brand-sub">Tamil Nadu • Tax Recognition Portal</div>
-                </div>
-            </div>
-            <div class="hero-content">
-                <h1>Property Tax<br><span class="hero-highlight">Digital Seva</span></h1>
-                <p class="hero-description">
-                    Official portal for property tax assessment, online payment, and e-recognition certificates.
-                    Government of Tamil Nadu initiative for transparent governance.
-                </p>
-                <div class="trust-badge">
-                    <div class="trust-item"><i class="fas fa-shield-alt"></i> <span>e-Governance</span></div>
-                    <div class="trust-item"><i class="fas fa-file-certificate"></i> <span>Tax Recognition</span></div>
-                    <div class="trust-item"><i class="fas fa-hand-holding-usd"></i> <span>Online Collection</span></div>
-                </div>
-            </div>
-            <div class="quote-area">
-                <div class="quote">"நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு" — Hon'ble Minister of Municipal Administration</div>
-            </div>
-        </div>
+    @yield('content')
 
-        <div class="login-form-section">
-            <div class="mobile-header">
-                <div class="mobile-brand-icon"><i class="fas fa-landmark"></i></div>
-                <h3>Greater Chennai Corporation</h3>
-                <p>Tamil Nadu • Tax Recognition Portal</p>
-            </div>
-            @yield('content')
-        </div>
-    </div>
-
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        window.showToast = function(type, title, message, duration = 4500) {
+        // Toast system
+        function showToast(type, title, message, duration = 4500) {
             const container = document.getElementById('toast-container');
             if (!container) return;
+
             const icons = {
                 success: 'fa-circle-check',
                 error: 'fa-circle-xmark',
                 warning: 'fa-triangle-exclamation',
                 info: 'fa-circle-info'
             };
+
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             toast.innerHTML = `
@@ -664,26 +427,63 @@
             `;
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 20);
+
             const closeBtn = toast.querySelector('.toast-close');
             closeBtn.addEventListener('click', () => removeToast(toast));
-            if (duration > 0) setTimeout(() => { if (toast.parentNode) removeToast(toast); }, duration);
+
+            if (duration > 0) {
+                setTimeout(() => removeToast(toast), duration);
+            }
             return toast;
-        };
+        }
 
         function removeToast(toast) {
             toast.classList.remove('show');
             toast.classList.add('hide');
-            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 350);
         }
 
         function escapeHtml(str) {
-            return String(str).replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+            return String(str).replace(/[&<>]/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;'
+            }[m]));
         }
 
+        // Ripple effect
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.login-btn, .sso-btn, .btn-primary, .btn-success');
+            if (btn && !btn.disabled) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple-effect');
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
+                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.5), rgba(255,255,255,0))';
+                ripple.style.borderRadius = '50%';
+                ripple.style.pointerEvents = 'none';
+                btn.style.position = 'relative';
+                btn.style.overflow = 'hidden';
+                btn.appendChild(ripple);
+                setTimeout(() => {
+                    ripple.style.transform = 'scale(5)';
+                    ripple.style.opacity = '0';
+                }, 10);
+                setTimeout(() => ripple.remove(), 500);
+            }
+        });
+
+        // Particles
         function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
-            for (let i = 0; i < 45; i++) {
+            for (let i = 0; i < 35; i++) {
                 const p = document.createElement('div');
                 p.classList.add('particle');
                 const size = Math.random() * 4 + 2;
@@ -697,8 +497,14 @@
             }
         }
         createParticles();
-    </script>
 
+        // Global AJAX setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

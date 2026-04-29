@@ -19,17 +19,18 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('admin.dashboard'); // or route('dashboards')
         }
+
         return view('auth.login');
     }
 
-    /** Show Register Page */
     public function showRegister()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('admin.dashboard');
         }
+
         return view('auth.register');
     }
 
@@ -41,6 +42,7 @@ class AuthController extends Controller
             'password' => 'required|min:6',
         ]);
 
+        // Find user by email
         $user = User::where('email', $validated['email'])->first();
 
         if (!$user) {
@@ -50,6 +52,7 @@ class AuthController extends Controller
             ], 404);
         }
 
+        // Ensure user is active
         if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
             return response()->json([
                 'status' => 'error',
@@ -57,16 +60,21 @@ class AuthController extends Controller
             ], 403);
         }
 
-        if (Auth::attempt($validated, $request->remember ? true : false)) {
+        // Attempt login
+        if (Auth::attempt($validated)) {
             $request->session()->regenerate();
 
             // Role-based redirect
-            $redirect = match($user->role) {
-                RoleEnum::ADMIN->value => route('admin.dashboard'),
-                RoleEnum::TEAM_LEADER->value => route('teamleader.dashboard'),
-                RoleEnum::SURVEYOR->value => route('surveyor.dashboard'),
-                default => route('dashboard'),
-            };
+            if ($user->role === RoleEnum::ADMIN->value) {
+                $redirect = route('admin.dashboard');
+            }
+              elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
+                $redirect = route('teamleader.dashboard');
+            } elseif ($user->role === RoleEnum::SURVEYOR->value) {
+                $redirect = route('surveyor.dashboard');
+            }else {
+                $redirect = route('/'); // fallback
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -81,12 +89,17 @@ class AuthController extends Controller
         ], 401);
     }
 
+
+
+    /** Show Register Page */
+
+
     /** Handle Register (AJAX) */
     public function register(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
             'gender' => 'required|in:male,female,other',
             'phone' => 'required|string|max:20',
@@ -96,101 +109,92 @@ class AuthController extends Controller
         ]);
 
         // Handle file upload
-        $profilePath = null;
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
-            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9]/', '_', $request->email) . '.' . $file->getClientOriginalExtension();
-            $profilePath = $file->storeAs('profile_pictures', $filename, 'public');
+            $filename = $request->email . $file->getClientOriginalName();
+
+            // Store in public/profile directory
+            $filePath = $file->move('profile', $filename, 'public');
+            $validated['profile_picture'] = $filePath;
         }
 
+        // Hash password
+        $validated['profile'] = $filePath ?? null;
+        $validated['password'] = Hash::make($validated['password']);
+
         // Create user
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'gender' => $validated['gender'],
-            'phone' => $validated['phone'],
-            'date_of_birth' => $validated['date_of_birth'],
-            'city' => $validated['city'],
-            'profile_picture' => $profilePath,
-            'status' => ActiveStatusEnum::ACTIVE->value,
-            'role' => RoleEnum::SURVEYOR->value,
-        ]);
+        $user = User::create($validated);
+
+        // You can add login logic here if needed
+        // Auth::login($user);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Registration successful! Please login to continue.',
-            'redirect' => route('login')
+            'message' => 'Registration successful! Welcome to our community.',
+            'redirect' => route('login') // or admin.dashboard
         ]);
     }
 
-    /** Dashboard */
-    public function dashboard()
-    {
-        $user = Auth::user();
 
-        return match($user->role) {
-            RoleEnum::ADMIN->value => view('admin.dashboard'),
-            RoleEnum::TEAM_LEADER->value => view('teamleader.dashboard'),
-            RoleEnum::SURVEYOR->value => view('surveyor.dashboard'),
-            default => view('taxpayer.dashboard'),
-        };
-    }
+    /** Dashboard (after login) */
 
-    public function adminDashboard()
+    public function dashboards()
     {
         return view('admin.dashboard');
-    }
-
-    public function teamleaderDashboard()
-    {
-        return view('teamleader.dashboard');
-    }
-
-    public function surveyorDashboard()
-    {
-        return view('surveyor.dashboard');
     }
 
     /** Logout */
     public function logout(Request $request)
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 
-    /** Show Forgot Password Page */
+
+    // Show Forgot Password Page
     public function showForgotPassword()
     {
         return view('auth.forgot-password');
     }
 
-    /** Send Password Reset Link */
+    // Send Password Reset Link
     public function sendResetLink(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
+        // Check if user exists
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'We can\'t find a user with that email address.'
-            ], 404);
+            ], 422);
         }
 
         try {
+            // Generate reset token
             $token = Password::createToken($user);
-            $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
 
+            // Build reset URL
+            $resetUrl = url(route('password.reset', [
+                'token' => $token,
+                'email' => $user->email
+            ]));
+
+            // Send email using Laravel Mail
             Mail::send('emails.password-reset', [
                 'resetUrl' => $resetUrl,
+                'token' => $token,
                 'user' => $user
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                    ->subject('Password Reset Request - TN Municipal Portal');
+                    ->subject('Password Reset Request - ' . config('app.name'))
+                    ->from(config('mail.from.address'), config('mail.from.name'));
             });
 
             return response()->json([
@@ -198,14 +202,16 @@ class AuthController extends Controller
                 'message' => 'Password reset link has been sent to your email!'
             ]);
         } catch (\Exception $e) {
+
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to send email. Please try again later.'
+                'message' => 'Failed to send email. Please try again later. Error: ' . $e->getMessage()
             ], 500);
         }
     }
 
-    /** Show Reset Password Page */
+    // Show Reset Password Page
     public function showResetPassword(Request $request, $token = null)
     {
         return view('auth.reset-password', [
@@ -214,7 +220,7 @@ class AuthController extends Controller
         ]);
     }
 
-    /** Reset Password */
+    // Reset Password
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -229,7 +235,9 @@ class AuthController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
+
                 $user->save();
+
                 event(new PasswordReset($user));
             }
         );
@@ -237,7 +245,7 @@ class AuthController extends Controller
         if ($status === Password::PASSWORD_RESET) {
             return response()->json([
                 'status' => 'success',
-                'message' => 'Password reset successfully!',
+                'message' => __($status),
                 'redirect' => route('login')
             ]);
         }
