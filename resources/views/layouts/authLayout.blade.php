@@ -167,7 +167,7 @@
             to { width: 0%; }
         }
 
-        /* Main Card */
+        /* Main Card - Responsive */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -175,11 +175,17 @@
             border-radius: 2rem;
             box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.2);
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             overflow: hidden;
             z-index: 10;
             position: relative;
             animation: fadeSlideUp 0.5s ease-out;
+        }
+
+        @media (min-width: 992px) {
+            .auth-card {
+                flex-direction: row;
+            }
         }
 
         @keyframes fadeSlideUp {
@@ -187,50 +193,117 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Left Side Branding */
+        /* Left Side Branding - Responsive */
         .login-hero {
             flex: 1.2;
-            min-width: 260px;
             background: linear-gradient(135deg, #fbf7ef 0%, #fffaf2 100%);
-            padding: 2rem 1.8rem;
+            padding: 2rem 1.5rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             color: #2c3e4e;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .login-hero {
+                padding: 2rem 1.8rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .login-hero {
+                min-width: 260px;
+            }
         }
 
         .brand {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 1.8rem;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
         }
 
         .brand-icon {
             background: #e67e22;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             color: white;
             box-shadow: 0 8px 16px rgba(230, 126, 34, 0.2);
         }
 
-        .brand-text { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.2px; line-height: 1.2; color: #1e3a5f; }
-        .brand-sub { font-size: 0.7rem; font-weight: 600; color: #e67e22; }
+        @media (min-width: 768px) {
+            .brand-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
+        }
 
-        .hero-content h1 { font-size: 1.7rem; font-weight: 800; margin-bottom: 0.8rem; color: #1e3a5f; }
-        @media (min-width: 768px) { .hero-content h1 { font-size: 2.2rem; } .brand-text { font-size: 1.5rem; } }
-        @media (min-width: 992px) { .hero-content h1 { font-size: 2.5rem; } }
+        .brand-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+            color: #1e3a5f;
+        }
 
-        .hero-highlight { color: #e67e22; border-bottom: 2px solid #f39c12; display: inline-block; }
-        .hero-description { font-size: 0.85rem; line-height: 1.45; color: #4a627a; margin-bottom: 1rem; }
+        .brand-sub {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #e67e22;
+        }
 
-        .trust-badge { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.2rem; }
+        @media (min-width: 768px) {
+            .brand-text { font-size: 1.3rem; }
+            .brand-sub { font-size: 0.7rem; }
+        }
+
+        .hero-content h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .hero-content h1 { font-size: 1.8rem; }
+        }
+
+        @media (min-width: 992px) {
+            .hero-content h1 { font-size: 2rem; }
+        }
+
+        .hero-highlight {
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            display: inline-block;
+        }
+
+        .hero-description {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: #4a627a;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero-description { font-size: 0.85rem; }
+        }
+
+        .trust-badge {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+
         .trust-item {
             display: flex;
             align-items: center;
@@ -243,37 +316,84 @@
             font-weight: 500;
         }
 
-        .quote-area { margin-top: 1.8rem; }
+        .quote-area {
+            margin-top: 1.5rem;
+        }
+
         .quote {
             font-weight: 500;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             border-left: 3px solid #e67e22;
             padding-left: 0.9rem;
             color: #5d6f83;
             line-height: 1.35;
         }
 
-        /* Right Side Form */
-        .login-form-section {
-            flex: 1;
-            min-width: 300px;
-            background: white;
-            padding: 1.8rem;
+        @media (min-width: 768px) {
+            .quote { font-size: 0.75rem; }
         }
 
-        @media (min-width: 576px) { .login-form-section { padding: 2rem; } }
-        @media (min-width: 768px) { .login-form-section { padding: 2.5rem; } }
+        /* Right Side Form - Responsive */
+        .login-form-section {
+            flex: 1;
+            background: white;
+            padding: 1.5rem;
+            width: 100%;
+        }
 
-        .form-header h2 { font-size: 1.6rem; font-weight: 700; color: #1e3a5f; }
-        .form-header p { color: #5e7a93; font-size: 0.85rem; margin-top: 4px; }
+        @media (min-width: 576px) {
+            .login-form-section { padding: 2rem; }
+        }
 
-        .input-label { font-size: 0.8rem; font-weight: 600; color: #2c4c6e; margin-bottom: 6px; display: block; }
+        @media (min-width: 768px) {
+            .login-form-section { padding: 2rem; }
+        }
 
-        .input-field { position: relative; display: flex; align-items: center; }
-        .input-field i { position: absolute; left: 14px; color: #e67e22; font-size: 1rem; z-index: 2; }
+        @media (min-width: 992px) {
+            .login-form-section { padding: 2.5rem; }
+        }
+
+        .form-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .form-header h2 { font-size: 1.6rem; }
+        }
+
+        .form-header p {
+            color: #5e7a93;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c4c6e;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .input-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 14px;
+            color: #e67e22;
+            font-size: 1rem;
+            z-index: 2;
+        }
+
         .input-field input {
             width: 100%;
-            padding: 11px 14px 11px 44px;
+            padding: 10px 14px 10px 44px;
             font-size: 0.9rem;
             border: 1.5px solid #e2e8f0;
             border-radius: 16px;
@@ -281,10 +401,18 @@
             transition: all 0.2s;
             outline: none;
         }
+
+        @media (min-width: 768px) {
+            .input-field input {
+                padding: 11px 14px 11px 44px;
+            }
+        }
+
         .input-field input:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
         }
+
         .input-field input.is-invalid {
             border-color: #e74c3c;
         }
@@ -305,20 +433,42 @@
             gap: 0.6rem;
         }
 
-        .checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #2c4c6e; }
-        .checkbox input { accent-color: #e67e22; width: 16px; height: 16px; margin: 0; }
-        .forgot-link { font-size: 0.8rem; font-weight: 600; color: #e67e22; text-decoration: none; }
-        .forgot-link:hover { text-decoration: underline; color: #c0392b; }
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #2c4c6e;
+        }
+
+        .checkbox input {
+            accent-color: #e67e22;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        .forgot-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #e67e22;
+            text-decoration: none;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: #c0392b;
+        }
 
         .login-btn {
             background: linear-gradient(95deg, #e67e22, #f39c12);
             color: white;
             width: 100%;
-            padding: 12px 0;
+            padding: 11px 0;
             border: none;
             border-radius: 44px;
             font-weight: 700;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.25s ease;
             display: flex;
@@ -327,8 +477,24 @@
             gap: 8px;
             box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
-        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4); }
-        .login-btn:disabled { opacity: 0.7; transform: none; cursor: not-allowed; }
+
+        @media (min-width: 768px) {
+            .login-btn {
+                padding: 12px 0;
+                font-size: 0.95rem;
+            }
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
 
         .divider {
             display: flex;
@@ -337,14 +503,24 @@
             color: #a0b8d0;
             font-size: 0.7rem;
         }
+
         .divider::before, .divider::after {
             content: "";
             flex: 1;
             border-bottom: 1px solid #e9edf2;
         }
-        .divider span { margin: 0 12px; }
 
-        .sso-buttons { display: flex; gap: 0.7rem; justify-content: center; flex-wrap: wrap; }
+        .divider span {
+            margin: 0 12px;
+        }
+
+        .sso-buttons {
+            display: flex;
+            gap: 0.7rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
         .sso-btn {
             flex: 1;
             min-width: 100px;
@@ -355,18 +531,41 @@
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 44px;
-            padding: 9px 6px;
+            padding: 8px 6px;
             font-weight: 600;
             font-size: 0.7rem;
             color: #1e3a5f;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .sso-btn:hover { background: #fff4e6; border-color: #e67e22; }
 
-        .register-prompt { text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: #5e7a93; }
-        .register-prompt a { color: #e67e22; font-weight: 700; text-decoration: none; }
-        .register-prompt a:hover { text-decoration: underline; }
+        @media (min-width: 768px) {
+            .sso-btn {
+                padding: 9px 6px;
+            }
+        }
+
+        .sso-btn:hover {
+            background: #fff4e6;
+            border-color: #e67e22;
+        }
+
+        .register-prompt {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #5e7a93;
+        }
+
+        .register-prompt a {
+            color: #e67e22;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-prompt a:hover {
+            text-decoration: underline;
+        }
 
         .ripple-effect {
             position: absolute;
@@ -376,20 +575,60 @@
             animation: rippleAnim 0.5s ease-out;
             pointer-events: none;
         }
+
         @keyframes rippleAnim {
             to { transform: scale(6); opacity: 0; }
         }
 
+        /* Extra small devices */
         @media (max-width: 480px) {
-            body { padding: 0.75rem; }
-            .auth-card { border-radius: 1.5rem; }
-            .login-hero, .login-form-section { padding: 1.3rem; }
-            .brand-icon { width: 42px; height: 42px; font-size: 1.3rem; }
-            .brand-text { font-size: 1rem; }
-            .hero-content h1 { font-size: 1.3rem; }
-            .sso-buttons { flex-direction: column; }
-            .sso-btn { width: 100%; }
-            .form-options { flex-direction: column; align-items: flex-start; }
+            body {
+                padding: 0.5rem;
+            }
+
+            .auth-card {
+                border-radius: 1.2rem;
+            }
+
+            .login-hero, .login-form-section {
+                padding: 1.2rem;
+            }
+
+            .brand-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1.2rem;
+            }
+
+            .brand-text {
+                font-size: 1rem;
+            }
+
+            .hero-content h1 {
+                font-size: 1.2rem;
+            }
+
+            .trust-item {
+                font-size: 0.65rem;
+                padding: 3px 10px;
+            }
+
+            .quote {
+                font-size: 0.65rem;
+            }
+
+            .sso-buttons {
+                flex-direction: column;
+            }
+
+            .sso-btn {
+                width: 100%;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 
