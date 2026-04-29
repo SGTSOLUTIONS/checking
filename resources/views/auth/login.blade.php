@@ -1,4 +1,4 @@
-@extends('layouts.authLayout')
+@extends('layouts.auth-layout')
 
 @section('title', 'Login | TN Municipal Property Tax Portal')
 
@@ -227,7 +227,7 @@ $(document).ready(function() {
 
     // Welcome message
     setTimeout(() => {
-        showToast('info', '📜 Tamil Nadu Municipal Tax', 'Welcome to property tax e-portal | Secure GSTN integration', 4000);
+        showToast('info', '📜 Tamil Nadu Municipal Tax', 'Welcome to property tax e-portal', 4000);
     }, 500);
 });
 </script>
