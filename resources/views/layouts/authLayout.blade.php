@@ -30,7 +30,7 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            background-color: #f4f2ef;
+            background-color: #f4f2ef2d;
             position: relative;
             overflow-x: hidden;
         }
