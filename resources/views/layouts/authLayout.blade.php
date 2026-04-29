@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
@@ -9,7 +10,9 @@
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     @stack('styles')
 
@@ -53,8 +56,13 @@
         }
 
         @keyframes slowZoom {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.06);
+            }
         }
 
         .bg-overlay {
@@ -87,10 +95,23 @@
         }
 
         @keyframes floatParticle {
-            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.5; }
-            90% { opacity: 0.25; }
-            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.25;
+            }
+
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         /* Toast Container */
@@ -143,16 +164,52 @@
             opacity: 0;
         }
 
-        .toast-success { border-left-color: #27ae60; }
-        .toast-error { border-left-color: #e74c3c; }
-        .toast-warning { border-left-color: #f39c12; }
-        .toast-info { border-left-color: #2980b9; }
+        .toast-success {
+            border-left-color: #27ae60;
+        }
 
-        .toast-icon { font-size: 1.4rem; flex-shrink: 0; }
-        .toast-content { flex: 1; }
-        .toast-title { font-weight: 800; font-size: 0.85rem; margin-bottom: 0.2rem; }
-        .toast-message { font-size: 0.75rem; opacity: 0.8; margin: 0; }
-        .toast-close { background: none; border: none; color: #7e8b9e; cursor: pointer; font-size: 0.8rem; padding: 0 4px; }
+        .toast-error {
+            border-left-color: #e74c3c;
+        }
+
+        .toast-warning {
+            border-left-color: #f39c12;
+        }
+
+        .toast-info {
+            border-left-color: #2980b9;
+        }
+
+        .toast-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .toast-message {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #7e8b9e;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 4px;
+        }
+
         .toast-progress {
             position: absolute;
             bottom: 0;
@@ -162,9 +219,15 @@
             width: 0%;
             animation: progressShrink linear forwards;
         }
+
         @keyframes progressShrink {
-            from { width: 100%; }
-            to { width: 0%; }
+            from {
+                width: 100%;
+            }
+
+            to {
+                width: 0%;
+            }
         }
 
         /* Main Card - Responsive */
@@ -189,8 +252,15 @@
         }
 
         @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Left Side Branding - Hidden on mobile, visible on desktop */
@@ -202,12 +272,14 @@
             flex-direction: column;
             justify-content: space-between;
             color: #2c3e4e;
-            display: none; /* Hidden by default on mobile */
+            display: none;
+            /* Hidden by default on mobile */
         }
 
         @media (min-width: 992px) {
             .login-hero {
-                display: flex; /* Show on desktop */
+                display: flex;
+                /* Show on desktop */
                 min-width: 260px;
             }
         }
@@ -256,8 +328,13 @@
         }
 
         @media (min-width: 768px) {
-            .brand-text { font-size: 1.3rem; }
-            .brand-sub { font-size: 0.7rem; }
+            .brand-text {
+                font-size: 1.3rem;
+            }
+
+            .brand-sub {
+                font-size: 0.7rem;
+            }
         }
 
         .hero-content h1 {
@@ -268,11 +345,15 @@
         }
 
         @media (min-width: 768px) {
-            .hero-content h1 { font-size: 1.8rem; }
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
         }
 
         @media (min-width: 992px) {
-            .hero-content h1 { font-size: 2rem; }
+            .hero-content h1 {
+                font-size: 2rem;
+            }
         }
 
         .hero-highlight {
@@ -289,7 +370,9 @@
         }
 
         @media (min-width: 768px) {
-            .hero-description { font-size: 0.85rem; }
+            .hero-description {
+                font-size: 0.85rem;
+            }
         }
 
         .trust-badge {
@@ -325,7 +408,9 @@
         }
 
         @media (min-width: 768px) {
-            .quote { font-size: 0.75rem; }
+            .quote {
+                font-size: 0.75rem;
+            }
         }
 
         /* Right Side Form - Full width on mobile */
@@ -337,15 +422,21 @@
         }
 
         @media (min-width: 576px) {
-            .login-form-section { padding: 2rem; }
+            .login-form-section {
+                padding: 2rem;
+            }
         }
 
         @media (min-width: 768px) {
-            .login-form-section { padding: 2rem; }
+            .login-form-section {
+                padding: 2rem;
+            }
         }
 
         @media (min-width: 992px) {
-            .login-form-section { padding: 2.5rem; }
+            .login-form-section {
+                padding: 2.5rem;
+            }
         }
 
         /* Mobile Header - Only visible on mobile */
@@ -361,15 +452,18 @@
             .mobile-header {
                 display: block;
             }
+
             .mobile-header .brand-icon {
                 margin: 0 auto 10px;
                 width: 55px;
                 height: 55px;
                 font-size: 1.8rem;
             }
+
             .mobile-header .brand-text {
                 font-size: 1.2rem;
             }
+
             .mobile-header .brand-sub {
                 font-size: 0.7rem;
             }
@@ -382,7 +476,9 @@
         }
 
         @media (min-width: 768px) {
-            .form-header h2 { font-size: 1.6rem; }
+            .form-header h2 {
+                font-size: 1.6rem;
+            }
         }
 
         .form-header p {
@@ -427,6 +523,7 @@
         }
 
         @media (min-width: 768px) {
+
             .input-field input,
             .input-field select {
                 padding: 11px 14px 11px 44px;
@@ -531,7 +628,8 @@
             font-size: 0.7rem;
         }
 
-        .divider::before, .divider::after {
+        .divider::before,
+        .divider::after {
             content: "";
             flex: 1;
             border-bottom: 1px solid #e9edf2;
@@ -604,7 +702,10 @@
         }
 
         @keyframes rippleAnim {
-            to { transform: scale(6); opacity: 0; }
+            to {
+                transform: scale(6);
+                opacity: 0;
+            }
         }
 
         /* File Upload Styles */
@@ -739,12 +840,13 @@
 
     @stack('additional-styles')
 </head>
+
 <body>
 
     <div class="heritage-bg">
         <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
-             alt="Tamil Nadu Government Heritage Building"
-             onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+            alt="Tamil Nadu Government Heritage Building"
+            onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
@@ -803,7 +905,7 @@
                 '&': '&amp;',
                 '<': '&lt;',
                 '>': '&gt;'
-            }[m]));
+            } [m]));
         }
 
         // Ripple effect
@@ -860,4 +962,5 @@
     </script>
     @yield('scripts')
 </body>
+
 </html>
