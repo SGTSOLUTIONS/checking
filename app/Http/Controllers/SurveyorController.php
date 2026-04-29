@@ -922,7 +922,7 @@ class SurveyorController extends Controller
             'no_of_shop' => 'required|integer|min:0',
             'floor' => 'required|integer|min:0',
             'old_door_no' => 'nullable|string|max:50',
-            'no_of_persons' => 'nullable',
+            'no_of_persons' => 'nullable|integer|min:0',
             'new_door_no' => 'nullable|string|max:50',
             'bill_usage' => 'nullable|in:Residential,Commercial,Mixed',
             'eb' => 'nullable|string|max:50',
@@ -971,8 +971,6 @@ class SurveyorController extends Controller
         $corp = (int)$ward->corporation_id;
         $allMisTable = "mis_corporation_{$corp}";
 
-
-
         // Proceed with main logic only if switch validation passes
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
@@ -987,28 +985,30 @@ class SurveyorController extends Controller
         $buildingData = DB::table($polygonDataTableName)
             ->where('gisid', $data['point_gisid'])
             ->first();
-        //building data check
+
+        // Building data check
         if (!$buildingData) {
             return response()->json([
                 'success' => false,
                 'message' => 'Building data not found for this GIS ID. Please add building data first.',
             ], 404);
         }
-        // building usage check
-        if ($buildingData->building_usage != $validator['bill_usage']) {
+
+        // Fixed: Building usage check - use $data instead of $validator
+        if ($buildingData->building_usage != $data['bill_usage']) {
             if ($buildingData->building_usage != "MIXED") {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Building data usage and bill usage is different ',
+                    'message' => 'Building data usage and bill usage is different',
                 ], 422);
             }
         }
-        //building floor check
-        if ($buildingData->number_floor >= $validator['floor']) {
 
+        // Fixed: Building floor check - corrected logic
+        if ($data['floor'] > $buildingData->number_floor) {
             return response()->json([
                 'success' => false,
-                'message' => 'Building data floor is less thn now you entered ',
+                'message' => 'Entered floor number exceeds building floor limit. Building has ' . $buildingData->number_floor . ' floors.',
             ], 422);
         }
 
@@ -1032,18 +1032,19 @@ class SurveyorController extends Controller
             }
         } else {
             if (($data['no_of_shop']) > $buildingData->number_shop) {
-                $remaining = $buildingData->number_shop - $data['no_of_shop'];
+                $remaining = $buildingData->number_shop;
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
                     'errors' => [
                         'no_of_shop' => [
-                            "Only $remaining shops can be added"
+                            "Only $remaining shops can be added. Building has $buildingData->number_shop shops."
                         ]
                     ]
                 ], 422);
             }
         }
+
         // Prepare point data
         $pointData = [
             'point_gisid' => $data['point_gisid'],
@@ -1057,7 +1058,7 @@ class SurveyorController extends Controller
             'new_door_no' => $data['new_door_no'] ?? null,
             'bill_usage' => $data['bill_usage'] ?? null,
             'eb' => $data['eb'] ?? null,
-            'no_of_persons' => $data['number_persons'] ?? 0,
+            'no_of_persons' => $data['no_of_persons'] ?? 0, // Fixed variable name
             'water_tax' => $data['water_tax'] ?? null,
             'old_water_tax' => $data['old_water_tax'] ?? null,
             'professional_tax' => $data['professional_tax'] ?? null,
@@ -1072,10 +1073,11 @@ class SurveyorController extends Controller
             'qc_remarks' => $data['qc_remarks'] ?? null,
             'establishment_remarks' => $data['establishment_remarks'] ?? null,
             'remarks' => $data['remarks'] ?? null,
-            'worker_name' => $teamMember->user->id . '-' . $teamMember->user->name,
+            'worker_name' => ($teamMember->user->id ?? '') . '-' . ($teamMember->user->name ?? ''), // Added null check
             'assessment_type' => $data['type'] ?? 'OLD',
             'updated_at' => now(),
         ];
+
         // Handle type validation before proceeding
         switch ($request->type) {
             case "NEW":
@@ -1104,11 +1106,14 @@ class SurveyorController extends Controller
                         'message' => 'This assessment does not exist in this ward. Please check the data.'
                     ], 422);
                 }
-                $alredyExist = DB::table($pointDataTableName)->where('assessmen', $pointData['assessment'])->first();
-                if ($alredyExist) {
+                // Fixed typo: 'assessmen' to 'assessment'
+                $alreadyExist = DB::table($pointDataTableName)
+                    ->where('assessment', $pointData['assessment'])
+                    ->first();
+                if ($alreadyExist) {
                     return response()->json([
                         'success' => false,
-                        'message' => "This assessment is alredy entered"
+                        'message' => "This assessment is already entered"
                     ], 422);
                 }
                 break;
@@ -1132,6 +1137,7 @@ class SurveyorController extends Controller
                     'message' => 'Invalid request type'
                 ], 400);
         }
+
         try {
             DB::beginTransaction();
 
@@ -1228,6 +1234,13 @@ class SurveyorController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Added logging for debugging
+            \Log::error('Point data upload error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'data' => $data
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Database error: ' . $e->getMessage()
