@@ -53,7 +53,7 @@
     <div class="register-prompt">New taxpayer? <a href="{{ route('register') }}">Register your property for tax recognition</a></div>
 @endsection
 
-@section('scripts')
+@section('script')
 <script>
 $(document).ready(function() {
     // Make sure to unbind any existing handlers
