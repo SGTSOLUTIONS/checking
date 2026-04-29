@@ -5,21 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TN Municipal | Heritage e-Governance Suite</title>
+    <title>@yield('title', 'TN Municipal | Property Tax Portal')</title>
 
-    <!-- Bootstrap 5 + Icons + Fonts -->
+    <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet">
 
-    <!-- OpenLayers & Chart.js for advanced dashboard -->
+    <!-- OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
-    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- OpenLayers JS -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+
+    <!-- Bootstrap 5 JS (Bundle includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    @stack('styles')
 
     <style>
         * {
@@ -29,27 +39,42 @@
         }
 
         :root {
-            --primary-tn: #e67e22;
+            --primary: #e67e22;
+            --primary-light: #f39c12;
             --primary-dark: #b45f1b;
-            --secondary-gold: #f39c12;
-            --deep-blue: #1e3a5f;
-            --terracotta: #d35400;
-            --sand-light: #fef5e8;
-            --shadow-elegant: 0 20px 35px -12px rgba(0, 0, 0, 0.2);
-            --border-radius-xl: 2rem;
-            --sidebar-width: 280px;
+            --secondary: #7209b7;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #e63946;
+            --dark: #1e3a5f;
+            --light: #f1faee;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --sidebar-width: 260px;
             --header-height: 80px;
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%);
         }
 
         body {
             font-family: 'Inter', 'Poppins', sans-serif;
             min-height: 100vh;
-            background: #f4f2ef;
+            background-color: #f4f2ef;
             position: relative;
             overflow-x: hidden;
         }
 
-        /* Heritage Tamil Nadu Background */
+        /* Heritage Background - Same as Auth Layout */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -64,7 +89,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            animation: slowZoom 24s ease infinite alternate;
+            animation: slowZoom 22s ease infinite alternate;
         }
 
         @keyframes slowZoom {
@@ -73,7 +98,7 @@
             }
 
             100% {
-                transform: scale(1.07);
+                transform: scale(1.06);
             }
         }
 
@@ -83,10 +108,11 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(125deg, rgba(30, 58, 95, 0.4) 0%, rgba(230, 126, 34, 0.2) 100%);
+            background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%);
             z-index: -1;
         }
 
+        /* Particles - Same as Auth Layout */
         .particles {
             position: fixed;
             top: 0;
@@ -99,8 +125,9 @@
 
         .particle {
             position: absolute;
-            background: rgba(243, 156, 18, 0.3);
+            background: rgba(224, 126, 40, 0.25);
             border-radius: 50%;
+            pointer-events: none;
             animation: floatParticle linear infinite;
         }
 
@@ -111,11 +138,11 @@
             }
 
             10% {
-                opacity: 0.6;
+                opacity: 0.5;
             }
 
             90% {
-                opacity: 0.2;
+                opacity: 0.25;
             }
 
             100% {
@@ -124,41 +151,28 @@
             }
         }
 
-        /* Toast Container */
+        /* Toast Notification Styles - Merged from both */
         .toast-container {
             position: fixed;
-            bottom: 1.5rem;
-            right: 1rem;
-            left: 1rem;
+            top: 20px;
+            right: 20px;
             z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 0.7rem;
-            max-width: 380px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        @media (min-width: 576px) {
-            .toast-container {
-                left: auto;
-                right: 1.5rem;
-            }
         }
 
         .toast {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             border-left: 4px solid;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-            padding: 0.8rem 1rem;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             display: flex;
             align-items: center;
-            gap: 0.7rem;
-            transform: translateX(120%);
-            opacity: 0;
-            transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
+            justify-content: space-between;
         }
 
         .toast.show {
@@ -166,25 +180,50 @@
             opacity: 1;
         }
 
+        .toast.hide {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+
         .toast-success {
-            border-left-color: #27ae60;
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #f8fff9, #ffffff);
         }
 
         .toast-error {
-            border-left-color: #e74c3c;
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff8f8, #ffffff);
         }
 
         .toast-warning {
-            border-left-color: #f39c12;
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fffdf5, #ffffff);
         }
 
         .toast-info {
-            border-left-color: #2980b9;
+            border-left-color: #17a2b8;
+            background: linear-gradient(135deg, #f5fdff, #ffffff);
         }
 
         .toast-icon {
-            font-size: 1.4rem;
-            flex-shrink: 0;
+            font-size: 20px;
+            margin-right: 12px;
+        }
+
+        .toast-success .toast-icon {
+            color: #28a745;
+        }
+
+        .toast-error .toast-icon {
+            color: #dc3545;
+        }
+
+        .toast-warning .toast-icon {
+            color: #ffc107;
+        }
+
+        .toast-info .toast-icon {
+            color: #17a2b8;
         }
 
         .toast-content {
@@ -192,20 +231,29 @@
         }
 
         .toast-title {
-            font-weight: 800;
-            font-size: 0.85rem;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
         }
 
         .toast-message {
-            font-size: 0.75rem;
-            opacity: 0.8;
+            font-size: 13px;
+            color: #666;
+            margin: 0;
         }
 
         .toast-close {
             background: none;
             border: none;
-            color: #7e8b9e;
+            font-size: 16px;
+            color: #999;
             cursor: pointer;
+            padding: 0;
+            margin-left: 15px;
+        }
+
+        .toast-close:hover {
+            color: #666;
         }
 
         .toast-progress {
@@ -213,158 +261,177 @@
             bottom: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, #e67e22, #f39c12);
-            width: 0;
-            animation: progressShrink linear forwards;
+            background: currentColor;
+            opacity: 0.3;
+            width: 100%;
+            transform: scaleX(1);
+            transform-origin: left;
+            animation: progressBar 5s linear forwards;
         }
 
-        @keyframes progressShrink {
-            from {
-                width: 100%;
-            }
-
+        @keyframes progressBar {
             to {
-                width: 0%;
+                transform: scaleX(0);
             }
         }
 
-        /* ========= MODERN ADMIN LAYOUT WITH HERITAGE TOUCH ========= */
+        /* Admin Container */
         .admin-container {
-            display: flex;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: var(--header-height) 1fr;
+            grid-template-areas: "sidebar header" "sidebar main";
             min-height: 100vh;
-            position: relative;
-            z-index: 5;
         }
 
-        /* SIDEBAR - Heritage themed */
+        /* Sidebar - Updated with Heritage Colors */
         .sidebar {
-            width: var(--sidebar-width);
-            background: linear-gradient(145deg, #1e3a5f 0%, #0f2c48 100%);
-            backdrop-filter: blur(2px);
+            grid-area: sidebar;
+            background: var(--gradient-primary);
             color: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0;
             position: fixed;
+            width: var(--sidebar-width);
             height: 100vh;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
             z-index: 1000;
-            box-shadow: 5px 0 20px rgba(0, 0, 0, 0.2);
-            border-right: 1px solid rgba(230, 126, 34, 0.3);
+            transition: var(--transition);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
         }
 
         .sidebar-header {
-            padding: 28px 24px;
+            padding: 30px 25px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
         .logo-icon {
-            background: #e67e22;
-            width: 48px;
-            height: 48px;
-            border-radius: 18px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.7rem;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+            font-size: 1.4rem;
         }
 
         .logo-text {
-            font-weight: 800;
             font-size: 1.3rem;
-            letter-spacing: -0.3px;
-        }
-
-        .logo-sub {
-            font-size: 0.65rem;
-            opacity: 0.8;
-            font-weight: 500;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         .sidebar-nav {
-            padding: 24px 0;
+            flex: 1;
+            padding: 25px 0;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
         }
 
         .nav-section-title {
-            padding: 0 24px 12px;
-            font-size: 0.7rem;
+            padding: 0 25px 12px;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.6;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            font-weight: 600;
+        }
+
+        .nav-section a {
+            text-decoration: none;
+            color: inherit;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 12px 24px;
-            margin: 4px 12px;
-            border-radius: 14px;
-            transition: 0.2s;
+            gap: 15px;
+            padding: 14px 25px;
+            margin: 4px 0;
             cursor: pointer;
-            color: #f0f3f8;
-            text-decoration: none;
+            transition: var(--transition);
+            position: relative;
+            border-left: 4px solid transparent;
         }
 
-        .nav-item:hover,
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: rgba(255, 255, 255, 0.3);
+        }
+
         .nav-item.active {
-            background: rgba(230, 126, 34, 0.2);
-            color: white;
-            border-left: 3px solid #e67e22;
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: white;
         }
 
         .nav-item i {
-            width: 24px;
+            width: 20px;
+            text-align: center;
             font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .nav-text {
+            font-weight: 500;
+            font-size: 0.95rem;
         }
 
         .nav-badge {
             margin-left: auto;
-            background: #e67e22;
-            padding: 2px 8px;
-            border-radius: 40px;
-            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
         .sidebar-footer {
-            padding: 20px 24px;
-            font-size: 0.7rem;
-            text-align: center;
+            padding: 20px 25px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* MAIN CONTENT AREA */
-        .main-content-area {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            transition: all 0.3s;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            text-align: center;
         }
 
         /* Header */
-        .heritage-header {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(12px);
+        .header {
+            grid-area: header;
+            background: white;
             padding: 0 30px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            height: var(--header-height);
-            border-bottom: 1px solid rgba(230, 126, 34, 0.2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            justify-content: space-between;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+            z-index: 999;
             position: sticky;
             top: 0;
-            z-index: 99;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .page-title {
-            font-size: 1.6rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #1e3a5f, #e67e22);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            letter-spacing: -0.5px;
         }
 
         .header-right {
@@ -375,16 +442,23 @@
 
         .search-bar {
             position: relative;
-            width: 280px;
+            width: 300px;
         }
 
         .search-input {
             width: 100%;
-            padding: 10px 40px 10px 18px;
-            border: 1px solid #e2e8f0;
+            padding: 12px 45px 12px 20px;
+            border: none;
+            background: var(--gray-100);
             border-radius: 50px;
-            font-size: 0.85rem;
-            background: #f8fafc;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
         }
 
         .search-icon {
@@ -392,79 +466,115 @@
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            color: #e67e22;
+            color: var(--gray-600);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .action-btn {
-            width: 42px;
-            height: 42px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             border: none;
-            background: #fef5e8;
-            color: #1e3a5f;
-            transition: 0.2s;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
             position: relative;
         }
 
         .action-btn:hover {
-            background: #e67e22;
+            background: var(--primary);
             color: white;
+            transform: translateY(-2px);
         }
 
         .notification-badge {
             position: absolute;
-            top: -2px;
-            right: -2px;
-            background: #e74c3c;
+            top: 5px;
+            right: 5px;
+            background: var(--accent);
             color: white;
             border-radius: 50%;
             width: 18px;
             height: 18px;
-            font-size: 0.65rem;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
         }
 
         .user-profile {
             display: flex;
             align-items: center;
             gap: 12px;
-            background: #fffbf5;
-            padding: 6px 18px 6px 12px;
-            border-radius: 60px;
             cursor: pointer;
-            border: 1px solid #ffe1b9;
+            padding: 8px 15px;
+            border-radius: 50px;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .user-profile:hover {
+            background: var(--gray-100);
         }
 
         .user-avatar {
-            width: 42px;
-            height: 42px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            background: #e67e22;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: white;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+            flex-shrink: 0;
+            background: var(--gradient-primary);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .user-role {
+            font-size: 0.85rem;
+            color: var(--gray-600);
         }
 
         .profile-dropdown {
             position: absolute;
-            top: 70px;
-            right: 30px;
+            top: 100%;
+            right: 0;
             background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
             width: 280px;
+            z-index: 1000;
             display: none;
-            z-index: 200;
             overflow: hidden;
+            margin-top: 10px;
         }
 
-        .profile-dropdown.show {
+        .profile-dropdown.active {
             display: block;
-            animation: fadeDrop 0.2s;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeDrop {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(-10px);
@@ -476,129 +586,206 @@
             }
         }
 
-        /* Dashboard Content Styles */
-        .dashboard-wrapper {
-            padding: 30px;
+        .dropdown-header {
+            padding: 25px;
+            background: var(--gradient-primary);
+            color: white;
+            text-align: center;
         }
 
-        .stat-grid {
+        .dropdown-header .user-name {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .dropdown-header .user-role {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--gray-200);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: var(--gray-100);
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            grid-area: main;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .stat-card {
             background: white;
-            border-radius: 28px;
-            padding: 1.5rem;
-            border-left: 6px solid #e67e22;
-            box-shadow: var(--shadow-elegant);
-            transition: all 0.2s;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 20px;
+            transition: var(--transition);
+            border-left: 5px solid var(--primary);
+            position: relative;
+            overflow: hidden;
         }
 
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
         }
 
         .stat-icon {
-            width: 65px;
-            height: 65px;
-            background: #fef2e6;
-            border-radius: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            color: #e67e22;
+            font-size: 1.8rem;
+            color: white;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon.primary {
+            background: var(--gradient-primary);
+        }
+
+        .stat-icon.success {
+            background: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: var(--warning);
+        }
+
+        .stat-icon.danger {
+            background: var(--danger);
+        }
+
+        .stat-info {
+            flex: 1;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 800;
-            color: #1e3a5f;
+            margin-bottom: 5px;
+            color: var(--dark);
             line-height: 1;
         }
 
-        .charts-row {
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .charts-section {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 25px;
-            margin-bottom: 30px;
         }
 
-        .card-chart {
+        .chart-container {
             background: white;
-            border-radius: 28px;
-            padding: 1.2rem;
-            box-shadow: var(--shadow-elegant);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
         }
 
         .map-wrapper {
-            background: white;
-            border-radius: 28px;
-            overflow: hidden;
-            height: 450px;
             position: relative;
-            box-shadow: var(--shadow-elegant);
-            margin-bottom: 30px;
+            height: 500px;
+            border-radius: var(--border-radius-sm);
+            overflow: hidden;
         }
 
-        #map,
-        #exploreMap {
+        #map {
             width: 100%;
             height: 100%;
         }
 
-        .activity-list {
-            background: white;
-            border-radius: 28px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow-elegant);
-        }
-
-        .activity-item {
-            padding: 14px 0;
-            border-bottom: 1px solid #f0e6dc;
-            display: flex;
-            gap: 14px;
-            align-items: center;
-        }
-
-        .btn-tn {
-            background: linear-gradient(95deg, #e67e22, #f39c12);
-            border: none;
-            color: white;
-            border-radius: 40px;
-            padding: 8px 20px;
-            font-weight: 600;
-        }
-
         @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
+            .admin-container {
+                grid-template-columns: 1fr;
+                grid-template-areas: "header" "main";
             }
 
-            .sidebar.open {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
                 transform: translateX(0);
             }
 
-            .main-content-area {
-                margin-left: 0;
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
 
-            .charts-row {
-                grid-template-columns: 1fr;
+            .header {
+                padding: 0 20px;
+            }
+
+            .search-bar {
+                width: 200px;
+            }
+
+            .user-info {
+                display: none;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
             }
         }
 
         @media (max-width: 576px) {
-            .dashboard-wrapper {
+            .main-content {
                 padding: 20px;
+            }
+
+            .header {
+                padding: 0 15px;
             }
 
             .search-bar {
@@ -606,408 +793,361 @@
             }
         }
     </style>
-    @stack('styles')
+    @stack('additional-styles')
 </head>
 
 <body>
-
+    <!-- Heritage Background from Auth Layout -->
     <div class="heritage-bg">
         <img src="https://images.pexels.com/photos/16466766/pexels-photo-16466766.png"
-            alt="Tamil Nadu Heritage Building">
+            alt="Tamil Nadu Government Heritage Building">
     </div>
     <div class="bg-overlay"></div>
-    <div class="particles" id="particles"></div>
-    <div id="toast-container" class="toast-container"></div>
+    <div class="particles" id="particles-container"></div>
 
-    <!-- Unified admin + heritage layout -->
     <div class="admin-container">
-        <!-- SIDEBAR -->
-        <aside class="sidebar" id="sidebar">
+        <div id="toast-container" class="toast-container"></div>
+
+        <aside class="sidebar">
             <div class="sidebar-header">
-                <div class="logo-icon"><i class="fas fa-temple"></i></div>
-                <div>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-temple"></i>
+                    </div>
                     <div class="logo-text">TN Municipal</div>
-                    <div class="logo-sub">e-Governance · Heritage</div>
                 </div>
             </div>
+
             <nav class="sidebar-nav">
-                <div class="nav-section-title">MAIN</div>
-                <a href="#" class="nav-item active" data-nav="dashboard"><i
-                        class="fas fa-home"></i><span>Dashboard</span></a>
-                <a href="#" class="nav-item" data-nav="map"><i class="fas fa-map-marked-alt"></i><span>Map
-                        Explorer</span><span class="nav-badge">LIVE</span></a>
-                <a href="#" class="nav-item" data-nav="property"><i
-                        class="fas fa-file-invoice-dollar"></i><span>Property Tax</span></a>
-                <div class="nav-section-title">ADMINISTRATION</div>
-                <a href="#" class="nav-item"><i class="fas fa-city"></i><span>Corporations</span></a>
-                <a href="#" class="nav-item"><i class="fas fa-users"></i><span>Citizen Registry</span><span
-                        class="nav-badge">1.2k</span></a>
-                <a href="#" class="nav-item"><i class="fas fa-chart-line"></i><span>Revenue Insights</span></a>
-                <div class="nav-section-title">SUPPORT</div>
-                <a href="#" class="nav-item"><i class="fas fa-headset"></i><span>Helpdesk</span></a>
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="{{ route('admin.dashboard') }}"
+                        class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                        <i class="fas fa-home"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="{{ route('admin.mapExplore') }}"
+                        class="nav-item {{ request()->routeIs('admin.mapExplore') ? 'active' : '' }}">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span class="nav-text">Map Explorer</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-layer-group"></i>
+                        <span class="nav-text">Data Layers</span>
+                        <span class="nav-badge">12</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Corporations</div>
+                    <a href="{{ route('admin.corporationdata') }}" class="nav-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span class="nav-text">Corporation Data</span>
+                    </a>
+                    <a href="{{ route('admin.users') }}" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span class="nav-text">Users</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                    <a href="{{ route('admin.team.index') }}" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span class="nav-text">Teams</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-database"></i>
+                        <span class="nav-text">Data Management</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <span class="nav-text">Insights</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-users"></i>
+                        <span class="nav-text">Users</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-cog"></i>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="nav-text">Security</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Support</div>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-question-circle"></i>
+                        <span class="nav-text">Help Center</span>
+                    </a>
+                    <a href="#" class="nav-item">
+                        <i class="fas fa-life-ring"></i>
+                        <span class="nav-text">Support Tickets</span>
+                    </a>
+                </div>
             </nav>
-            <div class="sidebar-footer">TN Municipal · v2.0 | <i class="fas fa-landmark"></i> Pride of Tamil Nadu</div>
+
+            <div class="sidebar-footer">
+                TN Municipal v2.0 | <i class="fas fa-landmark"></i> Pride of Tamil Nadu
+            </div>
         </aside>
 
-        <div class="main-content-area">
-            <header class="heritage-header">
+        <header class="header">
+            <div class="header-left">
+                <button class="action-btn" id="toggle-sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div>
-                    <h1 class="page-title" id="dynamic-page-title">Tax Administration Dashboard</h1>
+                    <h1 class="page-title">@yield('page-title', 'Dashboard Overview')</h1>
                 </div>
-                <div class="header-right">
-                    <div class="search-bar">
-                        <input type="text" class="search-input" placeholder="Search properties, zones...">
-                        <i class="fas fa-search search-icon"></i>
-                    </div>
-                    <button class="action-btn" title="Notifications"><i class="fas fa-bell"></i><span
-                            class="notification-badge">5</span></button>
-                    <button class="action-btn" title="Messages"><i class="fas fa-envelope"></i><span
-                            class="notification-badge">3</span></button>
-                    <div class="user-profile" id="userProfileBtn">
-                        <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
-                        <div><strong>Thiru. Selvam IAS</strong><br><small>Corporation Commissioner</small></div>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="profile-dropdown" id="profileDropdown">
-                        <div style="padding: 20px; text-align:center; background:#fef5e8;"><i
-                                class="fas fa-user-circle fa-3x" style="color:#e67e22;"></i><br><strong>Selvam,
-                                IAS</strong><br><span>Admin Role</span></div>
-                        <a href="#" class="dropdown-item"
-                            style="display:block; padding:12px 20px; text-decoration:none; color:#1e3a5f;"><i
-                                class="fas fa-user"></i> My Profile</a>
-                        <a href="#" class="dropdown-item"
-                            style="display:block; padding:12px 20px; text-decoration:none; color:#1e3a5f;"><i
-                                class="fas fa-cog"></i> Settings</a>
-                        <hr class="m-0">
-                        <button id="fakeLogoutBtn"
-                            style="width:100%; text-align:left; padding:12px 20px; background:none; border:none;"><i
-                                class="fas fa-sign-out-alt"></i> Logout (Demo)</button>
-                    </div>
-                </div>
-            </header>
+            </div>
 
-            <main id="main-dynamic-content">
-                <!-- DASHBOARD VIEW -->
-                <div id="dashboard-view">
-                    <div class="dashboard-wrapper">
-                        <div class="stat-grid">
-                            <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
-                                <div>
-                                    <div class="stat-value">₹48.2 Cr</div>
-                                    <div>Annual Collection</div><small>↑ 12.4% vs last year</small>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-building"></i></div>
-                                <div>
-                                    <div class="stat-value">1,24,560</div>
-                                    <div>Total Properties</div><small>Assessed</small>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-charging-station"></i></div>
-                                <div>
-                                    <div class="stat-value">92.3%</div>
-                                    <div>Tax Compliance</div><small>➕ 5.2% increase</small>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon"><i class="fas fa-hand-holding-heart"></i></div>
-                                <div>
-                                    <div class="stat-value">15,234</div>
-                                    <div>Pending Rebates</div><small>Under processing</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="charts-row">
-                            <div class="card-chart"><canvas id="taxChart" height="200"></canvas>
-                                <p class="text-center mt-2 fw-semibold">Quarterly Tax Collection (Cr)</p>
-                            </div>
-                            <div class="card-chart"><canvas id="pieChart" height="200"></canvas>
-                                <p class="text-center mt-2">Zone-wise Contribution</p>
-                            </div>
-                        </div>
-                        <div class="map-wrapper">
-                            <div id="map"></div>
+            <div class="header-right">
+                <div class="search-bar">
+                    <input type="text" class="search-input" placeholder="Search maps, data, reports...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <div class="header-actions">
+                    <button class="action-btn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">5</span>
+                    </button>
+                    <button class="action-btn" title="Messages">
+                        <i class="fas fa-envelope"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="action-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+
+                <div class="user-profile" id="user-profile">
+                    <div class="user-avatar">
+                        @if (Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
+                            <img src="{{ asset(Auth::user()->profile) }}" alt="User Profile"
+                                style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        @else
                             <div
-                                style="position:absolute; bottom:15px; left:15px; background:rgba(255,255,255,0.9); border-radius:30px; padding:6px 15px; font-size:12px;">
-                                <i class="fas fa-map-marker-alt" style="color:#e67e22;"></i> Greater Chennai GIS</div>
-                        </div>
-                        <div class="activity-list">
-                            <h5><i class="fas fa-history"></i> Recent Tax Payments</h5>
-                            <div class="activity-item"><i class="fas fa-receipt"
-                                    style="color:#e67e22; font-size:1.3rem;"></i>
-                                <div><strong>#TN-2421-89</strong> - ₹12,400 paid by Ramesh Flats, T.Nagar<br><small>Just
-                                        now</small></div>
+                                style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem;">
+                                {{ substr(Auth::user()->name, 0, 1) }}
                             </div>
-                            <div class="activity-item"><i class="fas fa-check-circle"
-                                    style="color:#27ae60; font-size:1.3rem;"></i>
-                                <div><strong>#TN-5678-23</strong> - ₹8,750 paid online, Mylapore<br><small>10 mins
-                                        ago</small></div>
-                            </div>
-                            <div class="activity-item"><i class="fas fa-file-signature"
-                                    style="font-size:1.3rem;"></i>
-                                <div><strong>New property registration</strong> - Anna Nagar zone +45 new
-                                    assessments<br><small>1 hour ago</small></div>
-                            </div>
-                        </div>
+                        @endif
                     </div>
-                </div>
-                <!-- MAP EXPLORER VIEW (Hidden initially) -->
-                <div id="map-view" style="display: none;">
-                    <div class="dashboard-wrapper">
-                        <div class="card-chart mb-4">
-                            <h4><i class="fas fa-globe-asia"></i> TN Property Tax Geo-Explorer</h4>
-                            <p>Interactive map with ward boundaries, tax heat zones & property layers</p>
-                        </div>
-                        <div class="map-wrapper" style="height: 520px;">
-                            <div id="exploreMap" style="height:100%"></div>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="bg-white p-3 rounded-4"><i class="fas fa-chart-simple"></i> <strong>Zone
-                                        Performance:</strong> North Zone collection +18% this quarter</div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="bg-white p-3 rounded-4"><i class="fas fa-fire"></i> High-value properties:
-                                    2,340 properties above ₹50L valuation</div>
-                            </div>
-                        </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ Auth::user()->name }}</div>
+                        <div class="user-role">{{ Auth::user()->role }}</div>
                     </div>
-                </div>
-                <!-- PROPERTY TAX VIEW (Demo) -->
-                <div id="property-view" style="display: none;">
-                    <div class="dashboard-wrapper">
-                        <div class="card-chart">
-                            <h4><i class="fas fa-file-invoice"></i> Property Tax Management</h4>
-                            <p>Quick assessment & collection overview</p>
-                            <div class="row mt-3">
-                                <div class="col-md-4">
-                                    <div class="p-3 border rounded-3"><i class="fas fa-check-circle text-success"></i>
-                                        On-time payments: 78%</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3 border rounded-3"><i class="fas fa-chart-line"></i> Monthly
-                                        target: ₹4.2 Cr</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3 border rounded-3"><i
-                                            class="fas fa-exclamation-triangle text-warning"></i> Defaulters: 2,341
+                    <i class="fas fa-chevron-down"></i>
+
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="dropdown-header">
+                            <div class="dropdown-avatar">
+                                @if (Auth::user()->profile && file_exists(public_path(Auth::user()->profile)))
+                                    <img src="{{ asset(Auth::user()->profile) }}" alt="User Profile"
+                                        style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                @else
+                                    <div
+                                        style="width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.4rem;">
+                                        {{ substr(Auth::user()->name, 0, 1) }}
                                     </div>
-                                </div>
+                                @endif
                             </div>
+                            <div class="user-name">{{ Auth::user()->name }}</div>
+                            <div class="user-role">{{ Auth::user()->role }}</div>
                         </div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            <span>My Profile</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            <span>Account Settings</span>
+                        </a>
+                        <div class="dropdown-item">
+                            <i class="fas fa-bell"></i>
+                            <span>Notifications</span>
+                            <span class="nav-badge">5</span>
+                        </div>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Privacy & Security</span>
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Help & Support</span>
+                        </a>
+                        <li class="nav-item mt-4">
+                            <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+                                @csrf
+                                <a href="#" class="dropdown-item"
+                                    onclick="event.preventDefault(); document.getElementById('logoutForm').submit();"
+                                    style="text-decoration: none;">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </form>
+                        </li>
                     </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            @yield('content')
+        </main>
     </div>
 
     <script>
-        // Toast system (unified)
-        window.showToast = function(type, title, message, duration = 4500) {
-            const container = document.getElementById('toast-container');
+        // Particles - Same as Auth Layout
+        function createParticles() {
+            const container = document.getElementById('particles-container');
             if (!container) return;
-            const icons = {
+            for (let i = 0; i < 35; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                const size = Math.random() * 4 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = Math.random() * 14 + 8 + 's';
+                p.style.animationDelay = Math.random() * 12 + 's';
+                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
+                container.appendChild(p);
+            }
+        }
+        createParticles();
+
+        // Toast System
+        window.showToast = function(type, title, message, duration = 5000) {
+            var toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return null;
+
+            var toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+
+            var icons = {
                 success: 'fa-circle-check',
                 error: 'fa-circle-xmark',
                 warning: 'fa-triangle-exclamation',
                 info: 'fa-circle-info'
             };
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.innerHTML =
-                `<i class="fas ${icons[type]} toast-icon"></i><div class="toast-content"><div class="toast-title">${escapeHtml(title)}</div><p class="toast-message">${escapeHtml(message)}</p></div><button class="toast-close"><i class="fas fa-times"></i></button><div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>`;
-            container.appendChild(toast);
-            setTimeout(() => toast.classList.add('show'), 20);
-            toast.querySelector('.toast-close').addEventListener('click', () => removeToast(toast));
-            setTimeout(() => removeToast(toast), duration);
 
-            function removeToast(t) {
-                t.classList.remove('show');
-                t.classList.add('hide');
-                setTimeout(() => t.remove(), 350);
-            }
+            toast.innerHTML = `
+                <i class="fas ${icons[type]} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${escapeHtml(title)}</div>
+                    <p class="toast-message">${escapeHtml(message)}</p>
+                </div>
+                <button class="toast-close">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="toast-progress"></div>
+            `;
 
-            function escapeHtml(s) {
-                return String(s).replace(/[&<>]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    return m;
+            toastContainer.appendChild(toast);
+            setTimeout(function() {
+                toast.classList.add('show');
+            }, 100);
+
+            var closeBtn = toast.querySelector('.toast-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    window.removeToast(toast);
                 });
             }
+
+            if (duration > 0) {
+                setTimeout(function() {
+                    if (toast.parentNode) window.removeToast(toast);
+                }, duration);
+            }
+            return toast;
         };
 
-        // Particles generation
-        (function createParticles() {
-            const container = document.getElementById('particles');
-            if (!container) return;
-            for (let i = 0; i < 55; i++) {
-                let p = document.createElement('div');
-                p.classList.add('particle');
-                let s = Math.random() * 5 + 2;
-                p.style.width = s + 'px';
-                p.style.height = s + 'px';
-                p.style.left = Math.random() * 100 + '%';
-                p.style.animationDuration = Math.random() * 14 + 8 + 's';
-                p.style.animationDelay = Math.random() * 12 + 's';
-                p.style.background = `rgba(230,126,34,${Math.random()*0.4+0.1})`;
-                container.appendChild(p);
+        window.removeToast = function(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(function() {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 500);
+        };
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>]/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;'
+            } [m]));
+        }
+
+        // Profile Dropdown
+        (function() {
+            function setupDropdown() {
+                var userProfile = document.getElementById('user-profile');
+                var profileDropdown = document.getElementById('profile-dropdown');
+
+                if (userProfile && profileDropdown) {
+                    var newUserProfile = userProfile.cloneNode(true);
+                    userProfile.parentNode.replaceChild(newUserProfile, userProfile);
+                    var finalUserProfile = document.getElementById('user-profile');
+
+                    finalUserProfile.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        var dropdown = document.getElementById('profile-dropdown');
+                        if (dropdown) {
+                            dropdown.classList.toggle('active');
+                        }
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        var dropdown = document.getElementById('profile-dropdown');
+                        var userProf = document.getElementById('user-profile');
+                        if (dropdown && dropdown.classList.contains('active')) {
+                            if (userProf && !userProf.contains(e.target) && !dropdown.contains(e.target)) {
+                                dropdown.classList.remove('active');
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupDropdown);
+            } else {
+                setupDropdown();
             }
         })();
 
-        // Profile dropdown toggle
-        const profileBtn = document.getElementById('userProfileBtn');
-        const dropdown = document.getElementById('profileDropdown');
-        if (profileBtn && dropdown) {
-            profileBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('show');
-            });
-            document.addEventListener('click', (e) => {
-                if (!profileBtn.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove(
-                    'show');
-            });
-        }
-        document.getElementById('fakeLogoutBtn')?.addEventListener('click', () => showToast('success', 'Signed out',
-            'Demo: redirected to login portal', 2000));
-
-        // Sidebar toggle for mobile
-        const toggleBtn = document.createElement('button');
-        toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-        toggleBtn.className = 'btn btn-tn rounded-circle position-fixed d-lg-none';
-        toggleBtn.style.position = 'fixed';
-        toggleBtn.style.bottom = '20px';
-        toggleBtn.style.left = '20px';
-        toggleBtn.style.zIndex = '1090';
-        toggleBtn.style.width = '50px';
-        toggleBtn.style.height = '50px';
-        toggleBtn.style.borderRadius = '50%';
-        toggleBtn.style.backgroundColor = '#e67e22';
-        toggleBtn.style.color = 'white';
-        toggleBtn.style.border = 'none';
-        document.body.appendChild(toggleBtn);
-        const sidebar = document.getElementById('sidebar');
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-
-        // Charts initialization
-        let taxChart, pieChart;
-        const ctx1 = document.getElementById('taxChart')?.getContext('2d');
-        const ctx2 = document.getElementById('pieChart')?.getContext('2d');
-        if (ctx1) taxChart = new Chart(ctx1, {
-            type: 'line',
-            data: {
-                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                datasets: [{
-                    label: 'Collection (Cr)',
-                    data: [11.2, 13.5, 14.8, 18.2],
-                    borderColor: '#e67e22',
-                    backgroundColor: 'rgba(230,126,34,0.1)',
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true
-            }
-        });
-        if (ctx2) pieChart = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['North', 'South', 'Central', 'East'],
-                datasets: [{
-                    data: [34, 28, 22, 16],
-                    backgroundColor: ['#e67e22', '#f39c12', '#d35400', '#e98c46']
-                }]
-            }
-        });
-
-        // OpenLayers Maps
-        let mainMap, explorerMap;
-
-        function initMainMap() {
-            if (document.getElementById('map') && typeof ol !== 'undefined') {
-                mainMap = new ol.Map({
-                    target: 'map',
-                    layers: [new ol.layer.Tile({
-                        source: new ol.source.OSM()
-                    })],
-                    view: new ol.View({
-                        center: ol.proj.fromLonLat([80.2707, 13.0827]),
-                        zoom: 12
-                    })
+        // Sidebar Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            var toggleSidebarBtn = document.getElementById('toggle-sidebar');
+            if (toggleSidebarBtn) {
+                toggleSidebarBtn.addEventListener('click', function() {
+                    var sidebar = document.querySelector('.sidebar');
+                    if (sidebar) {
+                        sidebar.classList.toggle('active');
+                    }
                 });
             }
-        }
-
-        function initExplorerMap() {
-            if (document.getElementById('exploreMap') && typeof ol !== 'undefined') {
-                explorerMap = new ol.Map({
-                    target: 'exploreMap',
-                    layers: [new ol.layer.Tile({
-                        source: new ol.source.OSM()
-                    })],
-                    view: new ol.View({
-                        center: ol.proj.fromLonLat([80.2707, 13.0827]),
-                        zoom: 12
-                    })
-                });
-            }
-        }
-        setTimeout(() => {
-            initMainMap();
-            initExplorerMap();
-        }, 300);
-
-        // Navigation logic (Dashboard / Map Explorer / Property Tax)
-        const navLinks = document.querySelectorAll('.nav-item');
-        const dashboardDiv = document.getElementById('dashboard-view');
-        const mapDiv = document.getElementById('map-view');
-        const propertyDiv = document.getElementById('property-view');
-        const pageTitleEl = document.getElementById('dynamic-page-title');
-
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                navLinks.forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
-                const navType = link.getAttribute('data-nav');
-                dashboardDiv.style.display = 'none';
-                mapDiv.style.display = 'none';
-                propertyDiv.style.display = 'none';
-                if (navType === 'map') {
-                    mapDiv.style.display = 'block';
-                    pageTitleEl.innerText = 'GIS Map Explorer | TN Heritage GIS';
-                    setTimeout(() => {
-                        if (explorerMap) explorerMap.updateSize();
-                        else initExplorerMap();
-                    }, 150);
-                    showToast('info', 'Map Explorer', '📍 Geo-spatial tax zones & property layers loaded',
-                        2000);
-                } else if (navType === 'property') {
-                    propertyDiv.style.display = 'block';
-                    pageTitleEl.innerText = 'Property Tax Management | TN Municipal';
-                    showToast('success', 'Tax Module', 'Quick view: 92% compliance this month', 1800);
-                } else {
-                    dashboardDiv.style.display = 'block';
-                    pageTitleEl.innerText = 'Tax Administration Dashboard | TN Municipal';
-                    if (mainMap) mainMap.updateSize();
-                    showToast('success', 'Vanakkam!',
-                        'Welcome to TN Unified Municipal Portal • Heritage meets e-Governance', 3000);
-                }
-            });
         });
 
-        // Initial welcome toast
-        setTimeout(() => {
-            showToast('success', 'Welcome!', 'TN Municipal e-Governance Suite Loaded', 4000);
-        }, 500);
+        // Global AJAX setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
     </script>
+
     @yield('scripts')
 </body>
 
