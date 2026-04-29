@@ -963,4 +963,4 @@
     @stack('scripts')
 </body>
 
-</html>S
+</html>

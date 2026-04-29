@@ -35,58 +35,58 @@ class AuthController extends Controller
     }
 
     /** Handle Login (AJAX) */
-    public function login(Request $request)
-    {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-        ]);
+   public function login(Request $request)
+{
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|min:6',
+    ]);
 
-        // Find user by email
-        $user = User::where('email', $validated['email'])->first();
+    // Find user by email
+    $user = User::where('email', $validated['email'])->first();
 
-        if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No account found with this email.'
-            ], 404);
-        }
+    if (!$user) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No account found with this email.'
+        ], 404);
+    }
 
-        // Ensure user is active
-        if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Your account is not active. Please contact the administrator.'
-            ], 403);
-        }
+    // Ensure user is active
+    if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Your account is not active. Please contact the administrator.'
+        ], 403);
+    }
 
-        // Attempt login
-        if (Auth::attempt($validated)) {
-            $request->session()->regenerate();
+    // Attempt login
+    if (Auth::attempt($validated)) {
+        $request->session()->regenerate();
 
-            // Role-based redirect
-            if ($user->role === RoleEnum::ADMIN->value) {
-                $redirect = route('admin.dashboard');
-            } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
-                $redirect = route('teamleader.dashboard');
-            } elseif ($user->role === RoleEnum::SURVEYOR->value) {
-                $redirect = route('surveyor.dashboard');
-            } else {
-                $redirect = route('/'); // fallback
-            }
+        // Role-based redirect - use named routes
+        $redirect = route('admin.dashboard'); // Default
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Login successful!',
-                'redirect' => $redirect,
-            ]);
+        if ($user->role === RoleEnum::ADMIN->value) {
+            $redirect = route('admin.dashboard');
+        } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
+            $redirect = route('teamleader.dashboard');
+        } elseif ($user->role === RoleEnum::SURVEYOR->value) {
+            $redirect = route('surveyor.dashboard');
         }
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Invalid password.'
-        ], 401);
+            'status' => 'success',
+            'message' => 'Login successful!',
+            'redirect' => $redirect, // This will be a relative URL like /dashboard
+        ]);
     }
+
+    return response()->json([
+        'status' => 'error',
+        'message' => 'Invalid password.'
+    ], 401);
+}
 
 
 

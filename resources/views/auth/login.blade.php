@@ -89,26 +89,35 @@
 
                         // IMPORTANT FIX: Handle redirect properly
                         if (res.redirect) {
+                            // Check if redirect URL is absolute or relative
+                            let redirectUrl = res.redirect;
+
+                            // If it's an absolute URL but you need relative, extract the path
+                            if (redirectUrl.startsWith('http')) {
+                                try {
+                                    const url = new URL(redirectUrl);
+                                    redirectUrl = url.pathname + url.search;
+                                } catch(e) {
+                                    console.error('Invalid URL:', e);
+                                }
+                            }
+
                             setTimeout(function() {
-                                window.location.href = res.redirect;
+                                window.location.href = redirectUrl;
                             }, 1500);
                         } else {
-                            // Fallback redirect
+                            // Fallback redirect - try to determine based on role
                             setTimeout(function() {
                                 window.location.href = "{{ route('admin.dashboard') }}";
                             }, 1500);
                         }
                     } else {
-                        $('#loginBtn').prop('disabled', false);
-                        $('#btnSpinner').addClass('d-none');
-                        $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+                        resetLoginButton();
                         showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
                     }
                 },
                 error: function(xhr) {
-                    $('#loginBtn').prop('disabled', false);
-                    $('#btnSpinner').addClass('d-none');
-                    $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+                    resetLoginButton();
 
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
@@ -138,11 +147,16 @@
             });
         });
 
+        function resetLoginButton() {
+            $('#loginBtn').prop('disabled', false);
+            $('#btnSpinner').addClass('d-none');
+            $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
+        }
+
         // SSO Buttons Demo
         $('#ssoGoogleBtn').on('click', function() {
             showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2800);
             setTimeout(() => {
-                // Simulate SSO success with redirect
                 window.location.href = "{{ route('login') }}?sso=tnseva";
             }, 1500);
         });
@@ -162,7 +176,7 @@
         });
 
         // Demo credentials on double-click
-        $('.login-form-section').on('dblclick', function(e) {
+        $('.form-header').on('dblclick', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
             $('#email').val('taxpayer@tn.gov.in');
             $('#password').val('TNtax2025');
