@@ -845,8 +845,7 @@
 
     <div class="heritage-bg">
         <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
-            alt="Tamil Nadu Government Heritage Building"
-            onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
+            alt="Tamil Nadu Government Heritage Building">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
