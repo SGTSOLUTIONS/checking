@@ -10,6 +10,7 @@ use App\Http\Controllers\TeamLeaderController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WardController;
+use Illuminate\Support\Facades\Mail;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -30,11 +31,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
-    // Forgot Password
     Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
 
-    // Reset Password
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
@@ -180,3 +179,14 @@ Route::get('/welcome', function () {
 });
 
 Route::get('/send-whatsapp', [WardController::class, 'send']);
+Route::get('/test-mail', function() {
+    try {
+        Mail::raw('Test email from SGT Property Survey', function($message) {
+            $message->to('sheikdawood13579@gmail.com')
+                    ->subject('Test Email');
+        });
+        return 'Mail sent successfully!';
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});

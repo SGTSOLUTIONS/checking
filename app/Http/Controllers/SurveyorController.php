@@ -8,6 +8,7 @@ use App\Services\GeoDataService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Mime\Message;
 
@@ -1236,7 +1237,7 @@ class SurveyorController extends Controller
             DB::rollBack();
 
             // Added logging for debugging
-            \Log::error('Point data upload error: ' . $e->getMessage(), [
+            Log::error('Point data upload error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'data' => $data
             ]);
