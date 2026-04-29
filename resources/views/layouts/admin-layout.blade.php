@@ -3,51 +3,42 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'TN Municipal | Property Tax Portal')</title>
+    <title>@yield('title', 'Admin Panel')</title>
 
-    <!-- Bootstrap 5 CSS + Icons + Fonts -->
+    <!-- ✅ Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
 
-    <!-- OpenLayers CSS -->
+    <!-- ✅ Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- ✅ OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
 
-    <!-- Chart.js -->
+    <!-- ✅ Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- ✅ jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- OpenLayers JS -->
+    <!-- ✅ OpenLayers JS -->
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
-    <!-- Bootstrap 5 JS (Bundle includes Popper) -->
+    <!-- ✅ Bootstrap 5 JS (Bundle includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    @stack('styles')
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --primary: #e67e22;
-            --primary-light: #f39c12;
-            --primary-dark: #b45f1b;
+            --primary: #f8961e;
+            --primary-light: #4895ef;
+            --primary-dark: #3a0ca3;
             --secondary: #7209b7;
             --accent: #f72585;
             --success: #4cc9f0;
             --warning: #f8961e;
             --danger: #e63946;
-            --dark: #1e3a5f;
+            --dark: #1d3557;
             --light: #f1faee;
             --gray-100: #f8f9fa;
             --gray-200: #e9ecef;
@@ -64,94 +55,10 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%);
+            --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--warning) 100%);
         }
 
-        body {
-            font-family: 'Inter', 'Poppins', sans-serif;
-            min-height: 100vh;
-            background-color: #f4f2ef;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Heritage Background - Same as Auth Layout */
-        .heritage-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            overflow: hidden;
-        }
-
-        .heritage-bg img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            animation: slowZoom 22s ease infinite alternate;
-        }
-
-        @keyframes slowZoom {
-            0% {
-                transform: scale(1);
-            }
-
-            100% {
-                transform: scale(1.06);
-            }
-        }
-
-        .bg-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%);
-            z-index: -1;
-        }
-
-        /* Particles - Same as Auth Layout */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .particle {
-            position: absolute;
-            background: rgba(224, 126, 40, 0.25);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: floatParticle linear infinite;
-        }
-
-        @keyframes floatParticle {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-
-            10% {
-                opacity: 0.5;
-            }
-
-            90% {
-                opacity: 0.25;
-            }
-
-            100% {
-                transform: translateY(-20vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* Toast Notification Styles - Merged from both */
+        /* Toast Notification Styles */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -250,6 +157,7 @@
             cursor: pointer;
             padding: 0;
             margin-left: 15px;
+            transition: color 0.3s;
         }
 
         .toast-close:hover {
@@ -275,16 +183,37 @@
             }
         }
 
-        /* Admin Container */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7ff 0%, #f0f4ff 100%);
+            color: var(--gray-800);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow);
+        }
+
         .admin-container {
             display: grid;
             grid-template-columns: var(--sidebar-width) 1fr;
             grid-template-rows: var(--header-height) 1fr;
-            grid-template-areas: "sidebar header" "sidebar main";
+            grid-template-areas:
+                "sidebar header"
+                "sidebar main";
             min-height: 100vh;
         }
 
-        /* Sidebar - Updated with Heritage Colors */
         .sidebar {
             grid-area: sidebar;
             background: var(--gradient-primary);
@@ -407,7 +336,6 @@
             text-align: center;
         }
 
-        /* Header */
         .header {
             grid-area: header;
             background: white;
@@ -434,6 +362,19 @@
             letter-spacing: -0.5px;
         }
 
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .breadcrumb i {
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
         .header-right {
             display: flex;
             align-items: center;
@@ -458,7 +399,7 @@
         .search-input:focus {
             outline: none;
             background: white;
-            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
 
         .search-icon {
@@ -535,9 +476,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+            box-shadow: 0 4px 12px rgba(114, 9, 183, 0.3);
             flex-shrink: 0;
-            background: var(--gradient-primary);
+            background: var(--gradient-secondary);
+        }
+
+        .dropdown-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .user-info {
@@ -632,6 +587,25 @@
             font-size: 1.1rem;
         }
 
+        .logout-form {
+            display: contents;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: inherit;
+            font-size: inherit;
+            font-family: inherit;
+        }
+
         .main-content {
             grid-area: main;
             padding: 30px;
@@ -662,9 +636,35 @@
             overflow: hidden;
         }
 
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card.primary {
+            border-left-color: var(--primary);
+        }
+
+        .stat-card.success {
+            border-left-color: var(--success);
+        }
+
+        .stat-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .stat-card.danger {
+            border-left-color: var(--danger);
         }
 
         .stat-icon {
@@ -713,6 +713,22 @@
             margin-bottom: 8px;
         }
 
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            color: var(--success);
+        }
+
+        .trend-down {
+            color: var(--danger);
+        }
+
         .charts-section {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -724,6 +740,60 @@
             border-radius: var(--border-radius);
             padding: 25px;
             box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+        }
+
+        .chart-btn:hover {
+            background: rgba(67, 97, 238, 0.1);
+        }
+
+        .chart-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .map-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .map-container {
+            width: 100%;
         }
 
         .map-wrapper {
@@ -738,10 +808,225 @@
             height: 100%;
         }
 
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: var(--transition);
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .layer-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            width: 220px;
+        }
+
+        .layer-title {
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .layer-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .activity-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .activity-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 15px;
+            padding: 18px;
+            border-radius: var(--border-radius-sm);
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .activity-item:hover {
+            background: var(--gray-100);
+            border-left-color: var(--primary);
+        }
+
+        .activity-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.primary {
+            background: var(--gradient-primary);
+        }
+
+        .activity-icon.success {
+            background: var(--success);
+        }
+
+        .activity-icon.warning {
+            background: var(--warning);
+        }
+
+        .activity-icon.danger {
+            background: var(--danger);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title-text {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .activity-desc {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 15px;
+            background: var(--gradient-primary);
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .action-desc {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 1200px) {
+
+            .charts-section,
+            .map-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 992px) {
             .admin-container {
                 grid-template-columns: 1fr;
-                grid-template-areas: "header" "main";
+                grid-template-areas:
+                    "header"
+                    "main";
             }
 
             .sidebar {
@@ -793,18 +1078,10 @@
             }
         }
     </style>
-    @stack('additional-styles')
+    @yield('css')
 </head>
 
 <body>
-    <!-- Heritage Background from Auth Layout -->
-    <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/16466766/pexels-photo-16466766.png"
-            alt="Tamil Nadu Government Heritage Building">
-    </div>
-    <div class="bg-overlay"></div>
-    <div class="particles" id="particles-container"></div>
-
     <div class="admin-container">
         <div id="toast-container" class="toast-container"></div>
 
@@ -812,9 +1089,9 @@
             <div class="sidebar-header">
                 <div class="logo">
                     <div class="logo-icon">
-                        <i class="fas fa-temple"></i>
+                        <i class="fas fa-globe-americas"></i>
                     </div>
-                    <div class="logo-text">TN Municipal</div>
+                    <div class="logo-text">GeoVision</div>
                 </div>
             </div>
 
@@ -895,7 +1172,7 @@
             </nav>
 
             <div class="sidebar-footer">
-                TN Municipal v2.0 | <i class="fas fa-landmark"></i> Pride of Tamil Nadu
+                GeoVision v3.0.1
             </div>
         </aside>
 
@@ -906,6 +1183,9 @@
                 </button>
                 <div>
                     <h1 class="page-title">@yield('page-title', 'Dashboard Overview')</h1>
+                    {{-- <div class="breadcrumb">
+                        @yield('breadcrumb', '<span>Home</span><i class="fas fa-chevron-right"></i><span>Dashboard</span>')
+                    </div> --}}
                 </div>
             </div>
 
@@ -1006,26 +1286,7 @@
     </div>
 
     <script>
-        // Particles - Same as Auth Layout
-        function createParticles() {
-            const container = document.getElementById('particles-container');
-            if (!container) return;
-            for (let i = 0; i < 35; i++) {
-                const p = document.createElement('div');
-                p.classList.add('particle');
-                const size = Math.random() * 4 + 2;
-                p.style.width = size + 'px';
-                p.style.height = size + 'px';
-                p.style.left = Math.random() * 100 + '%';
-                p.style.animationDuration = Math.random() * 14 + 8 + 's';
-                p.style.animationDelay = Math.random() * 12 + 's';
-                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
-                container.appendChild(p);
-            }
-        }
-        createParticles();
-
-        // Toast System
+        // Make showToast available globally
         window.showToast = function(type, title, message, duration = 5000) {
             var toastContainer = document.getElementById('toast-container');
             if (!toastContainer) return null;
@@ -1041,18 +1302,19 @@
             };
 
             toast.innerHTML = `
-                <i class="fas ${icons[type]} toast-icon"></i>
-                <div class="toast-content">
-                    <div class="toast-title">${escapeHtml(title)}</div>
-                    <p class="toast-message">${escapeHtml(message)}</p>
-                </div>
-                <button class="toast-close">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="toast-progress"></div>
-            `;
+            <i class="fas ${icons[type]} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <p class="toast-message">${message}</p>
+            </div>
+            <button class="toast-close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="toast-progress"></div>
+        `;
 
             toastContainer.appendChild(toast);
+
             setTimeout(function() {
                 toast.classList.add('show');
             }, 100);
@@ -1069,6 +1331,7 @@
                     if (toast.parentNode) window.removeToast(toast);
                 }, duration);
             }
+
             return toast;
         };
 
@@ -1079,14 +1342,6 @@
                 if (toast.parentNode) toast.parentNode.removeChild(toast);
             }, 500);
         };
-
-        function escapeHtml(str) {
-            return String(str).replace(/[&<>]/g, (m) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;'
-            } [m]));
-        }
 
         // Profile Dropdown
         (function() {
@@ -1139,16 +1394,9 @@
                 });
             }
         });
-
-        // Global AJAX setup
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
     </script>
 
-    @yield('scripts')
+    @yield('script')
 </body>
 
 </html>
