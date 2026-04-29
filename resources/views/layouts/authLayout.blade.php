@@ -844,7 +844,7 @@
 <body>
 
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
+        <img src="https://images.pexels.com/photos/4021367/pexels-photo-4021367.png"
             alt="Tamil Nadu Government Heritage Building">
     </div>
     <div class="bg-overlay"></div>
