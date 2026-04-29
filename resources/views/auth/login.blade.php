@@ -10,7 +10,7 @@
 
     <div id="alert-container"></div>
 
-    <form id="loginForm" method="POST">
+    <form id="loginForm" method="POST" action="javascript:void(0);">
         @csrf
 
         <div class="mb-3">
@@ -55,72 +55,79 @@
 
 @section('scripts')
 <script>
-    $(function() {
-        $('#loginForm').on('submit', function(e) {
-            e.preventDefault();
+$(document).ready(function() {
+    // Make sure to unbind any existing handlers
+    $('#loginForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-            // Reset error states
-            $('#alert-container').html('');
-            $('#email, #password').removeClass('is-invalid');
-            $('#email_error, #password_error').text('');
+        // Reset error states
+        $('#alert-container').html('');
+        $('#email, #password').removeClass('is-invalid');
+        $('#email_error, #password_error').text('');
 
-            // Show loading state
-            $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Authenticating...');
-            $('#btnSpinner').removeClass('d-none');
-            $('#loginBtn').prop('disabled', true);
+        // Show loading state
+        $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Authenticating...');
+        $('#btnSpinner').removeClass('d-none');
+        $('#loginBtn').prop('disabled', true);
 
-            const formData = {
-                email: $('#email').val().trim(),
-                password: $('#password').val(),
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                remember: $('#rememberCheck').is(':checked') ? 1 : 0
-            };
+        const formData = {
+            email: $('#email').val().trim(),
+            password: $('#password').val(),
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            remember: $('#rememberCheck').is(':checked') ? 1 : 0
+        };
 
-            $.ajax({
-                url: "{{ route('login.post') }}",
-                method: "POST",
-                data: formData,
-                dataType: "json",
-                success: function(res) {
-                    console.log('Login response:', res);
+        console.log('Sending AJAX request to login...');
 
-                    if (res.status === 'success') {
-                        showToast('success', 'Success!', res.message, 2000);
+        $.ajax({
+            url: "{{ route('login.post') }}",
+            method: "POST",
+            data: formData,
+            dataType: "json",
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(res) {
+                console.log('Login response:', res);
 
-                        // IMPORTANT FIX: Handle redirect properly
-                        if (res.redirect) {
-                            // Check if redirect URL is absolute or relative
-                            let redirectUrl = res.redirect;
+                if (res.status === 'success') {
+                    showToast('success', 'Success!', res.message, 1500);
 
-                            // If it's an absolute URL but you need relative, extract the path
-                            if (redirectUrl.startsWith('http')) {
-                                try {
-                                    const url = new URL(redirectUrl);
-                                    redirectUrl = url.pathname + url.search;
-                                } catch(e) {
-                                    console.error('Invalid URL:', e);
-                                }
-                            }
-
-                            setTimeout(function() {
-                                window.location.href = redirectUrl;
-                            }, 1500);
-                        } else {
-                            // Fallback redirect - try to determine based on role
-                            setTimeout(function() {
-                                window.location.href = "{{ route('admin.dashboard') }}";
-                            }, 1500);
-                        }
+                    // Handle redirect
+                    if (res.redirect) {
+                        console.log('Redirecting to:', res.redirect);
+                        setTimeout(function() {
+                            window.location.href = res.redirect;
+                        }, 1500);
                     } else {
+                        console.error('No redirect URL in response');
                         resetLoginButton();
-                        showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
                     }
-                },
-                error: function(xhr) {
+                } else {
                     resetLoginButton();
+                    showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error Details:', {
+                    status: xhr.status,
+                    statusText: xhr.statusText,
+                    responseText: xhr.responseText,
+                    error: error
+                });
 
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
+                resetLoginButton();
+
+                // Try to parse error response
+                if (xhr.responseJSON) {
+                    const errorMsg = xhr.responseJSON.message || 'Authentication failed';
+                    showToast('error', 'Error', errorMsg, 5000);
+
+                    // Handle validation errors
+                    if (xhr.responseJSON.errors) {
+                        const errors = xhr.responseJSON.errors;
                         if (errors.email) {
                             $('#email').addClass('is-invalid');
                             $('#email_error').text(errors.email[0]);
@@ -129,22 +136,11 @@
                             $('#password').addClass('is-invalid');
                             $('#password_error').text(errors.password[0]);
                         }
-                        showToast('error', 'Validation Error!', 'Please check the form for errors.', 5000);
-                    } else if (xhr.status === 401) {
-                        showToast('error', 'Authentication Failed!', xhr.responseJSON?.message || 'Invalid password.', 5000);
-                    } else if (xhr.status === 403) {
-                        showToast('error', 'Account Inactive!', xhr.responseJSON?.message || 'Your account is not active.', 5000);
-                    } else if (xhr.status === 404) {
-                        showToast('error', 'Account Not Found!', xhr.responseJSON?.message || 'No account found with this email.', 5000);
-                    } else {
-                        let errorMsg = 'Unable to reach server. Please try again.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMsg = xhr.responseJSON.message;
-                        }
-                        showToast('error', 'Connection issue', errorMsg, 5000);
                     }
+                } else {
+                    showToast('error', 'Error', 'Unable to connect to server. Please try again.', 5000);
                 }
-            });
+            }
         });
 
         function resetLoginButton() {
@@ -152,36 +148,24 @@
             $('#btnSpinner').addClass('d-none');
             $('#btnText').html('<i class="fas fa-file-invoice-dollar"></i> Access Tax Dashboard');
         }
-
-        // SSO Buttons Demo
-        $('#ssoGoogleBtn').on('click', function() {
-            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2800);
-            setTimeout(() => {
-                window.location.href = "{{ route('login') }}?sso=tnseva";
-            }, 1500);
-        });
-
-        $('#ssoOktaBtn').on('click', function() {
-            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2700);
-            setTimeout(() => {
-                window.location.href = "{{ route('login') }}?sso=umang";
-            }, 1500);
-        });
-
-        $('#ssoMsftBtn').on('click', function() {
-            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2800);
-            setTimeout(() => {
-                window.location.href = "{{ route('login') }}?sso=digilocker";
-            }, 1500);
-        });
-
-        // Demo credentials on double-click
-        $('.form-header').on('dblclick', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-            $('#email').val('taxpayer@tn.gov.in');
-            $('#password').val('TNtax2025');
-            showToast("success", "Demo Credentials", "Sample taxpayer account loaded (for preview)", 2200);
-        });
     });
+
+    // SSO Buttons
+    $('#ssoGoogleBtn, #ssoOktaBtn, #ssoMsftBtn').on('click', function() {
+        let service = $(this).text().trim();
+        showToast("info", service, "Redirecting to " + service, 2000);
+        setTimeout(() => {
+            window.location.href = "{{ route('login') }}?sso=" + service.toLowerCase().replace(/\s+/g, '');
+        }, 1500);
+    });
+
+    // Demo credentials on double-click
+    $('.form-header').on('dblclick', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+        $('#email').val('taxpayer@tn.gov.in');
+        $('#password').val('TNtax2025');
+        showToast("success", "Demo Credentials", "Sample taxpayer account loaded", 2200);
+    });
+});
 </script>
 @endsection
