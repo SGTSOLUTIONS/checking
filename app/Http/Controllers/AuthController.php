@@ -34,16 +34,9 @@ class AuthController extends Controller
         return view('auth.register');
     }
 
-    /** Handle Login (AJAX) */    public function login(Request $request)
+    /** Handle Login (AJAX) */
+    public function login(Request $request)
     {
-        // Ensure this endpoint only responds to AJAX requests
-        if (!$request->ajax() && !$request->wantsJson()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid request type'
-            ], 400);
-        }
-
         $validated = $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
@@ -68,25 +61,25 @@ class AuthController extends Controller
         }
 
         // Attempt login
-        if (Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']], $request->remember ? true : false)) {
+        if (Auth::attempt($validated)) {
             $request->session()->regenerate();
 
             // Role-based redirect
-            $redirect = route('admin.dashboard'); // Default
-
             if ($user->role === RoleEnum::ADMIN->value) {
                 $redirect = route('admin.dashboard');
             } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
                 $redirect = route('teamleader.dashboard');
             } elseif ($user->role === RoleEnum::SURVEYOR->value) {
                 $redirect = route('surveyor.dashboard');
+            } else {
+                $redirect = route('/'); // fallback
             }
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Login successful!',
                 'redirect' => $redirect,
-            ])->header('Content-Type', 'application/json');
+            ]);
         }
 
         return response()->json([
@@ -94,6 +87,7 @@ class AuthController extends Controller
             'message' => 'Invalid password.'
         ], 401);
     }
+
 
 
     /** Show Register Page */
@@ -142,7 +136,10 @@ class AuthController extends Controller
             'redirect' => route('login')
         ]);
     }
+
+
     /** Dashboard (after login) */
+
     public function dashboards()
     {
         return view('admin.dashboard');
