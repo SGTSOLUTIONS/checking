@@ -1,5 +1,5 @@
 {{-- resources/views/auth/login.blade.php --}}
-@extends('layouts.auth-layout')
+@extends('layouts.authLayout')
 
 @section('title', 'Login | TN Municipal Property Tax Portal')
 
