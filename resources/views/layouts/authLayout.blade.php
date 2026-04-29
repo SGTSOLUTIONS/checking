@@ -46,7 +46,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.82) contrast(1.02) saturate(1.05);
+            /* filter: brightness(0.82) contrast(1.02) saturate(1.05); */
             transform: scale(1.02);
             animation: slowZoom 28s ease infinite alternate;
         }
