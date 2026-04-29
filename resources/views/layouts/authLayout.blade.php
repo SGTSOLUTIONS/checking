@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>TN Municipal | Property Tax & Revenue Portal</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>TN Municipal | Property Tax & Revenue Portal - @yield('title', 'Taxpayer Portal')</title>
 
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -30,7 +31,7 @@
             background-color: #f4f2ef;
         }
 
-        /* FULLSCREEN HERITAGE BG - optimized mobile performance */
+        /* FULLSCREEN HERITAGE BG */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -70,7 +71,7 @@
             z-index: -1;
         }
 
-        /* floating particles - gentle festive touch */
+        /* floating particles */
         .particles {
             position: fixed;
             top: 0;
@@ -109,7 +110,7 @@
             }
         }
 
-        /* Toast System - fully responsive */
+        /* Toast System */
         .toast-container {
             position: fixed;
             bottom: 1.5rem;
@@ -146,7 +147,6 @@
             opacity: 0;
             transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
             color: #1e2f3e;
-            font-size: 0.9rem;
         }
 
         .toast.show {
@@ -225,7 +225,7 @@
             border-left-color: #2980b9;
         }
 
-        /* MAIN CARD - fully responsive, flex-wrap, no horizontal overflow */
+        /* MAIN CARD */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -370,7 +370,7 @@
             line-height: 1.35;
         }
 
-        /* RIGHT SIDE FORM - fully responsive */
+        /* RIGHT SIDE FORM SECTION */
         .login-form-section {
             flex: 1;
             min-width: 300px;
@@ -424,7 +424,8 @@
             z-index: 2;
         }
 
-        .input-field input {
+        .input-field input,
+        .input-field select {
             width: 100%;
             padding: 11px 14px 11px 44px;
             font-size: 0.9rem;
@@ -435,9 +436,29 @@
             outline: none;
         }
 
-        .input-field input:focus {
+        .input-field select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="%23e67e22" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+        }
+
+        .input-field input:focus,
+        .input-field select:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+        }
+
+        .input-field input.is-invalid,
+        .input-field select.is-invalid {
+            border-color: #e74c3c;
+        }
+
+        .invalid-feedback-custom {
+            font-size: 0.7rem;
+            color: #e74c3c;
+            margin-top: 4px;
+            display: block;
         }
 
         .form-options {
@@ -494,9 +515,14 @@
             box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
 
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .divider {
@@ -551,12 +577,6 @@
             }
         }
 
-        @media (min-width: 768px) {
-            .sso-btn {
-                font-size: 0.8rem;
-            }
-        }
-
         .sso-btn:hover {
             background: #fff4e6;
             border-color: #e67e22;
@@ -595,7 +615,40 @@
             }
         }
 
-        /* extra small adjustments */
+        /* File Upload Styles for Registration */
+        .file-upload-mini {
+            margin-top: 5px;
+            background: #fef9f0;
+            border: 1.5px dashed #e2e8f0;
+            border-radius: 16px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .file-upload-mini:hover {
+            border-color: #e67e22;
+            background: #fff6ea;
+        }
+
+        .file-preview-mini {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preview-img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #e67e22;
+        }
+
         @media (max-width: 480px) {
             body {
                 padding: 0.75rem;
@@ -643,23 +696,15 @@
                 align-items: flex-start;
             }
         }
-
-        @media (min-width: 481px) and (max-width: 767px) {
-            .sso-buttons {
-                flex-wrap: wrap;
-            }
-
-            .sso-btn {
-                flex: 1 0 auto;
-            }
-        }
     </style>
+
+    @stack('styles')
 </head>
 
 <body>
 
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
+        <img src="https://images.pexels.com/photos/8967822/pexels-photo-8967822.jpeg"
             alt="Tamil Nadu Government Heritage Building"
             onerror="this.src='https://images.pexels.com/photos/7655710/pexels-photo-7655710.jpeg?auto=compress&cs=tinysrgb&w=1600'">
     </div>
@@ -695,52 +740,16 @@
             </div>
         </div>
 
-        <!-- RIGHT: Login Form Core  (mobile-first, full responsive) -->
+        <!-- RIGHT: Dynamic Content -->
         <div class="login-form-section">
-            <div class="form-header">
-                <h2>Taxpayer Access</h2>
-                <p>Sign in to view property tax, file returns & download e-receipts</p>
-            </div>
-            <form id="loginForm" action="#" method="post">
-                <div class="mb-3">
-                    <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu)</label>
-                    <div class="input-field">
-                        <i class="fas fa-envelope"></i>
-                        <input type="email" id="email" name="email"
-                            placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="input-label" for="password">Tax Portal Password / OTP PIN</label>
-                    <div class="input-field">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="password" name="password" placeholder="••••••••"
-                            autocomplete="current-password" required>
-                    </div>
-                </div>
-                <div class="form-options">
-                    <label class="checkbox">
-                        <input type="checkbox" id="rememberCheck"> <span>Keep me signed in (secured device)</span>
-                    </label>
-                    <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password / PID?</a>
-                </div>
-                <button type="submit" class="login-btn" id="loginBtn"><i class="fas fa-file-invoice-dollar"></i>
-                    Access Tax Dashboard</button>
-            </form>
-            <div class="divider"><span>OR SIGN IN WITH</span></div>
-            <div class="sso-buttons">
-                <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
-                <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
-                <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
-            </div>
-            <div class="register-prompt">New taxpayer? <a href="#" id="signupLink">Register your property for tax
-                    recognition</a></div>
+            @yield('content')
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        // Toast system (responsive & robust)
-        function showToast(type, title, message, duration = 4500) {
+        // ========== TOAST SYSTEM ==========
+        window.showToast = function(type, title, message, duration = 4500) {
             const container = document.getElementById('toast-container');
             if (!container) return;
             const icons = {
@@ -768,7 +777,7 @@
                 if (toast.parentNode) removeToast(toast);
             }, duration);
             return toast;
-        }
+        };
 
         function removeToast(toast) {
             toast.classList.remove('show');
@@ -779,17 +788,17 @@
         }
 
         function escapeHtml(str) {
-            return str.replace(/[&<>]/g, (m) => ({
+            return String(str).replace(/[&<>]/g, (m) => ({
                 '&': '&amp;',
                 '<': '&lt;',
                 '>': '&gt;'
             } [m]));
         }
 
-        // Ripple effect for buttons
+        // Ripple effect
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('.login-btn, .sso-btn');
-            if (btn) {
+            if (btn && btn.tagName === 'BUTTON') {
                 const ripple = document.createElement('span');
                 ripple.classList.add('ripple-effect');
                 const rect = btn.getBoundingClientRect();
@@ -812,7 +821,7 @@
             }
         });
 
-        // Gentle floating particles
+        // Particles
         function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
@@ -831,96 +840,14 @@
         }
         createParticles();
 
-        // Login handler (municipal tax simulation)
-        function handleLogin(email, password) {
-            if (!email || !password) {
-                showToast("error", "Authentication failed", "Please enter your registered ID / password", 3500);
-                return false;
-            }
-            if (!email.includes('@') || !email.includes('.')) {
-                showToast("error", "Invalid email", "Enter valid taxpayer email or mobile number", 3500);
-                return false;
-            }
-            if (password.length < 4) {
-                showToast("error", "Access denied", "Invalid credentials (password must be 4+ characters)", 3500);
-                return false;
-            }
-            const domain = email.split('@')[1] || '';
-            if (domain && (domain.includes('tn.gov') || domain.includes('municipality') || domain.includes('chennai') ||
-                    domain.includes('tax'))) {
-                showToast("success", "🏛️ Taxpayer Verified",
-                    `Welcome ${email.split('@')[0]}, property tax dashboard loading...`, 3800);
-                setTimeout(() => showToast("info", "e-Recognition", "Your PTIN: TN-2025-XXXX | Last payment: ₹4,250", 4200),
-                    1400);
-            } else {
-                showToast("success", "✅ Tamil Nadu Tax Portal",
-                    `Welcome ${email.split('@')[0]}! Demo assessment — property tax e-services active.`, 3500);
-            }
-            return true;
-        }
-
-        // Bind all interactive elements
-        const form = document.getElementById('loginForm');
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const email = document.getElementById('email')?.value.trim();
-                const pwd = document.getElementById('password')?.value;
-                if (email && pwd) handleLogin(email, pwd);
-            });
-        }
-        document.getElementById('forgotPwdLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast("info", "Password recovery", "Reset link sent to registered mobile (TN e-Seva)", 4000);
-        });
-        document.getElementById('signupLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast("info", "Property Registration",
-                "New tax assessment request initiated. Visit nearest corporation office or complete e-KYC.",
-                5000);
-        });
-        document.getElementById('ssoGoogleBtn')?.addEventListener('click', () => {
-            showToast("info", "TN e-Seva", "Redirecting to Tamil Nadu Single Sign-On", 2800);
-            setTimeout(() => showToast("success", "SSO Connected", "Taxpayer records fetched", 2400), 1400);
-        });
-        document.getElementById('ssoOktaBtn')?.addEventListener('click', () => {
-            showToast("info", "UMANG Platform", "Connecting to Unified Mobile App", 2700);
-            setTimeout(() => showToast("success", "Verified", "Property tax summary available", 2300), 1300);
-        });
-        document.getElementById('ssoMsftBtn')?.addEventListener('click', () => {
-            showToast("info", "DigiLocker", "Authenticating via DigiLocker issued documents", 2800);
-            setTimeout(() => showToast("success", "Authorized", "Tax certificates accessible", 2200), 1400);
-        });
-
-        const rememberCheck = document.getElementById('rememberCheck');
-        if (rememberCheck) {
-            rememberCheck.addEventListener('change', (e) => {
-                if (e.target.checked) showToast("info", "Session persistence",
-                    "Secured cookie enabled for 30 days (government policy)", 3000);
-            });
-        }
-
-        // Double-click on form section = demo credentials (responsive dev helper)
-        const rightPanel = document.querySelector('.login-form-section');
-        if (rightPanel) {
-            rightPanel.addEventListener('dblclick', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-                const emailF = document.getElementById('email');
-                const pwdF = document.getElementById('password');
-                if (emailF && pwdF) {
-                    emailF.value = 'taxpayer@tn.gov.in';
-                    pwdF.value = 'TNtax2025';
-                    showToast("success", "Demo Credentials", "Sample taxpayer account loaded (for preview)", 2200);
-                }
-            });
-        }
-
-        // Welcome toast on load
-        document.addEventListener('DOMContentLoaded', () => {
-            showToast("info", "📜 Tamil Nadu Municipal Tax",
+        // Welcome toast
+        setTimeout(() => {
+            if (window.showToast) showToast("info", "📜 Tamil Nadu Municipal Tax",
                 "Welcome to property tax e-portal | Secure GSTN integration", 4000);
-        });
+        }, 500);
     </script>
+
+    @stack('scripts')
 </body>
 
 </html>
