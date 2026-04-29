@@ -1,5 +1,4 @@
-{{-- resources/views/auth/login.blade.php --}}
-@extends('layouts.authLayout')
+@extends('layouts.auth-layout')
 
 @section('title', 'Login | TN Municipal Property Tax Portal')
 
@@ -38,13 +37,13 @@
             <p>Sign in to view property tax, file returns & download e-receipts</p>
         </div>
 
-        <form id="loginForm">
+        <form id="loginForm" method="POST" action="{{ route('login') }}">
             @csrf
             <div class="mb-3">
                 <label class="input-label" for="email">Registered Mobile / Email (Tamil Nadu)</label>
                 <div class="input-field">
                     <i class="fas fa-envelope"></i>
-                    <input type="email" id="email" name="email" placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
+                    <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="yourname@municipality.tn.gov.in" autocomplete="email" required>
                 </div>
                 <div class="invalid-feedback" id="email_error"></div>
             </div>
@@ -74,9 +73,9 @@
 
         <div class="divider"><span>OR SIGN IN WITH</span></div>
         <div class="sso-buttons">
-            <button class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
-            <button class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
-            <button class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
+            <button type="button" class="sso-btn" id="ssoGoogleBtn"><i class="fab fa-google"></i> TN e-Seva</button>
+            <button type="button" class="sso-btn" id="ssoOktaBtn"><i class="fas fa-building"></i> UMANG SSO</button>
+            <button type="button" class="sso-btn" id="ssoMsftBtn"><i class="fas fa-database"></i> DigiLocker</button>
         </div>
 
         <div class="register-prompt">
@@ -88,84 +87,131 @@
 
 @section('scripts')
 <script>
-$(function() {
+$(document).ready(function() {
+    let isSubmitting = false;
+
+    // Handle form submission with AJAX
     $('#loginForm').on('submit', function(e) {
         e.preventDefault();
+        e.stopPropagation();
 
-        // Reset validation
+        if (isSubmitting) {
+            return false;
+        }
+
+        // Reset validation errors
         $('.invalid-feedback').text('');
         $('.input-field input').removeClass('is-invalid');
 
+        const formData = {
+            email: $('#email').val(),
+            password: $('#password').val(),
+            remember: $('#rememberCheck').is(':checked') ? 1 : 0,
+            _token: $('meta[name="csrf-token"]').attr('content')
+        };
+
+        // Client-side validation
+        if (!formData.email) {
+            $('#email').addClass('is-invalid');
+            $('#email_error').text('Email address is required.');
+            showToast('error', 'Validation Error', 'Please enter your email address.', 3000);
+            return false;
+        }
+
+        if (!formData.password) {
+            $('#password').addClass('is-invalid');
+            $('#password_error').text('Password is required.');
+            showToast('error', 'Validation Error', 'Please enter your password.', 3000);
+            return false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            $('#email').addClass('is-invalid');
+            $('#email_error').text('Please enter a valid email address.');
+            showToast('error', 'Validation Error', 'Please enter a valid email address.', 3000);
+            return false;
+        }
+
         // Show loading state
+        isSubmitting = true;
         $('#btnText').text('Authenticating...');
         $('#btnSpinner').removeClass('d-none');
         $('#loginBtn').prop('disabled', true);
 
+        // AJAX request
         $.ajax({
-            url: "{{ route('login.post') }}",
+            url: "{{ route('login') }}",
             method: "POST",
-            data: $(this).serialize(),
+            data: formData,
             dataType: "json",
-            success: function(res) {
+            success: function(response) {
+                isSubmitting = false;
                 $('#loginBtn').prop('disabled', false);
                 $('#btnText').text('Access Tax Dashboard');
                 $('#btnSpinner').addClass('d-none');
 
-                if (res.status === 'success') {
-                    showToast('success', 'Welcome!', res.message, 2000);
+                if (response.status === 'success') {
+                    showToast('success', 'Welcome!', response.message, 2000);
                     setTimeout(function() {
-                        window.location.href = res.redirect;
+                        window.location.href = response.redirect;
                     }, 1500);
                 } else {
-                    showToast('error', 'Login Failed', res.message, 4000);
+                    showToast('error', 'Login Failed', response.message || 'Invalid credentials. Please try again.', 4000);
+
+                    if (response.message && response.message.toLowerCase().includes('password')) {
+                        $('#password').addClass('is-invalid');
+                        $('#password_error').text(response.message);
+                    } else if (response.message && response.message.toLowerCase().includes('email')) {
+                        $('#email').addClass('is-invalid');
+                        $('#email_error').text(response.message);
+                    }
                 }
             },
             error: function(xhr) {
+                isSubmitting = false;
                 $('#loginBtn').prop('disabled', false);
                 $('#btnText').text('Access Tax Dashboard');
                 $('#btnSpinner').addClass('d-none');
 
-                if (xhr.status === 422) {
-                    let errors = xhr.responseJSON.errors;
+                if (xhr.status === 422 && xhr.responseJSON.errors) {
+                    const errors = xhr.responseJSON.errors;
                     for (let key in errors) {
-                        $('#' + key).addClass('is-invalid');
-                        $('#' + key + '_error').text(errors[key][0]);
+                        $(`#${key}`).addClass('is-invalid');
+                        $(`#${key}_error`).text(errors[key][0]);
                     }
                     showToast('error', 'Validation Error', 'Please check the form for errors.', 4000);
-                } else if (xhr.status === 401 || xhr.status === 403 || xhr.status === 404) {
-                    let message = xhr.responseJSON?.message || 'Invalid credentials or account issue.';
+                } else if (xhr.status === 401) {
+                    const message = xhr.responseJSON?.message || 'Invalid password. Please try again.';
+                    $('#password').addClass('is-invalid');
+                    $('#password_error').text(message);
                     showToast('error', 'Authentication Failed', message, 4000);
-                    if (xhr.status === 401) {
-                        $('#password').addClass('is-invalid');
-                        $('#password_error').text('Invalid password. Please try again.');
-                    } else if (xhr.status === 404) {
-                        $('#email').addClass('is-invalid');
-                        $('#email_error').text('No account found with this email.');
-                    }
+                } else if (xhr.status === 404) {
+                    const message = xhr.responseJSON?.message || 'No account found with this email address.';
+                    $('#email').addClass('is-invalid');
+                    $('#email_error').text(message);
+                    showToast('error', 'Account Not Found', message, 4000);
                 } else {
-                    showToast('error', 'Error', 'Something went wrong. Please try again.', 4000);
+                    const message = xhr.responseJSON?.message || 'Something went wrong. Please try again later.';
+                    showToast('error', 'Error', message, 4000);
                 }
             }
         });
+
+        return false;
     });
 
-    // SSO Demo Buttons
-    $('#ssoGoogleBtn').click(function() {
-        showToast('info', 'TN e-Seva', 'Redirecting to Tamil Nadu Single Sign-On...', 2500);
-        setTimeout(() => showToast('success', 'SSO Connected', 'Taxpayer records fetched', 2000), 1500);
+    // SSO Buttons
+    $('#ssoGoogleBtn, #ssoOktaBtn, #ssoMsftBtn').click(function(e) {
+        e.preventDefault();
+        const ssoName = $(this).text().trim();
+        showToast('info', `${ssoName}`, 'Redirecting to SSO provider...', 2500);
+        setTimeout(() => {
+            showToast('success', 'SSO Connected', 'Authentication successful', 2000);
+        }, 1500);
     });
 
-    $('#ssoOktaBtn').click(function() {
-        showToast('info', 'UMANG Platform', 'Connecting to Unified Mobile App...', 2500);
-        setTimeout(() => showToast('success', 'Verified', 'Property tax summary available', 2000), 1500);
-    });
-
-    $('#ssoMsftBtn').click(function() {
-        showToast('info', 'DigiLocker', 'Authenticating via DigiLocker...', 2500);
-        setTimeout(() => showToast('success', 'Authorized', 'Tax certificates accessible', 2000), 1500);
-    });
-
-    // Demo credentials double-click (for testing)
+    // Demo credentials on double click
     $('.login-form-section').on('dblclick', function(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
         $('#email').val('taxpayer@tn.gov.in');
@@ -173,8 +219,16 @@ $(function() {
         showToast('info', 'Demo Credentials', 'Sample taxpayer account loaded', 2000);
     });
 
+    // Clear validation on input
+    $('#email, #password').on('input', function() {
+        $(this).removeClass('is-invalid');
+        $(this).siblings('.invalid-feedback').text('');
+    });
+
     // Welcome message
-    showToast('info', '📜 Tamil Nadu Municipal Tax', 'Welcome to property tax e-portal | Secure GSTN integration', 4000);
+    setTimeout(() => {
+        showToast('info', '📜 Tamil Nadu Municipal Tax', 'Welcome to property tax e-portal | Secure GSTN integration', 4000);
+    }, 500);
 });
 </script>
 @endsection

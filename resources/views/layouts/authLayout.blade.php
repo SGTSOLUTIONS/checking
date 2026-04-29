@@ -1,4 +1,3 @@
-{{-- resources/views/layouts/auth-layout.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -285,6 +284,16 @@
         .input-field input:focus {
             border-color: #e67e22;
             box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+        }
+        .input-field input.is-invalid {
+            border-color: #e74c3c;
+        }
+
+        .invalid-feedback {
+            font-size: 0.75rem;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: block;
         }
 
         .form-options {
