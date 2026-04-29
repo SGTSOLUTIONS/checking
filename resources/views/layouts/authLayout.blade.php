@@ -30,7 +30,7 @@
             align-items: center;
             justify-content: center;
             padding: 1rem;
-            background-color: #f4f2ef;
+            background-color: #f4f2ef2d;
             position: relative;
             overflow-x: hidden;
         }
@@ -50,9 +50,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.82) contrast(1.02) saturate(1.05);
+            brightness: 40%;
             transform: scale(1.02);
-            animation: slowZoom 28s ease infinite alternate;
+            animation: slowZoom 22s ease infinite alternate;
         }
 
         @keyframes slowZoom {
@@ -844,7 +844,7 @@
 <body>
 
     <div class="heritage-bg">
-        <img src="https://images.pexels.com/photos/258117/pexels-photo-258117.jpeg?auto=compress&cs=tinysrgb&w=1600"
+        <img src="https://images.pexels.com/photos/16466766/pexels-photo-16466766.png"
             alt="Tamil Nadu Government Heritage Building">
     </div>
     <div class="bg-overlay"></div>
