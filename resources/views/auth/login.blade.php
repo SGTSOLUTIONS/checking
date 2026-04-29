@@ -8,16 +8,14 @@
         <p>Sign in to view property tax, file returns & download e-receipts</p>
     </div>
 
-    <div id="alert-container"></div>
-
-    <form id="loginForm" method="POST" >
+    <form id="loginForm">
         @csrf
 
         <div class="mb-3">
             <label class="input-label" for="email">Email address</label>
             <div class="input-field">
                 <i class="fas fa-envelope"></i>
-                <input type="email" id="email" name="email" class="" placeholder="yourname@municipality.tn.gov.in" autocomplete="email" value="{{ old('email') }}">
+                <input type="email" id="email" name="email" placeholder="yourname@municipality.tn.gov.in" autocomplete="email">
             </div>
             <div class="invalid-feedback-custom" id="email_error"></div>
         </div>
@@ -26,14 +24,17 @@
             <label class="input-label" for="password">Password</label>
             <div class="input-field">
                 <i class="fas fa-lock"></i>
-                <input type="password" id="password" name="password" class="" placeholder="Enter password" autocomplete="current-password">
+                <input type="password" id="password" name="password" placeholder="Enter password" autocomplete="current-password">
+                <button type="button" class="toggle-password" style="position: absolute; right: 12px; background: transparent; border: none; color: #e67e22;">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
             <div class="invalid-feedback-custom" id="password_error"></div>
         </div>
 
         <div class="form-options">
             <label class="checkbox">
-                <input type="checkbox" id="rememberCheck" name="remember"> <span>Keep me signed in (secured device)</span>
+                <input type="checkbox" name="remember" id="rememberCheck"> <span>Keep me signed in (secured device)</span>
             </label>
             <a href="{{ route('password.request') }}" class="forgot-link">Forgot password / PID?</a>
         </div>
@@ -56,86 +57,64 @@
 @section('scripts')
 <script>
 $(document).ready(function() {
-    // Make sure to unbind any existing handlers
-    $('#loginForm').off('submit').on('submit', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    // Toggle password visibility
+    $('.toggle-password').on('click', function() {
+        const input = $('#password');
+        const icon = $(this).find('i');
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
 
-        // Reset error states
-        $('#alert-container').html('');
+    $('#loginForm').on('submit', function(e) {
+        e.preventDefault();
+
         $('#email, #password').removeClass('is-invalid');
         $('#email_error, #password_error').text('');
 
-        // Show loading state
         $('#btnText').html('<i class="fas fa-spinner fa-spin"></i> Authenticating...');
         $('#btnSpinner').removeClass('d-none');
         $('#loginBtn').prop('disabled', true);
 
-        const formData = {
-            email: $('#email').val().trim(),
-            password: $('#password').val(),
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            remember: $('#rememberCheck').is(':checked') ? 1 : 0
-        };
-
-        console.log('Sending AJAX request to login...');
-
         $.ajax({
             url: "{{ route('login.post') }}",
             method: "POST",
-            data: formData,
-            dataType: "json",
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+            data: {
+                email: $('#email').val().trim(),
+                password: $('#password').val(),
+                remember: $('#rememberCheck').is(':checked') ? 1 : 0,
+                _token: $('meta[name="csrf-token"]').attr('content')
             },
+            dataType: "json",
             success: function(res) {
-                console.log('Login response:', res);
-
                 if (res.status === 'success') {
                     showToast('success', 'Success!', res.message, 1500);
-
-                    // Handle redirect
-                    if (res.redirect) {
-                        console.log('Redirecting to:', res.redirect);
-                        setTimeout(function() {
-                            window.location.href = res.redirect;
-                        }, 1500);
-                    } else {
-                        console.error('No redirect URL in response');
-                        resetLoginButton();
-                    }
+                    setTimeout(function() {
+                        window.location.href = res.redirect;
+                    }, 1500);
                 } else {
                     resetLoginButton();
                     showToast('error', 'Error!', res.message || 'Invalid credentials', 5000);
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error Details:', {
-                    status: xhr.status,
-                    statusText: xhr.statusText,
-                    responseText: xhr.responseText,
-                    error: error
-                });
-
+            error: function(xhr) {
                 resetLoginButton();
-
-                // Try to parse error response
                 if (xhr.responseJSON) {
-                    const errorMsg = xhr.responseJSON.message || 'Authentication failed';
-                    showToast('error', 'Error', errorMsg, 5000);
-
-                    // Handle validation errors
-                    if (xhr.responseJSON.errors) {
-                        const errors = xhr.responseJSON.errors;
-                        if (errors.email) {
+                    if (xhr.status === 422 && xhr.responseJSON.errors) {
+                        if (xhr.responseJSON.errors.email) {
                             $('#email').addClass('is-invalid');
-                            $('#email_error').text(errors.email[0]);
+                            $('#email_error').text(xhr.responseJSON.errors.email[0]);
                         }
-                        if (errors.password) {
+                        if (xhr.responseJSON.errors.password) {
                             $('#password').addClass('is-invalid');
-                            $('#password_error').text(errors.password[0]);
+                            $('#password_error').text(xhr.responseJSON.errors.password[0]);
                         }
+                    } else {
+                        showToast('error', 'Error', xhr.responseJSON.message || 'Authentication failed', 5000);
                     }
                 } else {
                     showToast('error', 'Error', 'Unable to connect to server. Please try again.', 5000);

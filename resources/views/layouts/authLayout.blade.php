@@ -10,9 +10,7 @@
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -31,7 +29,6 @@
             background-color: #f4f2ef;
         }
 
-        /* FULLSCREEN HERITAGE BG */
         .heritage-bg {
             position: fixed;
             top: 0;
@@ -50,13 +47,8 @@
         }
 
         @keyframes slowZoom {
-            0% {
-                transform: scale(1);
-            }
-
-            100% {
-                transform: scale(1.06);
-            }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
         }
 
         .bg-overlay {
@@ -69,7 +61,6 @@
             z-index: -1;
         }
 
-        /* floating particles */
         .particles {
             position: fixed;
             top: 0;
@@ -89,26 +80,12 @@
         }
 
         @keyframes floatParticle {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-
-            10% {
-                opacity: 0.5;
-            }
-
-            90% {
-                opacity: 0.25;
-            }
-
-            100% {
-                transform: translateY(-20vh) rotate(360deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.5; }
+            90% { opacity: 0.25; }
+            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
         }
 
-        /* Toast System */
         .toast-container {
             position: fixed;
             bottom: 1.5rem;
@@ -157,35 +134,11 @@
             opacity: 0;
         }
 
-        .toast-icon {
-            font-size: 1.4rem;
-            flex-shrink: 0;
-        }
-
-        .toast-content {
-            flex: 1;
-        }
-
-        .toast-title {
-            font-weight: 800;
-            font-size: 0.85rem;
-            margin-bottom: 0.2rem;
-        }
-
-        .toast-message {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            margin: 0;
-        }
-
-        .toast-close {
-            background: none;
-            border: none;
-            color: #7e8b9e;
-            cursor: pointer;
-            font-size: 0.8rem;
-            padding: 0 4px;
-        }
+        .toast-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 800; font-size: 0.85rem; margin-bottom: 0.2rem; }
+        .toast-message { font-size: 0.75rem; opacity: 0.8; margin: 0; }
+        .toast-close { background: none; border: none; color: #7e8b9e; cursor: pointer; font-size: 0.8rem; padding: 0 4px; }
 
         .toast-progress {
             position: absolute;
@@ -198,32 +151,15 @@
         }
 
         @keyframes progressShrink {
-            from {
-                width: 100%;
-            }
-
-            to {
-                width: 0%;
-            }
+            from { width: 100%; }
+            to { width: 0%; }
         }
 
-        .toast-success {
-            border-left-color: #27ae60;
-        }
+        .toast-success { border-left-color: #27ae60; }
+        .toast-error { border-left-color: #e74c3c; }
+        .toast-warning { border-left-color: #f39c12; }
+        .toast-info { border-left-color: #2980b9; }
 
-        .toast-error {
-            border-left-color: #e74c3c;
-        }
-
-        .toast-warning {
-            border-left-color: #f39c12;
-        }
-
-        .toast-info {
-            border-left-color: #2980b9;
-        }
-
-        /* MAIN CARD */
         .auth-card {
             width: 100%;
             max-width: 1280px;
@@ -238,18 +174,10 @@
         }
 
         @keyframes fadeSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* LEFT SIDE BRANDING - Hidden on mobile */
         .login-hero {
             flex: 1.2;
             min-width: 260px;
@@ -261,21 +189,10 @@
             color: #2c3e4e;
         }
 
-        /* Hide left content on mobile devices */
         @media (max-width: 768px) {
-            .login-hero {
-                display: none;
-            }
-
-            .auth-card {
-                max-width: 500px;
-                margin: 0 auto;
-            }
-
-            .login-form-section {
-                width: 100%;
-                flex: none;
-            }
+            .login-hero { display: none; }
+            .auth-card { max-width: 500px; margin: 0 auto; }
+            .login-form-section { width: 100%; flex: none; }
         }
 
         .brand {
@@ -320,24 +237,10 @@
             color: #1e3a5f;
         }
 
-        @media (min-width: 769px) and (max-width: 992px) {
-            .hero-content h1 {
-                font-size: 1.8rem;
-            }
-        }
-
         @media (min-width: 993px) {
-            .hero-content h1 {
-                font-size: 2.2rem;
-            }
-
-            .brand-text {
-                font-size: 1.5rem;
-            }
-
-            .login-hero {
-                padding: 2.5rem;
-            }
+            .hero-content h1 { font-size: 2.2rem; }
+            .brand-text { font-size: 1.5rem; }
+            .login-hero { padding: 2.5rem; }
         }
 
         .hero-highlight {
@@ -372,9 +275,7 @@
             font-weight: 500;
         }
 
-        .quote-area {
-            margin-top: 1.8rem;
-        }
+        .quote-area { margin-top: 1.8rem; }
 
         .quote {
             font-weight: 500;
@@ -385,7 +286,6 @@
             line-height: 1.35;
         }
 
-        /* RIGHT SIDE FORM SECTION */
         .login-form-section {
             flex: 1;
             min-width: 300px;
@@ -393,7 +293,6 @@
             padding: 1.8rem;
         }
 
-        /* Mobile header (visible only on mobile) */
         .mobile-header {
             display: none;
             text-align: center;
@@ -430,21 +329,11 @@
         }
 
         @media (max-width: 768px) {
-            .mobile-header {
-                display: block;
-            }
+            .mobile-header { display: block; }
         }
 
         @media (min-width: 576px) {
-            .login-form-section {
-                padding: 2rem 2rem;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .login-form-section {
-                padding: 2.5rem 2.5rem;
-            }
+            .login-form-section { padding: 2rem 2rem; }
         }
 
         .form-header h2 {
@@ -656,23 +545,6 @@
             text-decoration: underline;
         }
 
-        .ripple-effect {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
-            transform: scale(0);
-            animation: rippleAnim 0.5s ease-out;
-            pointer-events: none;
-        }
-
-        @keyframes rippleAnim {
-            to {
-                transform: scale(6);
-                opacity: 0;
-            }
-        }
-
-        /* File Upload Styles for Registration */
         .file-upload-mini {
             margin-top: 5px;
             background: #fef9f0;
@@ -706,97 +578,14 @@
             border: 2px solid #e67e22;
         }
 
-        /* Password strength meter styles */
-        .strength-container {
-            margin-top: 0.5rem;
-        }
-
-        .strength-bar {
-            height: 6px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 6px;
-        }
-
-        .strength-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 10px;
-            transition: width 0.3s ease, background 0.3s ease;
-        }
-
-        .strength-fill.weak {
-            background: #e74c3c;
-            width: 25%;
-        }
-
-        .strength-fill.fair {
-            background: #f39c12;
-            width: 50%;
-        }
-
-        .strength-fill.good {
-            background: #3498db;
-            width: 75%;
-        }
-
-        .strength-fill.strong {
-            background: #27ae60;
-            width: 100%;
-        }
-
-        .strength-text {
-            font-size: 0.7rem;
-            color: #7e8b9e;
-        }
-
-        .toggle-password {
-            background: transparent;
-            border: none;
-            color: #e67e22;
-            cursor: pointer;
-            transition: color 0.2s;
-            z-index: 5;
-            position: absolute;
-            right: 12px;
-        }
-
-        .toggle-password:hover {
-            color: #c0392b;
-        }
-
         @media (max-width: 480px) {
-            body {
-                padding: 0.75rem;
-            }
-
-            .auth-card {
-                border-radius: 1.5rem;
-                max-width: 100%;
-            }
-
-            .login-form-section {
-                padding: 1.3rem;
-            }
-
-            .form-header h2 {
-                font-size: 1.3rem;
-            }
-
-            .sso-buttons {
-                flex-direction: column;
-                gap: 0.6rem;
-            }
-
-            .sso-btn {
-                width: 100%;
-            }
-
-            .form-options {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+            body { padding: 0.75rem; }
+            .auth-card { border-radius: 1.5rem; max-width: 100%; }
+            .login-form-section { padding: 1.3rem; }
+            .form-header h2 { font-size: 1.3rem; }
+            .sso-buttons { flex-direction: column; gap: 0.6rem; }
+            .sso-btn { width: 100%; }
+            .form-options { flex-direction: column; align-items: flex-start; }
         }
     </style>
 
@@ -804,7 +593,6 @@
 </head>
 
 <body>
-
     <div class="heritage-bg">
         <img src="https://images.pexels.com/photos/8967822/pexels-photo-8967822.jpeg"
             alt="Tamil Nadu Government Heritage Building"
@@ -815,7 +603,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <div class="auth-card">
-        <!-- LEFT: Branding & municipal info (hidden on mobile) -->
         <div class="login-hero">
             <div class="brand">
                 <div class="brand-icon"><i class="fas fa-landmark"></i></div>
@@ -837,29 +624,24 @@
                 </div>
             </div>
             <div class="quote-area">
-                <div class="quote">“நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு” — Hon'ble Minister of Municipal
-                    Administration</div>
+                <div class="quote">"நேர்மையான வரி செலுத்துதல் - நகரத்தின் வளர்ச்சிக்கு" — Hon'ble Minister of Municipal Administration</div>
             </div>
         </div>
 
-        <!-- RIGHT: Dynamic Content -->
         <div class="login-form-section">
-            <!-- Mobile Header (visible only on mobile) -->
             <div class="mobile-header">
-                <div class="mobile-brand-icon">
-                    <i class="fas fa-landmark"></i>
-                </div>
+                <div class="mobile-brand-icon"><i class="fas fa-landmark"></i></div>
                 <h3>Greater Chennai Corporation</h3>
                 <p>Tamil Nadu • Tax Recognition Portal</p>
             </div>
-
             @yield('content')
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ========== TOAST SYSTEM ==========
         window.showToast = function(type, title, message, duration = 4500) {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -872,67 +654,32 @@
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             toast.innerHTML = `
-            <i class="fas ${icons[type] || 'fa-circle-info'} toast-icon"></i>
-            <div class="toast-content">
-                <div class="toast-title">${escapeHtml(title)}</div>
-                <p class="toast-message">${escapeHtml(message)}</p>
-            </div>
-            <button class="toast-close"><i class="fas fa-times"></i></button>
-            <div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>
-        `;
+                <i class="fas ${icons[type] || 'fa-circle-info'} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${escapeHtml(title)}</div>
+                    <p class="toast-message">${escapeHtml(message)}</p>
+                </div>
+                <button class="toast-close"><i class="fas fa-times"></i></button>
+                <div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>
+            `;
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 20);
             const closeBtn = toast.querySelector('.toast-close');
             closeBtn.addEventListener('click', () => removeToast(toast));
-            if (duration > 0) setTimeout(() => {
-                if (toast.parentNode) removeToast(toast);
-            }, duration);
+            if (duration > 0) setTimeout(() => { if (toast.parentNode) removeToast(toast); }, duration);
             return toast;
         };
 
         function removeToast(toast) {
             toast.classList.remove('show');
             toast.classList.add('hide');
-            setTimeout(() => {
-                if (toast.parentNode) toast.parentNode.removeChild(toast);
-            }, 350);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
         }
 
         function escapeHtml(str) {
-            return String(str).replace(/[&<>]/g, (m) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;'
-            } [m]));
+            return String(str).replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
         }
 
-        // Ripple effect
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.login-btn, .sso-btn');
-            if (btn && btn.tagName === 'BUTTON') {
-                const ripple = document.createElement('span');
-                ripple.classList.add('ripple-effect');
-                const rect = btn.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
-                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
-                ripple.style.position = 'absolute';
-                ripple.style.background = 'radial-gradient(circle, rgba(230,126,34,0.5), rgba(230,126,34,0))';
-                ripple.style.borderRadius = '50%';
-                ripple.style.pointerEvents = 'none';
-                btn.style.position = 'relative';
-                btn.style.overflow = 'hidden';
-                btn.appendChild(ripple);
-                setTimeout(() => {
-                    ripple.style.transform = 'scale(5)';
-                    ripple.style.opacity = '0';
-                }, 10);
-                setTimeout(() => ripple.remove(), 500);
-            }
-        });
-
-        // Particles
         function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
@@ -950,17 +697,8 @@
             }
         }
         createParticles();
-
-        // Welcome toast only on desktop (optional)
-        if (window.innerWidth > 768) {
-            setTimeout(() => {
-                if (window.showToast) showToast("info", "📜 Tamil Nadu Municipal Tax",
-                    "Welcome to property tax e-portal | Secure GSTN integration", 4000);
-            }, 500);
-        }
     </script>
 
-    @yield('scripts')
+    @stack('scripts')
 </body>
-
 </html>
