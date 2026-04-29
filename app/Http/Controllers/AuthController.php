@@ -127,7 +127,7 @@ class AuthController extends Controller
             'city' => $validated['city'],
             'profile_picture' => $profilePath,
             'status' => ActiveStatusEnum::ACTIVE->value,
-            'role' => RoleEnum::SURVEYOR->value, // Set default role
+            'role' => RoleEnum::SURVEYOR    ->value, // Set default role
         ]);
 
         return response()->json([

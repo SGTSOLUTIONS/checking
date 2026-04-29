@@ -40,7 +40,7 @@
     </form>
 @endsection
 
-@section('js')
+@section('script')
     <script>
         $(function() {
             $('#loginForm').on('submit', function(e) {
@@ -53,7 +53,6 @@
                 $('#btnText').text('Logging in...');
                 $('#btnSpinner').removeClass('d-none');
                 $('button[type="submit"]').prop('disabled', true);
-
                 $.ajax({
                     url: "{{ route('login.post') }}",
                     method: "POST",
