@@ -75,7 +75,7 @@
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 remember: $('#rememberCheck').is(':checked') ? 1 : 0
             };
-
+            alert("hi");
             $.ajax({
                 url: "{{ route('login.post') }}",
                 method: "POST",
