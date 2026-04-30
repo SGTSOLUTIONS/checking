@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CorporationController;
+use App\Http\Controllers\DcController;
 use App\Http\Controllers\SurveyorController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamLeaderController;
@@ -190,3 +191,10 @@ Route::get('/test-mail', function() {
         return 'Error: ' . $e->getMessage();
     }
 });
+
+
+
+
+
+
+Route::get('DC/Dashboard',[DcController::class,'dashboard'])->name('dc.dashboard');

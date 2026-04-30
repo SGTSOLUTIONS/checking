@@ -24,6 +24,8 @@ return new class extends Migration
             $table->enum('role', array_column(RoleEnum::cases(), 'value'))->default(RoleEnum::SURVEYOR->value);
             $table->string('profile')->nullable();
             $table->string('phone')->nullable();
+            $table->string('corporation_id')->nullable();
+            $table->string('ward_id')->nullable();
             $table->string('city')->nullable();
             $table->enum('gender', array_column(GenderEnum::cases(), 'value'))->nullable();
             $table->string('date_of_birth')->nullable();

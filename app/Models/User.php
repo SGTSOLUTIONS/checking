@@ -24,6 +24,8 @@ class User extends Authenticatable
         'profile',
         'status',
         'gender',
+        'corporation_id',
+        'ward_id',
         'storage_path'
     ];
 
@@ -68,7 +70,7 @@ class User extends Authenticatable
     {
         return $this->hasOne(Team::class, 'team_leader_id');
     }
-    
+
     public function leadingTeams()
     {
         return $this->hasMany(Team::class, 'team_leader_id');

@@ -67,13 +67,16 @@ class AuthController extends Controller
             // Role-based redirect
             if ($user->role === RoleEnum::ADMIN->value) {
                 $redirect = route('admin.dashboard');
-            }
-              elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
+            } elseif ($user->role === RoleEnum::TEAM_LEADER->value) {
                 $redirect = route('teamleader.dashboard');
             } elseif ($user->role === RoleEnum::SURVEYOR->value) {
                 $redirect = route('surveyor.dashboard');
-            }else {
-                $redirect = route('/'); // fallback
+            } elseif ($user->role === RoleEnum::DC->value) {
+                $redirect = route('dc.dashboard');
+            } elseif ($user->role === RoleEnum::COMMISIONER->value) {
+                $redirect = route('commissioner.dashboard');
+            } else {
+                $redirect = route('home'); // ✅ correct fallback (use a named route)
             }
 
             return response()->json([
