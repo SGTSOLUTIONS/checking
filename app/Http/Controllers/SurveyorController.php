@@ -1210,7 +1210,6 @@ class SurveyorController extends Controller
             'remarks' => $data['remarks'] ?? null,
             'worker_name' => ($teamMember->user->id ?? '') . '-' . ($teamMember->user->name ?? ''),
             'assessment_type' => $data['type'] ?? 'OLD',
-            'no_of_shop' => $data['no_of_shop'] ?? 0,
             'updated_at' => now(),
         ];
 
