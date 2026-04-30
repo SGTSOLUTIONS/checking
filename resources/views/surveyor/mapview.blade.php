@@ -1159,12 +1159,7 @@
                                             id="no_of_persons" min="0" step="1" value="0">
                                         <div id="no_of_persons_error" class="error-message text-danger"></div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="number_persons" class="form-label">Number persons</label>
-                                        <input type="number" name="number_persons" class="form-control"
-                                            id="number_persons" min="0" step="1" value="0">
-                                        <div id="number_persons_error" class="error-message text-danger"></div>
-                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -1409,7 +1404,14 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Zone</label>
-                                <input type="text" class="form-control" name="building_zone" id="building_zone">
+                                <select class="form-control" name="building_zone" id="building_zone">
+                                    <option value="">Select Zone</option>
+                                    <option value="ZONE-A">ZONE-A</option>
+                                    <option value="ZONE-B">ZONE-B</option>
+                                    <option value="ZONE-C">ZONE-C</option>
+                                    <option value="ZONE-D">ZONE-D</option>
+                                    <option value="ZONE-E">ZONE-E</option>
+                                </select>
                                 <div id="building_zone_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
@@ -1629,8 +1631,11 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Water Connection</label>
-                                <input type="text" class="form-control" name="water_connection"
-                                    id="water_connection">
+
+                                <select class="form-control" name="water_connection" id="water_connection">
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                </select>
                                 <div id="water_connection_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
@@ -3361,9 +3366,8 @@
                         $("#buildingsubmitBtn").prop("disabled", false);
                         if (xhr.responseJSON && xhr.responseJSON.errors) {
                             $.each(xhr.responseJSON.errors, function(key, value) {
-                                if(key == "image")
-                                {
-                                    key="building_image"
+                                if (key == "image") {
+                                    key = "building_image"
                                 }
                                 $("#" + key).addClass("is-invalid");
                                 $("#" + key + "_error").text(value[0]);
