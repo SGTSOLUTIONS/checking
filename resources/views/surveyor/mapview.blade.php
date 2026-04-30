@@ -1196,9 +1196,9 @@
                                     <div class="col-md-3 mb-3">
                                         <label for="bill_usage" class="form-label">Bill Usage</label>
                                         <select name="bill_usage" id="bill_usage" class="form-control">
-                                            <option value="">Select Bill Usage</option>
+
                                             <option value="">SELECT USAGE</option>
-                                             <option value="RESIDENTIAL">RESIDENTIAL</option>
+                                            <option value="RESIDENTIAL">RESIDENTIAL</option>
                                             <option value="COMMERCIAL">COMMERCIAL</option>
                                             <option value="EDUCATIONAL INSTITUTIONS">EDUCATIONAL INSTITUTIONS</option>
                                             <option value="GOVERNMENT BUILDING">GOVERNMENT BUILDING</option>
@@ -1405,28 +1405,50 @@
                                 <label>Gisid</label>
                                 <input type="text" class="form-control" name="building_gisid" id="building_gisid"
                                     readonly>
+                                <div id="building_gisid_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Zone</label>
-                                <input type="text" class="form-control" name="building_zone" id="building_zone"
-                                    readonly>
+                                <input type="text" class="form-control" name="building_zone" id="building_zone">
+                                <div id="building_zone_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Number of Bills</label>
                                 <input type="number" class="form-control" name="number_bill" id="number_bill">
+                                <div id="number_bill_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Number of Shops</label>
                                 <input type="number" class="form-control" name="number_shop" id="number_shop">
+                                <div id="number_shop_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Number of Floors</label>
                                 <input type="number" class="form-control" name="number_floor" id="number_floor">
+                                <div id="number_floor_error" class="error-message text-danger"></div>
                             </div>
-
+                            <div class="col-md-4 mb-3">
+                                <label>Percentage</label>
+                                <select class="form-control mt-2" name="percentage" id="percentage">
+                                    <option value=""></option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                    <option value="30">30</option>
+                                    <option value="40">40</option>
+                                    <option value="50">50</option>
+                                    <option value="60">60</option>
+                                    <option value="70">70</option>
+                                    <option value="80">80</option>
+                                    <option value="85">85</option>
+                                    <option value="90">90</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <div id="percentage_error" class="error-message text-danger"></div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label>Building Name</label>
                                 <input type="text" class="form-control" name="building_name" id="building_name">
+                                <div id="building_name_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Road Name</label>
@@ -1438,10 +1460,12 @@
                                         @endforeach
                                     @endif
                                 </select>
+                                <div id="point_road_name_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Phone</label>
                                 <input type="text" class="form-control" name="phone" id="phone_building">
+                                <div id="phone_building_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Building Usage</label>
@@ -1455,6 +1479,7 @@
                                     <option value="GOVERNMENT">Government</option>
                                     <option value="VACANT">Vacant</option>
                                 </select>
+                                <div id="building_usage_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Construction Type</label>
@@ -1467,6 +1492,7 @@
                                     <option value="CAR_SHED">Car Shed</option>
                                     <option value="TEMPORARY">Temporary</option>
                                 </select>
+                                <div id="construction_type_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Building Type</label>
@@ -1494,6 +1520,7 @@
                                     <option value="Under Construction">Under Construction</option>
                                     <option value="Others">Others</option>
                                 </select>
+                                <div id="building_type_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>UGD</label>
@@ -1513,6 +1540,7 @@
                                     <option value="2_UGD_Connection_-_3_Stage_Completed">2 UGD Connection - 3 Stage
                                         Completed</option>
                                 </select>
+                                <div id="ugd_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Lift Room</label>
@@ -1520,6 +1548,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="liftroom_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Head Room</label>
@@ -1527,6 +1556,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="headroom_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Overhead Tank</label>
@@ -1534,6 +1564,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="overhead_tank_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Rainwater Harvesting</label>
@@ -1541,6 +1572,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="rainwater_harvesting_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Parking</label>
@@ -1548,6 +1580,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="parking_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Ramp</label>
@@ -1555,6 +1588,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="ramp_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Hoarding</label>
@@ -1562,6 +1596,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="hoarding_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>CCTV</label>
@@ -1569,6 +1604,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="cctv_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Cell Tower</label>
@@ -1576,6 +1612,7 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="cell_tower_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Solar Panel</label>
@@ -1583,50 +1620,46 @@
                                     <option value="No">No</option>
                                     <option value="Yes">Yes</option>
                                 </select>
+                                <div id="solar_panel_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Basement</label>
                                 <input type="number" class="form-control" name="basement" id="basement">
+                                <div id="basement_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label>Water Connection</label>
                                 <input type="text" class="form-control" name="water_connection"
                                     id="water_connection">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label>Percentage</label>
-                                <select class="form-control mt-2" name="percentage" id="percentage">
-                                    <option value=""></option>
-                                    <option value="10">10</option>
-                                    <option value="20">20</option>
-                                    <option value="30">30</option>
-                                    <option value="40">40</option>
-                                    <option value="50">50</option>
-                                    <option value="60">60</option>
-                                    <option value="70">70</option>
-                                    <option value="80">80</option>
-                                    <option value="85">85</option>
-                                    <option value="90">90</option>
-                                    <option value="100">100</option>
-                                </select>
+                                <div id="water_connection_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Upload Image</label>
                                 <input type="file" class="form-control" name="image" id="building_image"
                                     accept="image/*">
+                                <div id="building_image_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label>Upload Image2</label>
                                 <input type="file" class="form-control" name="image2" id="building_image2"
                                     accept="image/*">
+                                <div id="building_image2_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Remarks</label>
                                 <textarea class="form-control" name="remarks" id="remarks_building"></textarea>
+                                <div id="remarks_building_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Corporation Remarks</label>
                                 <textarea class="form-control" name="corporationremarks" id="corporationremarks"></textarea>
+                                <div id="corporationremarks_error" class="error-message text-danger"></div>
+                            </div>
+                            <!-- QC Remarks Field with Error Div -->
+                            <div class="col-md-3 mb-3">
+                                <label for="qc_remarks" class="form-label">QC Remarks</label>
+                                <input type="text" name="qc_remarks" class="form-control" id="qc_remarks">
+                                <div id="qc_remarks_error" class="error-message text-danger"></div>
                             </div>
                         </div>
                     </div>
@@ -3273,11 +3306,21 @@
                         $('#no_of_shop').val('');
                         currentShopCount = 0;
                     },
-                    error: function(xhr) {
-                        let errorMsg = "An error occurred while processing your request.";
-                        if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr
-                            .responseJSON.message;
+                    error: function(xhr, status, error) {
+                        console.log(xhr);
+                        let errorMsg =
+                            "An error occurred while processing your request. Please try again.";
+                        if (xhr.responseJSON && xhr.responseJSON.msg) {
+                            errorMsg = xhr.responseJSON.msg;
+                        }
                         showFlashMessage(errorMsg, "error");
+                        $("#pointSubmit").prop("disabled", false);
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            $.each(xhr.responseJSON.errors, function(key, value) {
+                                $("#" + key).addClass("is-invalid");
+                                $("#" + key + "_error").text(value[0]);
+                            });
+                        }
                     },
                     complete: function() {
                         $("#pointSubmit").prop("disabled", false).html(
@@ -3307,11 +3350,21 @@
                         refreshVectorLayer();
                         resetBuildingForm();
                     },
-                    error: function(xhr) {
-                        let errorMsg = "An error occurred while processing your request.";
-                        if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr
-                            .responseJSON.message;
+                    error: function(xhr, status, error) {
+                        console.log(xhr);
+                        let errorMsg =
+                            "An error occurred while processing your request. Please try again.";
+                        if (xhr.responseJSON && xhr.responseJSON.msg) {
+                            errorMsg = xhr.responseJSON.msg;
+                        }
                         showFlashMessage(errorMsg, "error");
+                        $("#buildingsubmitBtn").prop("disabled", false);
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            $.each(xhr.responseJSON.errors, function(key, value) {
+                                $("#" + key).addClass("is-invalid");
+                                $("#" + key + "_error").text(value[0]);
+                            });
+                        }
                     },
                     complete: function() {
                         $("#buildingsubmitBtn").prop("disabled", false).html(
