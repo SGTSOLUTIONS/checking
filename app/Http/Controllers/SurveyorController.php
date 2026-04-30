@@ -881,7 +881,7 @@ class SurveyorController extends Controller
             if ($existingRecord) {
                 $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
                 $count = DB::table($pointDataTableName)->count();
-
+     return response()->json($count, $existingRecord->number_bill);
                 if ($count > 0) {
                     if ($existingRecord->number_bill < $count) {
                         return response()->json([
