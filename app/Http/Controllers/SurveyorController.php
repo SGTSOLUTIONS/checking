@@ -884,7 +884,7 @@ class SurveyorController extends Controller
 
                 // Check if point data table exists before counting
                 if (Schema::hasTable($pointDataTableName)) {
-                    $count = DB::table($pointDataTableName)->count();
+                    $count = DB::table($pointDataTableName)->WHERE('point_gisid',$existingRecord->gisid)->count();
 
                     if ($count > 0) {
                         // Safely access number_bill property
