@@ -74,6 +74,7 @@ class SurveyorController extends Controller
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
         $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
         $misTableName = "mis_corporation_{$corp}";
+        $wateTaxTableName = "watertax_corporation_{$corp}";
 
         // Get data
         $polygons = DB::table($polygonsTableName)->get();
@@ -81,7 +82,13 @@ class SurveyorController extends Controller
         $points = DB::table($pointsTableName)->get();
         $polygonDatas = DB::table($polygonDataTableName)->get();
         $pointDatas = DB::table($pointDataTableName)->get();
-        $misData = DB::table($misTableName)->get();
+        $misData = DB::table($misTableName . ' as mis')
+            ->join($wateTaxTableName . ' as wt', 'mis.assessment', '=', 'wt.assessment')
+            ->select(
+                'mis.*',
+                'wt.watertax_no',
+            )
+            ->get();
 
         // Get unique road names from misData
         $uniqueRoadNames = DB::table($misTableName)
