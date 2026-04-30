@@ -50,7 +50,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* brightness: 80%; */
+            brightness: 20%;
             transform: scale(1.02);
             animation: slowZoom 22s ease infinite alternate;
         }
