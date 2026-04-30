@@ -1454,7 +1454,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Road Name</label>
-                                <select class="form-control" id="point_road_name" name="road_name">
+                                <select class="form-control" id="road_name" name="road_name">
                                     <option value="">Select Road Name</option>
                                     @if (isset($uniqueRoadNames))
                                         @foreach ($uniqueRoadNames as $roadName)
@@ -1462,7 +1462,7 @@
                                         @endforeach
                                     @endif
                                 </select>
-                                <div id="point_road_name_error" class="error-message text-danger"></div>
+                                <div id="road_name_error" class="error-message text-danger"></div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Phone</label>
@@ -2426,7 +2426,7 @@
                 $("#number_shop").val("");
                 $("#number_floor").val("");
                 $("#building_name").val("");
-                $("#point_road_name").val("");
+                $("#road_name").val("");
                 $("#phone_building").val("");
                 $("#building_usage").val("");
                 $("#construction_type").val("");
@@ -2510,16 +2510,14 @@
                 $("#number_shop").val(item.number_shop || "");
                 $("#number_floor").val(item.number_floor || "");
                 $("#building_name").val(item.building_name || "");
-                $("#point_road_name").val(item.road_name || "");
+                $("#road_name").val(item.road_name || "");
                 $("#phone_building").val(item.phone || "");
                 $("#zone_building").val(item.zone || "");
-
                 // Building Details
                 $("#building_usage").val(item.building_usage || "");
                 $("#construction_type").val(item.construction_type || "");
                 $("#building_type").val(item.building_type || "");
                 $("#ugd").val(item.ugd || "");
-
                 // Amenities (Yes/No fields)
                 $("#liftroom").val(item.liftroom || "No");
                 $("#headroom").val(item.headroom || "No");

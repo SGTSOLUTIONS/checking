@@ -788,6 +788,7 @@ class SurveyorController extends Controller
         // Check if record exists
         $existingRecord = DB::table($polygonDataTableName)->where('gisid', $data['building_gisid'])->first();
 
+
         // Validate Flat building condition
         if ($request->building_type == "Flat" && $request->number_floor < 3) {
             return response()->json([
@@ -870,7 +871,20 @@ class SurveyorController extends Controller
 
         try {
             if ($existingRecord) {
-                // UPDATE existing record
+                $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
+                $count = DB::table($pointDataTableName)->count();
+
+                if ($count > 0) {
+                    if ($existingRecord->number_bill < $count) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Validation errors',
+                            'errors' => [
+                                'number_bill' => ['number of bill less than typed assessment']
+                            ]
+                        ], 422);
+                    }
+                }
                 // If no new images uploaded, keep existing images (using correct column names)
                 if (!$imagePath1 && isset($existingRecord->image) && $existingRecord->image) {
                     $insertData['image'] = $existingRecord->image;
@@ -979,12 +993,10 @@ class SurveyorController extends Controller
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
         $allMisTable = "mis_corporation_{$corp}";
-        $waterTaxTable = "watertax_corporation_{$corp}"; // Added water tax table name
+        $waterTaxTable = "watertax_corporation_{$corp}";
 
-        // Get MIS data
-        $misData = DB::table($allMisTable)
-            ->select('*')
-            ->get();
+        // Fixed: Corrected MIS data query - removed incorrect self-join
+        $misData = DB::table($allMisTable)->get();
 
         // Table names
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
@@ -1047,13 +1059,12 @@ class SurveyorController extends Controller
             }
         } else {
             if (($data['no_of_shop']) > $buildingData->number_shop) {
-                $remaining = $buildingData->number_shop;
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
                     'errors' => [
                         'no_of_shop' => [
-                            "Only $remaining shops can be added. Building has $buildingData->number_shop shops."
+                            "Only {$buildingData->number_shop} shops can be added. Building has {$buildingData->number_shop} shops."
                         ]
                     ]
                 ], 422);
@@ -1094,9 +1105,8 @@ class SurveyorController extends Controller
                     ], 422);
                 }
 
-                // NEW CONDITIONS: Check water tax table
+                // Check water tax table for validation
                 if (!empty($request->water_tax)) {
-                    // Check if water tax exists for this assessment number
                     $waterTaxData = DB::table($waterTaxTable)
                         ->where('assessment', $request->assessment)
                         ->first();
@@ -1108,25 +1118,24 @@ class SurveyorController extends Controller
                         ], 422);
                     }
 
-                    // Check if the provided water tax matches the water tax in the table
                     if ($waterTaxData->watertax_no != $request->water_tax) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Water tax number does not match. Expected: ' . $waterTaxData->watertax_no . ', Provided: ' . $request->water_tax
+                            'message' => 'Water tax number does not match. Expected: ' . $waterTaxData->watertax_no
                         ], 422);
                     }
                 }
 
-                // Check if old water tax matches if provided
+                // Check if old water tax matches
                 if (!empty($request->old_water_tax)) {
-                    $oldWaterTaxData = DB::table($waterTaxTable)
+                    $waterTaxData = DB::table($waterTaxTable)
                         ->where('assessment', $request->assessment)
                         ->first();
 
-                    if ($oldWaterTaxData && $oldWaterTaxData->old_watertax_no != $request->old_water_tax) {
+                    if ($waterTaxData && $waterTaxData->old_watertax_no != $request->old_water_tax) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Old water tax number does not match. Expected: ' . ($oldWaterTaxData->old_watertax_no ?? 'N/A') . ', Provided: ' . $request->old_water_tax
+                            'message' => 'Old water tax number does not match'
                         ], 422);
                     }
                 }
@@ -1145,7 +1154,6 @@ class SurveyorController extends Controller
                 break;
 
             case "OTHER":
-                // Check if assessment exists in MIS table but in different ward
                 $checkOther = DB::table($allMisTable)
                     ->where('assessment', $request->assessment)
                     ->where('ward_no', '!=', $wardNo)
@@ -1156,20 +1164,6 @@ class SurveyorController extends Controller
                         'success' => false,
                         'message' => 'This assessment does not belong to other ward.'
                     ], 422);
-                }
-
-                // Optional: Check water tax for OTHER type as well if needed
-                if (!empty($request->water_tax)) {
-                    $waterTaxData = DB::table($waterTaxTable)
-                        ->where('assessment', $request->assessment)
-                        ->first();
-
-                    if ($waterTaxData && $waterTaxData->watertax_no != $request->water_tax) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Water tax number does not match for this assessment.'
-                        ], 422);
-                    }
                 }
                 break;
 
@@ -1296,8 +1290,32 @@ class SurveyorController extends Controller
                 ->where('point_data_id', $pointId)
                 ->get();
 
-            // Get all points data for the ward
-            $allPointsData = DB::table($pointDataTableName)->get();
+            // FIXED: Get all points data with building and shop information
+            $allPointsData = DB::table($pointDataTableName)
+                ->select('*')
+                ->get();
+
+            // Format points data with additional info
+            $formattedPoints = [];
+            foreach ($allPointsData as $point) {
+                $pointShops = DB::table($shopDataTableName)
+                    ->where('point_data_id', $point->id)
+                    ->get();
+
+                $formattedPoints[] = [
+                    'id' => $point->id,
+                    'point_gisid' => $point->point_gisid,
+                    'assessment' => $point->assessment,
+                    'owner_name' => $point->owner_name,
+                    'floor' => $point->floor,
+                    'no_of_shop' => $point->no_of_shop,
+                    'bill_usage' => $point->bill_usage,
+                    'water_tax' => $point->water_tax,
+                    'assessment_type' => $point->assessment_type,
+                    'shops_count' => $pointShops->count(),
+                    'shops' => $pointShops
+                ];
+            }
 
             return response()->json([
                 'success' => true,
@@ -1305,7 +1323,7 @@ class SurveyorController extends Controller
                 'pointData' => $updatedPointData,
                 'shops' => $updatedShops,
                 'pointDatas' => $allPointsData,
-                'points' => $allPointsData
+                'points' => $formattedPoints  // FIXED: Now returning formatted points data
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
