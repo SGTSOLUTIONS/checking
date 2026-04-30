@@ -87,6 +87,7 @@ class SurveyorController extends Controller
             ->select(
                 'mis.*',
                 'wt.watertax_no',
+                'wt.old_watertax_no'
             )
             ->get();
 
@@ -962,7 +963,7 @@ class SurveyorController extends Controller
         $data = $request->all();
         $userId = Auth::id();
 
-        $teamMember = TeamMember::with(['team.ward'])
+        $teamMember = TeamMember::with(['team.ward', 'user'])
             ->where('user_id', $userId)
             ->first();
 
@@ -978,8 +979,14 @@ class SurveyorController extends Controller
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
         $allMisTable = "mis_corporation_{$corp}";
+        $waterTaxTable = "watertax_corporation_{$corp}"; // Added water tax table name
 
-        // Proceed with main logic only if switch validation passes
+        // Get MIS data
+        $misData = DB::table($allMisTable)
+            ->select('*')
+            ->get();
+
+        // Table names
         $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
         $shopDataTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
@@ -1002,8 +1009,8 @@ class SurveyorController extends Controller
             ], 404);
         }
 
-        // Fixed: Building usage check - use $data instead of $validator
-        if ($buildingData->building_usage != $data['bill_usage']) {
+        // Building usage check
+        if (!empty($data['bill_usage']) && $buildingData->building_usage != $data['bill_usage']) {
             if ($buildingData->building_usage != "MIXED") {
                 return response()->json([
                     'success' => false,
@@ -1012,7 +1019,7 @@ class SurveyorController extends Controller
             }
         }
 
-        // Fixed: Building floor check - corrected logic
+        // Building floor check
         if ($data['floor'] > $buildingData->number_floor) {
             return response()->json([
                 'success' => false,
@@ -1022,12 +1029,12 @@ class SurveyorController extends Controller
 
         // Shop count validation
         if ($existingPoint) {
-            $shopdatacount = DB::table($shopDataTableName)
+            $shopDataCount = DB::table($shopDataTableName)
                 ->where('point_data_id', $existingPoint->id)
                 ->count();
 
-            if (($data['no_of_shop'] + $shopdatacount) > $buildingData->number_shop) {
-                $remaining = $buildingData->number_shop - $shopdatacount;
+            if (($data['no_of_shop'] + $shopDataCount) > $buildingData->number_shop) {
+                $remaining = $buildingData->number_shop - $shopDataCount;
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1053,6 +1060,126 @@ class SurveyorController extends Controller
             }
         }
 
+        // Handle type validation before proceeding
+        switch ($request->type) {
+            case "NEW":
+                // Check if assessment already exists in MIS data
+                $checkExist = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->first();
+
+                $checkBuildingExist = DB::table($polygonDataTableName)
+                    ->where('gisid', $request->point_gisid)
+                    ->first();
+
+                if ($checkExist || ($checkBuildingExist && $checkBuildingExist->assessment)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment already exists. This is not new data.'
+                    ], 422);
+                }
+                break;
+
+            case "OLD":
+                // Check if assessment exists in MIS table for this ward
+                $checkOld = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', $wardNo)
+                    ->first();
+
+                if (!$checkOld) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not exist in this ward. Please check the data.'
+                    ], 422);
+                }
+
+                // NEW CONDITIONS: Check water tax table
+                if (!empty($request->water_tax)) {
+                    // Check if water tax exists for this assessment number
+                    $waterTaxData = DB::table($waterTaxTable)
+                        ->where('assessment', $request->assessment)
+                        ->first();
+
+                    if (!$waterTaxData) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Water tax data not found for assessment number: ' . $request->assessment
+                        ], 422);
+                    }
+
+                    // Check if the provided water tax matches the water tax in the table
+                    if ($waterTaxData->watertax_no != $request->water_tax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Water tax number does not match. Expected: ' . $waterTaxData->watertax_no . ', Provided: ' . $request->water_tax
+                        ], 422);
+                    }
+                }
+
+                // Check if old water tax matches if provided
+                if (!empty($request->old_water_tax)) {
+                    $oldWaterTaxData = DB::table($waterTaxTable)
+                        ->where('assessment', $request->assessment)
+                        ->first();
+
+                    if ($oldWaterTaxData && $oldWaterTaxData->old_watertax_no != $request->old_water_tax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Old water tax number does not match. Expected: ' . ($oldWaterTaxData->old_watertax_no ?? 'N/A') . ', Provided: ' . $request->old_water_tax
+                        ], 422);
+                    }
+                }
+
+                // Check if assessment already exists in point data
+                $alreadyExist = DB::table($pointDataTableName)
+                    ->where('assessment', $request->assessment)
+                    ->first();
+
+                if ($alreadyExist) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "This assessment is already entered"
+                    ], 422);
+                }
+                break;
+
+            case "OTHER":
+                // Check if assessment exists in MIS table but in different ward
+                $checkOther = DB::table($allMisTable)
+                    ->where('assessment', $request->assessment)
+                    ->where('ward_no', '!=', $wardNo)
+                    ->first();
+
+                if (!$checkOther) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This assessment does not belong to other ward.'
+                    ], 422);
+                }
+
+                // Optional: Check water tax for OTHER type as well if needed
+                if (!empty($request->water_tax)) {
+                    $waterTaxData = DB::table($waterTaxTable)
+                        ->where('assessment', $request->assessment)
+                        ->first();
+
+                    if ($waterTaxData && $waterTaxData->watertax_no != $request->water_tax) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Water tax number does not match for this assessment.'
+                        ], 422);
+                    }
+                }
+                break;
+
+            default:
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid request type'
+                ], 400);
+        }
+
         // Prepare point data
         $pointData = [
             'point_gisid' => $data['point_gisid'],
@@ -1066,7 +1193,7 @@ class SurveyorController extends Controller
             'new_door_no' => $data['new_door_no'] ?? null,
             'bill_usage' => $data['bill_usage'] ?? null,
             'eb' => $data['eb'] ?? null,
-            'no_of_persons' => $data['no_of_persons'] ?? 0, // Fixed variable name
+            'no_of_persons' => $data['no_of_persons'] ?? 0,
             'water_tax' => $data['water_tax'] ?? null,
             'old_water_tax' => $data['old_water_tax'] ?? null,
             'professional_tax' => $data['professional_tax'] ?? null,
@@ -1081,70 +1208,11 @@ class SurveyorController extends Controller
             'qc_remarks' => $data['qc_remarks'] ?? null,
             'establishment_remarks' => $data['establishment_remarks'] ?? null,
             'remarks' => $data['remarks'] ?? null,
-            'worker_name' => ($teamMember->user->id ?? '') . '-' . ($teamMember->user->name ?? ''), // Added null check
+            'worker_name' => ($teamMember->user->id ?? '') . '-' . ($teamMember->user->name ?? ''),
             'assessment_type' => $data['type'] ?? 'OLD',
+            'no_of_shop' => $data['no_of_shop'] ?? 0,
             'updated_at' => now(),
         ];
-
-        // Handle type validation before proceeding
-        switch ($request->type) {
-            case "NEW":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->first();
-                $checkNew = DB::table($allMisTable)
-                    ->where('gisid', $request->point_gisid)
-                    ->first();
-                if ($checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment already exists. This is not new data.'
-                    ], 422);
-                }
-                break;
-
-            case "OLD":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->where('ward_no', $wardNo)
-                    ->first();
-                if (!$checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment does not exist in this ward. Please check the data.'
-                    ], 422);
-                }
-                // Fixed typo: 'assessmen' to 'assessment'
-                $alreadyExist = DB::table($pointDataTableName)
-                    ->where('assessment', $pointData['assessment'])
-                    ->first();
-                if ($alreadyExist) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "This assessment is already entered"
-                    ], 422);
-                }
-                break;
-
-            case "OTHER":
-                $checkNew = DB::table($allMisTable)
-                    ->where('assessment', $request->assessment)
-                    ->where('ward_no', '!=', $wardNo)
-                    ->first();
-                if (!$checkNew) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This assessment does not belong to other ward.'
-                    ], 422);
-                }
-                break;
-
-            default:
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid request type'
-                ], 400);
-        }
 
         try {
             DB::beginTransaction();
@@ -1189,7 +1257,7 @@ class SurveyorController extends Controller
                     'updated_at' => now(),
                 ];
 
-                // Check if shop already exists (by matching data)
+                // Check if shop already exists
                 $existingShop = DB::table($shopDataTableName)
                     ->where('point_data_id', $pointId)
                     ->where('shop_floor', $shopData['shop_floor'])
@@ -1222,23 +1290,23 @@ class SurveyorController extends Controller
 
             // Fetch updated data to return
             $updatedPointData = DB::table($pointDataTableName)
-                ->where('point_gisid', $data['point_gisid'])
+                ->where('id', $pointId)
                 ->first();
 
             $updatedShops = DB::table($shopDataTableName)
                 ->where('point_data_id', $pointId)
                 ->get();
 
-            // Helper method to get points data (implement if needed)
-            $pointsData = $this->getPointsData($ward);
+            // Get all points data for the ward
+            $allPointsData = DB::table($pointDataTableName)->get();
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
                 'pointData' => $updatedPointData,
                 'shops' => $updatedShops,
-                'pointDatas' => DB::table($pointDataTableName)->get(),
-                'points' => $pointsData
+                'pointDatas' => $allPointsData,
+                'points' => $allPointsData
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1255,7 +1323,6 @@ class SurveyorController extends Controller
             ], 500);
         }
     }
-
     // Helper method to get points data
     private function getPointsData($ward)
     {

@@ -3814,6 +3814,7 @@
                     $("#present_owner_name").val(data.present_owner_name || "");
                     $("#old_door_no").val(data.old_door_no || "");
                     $("#water_tax").val(data.watertax_no || "");
+                    $("#old_water_tax").val(data.old_water_tax || "");
 
                 }
             });
@@ -3825,6 +3826,7 @@
                     $("#present_owner_name").val(data.present_owner_name || "");
                     $("#old_door_no").val(data.old_door_no || "");
                     $("#water_tax").val(data.watertax_no || "");
+                    $("#old_water_tax").val(data.old_water_tax || "");
                 }
             });
 
