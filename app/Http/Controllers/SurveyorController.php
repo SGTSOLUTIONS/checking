@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Mime\Message;
 
@@ -880,17 +881,22 @@ class SurveyorController extends Controller
         try {
             if ($existingRecord) {
                 $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
-                $count = DB::table($pointDataTableName)->count();
-     return response()->json($count, $existingRecord->number_bill);
-                if ($count > 0) {
-                    if ($existingRecord->number_bill < $count) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Validation errors',
-                            'errors' => [
-                                'number_bill' => ['number of bill less than typed assessment']
-                            ]
-                        ], 422);
+
+                // Check if point data table exists before counting
+                if (Schema::hasTable($pointDataTableName)) {
+                    $count = DB::table($pointDataTableName)->count();
+
+                    if ($count > 0) {
+                        // Safely access number_bill property
+                        if (!isset($existingRecord->number_bill) || $existingRecord->number_bill < $count) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Validation errors',
+                                'errors' => [
+                                    'number_bill' => ['Number of bill less than typed assessment']
+                                ]
+                            ], 422);
+                        }
                     }
                 }
                 // If no new images uploaded, keep existing images (using correct column names)
