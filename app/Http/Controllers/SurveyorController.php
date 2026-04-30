@@ -753,7 +753,7 @@ class SurveyorController extends Controller
             'percentage' => 'required|numeric|min:0|max:100',
             'remarks' => 'nullable|string|max:500',
             'corporationremarks' => 'nullable|string|max:500',
-            'image' => 'required|image|mimes:jpg,jpeg,png',
+            'image' => 'required|image',
             'image2' => 'nullable|image|mimes:jpg,jpeg,png',
         ]);
 
