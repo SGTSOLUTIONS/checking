@@ -925,7 +925,7 @@ class SurveyorController extends Controller
             'old_door_no' => 'nullable|string|max:50',
             'no_of_persons' => 'nullable|integer|min:0',
             'new_door_no' => 'nullable|string|max:50',
-            'bill_usage' => 'nullable|in:Residential,Commercial,Mixed',
+            'bill_usage' => 'nullable|in:COMMERCIAL,EDUCATIONAL INSTITUTIONS,GOVERNMENT BUILDING,INDUSTRIAL,OFFICE / LODGE / THEATER / RESTAURANTS,RESIDENTIAL,STAR HOTEL',
             'eb' => 'nullable|string|max:50',
             'water_tax' => 'nullable|string|max:100',
             'old_water_tax' => 'nullable|string|max:100',

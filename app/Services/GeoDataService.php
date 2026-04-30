@@ -148,7 +148,7 @@ class GeoDataService
                     $table->string('bill_usage')->nullable();
                     $table->string('aadhar_no')->nullable();
                     $table->string('ration_no')->nullable();
-                    $table->string('phone_number')->nullable();
+                     $table->string('phone_number')->nullable();
                     $table->string('shop_floor')->nullable();
                     $table->string('shop_name')->nullable();
                     $table->string('shop_owner_name')->nullable();

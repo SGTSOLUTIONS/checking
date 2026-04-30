@@ -12,6 +12,7 @@
             border-radius: 10px;
             border: 2px solid #ddd;
         }
+
         /* Card Styles */
         .card {
             border: none;
@@ -1154,14 +1155,14 @@
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="no_of_persons" class="form-label">Number of Persons</label>
-                                        <input type="number" name="no_of_persons" class="form-control" id="no_of_persons"
-                                            min="0" step="1" value="0">
+                                        <input type="number" name="no_of_persons" class="form-control"
+                                            id="no_of_persons" min="0" step="1" value="0">
                                         <div id="no_of_persons_error" class="error-message text-danger"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="number_persons" class="form-label">Number persons</label>
-                                        <input type="number" name="number_persons" class="form-control" id="number_persons"
-                                            min="0" step="1" value="0">
+                                        <input type="number" name="number_persons" class="form-control"
+                                            id="number_persons" min="0" step="1" value="0">
                                         <div id="number_persons_error" class="error-message text-danger"></div>
                                     </div>
                                 </div>
@@ -1196,9 +1197,16 @@
                                         <label for="bill_usage" class="form-label">Bill Usage</label>
                                         <select name="bill_usage" id="bill_usage" class="form-control">
                                             <option value="">Select Bill Usage</option>
-                                            <option value="Residential">Residential</option>
-                                            <option value="Commercial">Commercial</option>
-                                            <option value="Mixed">Mixed</option>
+                                            <option value="">SELECT USAGE</option>
+                                             <option value="RESIDENTIAL">RESIDENTIAL</option>
+                                            <option value="COMMERCIAL">COMMERCIAL</option>
+                                            <option value="EDUCATIONAL INSTITUTIONS">EDUCATIONAL INSTITUTIONS</option>
+                                            <option value="GOVERNMENT BUILDING">GOVERNMENT BUILDING</option>
+                                            <option value="INDUSTRIAL">INDUSTRIAL</option>
+                                            <option value="OFFICE / LODGE / THEATER / RESTAURANTS">
+                                                OFFICE / LODGE / THEATER / RESTAURANTS
+                                            </option>
+                                            <option value="STAR HOTEL">STAR HOTEL</option>
                                         </select>
                                         <div id="bill_usage_error" class="error-message text-danger"></div>
                                     </div>
@@ -2209,7 +2217,7 @@
                     if (header.length) {
                         header.html(
                             `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
-                            );
+                        );
                     }
 
                     // Remove card if no shops left
@@ -2298,7 +2306,7 @@
                 if (header.length) {
                     header.html(
                         `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
-                        );
+                    );
                 }
             }
 
@@ -2466,7 +2474,7 @@
                 $("#building_name").val(item.building_name || "");
                 $("#point_road_name").val(item.road_name || "");
                 $("#phone_building").val(item.phone || "");
-                 $("#zone_building").val(item.zone || "");
+                $("#zone_building").val(item.zone || "");
 
                 // Building Details
                 $("#building_usage").val(item.building_usage || "");
