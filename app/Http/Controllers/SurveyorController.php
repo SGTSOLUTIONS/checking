@@ -718,7 +718,7 @@ class SurveyorController extends Controller
         $validator = Validator::make($request->all(), [
             // Required basic fields
             'building_gisid' => 'required|string|max:50',
-            'number_bill' => 'nullable|integer',
+            'number_bill' => 'required|integer',
             'number_shop' => 'required|integer|min:0',
             'number_floor' => 'required|integer|min:0',
             'building_name' => 'nullable|string|max:255',
@@ -745,8 +745,8 @@ class SurveyorController extends Controller
             'percentage' => 'required|numeric|min:0|max:100',
             'remarks' => 'nullable|string|max:500',
             'corporationremarks' => 'nullable|string|max:500',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'image2' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'required|image|mimes:jpg,jpeg,png',
+            'image2' => 'nullable|image|mimes:jpg,jpeg,png',
         ]);
 
         if ($validator->fails()) {
