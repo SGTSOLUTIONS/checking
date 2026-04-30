@@ -3361,6 +3361,10 @@
                         $("#buildingsubmitBtn").prop("disabled", false);
                         if (xhr.responseJSON && xhr.responseJSON.errors) {
                             $.each(xhr.responseJSON.errors, function(key, value) {
+                                if(key == "image")
+                                {
+                                    key="building_image"
+                                }
                                 $("#" + key).addClass("is-invalid");
                                 $("#" + key + "_error").text(value[0]);
                             });
