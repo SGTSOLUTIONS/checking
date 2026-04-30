@@ -50,7 +50,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* brightness: 20%; */
+            brightness: 20%;
             transform: scale(1.02);
             animation: slowZoom 22s ease infinite alternate;
         }
@@ -71,7 +71,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            /* background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%); */
+            background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%);
             z-index: -1;
         }
 
