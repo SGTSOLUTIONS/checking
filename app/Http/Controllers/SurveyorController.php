@@ -753,7 +753,7 @@ class SurveyorController extends Controller
             'percentage' => 'required|numeric|min:0|max:100',
             'remarks' => 'nullable|string|max:500',
             'corporationremarks' => 'nullable|string|max:500',
-            'image' => 'required|image',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png',
             'image2' => 'nullable|image|mimes:jpg,jpeg,png',
         ]);
 
@@ -868,7 +868,15 @@ class SurveyorController extends Controller
         if ($imagePath2) {
             $insertData['image2'] = $imagePath2;
         }
-
+        if (!$existingRecord->image) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'image' => [
+                    'image' => ['image required']
+                ]
+            ], 422);
+        }
         try {
             if ($existingRecord) {
                 $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
