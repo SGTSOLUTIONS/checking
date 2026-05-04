@@ -1137,7 +1137,7 @@
                     </a>
                     <a href="#" class="nav-item">
                         <i class="fas fa-chart-pie"></i>
-                        <span class="nav-text">Insights</span>
+                        <span class="nav-text">Corporations</span>
                     </a>
                 </div>
 
