@@ -287,11 +287,79 @@
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
             max-width: 340px;
             animation: slideInRight 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(50px); }
             to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast-success {
+            border-left-color: #28a745;
+        }
+
+        .toast-error {
+            border-left-color: #dc3545;
+        }
+
+        .strength-meter {
+            height: 4px;
+            background: #e0d6c3;
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            width: 0%;
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #d6cfbf;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #fff6eb;
+        }
+
+        .file-upload-area:hover {
+            border-color: #F97300;
+            background: #fff0e0;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .file-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #F97300;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .invalid-feedback {
+            display: block;
+            font-size: 0.75rem;
+            color: #dc3545;
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
@@ -351,27 +419,23 @@
     </div>
 
     <!-- Load jQuery first -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // Global toast function
         window.showToast = function(type, title, message, duration = 4000) {
             const toast = document.createElement('div');
-            toast.className = 'toast-message';
+            toast.className = `toast-message toast-${type}`;
             toast.innerHTML = `
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="color: ${type === 'success' ? '#F97300' : '#dc3545'};"></i>
-                    <div>
-                        <strong>${title}</strong><br>
-                        <small>${message}</small>
-                    </div>
-                    <button type="button" class="btn-close ms-2 btn-sm" style="font-size: 0.65rem;"></button>
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="color: ${type === 'success' ? '#28a745' : '#dc3545'}; font-size: 20px;"></i>
+                <div style="flex: 1;">
+                    <strong>${title}</strong><br>
+                    <small>${message}</small>
                 </div>
+                <button type="button" class="btn-close btn-sm" style="font-size: 0.65rem;" onclick="this.parentElement.remove()"></button>
             `;
             document.body.appendChild(toast);
-            const closeBtn = toast.querySelector('.btn-close');
-            closeBtn.addEventListener('click', () => toast.remove());
             setTimeout(() => toast.remove(), duration);
         };
 
@@ -385,18 +449,18 @@
         };
 
         // Toggle password visibility
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.toggle-pwd')) {
-                const btn = e.target.closest('.toggle-pwd');
-                const targetId = btn.getAttribute('data-target');
-                const pwdField = document.getElementById(targetId);
-                if (pwdField) {
-                    const type = pwdField.getAttribute('type') === 'password' ? 'text' : 'password';
-                    pwdField.setAttribute('type', type);
-                    const icon = btn.querySelector('i');
-                    icon.classList.toggle('fa-eye-slash');
-                    icon.classList.toggle('fa-eye');
-                }
+        $(document).on('click', '.toggle-pwd', function() {
+            const targetId = $(this).data('target');
+            const pwdField = $('#' + targetId);
+            const type = pwdField.attr('type') === 'password' ? 'text' : 'password';
+            pwdField.attr('type', type);
+            $(this).find('i').toggleClass('fa-eye-slash fa-eye');
+        });
+
+        // AJAX setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
     </script>

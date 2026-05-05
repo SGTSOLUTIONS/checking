@@ -57,140 +57,120 @@
 
 @section('scripts')
 <script>
-// Use pure JavaScript to ensure it runs after DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded successfully');
+$(document).ready(function() {
+    alert('hello');
+    console.log('jQuery loaded successfully');
 
     let isSubmitting = false;
 
-    const loginForm = document.getElementById('loginForm');
+    $('#loginForm').on('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        console.log('Form submitted via jQuery');
 
-            console.log('Form submitted');
+        if (isSubmitting) return false;
 
-            if (isSubmitting) return false;
+        // Reset errors
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
 
-            // Reset errors
-            document.querySelectorAll('.is-invalid').forEach(el => {
-                el.classList.remove('is-invalid');
-            });
-            document.querySelectorAll('.invalid-feedback').forEach(el => {
-                el.textContent = '';
-            });
+        const email = $('#loginEmail').val().trim();
+        const password = $('#loginPassword').val();
+        const remember = $('#rememberCheck').is(':checked') ? 1 : 0;
 
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const remember = document.getElementById('rememberCheck').checked ? 1 : 0;
+        let hasError = false;
 
-            let hasError = false;
+        if (!email) {
+            $('#loginEmail').addClass('is-invalid');
+            $('#loginEmailError').text('Email address is required.');
+            hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            $('#loginEmail').addClass('is-invalid');
+            $('#loginEmailError').text('Enter a valid email address.');
+            hasError = true;
+        }
 
-            if (!email) {
-                document.getElementById('loginEmail').classList.add('is-invalid');
-                document.getElementById('loginEmailError').textContent = 'Email address is required.';
-                hasError = true;
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                document.getElementById('loginEmail').classList.add('is-invalid');
-                document.getElementById('loginEmailError').textContent = 'Enter a valid email address.';
-                hasError = true;
-            }
+        if (!password) {
+            $('#loginPassword').addClass('is-invalid');
+            $('#loginPasswordError').text('Password is required.');
+            hasError = true;
+        }
 
-            if (!password) {
-                document.getElementById('loginPassword').classList.add('is-invalid');
-                document.getElementById('loginPasswordError').textContent = 'Password is required.';
-                hasError = true;
-            }
+        if (hasError) {
+            showToast('error', 'Validation Error', 'Please check the form.', 3000);
+            return false;
+        }
 
-            if (hasError) {
-                if (typeof showToast === 'function') {
-                    showToast('error', 'Validation Error', 'Please check the form.', 3000);
-                } else {
-                    alert('Please check the form');
-                }
-                return false;
-            }
+        isSubmitting = true;
+        const $btn = $('#loginSubmitBtn');
+        const originalText = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Signing in...').prop('disabled', true);
 
-            isSubmitting = true;
-            const $btn = document.getElementById('loginSubmitBtn');
-            const originalText = $btn.innerHTML;
-            $btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Signing in...';
-            $btn.disabled = true;
-
-            // Get CSRF token
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            fetch("{{ route('corporation.login.submit') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": csrfToken,
-                    "Accept": "application/json"
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password,
-                    remember: remember,
-                    _token: csrfToken
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    if (typeof showToast === 'function') {
-                        showToast('success', 'Welcome!', data.message, 1500);
-                    }
+        $.ajax({
+            url: "{{ route('corporation.login.submit') }}",
+            type: "POST",
+            data: {
+                email: email,
+                password: password,
+                remember: remember,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            dataType: "json",
+            success: function(response) {
+                console.log('AJAX Success:', response);
+                if (response.status === 'success') {
+                    showToast('success', 'Welcome!', response.message, 1500);
                     setTimeout(function() {
-                        window.location.href = data.redirect;
+                        window.location.href = response.redirect;
                     }, 1500);
                 } else {
                     isSubmitting = false;
-                    $btn.innerHTML = originalText;
-                    $btn.disabled = false;
+                    $btn.html(originalText).prop('disabled', false);
+                    showToast('error', 'Error', response.message || 'Something went wrong.', 4000);
+                }
+            },
+            error: function(xhr) {
+                console.log('AJAX Error:', xhr);
+                isSubmitting = false;
+                $btn.html(originalText).prop('disabled', false);
 
-                    if (data.message) {
-                        if (typeof showToast === 'function') {
-                            showToast('error', 'Error', data.message, 4000);
-                        } else {
-                            alert(data.message);
+                if (xhr.status === 401) {
+                    $('#loginPassword').addClass('is-invalid');
+                    $('#loginPasswordError').text(xhr.responseJSON?.message || 'Invalid password.');
+                    showToast('error', 'Authentication Failed', xhr.responseJSON?.message, 4000);
+                } else if (xhr.status === 404) {
+                    $('#loginEmail').addClass('is-invalid');
+                    $('#loginEmailError').text(xhr.responseJSON?.message || 'Account not found.');
+                    showToast('error', 'Account Not Found', xhr.responseJSON?.message, 4000);
+                } else if (xhr.status === 403) {
+                    showToast('error', 'Account Issue', xhr.responseJSON?.message, 4000);
+                } else if (xhr.status === 422) {
+                    const errors = xhr.responseJSON?.errors;
+                    if (errors) {
+                        if (errors.email) {
+                            $('#loginEmail').addClass('is-invalid');
+                            $('#loginEmailError').text(errors.email[0]);
+                        }
+                        if (errors.password) {
+                            $('#loginPassword').addClass('is-invalid');
+                            $('#loginPasswordError').text(errors.password[0]);
                         }
                     }
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                isSubmitting = false;
-                $btn.innerHTML = originalText;
-                $btn.disabled = false;
-
-                if (typeof showToast === 'function') {
-                    showToast('error', 'Error', 'Something went wrong. Please try again.', 4000);
+                    showToast('error', 'Validation Error', 'Please check the form.', 4000);
                 } else {
-                    alert('Something went wrong. Please try again.');
+                    showToast('error', 'Error', 'Something went wrong. Please try again.', 4000);
                 }
-            });
+            }
         });
-    }
+    });
 
     // Clear validation on input
-    const emailInput = document.getElementById('loginEmail');
-    const passwordInput = document.getElementById('loginPassword');
-
-    if (emailInput) {
-        emailInput.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
-            document.getElementById('loginEmailError').textContent = '';
-        });
-    }
-
-    if (passwordInput) {
-        passwordInput.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
-            document.getElementById('loginPasswordError').textContent = '';
-        });
-    }
+    $('#loginEmail, #loginPassword').on('input', function() {
+        $(this).removeClass('is-invalid');
+        $(this).siblings('.invalid-feedback').text('');
+        $(`#${this.id}Error`).text('');
+    });
 });
 </script>
 @endsection
