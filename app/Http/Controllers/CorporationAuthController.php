@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActiveStatusEnum;
-use App\Enums\GenderEnum;
-use App\Enums\RoleEnum;
+use App\Models\Corporation;
 use App\Models\CorporationUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +11,9 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Validation\Rule;
 
 class CorporationAuthController extends Controller
 {
-    protected $guard = 'corporation';
-
     /**
      * Show Login Page
      */
@@ -27,21 +22,26 @@ class CorporationAuthController extends Controller
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
-        return view('corporation-auth.login');
+
+        $corporations = Corporation::all();
+        return view('corporation-auth.login', compact('corporations'));
     }
 
     /**
-     * Handle Login (AJAX)
+     * Handle Login
      */
     public function login(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
 
-        // Find user by email
-        $user = CorporationUser::where('email', $validated['email'])->first();
+        $credentials = $request->only('email', 'password');
+        $remember = $request->boolean('remember');
+
+        // Find user
+        $user = CorporationUser::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json([
@@ -50,25 +50,22 @@ class CorporationAuthController extends Controller
             ], 404);
         }
 
-        // Ensure user is active
-        if ($user->status !== ActiveStatusEnum::ACTIVE->value) {
+        // Check if user is active
+        if ($user->status !== 'active') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Your account is not active. Please contact the administrator.'
+                'message' => 'Your account is not active. Please contact administrator.'
             ], 403);
         }
 
         // Attempt login
-        if (Auth::guard('corporation')->attempt($validated)) {
+        if (Auth::guard('corporation')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
-
-            // Role-based redirect
-            $redirect = route('corporation.dashboard');
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Login successful! Welcome back.',
-                'redirect' => $redirect,
+                'redirect' => route('corporation.dashboard')
             ]);
         }
 
@@ -86,15 +83,17 @@ class CorporationAuthController extends Controller
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
-        return view('corporation-auth.register');
+
+        $corporations = Corporation::all();
+        return view('corporation-auth.register', compact('corporations'));
     }
 
     /**
-     * Handle Registration (AJAX)
+     * Handle Registration
      */
     public function register(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:corporation_users,email',
             'password' => 'required|min:6|confirmed',
@@ -106,38 +105,36 @@ class CorporationAuthController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        // Handle file upload to public directory
+        // Handle file upload
         $profilePath = null;
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
-            // Create directory if not exists
             $uploadPath = public_path('uploads/corporation-users/profiles');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
 
-            // Move file to public directory
             $file->move($uploadPath, $filename);
             $profilePath = 'uploads/corporation-users/profiles/' . $filename;
         }
 
         // Create user
         $user = CorporationUser::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'gender' => $validated['gender'],
-            'phone' => $validated['phone'],
-            'date_of_birth' => $validated['date_of_birth'],
-            'city' => $validated['city'],
-            'corporation_id' => $validated['corporation_id'],
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'gender' => $request->gender,
+            'phone' => $request->phone,
+            'date_of_birth' => $request->date_of_birth,
+            'city' => $request->city,
+            'corporation_id' => $request->corporation_id,
             'profile' => $profilePath,
             'storage_path' => $profilePath,
             'email_verified_at' => now(),
-            'status' => ActiveStatusEnum::ACTIVE->value,
-            'role' => RoleEnum::DC->value // Default role for corporation users
+            'status' => 'active',
+            'role' => 'dc' // Default role for corporation users
         ]);
 
         // Auto login after registration
@@ -159,13 +156,12 @@ class CorporationAuthController extends Controller
     }
 
     /**
-     * Send Password Reset Link
+     * Send Reset Link
      */
     public function sendResetLink(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
-        // Check if user exists
         $user = CorporationUser::where('email', $request->email)->first();
 
         if (!$user) {
@@ -176,23 +172,20 @@ class CorporationAuthController extends Controller
         }
 
         try {
-            // Generate reset token
             $token = Password::broker('corporation_users')->createToken($user);
 
-            // Build reset URL
-            $resetUrl = url(route('corporation.password.reset', [
+            $resetUrl = route('corporation.password.reset', [
                 'token' => $token,
                 'email' => $user->email
-            ]));
+            ]);
 
-            // Send email
+            // Send email (you can create a mail class for this)
             Mail::send('corporation-auth.emails.password-reset', [
-                'resetUrl' => $resetUrl,
-                'user' => $user
+                'user' => $user,
+                'resetUrl' => $resetUrl
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                    ->subject('Password Reset Request - Corporation Portal')
-                    ->from(config('mail.from.address'), config('mail.from.name'));
+                    ->subject('Password Reset Request - Corporation Portal');
             });
 
             return response()->json([
@@ -231,13 +224,11 @@ class CorporationAuthController extends Controller
 
         $status = Password::broker('corporation_users')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
-            function (CorporationUser $user, string $password) {
+            function ($user, $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
-
                 $user->save();
-
                 event(new PasswordReset($user));
             }
         );
@@ -257,11 +248,12 @@ class CorporationAuthController extends Controller
     }
 
     /**
-     * Dashboard
+     * Show Dashboard
      */
     public function dashboard()
     {
-        return view('corporation-auth.dashboard');
+        $user = Auth::guard('corporation')->user();
+        return view('corporation-auth.dashboard', compact('user'));
     }
 
     /**
@@ -270,7 +262,6 @@ class CorporationAuthController extends Controller
     public function logout(Request $request)
     {
         Auth::guard('corporation')->logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

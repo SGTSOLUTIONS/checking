@@ -28,6 +28,7 @@ class CorporationUser extends Authenticatable
         'date_of_birth',
         'status',
         'storage_path',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -45,29 +46,34 @@ class CorporationUser extends Authenticatable
         return $this->belongsTo(Corporation::class);
     }
 
-    // Accessors & Mutators
+    // Helper methods
     public function getProfileUrlAttribute()
     {
         if ($this->profile) {
-            return asset('storage/' . $this->profile);
+            return asset($this->profile);
         }
         return null;
     }
 
     public function getRoleLabelAttribute()
     {
-        return ucfirst($this->role);
+        return match($this->role) {
+            'admin' => 'Administrator',
+            'team_leader' => 'Team Leader',
+            'surveyor' => 'Surveyor',
+            'dc' => 'District Commissioner',
+            'commissioner' => 'Commissioner',
+            default => ucfirst($this->role)
+        };
     }
 
     public function getStatusLabelAttribute()
     {
-        return $this->status === ActiveStatusEnum::ACTIVE->value ? 'Active' : 'Inactive';
+        return $this->status === 'active' ? 'Active' : 'Inactive';
     }
 
-    public function getStatusBadgeAttribute()
+    public function isActive()
     {
-        return $this->status === ActiveStatusEnum::ACTIVE->value
-            ? '<span class="badge bg-success">Active</span>'
-            : '<span class="badge bg-danger">Inactive</span>';
+        return $this->status === 'active';
     }
 }

@@ -19,8 +19,9 @@ use App\Http\Controllers\CorporationAuthController;
 
 // Corporation Auth Routes
 Route::prefix('corporation')->name('corporation.')->group(function () {
+
     // Guest routes
-    Route::middleware('guest')->group(function () {
+    Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [CorporationAuthController::class, 'login'])->name('login.submit');
         Route::get('/register', [CorporationAuthController::class, 'showRegister'])->name('register');
@@ -32,12 +33,11 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     });
 
     // Authenticated routes
-    Route::middleware('auth:corporation')->group(function () {
+    Route::middleware('corporation.auth')->group(function () {
         Route::get('/dashboard', [CorporationAuthController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
-// Redirect root to login
 Route::get('/', function () {
     return redirect()->route('login');
 });
