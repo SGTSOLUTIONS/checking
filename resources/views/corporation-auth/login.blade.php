@@ -5,8 +5,8 @@
 @section('form-content')
 <div id="loginFormContainer" class="form-container fade-in">
     <div class="mb-4 text-center text-md-start">
-        <h4 class="fw-bold" style="color: #1a3c5c;">Welcome to Corporation e-Services</h4>
-        <p class="text-secondary small">Sign in to access property tax, licenses, and management dashboard</p>
+        <h4 class="fw-bold" style="color: #32012F;">Welcome to Municipal e-Services</h4>
+        <p class="text-secondary small" style="color: #524C42 !important;">Sign in to access property tax, licenses, complaints, and more</p>
     </div>
 
     <form id="loginForm">
@@ -25,7 +25,7 @@
             <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
                 <input type="password" class="form-control" id="loginPassword" name="password" placeholder="Enter your password" required>
-                <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="loginPassword" style="border-left:0;">
+                <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="loginPassword" style="border-left:0; background:#fff6eb;">
                     <i class="fas fa-eye-slash"></i>
                 </button>
             </div>
@@ -34,8 +34,8 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="rememberCheck" name="remember" style="border-color:#2d6a4f;">
-                <label class="form-check-label small" for="rememberCheck" style="color:#1a3c5c;">Remember me</label>
+                <input class="form-check-input" type="checkbox" id="rememberCheck" name="remember" style="border-color:#F97300;">
+                <label class="form-check-label small" for="rememberCheck" style="color:#32012F;">Remember me</label>
             </div>
             <a href="{{ route('corporation.password.request') }}" class="forgot-link"><i class="fas fa-question-circle"></i> Forgot password?</a>
         </div>
@@ -48,13 +48,13 @@
     <hr class="my-4">
 
     <div class="text-center">
-        <p class="signup-text" style="color:#5c6e7e;">Don't have a corporation account?
-            <a href="{{ route('corporation.register') }}" class="text-decoration-none fw-bold" style="color:#2d6a4f;">Register as Corporation User</a>
+        <p class="signup-text" style="color:#524C42;">Don't have a corporation account?
+            <a href="{{ route('corporation.register') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Register as Corporation User</a>
         </p>
     </div>
 
     <div class="text-center mt-2">
-        <small class="text-muted"><i class="fas fa-headset"></i> Corporation Helpline: 1913 | <i class="fas fa-envelope"></i> support@corporation.tn.gov.in</small>
+        <small class="text-muted" style="color:#524C42 !important;"><i class="fas fa-headset"></i> Corporation Helpline: 1913 | <i class="fas fa-envelope"></i> support@corporation.tn.gov.in</small>
     </div>
 </div>
 @endsection
@@ -69,7 +69,6 @@ $(document).ready(function() {
 
         if (isSubmitting) return false;
 
-        // Reset validation
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').text('');
 
@@ -100,7 +99,7 @@ $(document).ready(function() {
         }
 
         isSubmitting = true;
-        $('#loginSubmitBtn').html('<i class="fas fa-spinner fa-spin me-2"></i> Authenticating...').prop('disabled', true);
+        $('#loginSubmitBtn').html('<i class="fas fa-spinner fa-spin me-2"></i> Signing in...').prop('disabled', true);
 
         $.ajax({
             url: "{{ route('corporation.login.submit') }}",
@@ -141,10 +140,9 @@ $(document).ready(function() {
         });
     });
 
-    // Clear validation on input
     $('#loginEmail, #loginPassword').on('input', function() {
         $(this).removeClass('is-invalid');
-        $(this).siblings('.invalid-feedback').text('');
+        $('#' + $(this).attr('id') + 'Error').text('');
     });
 });
 </script>

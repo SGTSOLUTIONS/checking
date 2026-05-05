@@ -5,9 +5,9 @@
 @section('form-content')
 <div id="resetPasswordContainer" class="form-container fade-in">
     <div class="mb-4 text-center">
-        <i class="fas fa-lock fa-3x" style="color: #2d6a4f;"></i>
-        <h4 class="fw-bold mt-3" style="color: #1a3c5c;">Reset Password</h4>
-        <p class="text-secondary small">Create a new password for your account.</p>
+        <i class="fas fa-lock fa-3x" style="color: #F97300;"></i>
+        <h4 class="fw-bold mt-3" style="color: #32012F;">Reset Password</h4>
+        <p class="text-secondary small" style="color: #524C42 !important;">Create a new password for your account.</p>
     </div>
 
     <form id="resetPasswordForm">
@@ -20,7 +20,7 @@
             <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
                 <input type="password" class="form-control" id="newPassword" name="password" placeholder="Enter new password" required>
-                <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="newPassword">
+                <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="newPassword" style="background:#fff6eb;">
                     <i class="fas fa-eye-slash"></i>
                 </button>
             </div>
@@ -44,8 +44,8 @@
     <hr class="my-4">
 
     <div class="text-center">
-        <p class="signup-text" style="color:#5c6e7e;">Remember your password?
-            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#2d6a4f;">Back to Login</a>
+        <p class="signup-text" style="color:#524C42;">Remember your password?
+            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Back to Login</a>
         </p>
     </div>
 </div>
@@ -122,8 +122,6 @@ $(document).ready(function() {
                         if (key === 'password') {
                             $('#newPassword').addClass('is-invalid');
                             $('#passwordError').text(errors[key][0]);
-                        } else if (key === 'email') {
-                            showToast('error', 'Error', errors[key][0], 4000);
                         }
                     }
                 } else {
@@ -133,7 +131,6 @@ $(document).ready(function() {
         });
     });
 
-    // Password confirmation validation
     $('#confirmPassword').on('keyup', function() {
         const password = $('#newPassword').val();
         const confirm = $(this).val();
@@ -148,7 +145,8 @@ $(document).ready(function() {
 
     $('#newPassword, #confirmPassword').on('input', function() {
         $(this).removeClass('is-invalid');
-        $(this).siblings('.invalid-feedback').text('');
+        if ($(this).attr('id') === 'newPassword') $('#passwordError').text('');
+        else $('#confirmPasswordError').text('');
     });
 });
 </script>

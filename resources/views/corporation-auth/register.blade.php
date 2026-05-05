@@ -5,8 +5,8 @@
 @section('form-content')
 <div id="registerFormContainer" class="form-container fade-in">
     <div class="mb-4 text-center text-md-start">
-        <h4 class="fw-bold" style="color: #1a3c5c;">Corporation User Registration</h4>
-        <p class="text-secondary small">Register to access property tax, analytics, and management dashboard</p>
+        <h4 class="fw-bold" style="color: #32012F;">Citizen Registration</h4>
+        <p class="text-secondary small" style="color: #524C42 !important;">Register for Municipal e-Services - Property Tax, Trade License, Grievances</p>
     </div>
 
     <form id="registerForm" enctype="multipart/form-data">
@@ -14,19 +14,19 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="regFullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="regFullName" name="name" placeholder="Enter full name" required>
+                <input type="text" class="form-control" id="regFullName" name="name" placeholder="As per Aadhaar" required>
                 <div class="invalid-feedback" id="nameError"></div>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="regEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="regEmail" name="email" placeholder="your@email.com" required>
+                <input type="email" class="form-control" id="regEmail" name="email" placeholder="you@example.com" required>
                 <div class="invalid-feedback" id="emailError"></div>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="regPhone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                <label for="regPhone" class="form-label">Mobile Number <span class="text-danger">*</span></label>
                 <input type="tel" class="form-control" id="regPhone" name="phone" placeholder="10-digit mobile" maxlength="10" required>
                 <div class="invalid-feedback" id="phoneError"></div>
             </div>
@@ -72,7 +72,7 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
                     <input type="password" class="form-control" id="regPassword" name="password" placeholder="Min 8 characters" required>
-                    <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="regPassword">
+                    <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="regPassword" style="background:#fff6eb;">
                         <i class="fas fa-eye-slash"></i>
                     </button>
                 </div>
@@ -95,10 +95,10 @@
             <label class="form-label">Profile Picture</label>
             <div class="file-upload-area" id="fileUploadArea">
                 <div class="text-center">
-                    <i class="fas fa-cloud-upload-alt fa-2x" style="color: #2d6a4f;"></i>
-                    <div class="mt-2">
-                        <span class="fw-bold">Click or drag to upload</span>
-                        <div class="small text-muted">JPG, PNG, GIF (Max 2MB)</div>
+                    <i class="fas fa-cloud-upload-alt fa-2x" style="color: #F97300;"></i>
+                    <div class="file-upload-text mt-2">
+                        <div class="primary fw-bold">Click or drag to upload profile picture</div>
+                        <div class="secondary small text-muted">JPG, PNG, GIF (Max 2MB)</div>
                     </div>
                 </div>
             </div>
@@ -114,23 +114,23 @@
         </div>
 
         <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="termsCheck" required style="border-color:#2d6a4f;">
-            <label class="form-check-label small" for="termsCheck" style="color:#1a3c5c;">
-                I agree to the <a href="#" class="text-decoration-none" style="color:#2d6a4f;">Terms of Service</a> and <a href="#" class="text-decoration-none" style="color:#2d6a4f;">Privacy Policy</a>
+            <input class="form-check-input" type="checkbox" id="termsCheck" required style="border-color:#F97300;">
+            <label class="form-check-label small" for="termsCheck" style="color:#32012F;">
+                I agree to the <a href="#" class="text-decoration-none" style="color:#F97300;">Municipal Terms of Service</a> and <a href="#" class="text-decoration-none" style="color:#F97300;">Privacy Policy</a>
             </label>
             <div class="invalid-feedback" id="termsError"></div>
         </div>
 
         <button type="submit" class="btn btn-primary-custom" id="registerSubmitBtn">
-            <i class="fas fa-user-plus me-2"></i> Register for Corporation Services
+            <i class="fas fa-user-plus me-2"></i> Register for Municipal Services
         </button>
     </form>
 
     <hr class="my-4">
 
     <div class="text-center">
-        <p class="signup-text" style="color:#5c6e7e;">Already have an account?
-            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#2d6a4f;">Sign in here</a>
+        <p class="signup-text" style="color:#524C42;">Already a registered citizen?
+            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Sign in here</a>
         </p>
     </div>
 </div>
@@ -146,13 +146,11 @@ $(document).ready(function() {
 
         if (isSubmitting) return false;
 
-        // Reset validation
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').text('');
 
         const formData = new FormData(this);
 
-        // Validate fields
         const name = $('#regFullName').val().trim();
         const email = $('#regEmail').val().trim();
         const phone = $('#regPhone').val().trim();
@@ -263,12 +261,23 @@ $(document).ready(function() {
             },
             error: function(xhr) {
                 isSubmitting = false;
-                $('#registerSubmitBtn').html('<i class="fas fa-user-plus me-2"></i> Register for Corporation Services').prop('disabled', false);
+                $('#registerSubmitBtn').html('<i class="fas fa-user-plus me-2"></i> Register for Municipal Services').prop('disabled', false);
 
                 if (xhr.status === 422 && xhr.responseJSON.errors) {
                     const errors = xhr.responseJSON.errors;
                     for (let key in errors) {
-                        $(`#reg${key.charAt(0).toUpperCase() + key.slice(1)}`).addClass('is-invalid');
+                        let fieldId = '';
+                        if (key === 'name') fieldId = 'regFullName';
+                        else if (key === 'email') fieldId = 'regEmail';
+                        else if (key === 'phone') fieldId = 'regPhone';
+                        else if (key === 'gender') fieldId = 'regGender';
+                        else if (key === 'date_of_birth') fieldId = 'regDob';
+                        else if (key === 'city') fieldId = 'regCity';
+                        else if (key === 'corporation_id') fieldId = 'regCorporation';
+                        else if (key === 'password') fieldId = 'regPassword';
+                        else fieldId = 'reg' + key.charAt(0).toUpperCase() + key.slice(1);
+
+                        $(`#${fieldId}`).addClass('is-invalid');
                         $(`#${key}Error`).text(errors[key][0]);
                     }
                     showToast('error', 'Validation Error', 'Please check the form for errors.', 4000);
@@ -279,7 +288,6 @@ $(document).ready(function() {
         });
     });
 
-    // Password confirmation validation
     $('#regConfirmPwd').on('keyup', function() {
         const password = $('#regPassword').val();
         const confirm = $(this).val();
@@ -292,11 +300,17 @@ $(document).ready(function() {
         }
     });
 
-    // Clear validation on input
     $('input, select').on('input change', function() {
         $(this).removeClass('is-invalid');
-        $(this).siblings('.invalid-feedback').text('');
-        $(`#${$(this).attr('id')}Error`).text('');
+        const id = $(this).attr('id');
+        if (id === 'regFullName') $('#nameError').text('');
+        else if (id === 'regEmail') $('#emailError').text('');
+        else if (id === 'regPhone') $('#phoneError').text('');
+        else if (id === 'regGender') $('#genderError').text('');
+        else if (id === 'regDob') $('#dobError').text('');
+        else if (id === 'regCity') $('#cityError').text('');
+        else if (id === 'regCorporation') $('#corporationError').text('');
+        else if (id === 'regPassword') $('#passwordError').text('');
     });
 });
 </script>

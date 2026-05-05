@@ -23,7 +23,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1a3c5c 0%, #0f2b44 100%);
+            background: linear-gradient(#F97300, #32012F);
             font-family: 'Inter', 'Poppins', system-ui, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -34,15 +34,15 @@
             overflow-x: hidden;
         }
 
-        /* Animated gradient orbs */
+        /* animated gradient orbs with municipal theme */
         body::before {
             content: "";
             position: absolute;
             width: 300px;
             height: 300px;
-            background: #2d6a4f;
+            background: #F97300;
             filter: blur(120px);
-            opacity: 0.15;
+            opacity: 0.2;
             top: -100px;
             right: -50px;
             border-radius: 50%;
@@ -55,9 +55,9 @@
             position: absolute;
             width: 400px;
             height: 400px;
-            background: #1b4332;
+            background: #524C42;
             filter: blur(140px);
-            opacity: 0.2;
+            opacity: 0.25;
             bottom: -100px;
             left: -80px;
             border-radius: 50%;
@@ -68,31 +68,31 @@
         @keyframes floatBlob {
             0% {
                 transform: translate(0, 0) scale(1);
-                opacity: 0.15;
+                opacity: 0.2;
             }
             100% {
                 transform: translate(40px, 30px) scale(1.2);
-                opacity: 0.25;
+                opacity: 0.35;
             }
         }
 
         @keyframes floatBlob2 {
             0% {
                 transform: translate(0, 0) scale(1);
-                opacity: 0.15;
+                opacity: 0.2;
             }
             100% {
                 transform: translate(-30px, -40px) scale(1.3);
-                opacity: 0.25;
+                opacity: 0.3;
             }
         }
 
-        /* Main card container */
+        /* main card container */
         .auth-wrapper {
             max-width: 1300px;
             width: 100%;
             margin: 0 auto;
-            background: #ffffff;
+            background: #E2DFD0;
             border-radius: 48px;
             overflow: hidden;
             box-shadow: 0 35px 60px rgba(0, 0, 0, 0.3), 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -112,7 +112,7 @@
             }
         }
 
-        /* Split layout */
+        /* split layout */
         .auth-grid {
             display: flex;
             flex-wrap: wrap;
@@ -120,7 +120,7 @@
 
         .left-panel {
             flex: 1.2;
-            background: linear-gradient(135deg, #1b5e3f 0%, #0f3b26 100%);
+            background: linear-gradient(135deg, #32012F 0%, #1f0a1d 100%);
             padding: 2.8rem 2.2rem;
             color: white;
             display: flex;
@@ -152,20 +152,20 @@
 
         .right-panel {
             flex: 1;
-            background: #ffffff;
+            background: #E2DFD0;
             padding: 2.5rem 2.5rem;
         }
 
-        /* Top emblem */
+        /* top emblem - municipal corporation specific */
         .top-emblem {
-            background: #ffffff;
+            background: #E2DFD0;
             padding: 1rem 2rem 0.8rem 2rem;
             display: flex;
             align-items: center;
             justify-content: flex-start;
             gap: 1rem;
             flex-wrap: wrap;
-            border-bottom: 3px solid #2d6a4f;
+            border-bottom: 3px solid #F97300;
         }
 
         .emblem-img {
@@ -182,20 +182,20 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            color: #1a3c5c;
+            color: #32012F;
         }
 
         .gov-text p {
             font-size: 0.85rem;
             margin: 0;
-            color: #5c6e7e;
+            color: #524C42;
             font-weight: 500;
         }
 
         .tamil-text {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #2d6a4f;
+            color: #F97300;
             letter-spacing: 0.5px;
         }
 
@@ -241,44 +241,44 @@
         .feature-list li i {
             font-size: 1.25rem;
             width: 28px;
-            color: #ffd166;
+            color: #F97300;
         }
 
-        /* Form styling */
+        /* form styling */
         .form-label {
             font-weight: 600;
-            color: #1a3c5c;
+            color: #32012F;
             font-size: 0.85rem;
         }
 
         .input-group-text {
-            background-color: #f8f9fa;
+            background-color: #fff6eb;
             border-right: none;
-            color: #2d6a4f;
-            border-color: #dee2e6;
+            color: #F97300;
+            border-color: #d6cfbf;
         }
 
         .form-control {
             border-left: none;
             padding: 0.75rem;
             font-size: 0.9rem;
-            border-color: #dee2e6;
+            border-color: #d6cfbf;
             background-color: #ffffff;
             transition: all 0.25s;
         }
 
         .form-control:focus {
-            border-color: #2d6a4f;
-            box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.2);
-            background-color: #ffffff;
+            border-color: #F97300;
+            box-shadow: 0 0 0 3px rgba(249, 115, 0, 0.2);
+            background-color: #fffef7;
         }
 
         select.form-control {
-            border-left: 1px solid #dee2e6;
+            border-left: 1px solid #d6cfbf;
         }
 
         .btn-primary-custom {
-            background-color: #2d6a4f;
+            background-color: #F97300;
             border: none;
             padding: 0.8rem;
             font-weight: 700;
@@ -287,13 +287,13 @@
             width: 100%;
             transition: all 0.3s;
             color: white;
-            box-shadow: 0 4px 10px rgba(45, 106, 79, 0.3);
+            box-shadow: 0 4px 10px rgba(249, 115, 0, 0.3);
         }
 
         .btn-primary-custom:hover {
-            background-color: #1b5e3f;
+            background-color: #e06700;
             transform: translateY(-2px);
-            box-shadow: 0 12px 20px rgba(45, 106, 79, 0.4);
+            box-shadow: 0 12px 20px rgba(249, 115, 0, 0.4);
         }
 
         .btn-primary-custom:disabled {
@@ -304,22 +304,22 @@
 
         .forgot-link {
             font-size: 0.8rem;
-            color: #2d6a4f;
+            color: #F97300;
             text-decoration: none;
             font-weight: 600;
         }
 
         .forgot-link:hover {
             text-decoration: underline;
-            color: #1a3c5c;
+            color: #32012F;
         }
 
         hr {
-            background-color: #e9ecef;
+            background-color: #cbc3b0;
             opacity: 0.5;
         }
 
-        /* Form transition animations */
+        /* form transition animations */
         .form-container {
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
@@ -335,7 +335,7 @@
             transform: translateY(0);
         }
 
-        /* Loader */
+        /* loader */
         .loader-overlay {
             position: fixed;
             top: 0;
@@ -361,8 +361,8 @@
         .spinner-custom {
             width: 60px;
             height: 60px;
-            border: 5px solid #ffffff;
-            border-top: 5px solid #2d6a4f;
+            border: 5px solid #E2DFD0;
+            border-top: 5px solid #F97300;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -372,21 +372,21 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Toast message */
+        /* toast message */
         .toast-message {
             position: fixed;
             bottom: 30px;
             right: 30px;
             z-index: 10000;
             background: white;
-            border-left: 5px solid #2d6a4f;
+            border-left: 5px solid #F97300;
             border-radius: 14px;
             padding: 14px 20px;
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
             max-width: 340px;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #1a3c5c;
+            color: #32012F;
             animation: slideInRight 0.3s ease;
         }
 
@@ -401,10 +401,10 @@
             }
         }
 
-        /* Password strength */
+        /* password strength */
         .strength-meter {
             height: 4px;
-            background: #e9ecef;
+            background: #e0d6c3;
             border-radius: 4px;
             margin-top: 8px;
             overflow: hidden;
@@ -416,36 +416,36 @@
             transition: width 0.3s, background 0.3s;
         }
 
-        /* Municipal badge */
+        /* municipal badge */
         .municipal-badge {
-            background: rgba(45, 106, 79, 0.15);
+            background: rgba(249, 115, 0, 0.15);
             border-radius: 40px;
             padding: 0.25rem 0.75rem;
             font-size: 0.7rem;
             font-weight: 600;
-            color: #2d6a4f;
+            color: #F97300;
             display: inline-block;
         }
 
-        /* File upload styles */
+        /* file upload */
         .file-upload-area {
-            border: 2px dashed #dee2e6;
+            border: 2px dashed #d6cfbf;
             border-radius: 16px;
             padding: 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: #fff6eb;
         }
 
         .file-upload-area:hover {
-            border-color: #2d6a4f;
-            background: #f0fdf4;
+            border-color: #F97300;
+            background: #fff0e0;
         }
 
         .file-upload-area.dragover {
-            border-color: #2d6a4f;
-            background: #e8f5e9;
+            border-color: #F97300;
+            background: #ffe8d4;
             transform: scale(1.01);
         }
 
@@ -459,7 +459,7 @@
             height: 100px;
             object-fit: cover;
             border-radius: 50%;
-            border: 3px solid #2d6a4f;
+            border: 3px solid #F97300;
             padding: 3px;
         }
 
@@ -470,6 +470,10 @@
             cursor: pointer;
             font-size: 12px;
             margin-top: 5px;
+        }
+
+        .file-remove:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -505,46 +509,46 @@
     </div>
 
     <div class="auth-wrapper">
-        <!-- Top emblem - Corporation branding -->
+        <!-- top emblem - Municipal Corporation branding -->
         <div class="top-emblem">
-            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="TamilNadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
+            <img src="{{ asset('images/TamilNadu_Logo.svg.png') }}" alt="TamilNadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
             <div class="gov-text">
-                <h2>Tamil Nadu Corporation Portal</h2>
-                <p>Urban Local Body | Property Tax & e-Governance Services</p>
-                <div class="tamil-text">தமிழ்நாடு மாநகராட்சி | வரி மேலாண்மை அமைப்பு</div>
+                <h2>Tamil Nadu Municipal Corporation</h2>
+                <p>Urban Local Body | e-Governance & Citizen Services</p>
+                <div class="tamil-text">தமிழ்நாடு மாநகராட்சி | பொது சேவை மையம்</div>
             </div>
         </div>
 
         <div class="auth-grid">
-            <!-- Left panel - Corporation specific features -->
+            <!-- left panel (static) - municipal specific features -->
             <div class="left-panel">
-                <h3><i class="fas fa-building me-2" style="font-size: 1.8rem; color: #ffd166;"></i> மாநகராட்சி</h3>
-                <p>Access property tax, building approvals, trade licenses, water supply, and citizen services — all in one place.</p>
+                <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #F97300;"></i> மாநகராட்சி</h3>
+                <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and citizen grievance redressal — all in one place.</p>
                 <ul class="feature-list">
                     <li><i class="fas fa-file-invoice-dollar"></i> <span>Property Tax & e-Payment</span></li>
                     <li><i class="fas fa-hard-hat"></i> <span>Building Plan Approval</span></li>
                     <li><i class="fas fa-tint"></i> <span>Water & Sewerage Connection</span></li>
-                    <li><i class="fas fa-trash-alt"></i> <span>Solid Waste Management</span></li>
-                    <li><i class="fas fa-chart-line"></i> <span>Real-time Analytics Dashboard</span></li>
+                    <li><i class="fas fa-trash-alt"></i> <span>Solid Waste Management Services</span></li>
+                    <li><i class="fas fa-comment-dots"></i> <span>Grievance Redressal (24x7)</span></li>
                 </ul>
-                <div class="mt-4 pt-2 border-top border-light opacity-50 small d-flex gap-3 flex-wrap">
-                    <span><i class="fas fa-mobile-alt"></i> Mobile App Integration</span>
+                <div class="mt-4 pt-2 border-top border-warning opacity-50 small d-flex gap-3 flex-wrap">
+                    <span><i class="fas fa-mobile-alt"></i> CMA App Integration</span>
                     <span><i class="fas fa-globe"></i> Smart City Mission</span>
-                    <span><i class="fas fa-shield-alt"></i> Secure Portal</span>
+                    <span><i class="fas fa-chart-line"></i> e-District 2.0</span>
                 </div>
                 <div class="mt-3">
-                    <span class="municipal-badge"><i class="fas fa-check-circle me-1"></i> Official Corporation Portal</span>
+                    <span class="municipal-badge"><i class="fas fa-check-circle me-1"></i> Official Municipal Portal</span>
                 </div>
             </div>
 
-            <!-- Right panel: Dynamic forms -->
+            <!-- right panel: dynamic forms -->
             <div class="right-panel">
                 @yield('form-content')
             </div>
         </div>
 
-        <div class="bg-white py-2 text-center border-top" style="background: #ffffff !important; font-size: 0.7rem; color: #5c6e7e;">
-            <i class="fas fa-shield-alt"></i> Secure SSL Portal | © {{ date('Y') }} Tamil Nadu Corporation | All Urban Local Bodies | e-Governance Initiative
+        <div class="bg-white py-2 text-center border-top" style="background: #E2DFD0 !important; font-size: 0.7rem; color: #524C42;">
+            <i class="fas fa-shield-alt"></i> Secure SSL Portal | © {{ date('Y') }} Tamil Nadu Municipal Corporation | All Urban Local Bodies | e-Governance Initiative
         </div>
     </div>
 
@@ -565,7 +569,7 @@
             toast.className = 'toast-message';
             toast.innerHTML = `
                 <div class="d-flex align-items-center gap-2">
-                    <i class="fas ${icons[type] || 'fa-info-circle'}" style="color: ${type === 'success' ? '#2d6a4f' : '#dc3545'};"></i>
+                    <i class="fas ${icons[type] || 'fa-info-circle'}" style="color: ${type === 'success' ? '#F97300' : '#dc3545'};"></i>
                     <div>
                         <strong>${title}</strong><br>
                         <small>${message}</small>
@@ -672,7 +676,7 @@
             }
         }
 
-        // Ripple effect
+        // Ripple effect for buttons
         const btns = document.querySelectorAll('.btn-primary-custom');
         btns.forEach(btn => {
             btn.addEventListener('click', (e) => {

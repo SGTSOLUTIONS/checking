@@ -5,9 +5,9 @@
 @section('form-content')
 <div id="forgotPasswordContainer" class="form-container fade-in">
     <div class="mb-4 text-center">
-        <i class="fas fa-key fa-3x" style="color: #2d6a4f;"></i>
-        <h4 class="fw-bold mt-3" style="color: #1a3c5c;">Forgot Password?</h4>
-        <p class="text-secondary small">Enter your email address and we'll send you a link to reset your password.</p>
+        <i class="fas fa-key fa-3x" style="color: #F97300;"></i>
+        <h4 class="fw-bold mt-3" style="color: #32012F;">Forgot Password?</h4>
+        <p class="text-secondary small" style="color: #524C42 !important;">Enter your email address and we'll send you a link to reset your password.</p>
     </div>
 
     <form id="forgotPasswordForm">
@@ -16,7 +16,7 @@
             <label for="resetEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
             <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                <input type="email" class="form-control" id="resetEmail" name="email" placeholder="your@email.com" required>
+                <input type="email" class="form-control" id="resetEmail" name="email" placeholder="you@example.com" required>
             </div>
             <div class="invalid-feedback" id="emailError"></div>
         </div>
@@ -29,8 +29,8 @@
     <hr class="my-4">
 
     <div class="text-center">
-        <p class="signup-text" style="color:#5c6e7e;">Remember your password?
-            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#2d6a4f;">Back to Login</a>
+        <p class="signup-text" style="color:#524C42;">Remember your password?
+            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Back to Login</a>
         </p>
     </div>
 </div>
