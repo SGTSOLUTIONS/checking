@@ -33,7 +33,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     });
 
     // Authenticated routes
-    Route::middleware('corporation.auth')->group(function () {
+    Route::middleware('auth:corporation')->group(function () {
         Route::get('/dashboard', [CorporationAuthController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });

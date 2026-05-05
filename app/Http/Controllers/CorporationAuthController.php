@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Validation\Rule;
 
 class CorporationAuthController extends Controller
 {
@@ -22,9 +23,7 @@ class CorporationAuthController extends Controller
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
-
-        $corporations = Corporation::all();
-        return view('corporation-auth.login', compact('corporations'));
+        return view('corporation-auth.login');
     }
 
     /**
@@ -40,7 +39,6 @@ class CorporationAuthController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
-        // Find user
         $user = CorporationUser::where('email', $request->email)->first();
 
         if (!$user) {
@@ -50,7 +48,6 @@ class CorporationAuthController extends Controller
             ], 404);
         }
 
-        // Check if user is active
         if ($user->status !== 'active') {
             return response()->json([
                 'status' => 'error',
@@ -58,7 +55,6 @@ class CorporationAuthController extends Controller
             ], 403);
         }
 
-        // Attempt login
         if (Auth::guard('corporation')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
@@ -83,7 +79,6 @@ class CorporationAuthController extends Controller
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
-
         $corporations = Corporation::all();
         return view('corporation-auth.register', compact('corporations'));
     }
@@ -105,22 +100,18 @@ class CorporationAuthController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        // Handle file upload
         $profilePath = null;
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-
             $uploadPath = public_path('uploads/corporation-users/profiles');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
-
             $file->move($uploadPath, $filename);
             $profilePath = 'uploads/corporation-users/profiles/' . $filename;
         }
 
-        // Create user
         $user = CorporationUser::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -134,10 +125,9 @@ class CorporationAuthController extends Controller
             'storage_path' => $profilePath,
             'email_verified_at' => now(),
             'status' => 'active',
-            'role' => 'dc' // Default role for corporation users
+            'role' => 'dc'
         ]);
 
-        // Auto login after registration
         Auth::guard('corporation')->login($user);
 
         return response()->json([
@@ -173,14 +163,9 @@ class CorporationAuthController extends Controller
 
         try {
             $token = Password::broker('corporation_users')->createToken($user);
+            $resetUrl = route('corporation.password.reset', ['token' => $token, 'email' => $user->email]);
 
-            $resetUrl = route('corporation.password.reset', [
-                'token' => $token,
-                'email' => $user->email
-            ]);
-
-            // Send email (you can create a mail class for this)
-            Mail::send('corporation-auth.emails.password-reset', [
+            Mail::send('emails.corporation-password-reset', [
                 'user' => $user,
                 'resetUrl' => $resetUrl
             ], function ($message) use ($user) {
@@ -264,7 +249,6 @@ class CorporationAuthController extends Controller
         Auth::guard('corporation')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect()->route('corporation.login');
     }
 }

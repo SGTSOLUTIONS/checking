@@ -1,55 +1,52 @@
-@extends('layouts.corporation-auth-layout')
+@extends('layouts.corporation-auth')
 
 @section('title', 'Reset Password | Corporation Portal')
 
-@section('content')
-<div class="auth-card" style="max-width: 600px;">
-    <div class="login-form-section" style="width: 100%;">
-        <div class="mobile-header">
-            <div class="brand-icon mx-auto"><i class="fas fa-building"></i></div>
-            <div class="brand-text">Corporation Portal</div>
-            <div class="brand-sub">Property Tax Management System</div>
-        </div>
+@section('form-content')
+<div id="resetPasswordContainer" class="form-container fade-in">
+    <div class="mb-4 text-center">
+        <i class="fas fa-lock fa-3x" style="color: #2d6a4f;"></i>
+        <h4 class="fw-bold mt-3" style="color: #1a3c5c;">Reset Password</h4>
+        <p class="text-secondary small">Create a new password for your account.</p>
+    </div>
 
-        <div class="form-header text-center">
-            <i class="fas fa-lock fa-3x text-primary mb-3"></i>
-            <h2>Reset Password</h2>
-            <p>Enter your new password below.</p>
-        </div>
+    <form id="resetPasswordForm">
+        @csrf
+        <input type="hidden" name="token" value="{{ $token }}">
+        <input type="hidden" name="email" value="{{ $email }}">
 
-        <form id="resetPasswordForm">
-            @csrf
-            <input type="hidden" name="token" value="{{ $token }}">
-            <input type="hidden" name="email" value="{{ $email }}">
-
-            <div class="mb-3">
-                <label class="input-label">New Password</label>
-                <div class="input-field">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" name="password" placeholder="Enter new password" required>
-                </div>
-                <div class="invalid-feedback" id="password_error"></div>
+        <div class="mb-3">
+            <label for="newPassword" class="form-label">New Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="newPassword" name="password" placeholder="Enter new password" required>
+                <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="newPassword">
+                    <i class="fas fa-eye-slash"></i>
+                </button>
             </div>
-
-            <div class="mb-3">
-                <label class="input-label">Confirm Password</label>
-                <div class="input-field">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" name="password_confirmation" placeholder="Confirm new password" required>
-                </div>
-                <div class="invalid-feedback" id="password_confirmation_error"></div>
-            </div>
-
-            <button type="submit" class="login-btn" id="resetBtn">
-                <i class="fas fa-save"></i>
-                <span id="btnText">Reset Password</span>
-                <span id="btnSpinner" class="spinner-border spinner-border-sm d-none ms-2"></span>
-            </button>
-        </form>
-
-        <div class="back-to-login mt-3">
-            <a href="{{ route('corporation.login') }}"><i class="fas fa-arrow-left me-1"></i> Back to Login</a>
+            <div class="invalid-feedback" id="passwordError"></div>
         </div>
+
+        <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                <input type="password" class="form-control" id="confirmPassword" name="password_confirmation" placeholder="Confirm new password" required>
+            </div>
+            <div class="invalid-feedback" id="confirmPasswordError"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary-custom" id="resetPasswordBtn">
+            <i class="fas fa-save me-2"></i> Reset Password
+        </button>
+    </form>
+
+    <hr class="my-4">
+
+    <div class="text-center">
+        <p class="signup-text" style="color:#5c6e7e;">Remember your password?
+            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#2d6a4f;">Back to Login</a>
+        </p>
     </div>
 </div>
 @endsection
@@ -61,76 +58,74 @@ $(document).ready(function() {
 
     $('#resetPasswordForm').on('submit', function(e) {
         e.preventDefault();
-        e.stopPropagation();
 
         if (isSubmitting) return false;
 
+        $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback').text('');
-        $('.input-field input').removeClass('is-invalid');
 
-        const password = $('input[name="password"]').val();
-        const confirm = $('input[name="password_confirmation"]').val();
+        const password = $('#newPassword').val();
+        const confirmPassword = $('#confirmPassword').val();
+
+        let hasError = false;
 
         if (!password) {
-            $('input[name="password"]').addClass('is-invalid');
-            $('#password_error').text('Password is required.');
-            showToast('error', 'Validation Error', 'Please enter a password.', 3000);
-            return false;
+            $('#newPassword').addClass('is-invalid');
+            $('#passwordError').text('Password is required.');
+            hasError = true;
+        } else if (password.length < 6) {
+            $('#newPassword').addClass('is-invalid');
+            $('#passwordError').text('Password must be at least 6 characters.');
+            hasError = true;
         }
 
-        if (password.length < 6) {
-            $('input[name="password"]').addClass('is-invalid');
-            $('#password_error').text('Password must be at least 6 characters.');
-            showToast('error', 'Validation Error', 'Password must be at least 6 characters.', 3000);
-            return false;
+        if (password !== confirmPassword) {
+            $('#confirmPassword').addClass('is-invalid');
+            $('#confirmPasswordError').text('Passwords do not match.');
+            hasError = true;
         }
 
-        if (password !== confirm) {
-            $('input[name="password_confirmation"]').addClass('is-invalid');
-            $('#password_confirmation_error').text('Passwords do not match.');
-            showToast('error', 'Validation Error', 'Passwords do not match.', 3000);
+        if (hasError) {
+            showToast('error', 'Validation Error', 'Please check the form for errors.', 3000);
             return false;
         }
 
         isSubmitting = true;
-        $('#btnText').text('Resetting...');
-        $('#btnSpinner').removeClass('d-none');
-        $('#resetBtn').prop('disabled', true);
-
-        const formData = {
-            token: $('input[name="token"]').val(),
-            email: $('input[name="email"]').val(),
-            password: password,
-            password_confirmation: confirm,
-            _token: $('meta[name="csrf-token"]').attr('content')
-        };
+        $('#resetPasswordBtn').html('<i class="fas fa-spinner fa-spin me-2"></i> Resetting...').prop('disabled', true);
 
         $.ajax({
             url: "{{ route('corporation.password.update') }}",
             method: "POST",
-            data: formData,
+            data: {
+                token: $('input[name="token"]').val(),
+                email: $('input[name="email"]').val(),
+                password: password,
+                password_confirmation: confirmPassword,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
             dataType: "json",
             success: function(response) {
                 if (response.status === 'success') {
-                    showToast('success', 'Password Reset', response.message, 3000);
-                    setTimeout(() => {
+                    showToast('success', 'Password Reset!', response.message, 2000);
+                    setTimeout(function() {
                         window.location.href = response.redirect;
                     }, 2000);
                 }
             },
             error: function(xhr) {
                 isSubmitting = false;
-                $('#resetBtn').prop('disabled', false);
-                $('#btnText').text('Reset Password');
-                $('#btnSpinner').addClass('d-none');
+                $('#resetPasswordBtn').html('<i class="fas fa-save me-2"></i> Reset Password').prop('disabled', false);
 
                 if (xhr.status === 422 && xhr.responseJSON.errors) {
                     const errors = xhr.responseJSON.errors;
                     for (let key in errors) {
-                        $(`input[name="${key}"]`).addClass('is-invalid');
-                        $(`#${key}_error`).text(errors[key][0]);
+                        if (key === 'password') {
+                            $('#newPassword').addClass('is-invalid');
+                            $('#passwordError').text(errors[key][0]);
+                        } else if (key === 'email') {
+                            showToast('error', 'Error', errors[key][0], 4000);
+                        }
                     }
-                    showToast('error', 'Validation Error', 'Please check the form.', 4000);
                 } else {
                     showToast('error', 'Error', xhr.responseJSON?.message || 'Failed to reset password.', 4000);
                 }
@@ -138,9 +133,22 @@ $(document).ready(function() {
         });
     });
 
-    $('input').on('input', function() {
+    // Password confirmation validation
+    $('#confirmPassword').on('keyup', function() {
+        const password = $('#newPassword').val();
+        const confirm = $(this).val();
+        if (password !== confirm && confirm.length > 0) {
+            $(this).addClass('is-invalid');
+            $('#confirmPasswordError').text('Passwords do not match.');
+        } else {
+            $(this).removeClass('is-invalid');
+            $('#confirmPasswordError').text('');
+        }
+    });
+
+    $('#newPassword, #confirmPassword').on('input', function() {
         $(this).removeClass('is-invalid');
-        $(`#${$(this).attr('name')}_error`).text('');
+        $(this).siblings('.invalid-feedback').text('');
     });
 });
 </script>
