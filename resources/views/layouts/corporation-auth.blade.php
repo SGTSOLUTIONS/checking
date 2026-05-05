@@ -543,7 +543,8 @@
     <div class="auth-wrapper">
         <!-- top emblem - Municipal Corporation branding -->
         <div class="top-emblem">
-
+            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="TamilNadu" class="emblem-img"
+                onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
             <div class="gov-text">
                 <h2>Tamil Nadu Municipal Corporation</h2>
                 <p>Urban Local Body | e-Governance & Citizen Services</p>
