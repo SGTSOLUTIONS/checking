@@ -8,7 +8,7 @@ enum RoleEnum: string
     case TEAM_LEADER = 'team_leader';
     case SURVEYOR = 'surveyor';
     case DC = 'dc';
-    case COMMISIONER = 'commisioner';
+    case COMMISSIONER = 'commissioner'; // Fixed spelling
 
     public static function getValues(): array
     {
@@ -21,8 +21,8 @@ enum RoleEnum: string
             self::ADMIN => 'Administrator',
             self::TEAM_LEADER => 'Team Leader',
             self::SURVEYOR => 'Surveyor',
-            self::DC => 'dc',
-            self::COMMISIONER => 'Commisioner'
+            self::DC => 'District Commissioner',
+            self::COMMISSIONER => 'Commissioner'
         };
     }
 }

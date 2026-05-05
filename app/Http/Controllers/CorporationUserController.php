@@ -17,7 +17,11 @@ class CorporationUserController extends Controller
     public function index()
     {
         $corporations = Corporation::all();
-        return view('corporation-users.index', compact('corporations'));
+        $roles = RoleEnum::getValues(); // Get all roles
+        $genders = GenderEnum::getValues();
+        $statuses = ActiveStatusEnum::getValues();
+
+        return view('corporation-users.index', compact('corporations', 'roles', 'genders', 'statuses'));
     }
 
     public function list(Request $request)
@@ -36,18 +40,19 @@ class CorporationUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:corporation_users,email',
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:' . implode(',', array_column(RoleEnum::cases(), 'value')),
+            'role' => 'required|in:' . implode(',', RoleEnum::getValues()),
             'corporation_id' => 'required|exists:corporations,id',
             'city' => 'nullable|string|max:255',
-            'gender' => 'nullable|in:' . implode(',', array_column(GenderEnum::cases(), 'value')),
+            'gender' => 'nullable|in:' . implode(',', GenderEnum::getValues()),
             'date_of_birth' => 'nullable|date',
-            'status' => 'required|in:' . implode(',', array_column(ActiveStatusEnum::cases(), 'value')),
+            'status' => 'required|in:' . implode(',', ActiveStatusEnum::getValues()),
             'password' => 'required|string|min:6|confirmed',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data = $request->except(['password', 'password_confirmation', 'profile']);
         $data['password'] = Hash::make($request->password);
+        $data['email_verified_at'] = now(); // Auto-verify email
 
         if ($request->hasFile('profile')) {
             $path = $request->file('profile')->store('corporation-users/profiles', 'public');
@@ -78,12 +83,12 @@ class CorporationUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', Rule::unique('corporation_users')->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
-            'role' => 'required|in:' . implode(',', array_column(RoleEnum::cases(), 'value')),
+            'role' => 'required|in:' . implode(',', RoleEnum::getValues()),
             'corporation_id' => 'required|exists:corporations,id',
             'city' => 'nullable|string|max:255',
-            'gender' => 'nullable|in:' . implode(',', array_column(GenderEnum::cases(), 'value')),
+            'gender' => 'nullable|in:' . implode(',', GenderEnum::getValues()),
             'date_of_birth' => 'nullable|date',
-            'status' => 'required|in:' . implode(',', array_column(ActiveStatusEnum::cases(), 'value')),
+            'status' => 'required|in:' . implode(',', ActiveStatusEnum::getValues()),
             'password' => 'nullable|string|min:6|confirmed',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -132,22 +137,46 @@ class CorporationUserController extends Controller
 
     public function getRoles()
     {
+        $roles = [];
+        foreach (RoleEnum::cases() as $role) {
+            $roles[] = [
+                'value' => $role->value,
+                'label' => $role->label()
+            ];
+        }
+
         return response()->json([
-            'roles' => array_column(RoleEnum::cases(), 'value')
+            'roles' => $roles
         ]);
     }
 
     public function getGenders()
     {
+        $genders = [];
+        foreach (GenderEnum::cases() as $gender) {
+            $genders[] = [
+                'value' => $gender->value,
+                'label' => $gender->label()
+            ];
+        }
+
         return response()->json([
-            'genders' => array_column(GenderEnum::cases(), 'value')
+            'genders' => $genders
         ]);
     }
 
     public function getStatuses()
     {
+        $statuses = [];
+        foreach (ActiveStatusEnum::cases() as $status) {
+            $statuses[] = [
+                'value' => $status->value,
+                'label' => $status->label()
+            ];
+        }
+
         return response()->json([
-            'statuses' => array_column(ActiveStatusEnum::cases(), 'value')
+            'statuses' => $statuses
         ]);
     }
 }
