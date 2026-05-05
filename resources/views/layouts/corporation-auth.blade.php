@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
@@ -321,16 +320,14 @@
         }
     </style>
 </head>
-
 <body>
-
     <div class="loader-overlay" id="loaderOverlay">
         <div class="spinner-custom"></div>
     </div>
 
     <div class="auth-wrapper">
         <div class="top-emblem">
-            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="TamilNadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
+            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="Tamil Nadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
             <div class="gov-text">
                 <h2>Tamil Nadu Municipal Corporation</h2>
                 <p>Urban Local Body | e-Governance & Citizen Services</p>
@@ -351,10 +348,12 @@
                 </ul>
                 <div class="mt-4 pt-2 border-top border-warning opacity-50 small">
                     <span><i class="fas fa-mobile-alt"></i> CMA App Integration</span>
-                    <span><i class="fas fa-globe"></i> Smart City Mission</span>
+                    <span class="ms-3"><i class="fas fa-globe"></i> Smart City Mission</span>
                 </div>
                 <div class="mt-3">
-                    <span class="badge" style="background: rgba(249,115,0,0.2); color:#F97300;"><i class="fas fa-check-circle me-1"></i> Official Municipal Portal</span>
+                    <span class="badge" style="background: rgba(249,115,0,0.2); color:#F97300;">
+                        <i class="fas fa-check-circle me-1"></i> Official Municipal Portal
+                    </span>
                 </div>
             </div>
 
@@ -368,28 +367,31 @@
         </div>
     </div>
 
-    <!-- Load jQuery first -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Global toast function
         window.showToast = function(type, title, message, duration = 4000) {
             const toast = document.createElement('div');
             toast.className = `toast-message toast-${type}`;
             toast.innerHTML = `
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="color: ${type === 'success' ? '#28a745' : '#dc3545'}; font-size: 20px;"></i>
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"
+                   style="color: ${type === 'success' ? '#28a745' : '#dc3545'}; font-size: 20px;"></i>
                 <div style="flex: 1;">
                     <strong>${title}</strong><br>
                     <small>${message}</small>
                 </div>
-                <button type="button" class="btn-close btn-sm" style="font-size: 0.65rem;" onclick="this.parentElement.remove()"></button>
+                <button type="button" class="btn-close btn-sm" style="font-size: 0.65rem;"
+                        onclick="this.parentElement.remove()"></button>
             `;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), duration);
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, duration);
         };
 
-        // Global loader functions
         window.showLoader = function() {
             document.getElementById('loaderOverlay').classList.add('active');
         };
@@ -398,7 +400,6 @@
             document.getElementById('loaderOverlay').classList.remove('active');
         };
 
-        // Toggle password visibility
         $(document).on('click', '.toggle-pwd', function() {
             const targetId = $(this).data('target');
             const pwdField = $('#' + targetId);
@@ -407,14 +408,13 @@
             $(this).find('i').toggleClass('fa-eye-slash fa-eye');
         });
 
-        // AJAX setup
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
     </script>
+
     @stack('scripts')
 </body>
-
 </html>

@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\ActiveStatusEnum;
-use App\Enums\GenderEnum;
-use App\Enums\RoleEnum;
+use App\Models\Corporation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -40,30 +38,25 @@ class CorporationUser extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    // Relationships
     public function corporation()
     {
         return $this->belongsTo(Corporation::class);
     }
 
-    // Helper methods
     public function getProfileUrlAttribute()
     {
-        if ($this->profile) {
-            return asset($this->profile);
-        }
-        return null;
+        return $this->profile ? asset($this->profile) : null;
     }
 
     public function getRoleLabelAttribute()
     {
-        return match($this->role) {
+        return match ($this->role) {
             'admin' => 'Administrator',
             'team_leader' => 'Team Leader',
             'surveyor' => 'Surveyor',
             'dc' => 'District Commissioner',
             'commissioner' => 'Commissioner',
-            default => ucfirst($this->role)
+            default => ucfirst($this->role),
         };
     }
 

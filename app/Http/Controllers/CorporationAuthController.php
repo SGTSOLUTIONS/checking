@@ -14,20 +14,15 @@ use Illuminate\Auth\Events\PasswordReset;
 
 class CorporationAuthController extends Controller
 {
-    /**
-     * Show Login Page
-     */
     public function showLogin()
     {
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
+
         return view('corporation-auth.login');
     }
 
-    /**
-     * Handle Login
-     */
     public function login(Request $request)
     {
         $request->validate([
@@ -70,21 +65,17 @@ class CorporationAuthController extends Controller
         ], 401);
     }
 
-    /**
-     * Show Registration Page
-     */
     public function showRegister()
     {
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
+
         $corporations = Corporation::all();
+
         return view('corporation-auth.register', compact('corporations'));
     }
 
-    /**
-     * Handle Registration
-     */
     public function register(Request $request)
     {
         $request->validate([
@@ -100,13 +91,16 @@ class CorporationAuthController extends Controller
         ]);
 
         $profilePath = null;
+
         if ($request->hasFile('profile_picture')) {
             $file = $request->file('profile_picture');
             $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $uploadPath = public_path('uploads/corporation-users/profiles');
+
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
+
             $file->move($uploadPath, $filename);
             $profilePath = 'uploads/corporation-users/profiles/' . $filename;
         }
@@ -136,20 +130,16 @@ class CorporationAuthController extends Controller
         ]);
     }
 
-    /**
-     * Show Forgot Password Page
-     */
     public function showForgotPassword()
     {
         return view('corporation-auth.forgot-password');
     }
 
-    /**
-     * Send Reset Link
-     */
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate([
+            'email' => 'required|email'
+        ]);
 
         $user = CorporationUser::where('email', $request->email)->first();
 
@@ -162,14 +152,17 @@ class CorporationAuthController extends Controller
 
         try {
             $token = Password::broker('corporation_users')->createToken($user);
-            $resetUrl = route('corporation.password.reset', ['token' => $token, 'email' => $user->email]);
+            $resetUrl = route('corporation.password.reset', [
+                'token' => $token,
+                'email' => $user->email
+            ]);
 
             Mail::send('emails.corporation-password-reset', [
                 'user' => $user,
                 'resetUrl' => $resetUrl
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                    ->subject('Password Reset Request - Corporation Portal');
+                        ->subject('Password Reset Request - Corporation Portal');
             });
 
             return response()->json([
@@ -184,9 +177,6 @@ class CorporationAuthController extends Controller
         }
     }
 
-    /**
-     * Show Reset Password Page
-     */
     public function showResetPassword(Request $request, $token = null)
     {
         return view('corporation-auth.reset-password', [
@@ -195,9 +185,6 @@ class CorporationAuthController extends Controller
         ]);
     }
 
-    /**
-     * Reset Password
-     */
     public function resetPassword(Request $request)
     {
         $request->validate([
@@ -212,7 +199,9 @@ class CorporationAuthController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
+
                 $user->save();
+
                 event(new PasswordReset($user));
             }
         );
@@ -231,23 +220,19 @@ class CorporationAuthController extends Controller
         ], 422);
     }
 
-    /**
-     * Show Dashboard
-     */
     public function dashboard()
     {
         $user = Auth::guard('corporation')->user();
+
         return view('corporation-auth.dashboard', compact('user'));
     }
 
-    /**
-     * Logout
-     */
     public function logout(Request $request)
     {
         Auth::guard('corporation')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('corporation.login');
     }
 }

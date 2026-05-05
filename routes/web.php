@@ -18,21 +18,23 @@ use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\CorporationAuthController;
 
 // Corporation Auth Routes
+
 Route::prefix('corporation')->name('corporation.')->group(function () {
 
-    // Guest routes
     Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [CorporationAuthController::class, 'login'])->name('login.submit');
+
         Route::get('/register', [CorporationAuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [CorporationAuthController::class, 'register'])->name('register.submit');
+
         Route::get('/forgot-password', [CorporationAuthController::class, 'showForgotPassword'])->name('password.request');
         Route::post('/forgot-password', [CorporationAuthController::class, 'sendResetLink'])->name('password.email');
+
         Route::get('/reset-password/{token}', [CorporationAuthController::class, 'showResetPassword'])->name('password.reset');
         Route::post('/reset-password', [CorporationAuthController::class, 'resetPassword'])->name('password.update');
     });
 
-    // Authenticated routes
     Route::middleware('auth:corporation')->group(function () {
         Route::get('/dashboard', [CorporationAuthController::class, 'dashboard'])->name('dashboard');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
