@@ -120,9 +120,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/tracking/map-view', [TrackingController::class, 'mapView'])->name('tracking.map-view');
             Route::get('/tracking/data/{userId?}', [TrackingController::class, 'getUserTracking'])->name('admin.tracking.data');
 
-            Route::get('/corporation-user', [CorporationUserController::class, 'index'])->name('corporation-user.index');
-            Route::get('/corporation-user-list', [CorporationUserController::class, 'list'])->name('corporation-user-list');
-            Route::post('/corporation-user-store', [CorporationUserController::class, 'store'])->name('corporation-user-store');
+            Route::get('/corporation-user', [CorporationUserController::class, 'index'])->name('admin.corporation-user.index');
+            Route::get('/corporation-user-list', [CorporationUserController::class, 'list'])->name('admin.corporation-user-list');
+            Route::post('/corporation-user-store', [CorporationUserController::class, 'store'])->name('admin.corporation-user-store');
             Route::get('/corporation-user/{id}/edit', [CorporationUserController::class, 'edit']);
             Route::put('/corporation-user/{id}', [CorporationUserController::class, 'update']);
             Route::delete('/corporation-user/{id}', [CorporationUserController::class, 'destroy']);
