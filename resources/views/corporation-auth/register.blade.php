@@ -3,315 +3,324 @@
 @section('title', 'Register | Corporation Portal')
 
 @section('form-content')
-<div id="registerFormContainer" class="form-container fade-in">
-    <div class="mb-4 text-center text-md-start">
-        <h4 class="fw-bold" style="color: #32012F;">Citizen Registration</h4>
-        <p class="text-secondary small" style="color: #524C42 !important;">Register for Municipal e-Services - Property Tax, Trade License, Grievances</p>
+<div id="registerFormContainer">
+    <div class="mb-4">
+        <h4 class="fw-bold" style="color: #32012F;">Create Corporation Account</h4>
+        <p class="text-secondary small">Register to access municipal e-services and corporation dashboard</p>
     </div>
 
-    <form id="registerForm" enctype="multipart/form-data">
+    <form id="registerForm" method="POST" action="{{ route('corporation.register.submit') }}" enctype="multipart/form-data">
         @csrf
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="regFullName" class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="regFullName" name="name" placeholder="As per Aadhaar" required>
-                <div class="invalid-feedback" id="nameError"></div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="regEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" id="regEmail" name="email" placeholder="you@example.com" required>
-                <div class="invalid-feedback" id="emailError"></div>
-            </div>
-        </div>
 
         <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="regPhone" class="form-label">Mobile Number <span class="text-danger">*</span></label>
-                <input type="tel" class="form-control" id="regPhone" name="phone" placeholder="10-digit mobile" maxlength="10" required>
-                <div class="invalid-feedback" id="phoneError"></div>
+                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="regName" name="name" placeholder="Enter full name">
+                </div>
+                <div class="invalid-feedback" id="regNameError"></div>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="regGender" class="form-label">Gender <span class="text-danger">*</span></label>
-                <select class="form-control" id="regGender" name="gender" required>
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                </select>
-                <div class="invalid-feedback" id="genderError"></div>
-            </div>
-        </div>
 
-        <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="regDob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="regDob" name="date_of_birth" required>
-                <div class="invalid-feedback" id="dobError"></div>
+                <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="regEmail" name="email" placeholder="Enter email address">
+                </div>
+                <div class="invalid-feedback" id="regEmailError"></div>
             </div>
+
             <div class="col-md-6 mb-3">
-                <label for="regCity" class="form-label">City <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="regCity" name="city" placeholder="Enter your city" required>
-                <div class="invalid-feedback" id="cityError"></div>
+                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                    <input type="text" class="form-control" id="regPhone" name="phone" placeholder="Enter phone number">
+                </div>
+                <div class="invalid-feedback" id="regPhoneError"></div>
             </div>
-        </div>
 
-        <div class="mb-3">
-            <label for="regCorporation" class="form-label">Corporation <span class="text-danger">*</span></label>
-            <select class="form-control" id="regCorporation" name="corporation_id" required>
-                <option value="">Select Corporation</option>
-                @foreach($corporations as $corporation)
-                    <option value="{{ $corporation->id }}">{{ $corporation->name }}</option>
-                @endforeach
-            </select>
-            <div class="invalid-feedback" id="corporationError"></div>
-        </div>
-
-        <div class="row">
             <div class="col-md-6 mb-3">
-                <label for="regPassword" class="form-label">Create Password <span class="text-danger">*</span></label>
+                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-venus-mars"></i></span>
+                    <select class="form-control" id="regGender" name="gender">
+                        <option value="">Select gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="invalid-feedback" id="regGenderError"></div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                    <input type="date" class="form-control" id="regDob" name="date_of_birth">
+                </div>
+                <div class="invalid-feedback" id="regDobError"></div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">City <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-city"></i></span>
+                    <input type="text" class="form-control" id="regCity" name="city" placeholder="Enter city">
+                </div>
+                <div class="invalid-feedback" id="regCityError"></div>
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Corporation <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-building"></i></span>
+                    <select class="form-control" id="regCorporation" name="corporation_id">
+                        <option value="">Select corporation</option>
+                        @foreach($corporations as $corporation)
+                            <option value="{{ $corporation->id }}">{{ $corporation->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="invalid-feedback" id="regCorporationError"></div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                    <input type="password" class="form-control" id="regPassword" name="password" placeholder="Min 8 characters" required>
-                    <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="regPassword" style="background:#fff6eb;">
+                    <input type="password" class="form-control" id="regPassword" name="password" placeholder="Enter password">
+                    <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="regPassword" style="border-left:0; background:#fff6eb;">
                         <i class="fas fa-eye-slash"></i>
                     </button>
                 </div>
-                <div class="strength-meter mt-2">
-                    <div class="strength-bar" id="strengthBar"></div>
-                </div>
-                <div class="invalid-feedback" id="passwordError"></div>
+                <div class="invalid-feedback" id="regPasswordError"></div>
             </div>
+
             <div class="col-md-6 mb-3">
-                <label for="regConfirmPwd" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
-                    <input type="password" class="form-control" id="regConfirmPwd" name="password_confirmation" placeholder="Re-enter password" required>
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" id="regPasswordConfirmation" name="password_confirmation" placeholder="Confirm password">
+                    <button class="btn btn-outline-secondary toggle-pwd" type="button" data-target="regPasswordConfirmation" style="border-left:0; background:#fff6eb;">
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
                 </div>
-                <div class="invalid-feedback" id="confirmPasswordError"></div>
+                <div class="invalid-feedback" id="regPasswordConfirmationError"></div>
             </div>
-        </div>
 
-        <div class="mb-3">
-            <label class="form-label">Profile Picture</label>
-            <div class="file-upload-area" id="fileUploadArea">
-                <div class="text-center">
-                    <i class="fas fa-cloud-upload-alt fa-2x" style="color: #F97300;"></i>
-                    <div class="file-upload-text mt-2">
-                        <div class="primary fw-bold">Click or drag to upload profile picture</div>
-                        <div class="secondary small text-muted">JPG, PNG, GIF (Max 2MB)</div>
-                    </div>
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Profile Picture</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-image"></i></span>
+                    <input type="file" class="form-control" id="regProfilePicture" name="profile_picture" accept="image/*">
                 </div>
+                <div class="invalid-feedback" id="regProfilePictureError"></div>
             </div>
-            <input type="file" id="profile_picture" name="profile_picture" accept="image/*" style="display: none;">
-            <div id="filePreview" class="file-preview" style="display: none;">
-                <img id="previewImage" src="" alt="Profile Preview">
-                <div class="mt-2">
-                    <span id="fileName" class="small"></span>
-                    <button type="button" class="file-remove" id="removeFile">Remove</button>
-                </div>
-            </div>
-            <div class="invalid-feedback" id="profileError"></div>
-        </div>
-
-        <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="termsCheck" required style="border-color:#F97300;">
-            <label class="form-check-label small" for="termsCheck" style="color:#32012F;">
-                I agree to the <a href="#" class="text-decoration-none" style="color:#F97300;">Municipal Terms of Service</a> and <a href="#" class="text-decoration-none" style="color:#F97300;">Privacy Policy</a>
-            </label>
-            <div class="invalid-feedback" id="termsError"></div>
         </div>
 
         <button type="submit" class="btn btn-primary-custom" id="registerSubmitBtn">
-            <i class="fas fa-user-plus me-2"></i> Register for Municipal Services
+            <i class="fas fa-user-plus me-2"></i> Create Account
         </button>
     </form>
 
     <hr class="my-4">
 
     <div class="text-center">
-        <p class="signup-text" style="color:#524C42;">Already a registered citizen?
-            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Sign in here</a>
+        <p>
+            Already have an account?
+            <a href="{{ route('corporation.login') }}" class="text-decoration-none fw-bold" style="color:#F97300;">Login here</a>
         </p>
     </div>
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-$(document).ready(function() {
-    let isSubmitting = false;
+    $(document).ready(function () {
+        let isRegisterSubmitting = false;
 
-    $('#registerForm').on('submit', function(e) {
-        e.preventDefault();
-
-        if (isSubmitting) return false;
-
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').text('');
-
-        const formData = new FormData(this);
-
-        const name = $('#regFullName').val().trim();
-        const email = $('#regEmail').val().trim();
-        const phone = $('#regPhone').val().trim();
-        const gender = $('#regGender').val();
-        const dob = $('#regDob').val();
-        const city = $('#regCity').val().trim();
-        const corporation = $('#regCorporation').val();
-        const password = $('#regPassword').val();
-        const confirmPwd = $('#regConfirmPwd').val();
-        const terms = $('#termsCheck').is(':checked');
-
-        let hasError = false;
-
-        if (!name) {
-            $('#regFullName').addClass('is-invalid');
-            $('#nameError').text('Full name is required.');
-            hasError = true;
+        function clearRegisterErrors() {
+            $('#registerForm .form-control').removeClass('is-invalid');
+            $('#regNameError, #regEmailError, #regPhoneError, #regGenderError, #regDobError, #regCityError, #regCorporationError, #regPasswordError, #regPasswordConfirmationError, #regProfilePictureError').text('');
         }
 
-        if (!email) {
-            $('#regEmail').addClass('is-invalid');
-            $('#emailError').text('Email address is required.');
-            hasError = true;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            $('#regEmail').addClass('is-invalid');
-            $('#emailError').text('Enter a valid email address.');
-            hasError = true;
-        }
+        $('#registerForm input, #registerForm select').on('input change', function () {
+            $(this).removeClass('is-invalid');
+        });
 
-        if (!phone) {
-            $('#regPhone').addClass('is-invalid');
-            $('#phoneError').text('Phone number is required.');
-            hasError = true;
-        } else if (!/^\d{10}$/.test(phone)) {
-            $('#regPhone').addClass('is-invalid');
-            $('#phoneError').text('Enter a valid 10-digit phone number.');
-            hasError = true;
-        }
+        $('#registerForm').on('submit', function (e) {
+            e.preventDefault();
 
-        if (!gender) {
-            $('#regGender').addClass('is-invalid');
-            $('#genderError').text('Please select gender.');
-            hasError = true;
-        }
-
-        if (!dob) {
-            $('#regDob').addClass('is-invalid');
-            $('#dobError').text('Date of birth is required.');
-            hasError = true;
-        }
-
-        if (!city) {
-            $('#regCity').addClass('is-invalid');
-            $('#cityError').text('City is required.');
-            hasError = true;
-        }
-
-        if (!corporation) {
-            $('#regCorporation').addClass('is-invalid');
-            $('#corporationError').text('Please select a corporation.');
-            hasError = true;
-        }
-
-        if (!password) {
-            $('#regPassword').addClass('is-invalid');
-            $('#passwordError').text('Password is required.');
-            hasError = true;
-        } else if (password.length < 6) {
-            $('#regPassword').addClass('is-invalid');
-            $('#passwordError').text('Password must be at least 6 characters.');
-            hasError = true;
-        }
-
-        if (password !== confirmPwd) {
-            $('#regConfirmPwd').addClass('is-invalid');
-            $('#confirmPasswordError').text('Passwords do not match.');
-            hasError = true;
-        }
-
-        if (!terms) {
-            $('#termsCheck').addClass('is-invalid');
-            $('#termsError').text('You must accept the terms and conditions.');
-            hasError = true;
-        }
-
-        if (hasError) {
-            showToast('error', 'Validation Error', 'Please check the form for errors.', 3000);
-            return false;
-        }
-
-        isSubmitting = true;
-        $('#registerSubmitBtn').html('<i class="fas fa-spinner fa-spin me-2"></i> Registering...').prop('disabled', true);
-
-        $.ajax({
-            url: "{{ route('corporation.register.submit') }}",
-            method: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: "json",
-            success: function(response) {
-                if (response.status === 'success') {
-                    showToast('success', 'Registration Successful!', response.message, 2000);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 2000);
-                }
-            },
-            error: function(xhr) {
-                isSubmitting = false;
-                $('#registerSubmitBtn').html('<i class="fas fa-user-plus me-2"></i> Register for Municipal Services').prop('disabled', false);
-
-                if (xhr.status === 422 && xhr.responseJSON.errors) {
-                    const errors = xhr.responseJSON.errors;
-                    for (let key in errors) {
-                        let fieldId = '';
-                        if (key === 'name') fieldId = 'regFullName';
-                        else if (key === 'email') fieldId = 'regEmail';
-                        else if (key === 'phone') fieldId = 'regPhone';
-                        else if (key === 'gender') fieldId = 'regGender';
-                        else if (key === 'date_of_birth') fieldId = 'regDob';
-                        else if (key === 'city') fieldId = 'regCity';
-                        else if (key === 'corporation_id') fieldId = 'regCorporation';
-                        else if (key === 'password') fieldId = 'regPassword';
-                        else fieldId = 'reg' + key.charAt(0).toUpperCase() + key.slice(1);
-
-                        $(`#${fieldId}`).addClass('is-invalid');
-                        $(`#${key}Error`).text(errors[key][0]);
-                    }
-                    showToast('error', 'Validation Error', 'Please check the form for errors.', 4000);
-                } else {
-                    showToast('error', 'Error', xhr.responseJSON?.message || 'Registration failed. Please try again.', 4000);
-                }
+            if (isRegisterSubmitting) {
+                return false;
             }
+
+            clearRegisterErrors();
+
+            const form = document.getElementById('registerForm');
+            const formData = new FormData(form);
+            const $btn = $('#registerSubmitBtn');
+            const originalBtnHtml = $btn.html();
+
+            let hasError = false;
+            const email = $('#regEmail').val().trim();
+            const password = $('#regPassword').val();
+            const confirmPassword = $('#regPasswordConfirmation').val();
+
+            if (!$('#regName').val().trim()) {
+                $('#regName').addClass('is-invalid');
+                $('#regNameError').text('Full name is required.');
+                hasError = true;
+            }
+
+            if (!email) {
+                $('#regEmail').addClass('is-invalid');
+                $('#regEmailError').text('Email is required.');
+                hasError = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                $('#regEmail').addClass('is-invalid');
+                $('#regEmailError').text('Enter a valid email address.');
+                hasError = true;
+            }
+
+            if (!$('#regPhone').val().trim()) {
+                $('#regPhone').addClass('is-invalid');
+                $('#regPhoneError').text('Phone number is required.');
+                hasError = true;
+            }
+
+            if (!$('#regGender').val()) {
+                $('#regGender').addClass('is-invalid');
+                $('#regGenderError').text('Gender is required.');
+                hasError = true;
+            }
+
+            if (!$('#regDob').val()) {
+                $('#regDob').addClass('is-invalid');
+                $('#regDobError').text('Date of birth is required.');
+                hasError = true;
+            }
+
+            if (!$('#regCity').val().trim()) {
+                $('#regCity').addClass('is-invalid');
+                $('#regCityError').text('City is required.');
+                hasError = true;
+            }
+
+            if (!$('#regCorporation').val()) {
+                $('#regCorporation').addClass('is-invalid');
+                $('#regCorporationError').text('Corporation is required.');
+                hasError = true;
+            }
+
+            if (!password) {
+                $('#regPassword').addClass('is-invalid');
+                $('#regPasswordError').text('Password is required.');
+                hasError = true;
+            } else if (password.length < 6) {
+                $('#regPassword').addClass('is-invalid');
+                $('#regPasswordError').text('Password must be at least 6 characters.');
+                hasError = true;
+            }
+
+            if (!confirmPassword) {
+                $('#regPasswordConfirmation').addClass('is-invalid');
+                $('#regPasswordConfirmationError').text('Confirm password is required.');
+                hasError = true;
+            } else if (password !== confirmPassword) {
+                $('#regPasswordConfirmation').addClass('is-invalid');
+                $('#regPasswordConfirmationError').text('Passwords do not match.');
+                hasError = true;
+            }
+
+            if (hasError) {
+                showToast('error', 'Validation Error', 'Please check the registration form.', 3000);
+                return false;
+            }
+
+            isRegisterSubmitting = true;
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Registering...');
+            showLoader();
+
+            $.ajax({
+                url: $('#registerForm').attr('action'),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function (response) {
+                    hideLoader();
+
+                    if (response.status === 'success') {
+                        showToast('success', 'Registration Successful', response.message, 1500);
+                        setTimeout(function () {
+                            window.location.href = response.redirect;
+                        }, 1500);
+                    } else {
+                        isRegisterSubmitting = false;
+                        $btn.prop('disabled', false).html(originalBtnHtml);
+                        showToast('error', 'Error', response.message || 'Something went wrong.', 4000);
+                    }
+                },
+                error: function (xhr) {
+                    hideLoader();
+                    isRegisterSubmitting = false;
+                    $btn.prop('disabled', false).html(originalBtnHtml);
+
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON?.errors || {};
+
+                        if (errors.name) {
+                            $('#regName').addClass('is-invalid');
+                            $('#regNameError').text(errors.name[0]);
+                        }
+                        if (errors.email) {
+                            $('#regEmail').addClass('is-invalid');
+                            $('#regEmailError').text(errors.email[0]);
+                        }
+                        if (errors.phone) {
+                            $('#regPhone').addClass('is-invalid');
+                            $('#regPhoneError').text(errors.phone[0]);
+                        }
+                        if (errors.gender) {
+                            $('#regGender').addClass('is-invalid');
+                            $('#regGenderError').text(errors.gender[0]);
+                        }
+                        if (errors.date_of_birth) {
+                            $('#regDob').addClass('is-invalid');
+                            $('#regDobError').text(errors.date_of_birth[0]);
+                        }
+                        if (errors.city) {
+                            $('#regCity').addClass('is-invalid');
+                            $('#regCityError').text(errors.city[0]);
+                        }
+                        if (errors.corporation_id) {
+                            $('#regCorporation').addClass('is-invalid');
+                            $('#regCorporationError').text(errors.corporation_id[0]);
+                        }
+                        if (errors.password) {
+                            $('#regPassword').addClass('is-invalid');
+                            $('#regPasswordError').text(errors.password[0]);
+                        }
+                        if (errors.profile_picture) {
+                            $('#regProfilePicture').addClass('is-invalid');
+                            $('#regProfilePictureError').text(errors.profile_picture[0]);
+                        }
+
+                        showToast('error', 'Validation Error', 'Please correct the highlighted fields.', 4000);
+                    } else if (xhr.status === 419) {
+                        showToast('error', 'Session Expired', 'Please refresh the page and try again.', 4000);
+                    } else {
+                        showToast('error', 'Error', xhr.responseJSON?.message || 'Something went wrong. Please try again.', 4000);
+                    }
+                }
+            });
+
+            return false;
         });
     });
-
-    $('#regConfirmPwd').on('keyup', function() {
-        const password = $('#regPassword').val();
-        const confirm = $(this).val();
-        if (password !== confirm && confirm.length > 0) {
-            $(this).addClass('is-invalid');
-            $('#confirmPasswordError').text('Passwords do not match.');
-        } else {
-            $(this).removeClass('is-invalid');
-            $('#confirmPasswordError').text('');
-        }
-    });
-
-    $('input, select').on('input change', function() {
-        $(this).removeClass('is-invalid');
-        const id = $(this).attr('id');
-        if (id === 'regFullName') $('#nameError').text('');
-        else if (id === 'regEmail') $('#emailError').text('');
-        else if (id === 'regPhone') $('#phoneError').text('');
-        else if (id === 'regGender') $('#genderError').text('');
-        else if (id === 'regDob') $('#dobError').text('');
-        else if (id === 'regCity') $('#cityError').text('');
-        else if (id === 'regCorporation') $('#corporationError').text('');
-        else if (id === 'regPassword') $('#passwordError').text('');
-    });
-});
 </script>
-@endsection
+@endpush
