@@ -1148,7 +1148,7 @@
                         <span class="nav-text">Users</span>
                         <span class="nav-badge">3</span>
                     </a>
-                    <a href="{{rute('admin.corporationuser.index')}}" class="nav-item">
+                    <a href="{{route('admin.corporationuser.index')}}" class="nav-item">
                         <i class="fas fa-cog"></i>
                         <span class="nav-text">Corporation user</span>
                     </a>
