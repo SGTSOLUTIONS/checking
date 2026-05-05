@@ -57,95 +57,140 @@
 
 @section('scripts')
 <script>
-$(document).ready(function() {
+// Use pure JavaScript to ensure it runs after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded successfully');
+
     let isSubmitting = false;
 
-    $('#loginForm').on('submit', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    const loginForm = document.getElementById('loginForm');
 
-        if (isSubmitting) return false;
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
 
-        // Reset errors
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback').text('');
+            console.log('Form submitted');
 
-        const email = $('#loginEmail').val().trim();
-        const password = $('#loginPassword').val();
-        const remember = $('#rememberCheck').is(':checked') ? 1 : 0;
+            if (isSubmitting) return false;
 
-        let hasError = false;
+            // Reset errors
+            document.querySelectorAll('.is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+            document.querySelectorAll('.invalid-feedback').forEach(el => {
+                el.textContent = '';
+            });
 
-        if (!email) {
-            $('#loginEmail').addClass('is-invalid');
-            $('#loginEmailError').text('Email address is required.');
-            hasError = true;
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            $('#loginEmail').addClass('is-invalid');
-            $('#loginEmailError').text('Enter a valid email address.');
-            hasError = true;
-        }
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const remember = document.getElementById('rememberCheck').checked ? 1 : 0;
 
-        if (!password) {
-            $('#loginPassword').addClass('is-invalid');
-            $('#loginPasswordError').text('Password is required.');
-            hasError = true;
-        }
+            let hasError = false;
 
-        if (hasError) {
-            showToast('error', 'Validation Error', 'Please check the form.', 3000);
-            return false;
-        }
-
-        isSubmitting = true;
-        const $btn = $('#loginSubmitBtn');
-        const originalText = $btn.html();
-        $btn.html('<i class="fas fa-spinner fa-spin me-2"></i> Signing in...').prop('disabled', true);
-
-        $.ajax({
-            url: "{{ route('corporation.login.submit') }}",
-            type: "POST",
-            data: {
-                email: email,
-                password: password,
-                remember: remember,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            dataType: "json",
-            success: function(response) {
-                if (response.status === 'success') {
-                    showToast('success', 'Welcome!', response.message, 1500);
-                    setTimeout(function() {
-                        window.location.href = response.redirect;
-                    }, 1500);
-                }
-            },
-            error: function(xhr) {
-                isSubmitting = false;
-                $btn.html(originalText).prop('disabled', false);
-
-                if (xhr.status === 401) {
-                    $('#loginPassword').addClass('is-invalid');
-                    $('#loginPasswordError').text(xhr.responseJSON?.message || 'Invalid password.');
-                    showToast('error', 'Authentication Failed', xhr.responseJSON?.message, 4000);
-                } else if (xhr.status === 404) {
-                    $('#loginEmail').addClass('is-invalid');
-                    $('#loginEmailError').text(xhr.responseJSON?.message || 'Account not found.');
-                    showToast('error', 'Account Not Found', xhr.responseJSON?.message, 4000);
-                } else if (xhr.status === 403) {
-                    showToast('error', 'Account Issue', xhr.responseJSON?.message, 4000);
-                } else {
-                    showToast('error', 'Error', 'Something went wrong. Please try again.', 4000);
-                }
+            if (!email) {
+                document.getElementById('loginEmail').classList.add('is-invalid');
+                document.getElementById('loginEmailError').textContent = 'Email address is required.';
+                hasError = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                document.getElementById('loginEmail').classList.add('is-invalid');
+                document.getElementById('loginEmailError').textContent = 'Enter a valid email address.';
+                hasError = true;
             }
-        });
-    });
 
-    $('#loginEmail, #loginPassword').on('input', function() {
-        $(this).removeClass('is-invalid');
-        $(this).siblings('.invalid-feedback').text('');
-        $(`#${this.id}Error`).text('');
-    });
+            if (!password) {
+                document.getElementById('loginPassword').classList.add('is-invalid');
+                document.getElementById('loginPasswordError').textContent = 'Password is required.';
+                hasError = true;
+            }
+
+            if (hasError) {
+                if (typeof showToast === 'function') {
+                    showToast('error', 'Validation Error', 'Please check the form.', 3000);
+                } else {
+                    alert('Please check the form');
+                }
+                return false;
+            }
+
+            isSubmitting = true;
+            const $btn = document.getElementById('loginSubmitBtn');
+            const originalText = $btn.innerHTML;
+            $btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Signing in...';
+            $btn.disabled = true;
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch("{{ route('corporation.login.submit') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    remember: remember,
+                    _token: csrfToken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (typeof showToast === 'function') {
+                        showToast('success', 'Welcome!', data.message, 1500);
+                    }
+                    setTimeout(function() {
+                        window.location.href = data.redirect;
+                    }, 1500);
+                } else {
+                    isSubmitting = false;
+                    $btn.innerHTML = originalText;
+                    $btn.disabled = false;
+
+                    if (data.message) {
+                        if (typeof showToast === 'function') {
+                            showToast('error', 'Error', data.message, 4000);
+                        } else {
+                            alert(data.message);
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                isSubmitting = false;
+                $btn.innerHTML = originalText;
+                $btn.disabled = false;
+
+                if (typeof showToast === 'function') {
+                    showToast('error', 'Error', 'Something went wrong. Please try again.', 4000);
+                } else {
+                    alert('Something went wrong. Please try again.');
+                }
+            });
+        });
+    }
+
+    // Clear validation on input
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+
+    if (emailInput) {
+        emailInput.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            document.getElementById('loginEmailError').textContent = '';
+        });
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            document.getElementById('loginPasswordError').textContent = '';
+        });
+    }
 });
 </script>
 @endsection
