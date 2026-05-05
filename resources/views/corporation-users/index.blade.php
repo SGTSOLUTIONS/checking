@@ -1,0 +1,733 @@
+@extends('layouts.admin-layout')
+@section('title', 'Corporation Users Management')
+
+@section('content')
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold text-primary">
+            <i class="fas fa-users me-2"></i>Corporation Users
+        </h1>
+        <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="fas fa-plus me-1"></i> Add User
+        </button>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="usersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Profile</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Corporation</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Loading users...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Add Corporation User
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" enctype="multipart/form-data">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Full Name</label>
+                            <input type="text" class="form-control" name="name" placeholder="Enter full name" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Email Address</label>
+                            <input type="email" class="form-control" name="email" placeholder="Enter email address" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Phone Number</label>
+                            <input type="tel" class="form-control" name="phone" placeholder="Enter phone number">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Role</label>
+                            <select class="form-select" name="role" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="user">User</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Corporation</label>
+                            <select class="form-select" name="corporation_id" required>
+                                <option value="">Select Corporation</option>
+                                @foreach($corporations as $corporation)
+                                    <option value="{{ $corporation->id }}">{{ $corporation->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">City</label>
+                            <input type="text" class="form-control" name="city" placeholder="Enter city">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Date of Birth</label>
+                            <input type="date" class="form-control" name="date_of_birth">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Status</label>
+                            <select class="form-select" name="status" required>
+                                <option value="">Select Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Confirm Password</label>
+                            <input type="password" class="form-control" name="password_confirmation" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Profile Picture</label>
+                            <input type="file" class="form-control" name="profile" accept="image/*">
+                            <div class="form-text">Accepted formats: JPG, PNG, GIF. Max size: 2MB</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer mt-4 px-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success px-4" id="submitBtn">
+                            <i class="fas fa-save me-1"></i> Save User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update User Modal -->
+<div class="modal fade" id="updateUserModal" tabindex="-1" aria-labelledby="updateUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="updateUserModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Update Corporation User
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateUserForm" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="id" id="update_id">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Full Name</label>
+                            <input type="text" class="form-control" name="name" id="update_name" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Email Address</label>
+                            <input type="email" class="form-control" name="email" id="update_email" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Phone Number</label>
+                            <input type="tel" class="form-control" name="phone" id="update_phone">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Role</label>
+                            <select class="form-select" name="role" id="update_role" required>
+                                <option value="">Select Role</option>
+                                <option value="admin">Admin</option>
+                                <option value="manager">Manager</option>
+                                <option value="user">User</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Corporation</label>
+                            <select class="form-select" name="corporation_id" id="update_corporation_id" required>
+                                <option value="">Select Corporation</option>
+                                @foreach($corporations as $corporation)
+                                    <option value="{{ $corporation->id }}">{{ $corporation->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">City</label>
+                            <input type="text" class="form-control" name="city" id="update_city">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Gender</label>
+                            <select class="form-select" name="gender" id="update_gender">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Date of Birth</label>
+                            <input type="date" class="form-control" name="date_of_birth" id="update_date_of_birth">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold required">Status</label>
+                            <select class="form-select" name="status" id="update_status" required>
+                                <option value="">Select Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">New Password</label>
+                            <input type="password" class="form-control" name="password">
+                            <div class="form-text">Leave empty to keep current password</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Confirm Password</label>
+                            <input type="password" class="form-control" name="password_confirmation">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Profile Picture</label>
+                            <input type="file" class="form-control" name="profile" accept="image/*">
+                            <div id="updateProfilePreview" class="mt-2"></div>
+                            <div class="form-text">Leave empty to keep current profile picture</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer mt-4 px-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success px-4" id="updateSubmitBtn">
+                            <i class="fas fa-save me-1"></i> Update User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteConfirmationModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="userNameToDelete"></strong>?</p>
+                <p class="text-danger mb-0"><small>This action cannot be undone.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i> Delete User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View User Modal -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-labelledby="viewUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewUserModalLabel">
+                    <i class="fas fa-eye me-2"></i>User Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewUserContent">
+                <!-- User details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-circle me-2 toast-icon"></i>
+            <strong class="me-auto toast-title">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body toast-message"></div>
+    </div>
+</div>
+
+@endsection
+
+@section('css')
+<style>
+    .required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .user-avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        background: #f0f0f0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-buttons .btn {
+        margin: 0 2px;
+        padding: 4px 8px;
+    }
+
+    .table > :not(caption) > * > * {
+        vertical-align: middle;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+</style>
+@endsection
+
+@section('script')
+<script>
+$(document).ready(function() {
+    let currentDeleteId = null;
+
+    // Load users on page load
+    loadUsers();
+
+    function loadUsers() {
+        $.ajax({
+            url: '{{ route("admin.corporation-user-list") }}',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                renderUsersTable(response.data);
+            },
+            error: function() {
+                $('#usersTableBody').html(`
+                    <tr>
+                        <td colspan="9" class="text-center text-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <p>Failed to load users. Please try again.</p>
+                        </td>
+                    </tr>
+                `);
+            }
+        });
+    }
+
+    function renderUsersTable(users) {
+        let tbody = $('#usersTableBody');
+        tbody.empty();
+
+        if (!users || users.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="fas fa-users fa-3x mb-3 opacity-50"></i>
+                        <h5>No Users Found</h5>
+                        <p>Click the "Add User" button to create your first corporation user.</p>
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        users.forEach(user => {
+            const profileHtml = user.profile
+                ? `<img src="{{ asset('storage') }}/${user.profile}" alt="${user.name}" class="user-avatar" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
+                : `<div class="user-avatar-placeholder"><i class="fas fa-user text-secondary"></i></div>`;
+
+            const statusBadge = user.status === 'active'
+                ? '<span class="badge bg-success">Active</span>'
+                : '<span class="badge bg-danger">Inactive</span>';
+
+            const roleBadge = user.role === 'admin'
+                ? '<span class="badge bg-primary">Admin</span>'
+                : user.role === 'manager'
+                ? '<span class="badge bg-warning text-dark">Manager</span>'
+                : '<span class="badge bg-secondary">User</span>';
+
+            tbody.append(`
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${profileHtml}</td>
+                    <td><strong>${escapeHtml(user.name)}</strong></td>
+                    <td>${escapeHtml(user.email)}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${user.corporation ? escapeHtml(user.corporation.name) : '-'}</td>
+                    <td>${roleBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td class="action-buttons">
+                        <button class="btn btn-sm btn-outline-info view-user" data-id="${user.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success edit-user" data-id="${user.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-user"
+                                data-id="${user.id}"
+                                data-name="${escapeHtml(user.name)}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function showToast(type, title, message) {
+        const toast = $('#liveToast');
+        toast.removeClass('success error warning info').addClass(type);
+
+        const iconColors = {
+            'success': '#198754',
+            'error': '#dc3545',
+            'warning': '#ffc107',
+            'info': '#0dcaf0'
+        };
+
+        toast.find('.toast-icon').css('color', iconColors[type] || '#6c757d');
+        toast.find('.toast-title').text(title);
+        toast.find('.toast-message').text(message);
+
+        const bsToast = new bootstrap.Toast(toast[0]);
+        bsToast.show();
+    }
+
+    function clearValidationErrors() {
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').html('');
+    }
+
+    function handleValidationErrors(errors) {
+        clearValidationErrors();
+        for (let key in errors) {
+            let input = $(`[name="${key}"]`);
+            input.addClass('is-invalid');
+            input.siblings('.invalid-feedback').html(errors[key][0]);
+        }
+    }
+
+    // Add User Form Submit
+    $('#userForm').on('submit', function(e) {
+        e.preventDefault();
+        const submitBtn = $('#submitBtn');
+        const originalText = submitBtn.html();
+
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+        let formData = new FormData(this);
+
+        $.ajax({
+            url: '{{ route("admin.corporation-user-store") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            beforeSend: function() {
+                clearValidationErrors();
+            },
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Success!', response.message);
+                    $('#addUserModal').modal('hide');
+                    $('#userForm')[0].reset();
+                    loadUsers();
+                } else {
+                    showToast('error', 'Failed!', response.message || 'Something went wrong.');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    handleValidationErrors(xhr.responseJSON.errors);
+                    showToast('error', 'Validation Error!', 'Please check the form for errors.');
+                } else {
+                    showToast('error', 'Server Error', 'Something went wrong. Please try again.');
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Edit User - Load data
+    $(document).on('click', '.edit-user', function() {
+        let id = $(this).data('id');
+
+        $.ajax({
+            url: `/admin/corporation-user/${id}/edit`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                $('#update_id').val(response.id);
+                $('#update_name').val(response.name);
+                $('#update_email').val(response.email);
+                $('#update_phone').val(response.phone);
+                $('#update_role').val(response.role);
+                $('#update_corporation_id').val(response.corporation_id);
+                $('#update_city').val(response.city);
+                $('#update_gender').val(response.gender);
+                $('#update_date_of_birth').val(response.date_of_birth);
+                $('#update_status').val(response.status);
+
+                if (response.profile) {
+                    $('#updateProfilePreview').html(`
+                        <img src="{{ asset('storage') }}/${response.profile}" class="mt-2" width="80" height="80"
+                             style="border-radius:10px;object-fit:cover;border:2px solid #28a745;">
+                        <p class="small text-muted mt-1">Current profile picture</p>
+                    `);
+                } else {
+                    $('#updateProfilePreview').html(`
+                        <p class="text-muted small mt-2">
+                            <i class="fas fa-image me-1"></i>No profile picture available
+                        </p>
+                    `);
+                }
+
+                $('#updateUserModal').modal('show');
+            },
+            error: function() {
+                showToast('error', 'Error!', 'Failed to fetch user details.');
+            }
+        });
+    });
+
+    // Update User Form Submit
+    $('#updateUserForm').on('submit', function(e) {
+        e.preventDefault();
+        const submitBtn = $('#updateSubmitBtn');
+        const originalText = submitBtn.html();
+        let id = $('#update_id').val();
+
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Updating...');
+
+        let formData = new FormData(this);
+        formData.append('_method', 'PUT');
+
+        $.ajax({
+            url: `/admin/corporation-user/${id}`,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            beforeSend: function() {
+                clearValidationErrors();
+            },
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Updated!', response.message);
+                    $('#updateUserModal').modal('hide');
+                    loadUsers();
+                } else {
+                    showToast('error', 'Failed!', response.message || 'Something went wrong.');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    handleValidationErrors(xhr.responseJSON.errors);
+                    showToast('error', 'Validation Error!', 'Please check the form for errors.');
+                } else {
+                    showToast('error', 'Server Error', 'Something went wrong. Please try again.');
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // View User Details
+    $(document).on('click', '.view-user', function() {
+        let id = $(this).data('id');
+
+        $.ajax({
+            url: `/admin/corporation-user/${id}/edit`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                const profileHtml = response.profile
+                    ? `<img src="{{ asset('storage') }}/${response.profile}" class="img-fluid rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">`
+                    : `<div class="mb-3"><i class="fas fa-user-circle fa-5x text-secondary"></i></div>`;
+
+                const statusBadge = response.status === 'active'
+                    ? '<span class="badge bg-success">Active</span>'
+                    : '<span class="badge bg-danger">Inactive</span>';
+
+                $('#viewUserContent').html(`
+                    <div class="text-center">
+                        ${profileHtml}
+                        <h4>${escapeHtml(response.name)}</h4>
+                        ${statusBadge}
+                    </div>
+                    <hr>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-envelope me-2"></i>Email:</strong><br>${escapeHtml(response.email)}</p>
+                            <p><strong><i class="fas fa-phone me-2"></i>Phone:</strong><br>${response.phone || '-'}</p>
+                            <p><strong><i class="fas fa-building me-2"></i>Corporation:</strong><br>${response.corporation ? escapeHtml(response.corporation.name) : '-'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-user-tag me-2"></i>Role:</strong><br>${response.role.charAt(0).toUpperCase() + response.role.slice(1)}</p>
+                            <p><strong><i class="fas fa-city me-2"></i>City:</strong><br>${response.city || '-'}</p>
+                            <p><strong><i class="fas fa-venus-mars me-2"></i>Gender:</strong><br>${response.gender ? response.gender.charAt(0).toUpperCase() + response.gender.slice(1) : '-'}</p>
+                            <p><strong><i class="fas fa-birthday-cake me-2"></i>Date of Birth:</strong><br>${response.date_of_birth || '-'}</p>
+                        </div>
+                    </div>
+                `);
+                $('#viewUserModal').modal('show');
+            },
+            error: function() {
+                showToast('error', 'Error!', 'Failed to fetch user details.');
+            }
+        });
+    });
+
+    // Delete User
+    $(document).on('click', '.delete-user', function() {
+        currentDeleteId = $(this).data('id');
+        const userName = $(this).data('name');
+        $('#userNameToDelete').text(userName);
+        $('#deleteConfirmationModal').modal('show');
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!currentDeleteId) return;
+
+        const deleteBtn = $(this);
+        const originalText = deleteBtn.html();
+
+        deleteBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Deleting...');
+
+        $.ajax({
+            url: `/admin/corporation-user/${currentDeleteId}`,
+            type: 'DELETE',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showToast('success', 'Deleted!', response.message);
+                    $('#deleteConfirmationModal').modal('hide');
+                    loadUsers();
+                } else {
+                    showToast('error', 'Error!', response.message || 'Failed to delete user.');
+                }
+            },
+            error: function(xhr) {
+                showToast('error', 'Error!', xhr.responseJSON?.message || 'Failed to delete user.');
+            },
+            complete: function() {
+                deleteBtn.prop('disabled', false).html(originalText);
+                currentDeleteId = null;
+            }
+        });
+    });
+
+    // Reset forms when modals close
+    $('.modal').on('hidden.bs.modal', function() {
+        clearValidationErrors();
+        $(this).find('form').trigger('reset');
+        $('#updateProfilePreview').html('');
+    });
+});
+</script>
+@endsection

@@ -1148,9 +1148,9 @@
                         <span class="nav-text">Users</span>
                         <span class="nav-badge">3</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="{{rute('admin.corporationuser.index')}}" class="nav-item">
                         <i class="fas fa-cog"></i>
-                        <span class="nav-text">Settings</span>
+                        <span class="nav-text">Corporation user</span>
                     </a>
                     <a href="#" class="nav-item">
                         <i class="fas fa-shield-alt"></i>

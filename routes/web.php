@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CorporationController;
+use App\Http\Controllers\CorporationUserController;
 use App\Http\Controllers\DcController;
 use App\Http\Controllers\SurveyorController;
 use App\Http\Controllers\TeamController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\TeamLeaderController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WardController;
+use App\Models\CorporationUser;
 use Illuminate\Support\Facades\Mail;
 
 // Redirect root to login
@@ -117,6 +119,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/teams/leader/{leader}', [TeamController::class, 'getTeamsByLeader'])->name('admin.teams.by-leader');
             Route::get('/tracking/map-view', [TrackingController::class, 'mapView'])->name('tracking.map-view');
             Route::get('/tracking/data/{userId?}', [TrackingController::class, 'getUserTracking'])->name('admin.tracking.data');
+
+            Route::get('/corporation-user', [CorporationUserController::class, 'index'])->name('corporation-user.index');
+            Route::get('/corporation-user-list', [CorporationUserController::class, 'list'])->name('corporation-user-list');
+            Route::post('/corporation-user-store', [CorporationUserController::class, 'store'])->name('corporation-user-store');
+            Route::get('/corporation-user/{id}/edit', [CorporationUserController::class, 'edit']);
+            Route::put('/corporation-user/{id}', [CorporationUserController::class, 'update']);
+            Route::delete('/corporation-user/{id}', [CorporationUserController::class, 'destroy']);
+            Route::get('/corporation-user-roles', [CorporationUserController::class, 'getRoles']);
+            Route::get('/corporation-user-genders', [CorporationUserController::class, 'getGenders']);
+            Route::get('/corporation-user-statuses', [CorporationUserController::class, 'getStatuses']);
         });
 
         Route::resource('users', UserController::class);
@@ -180,11 +192,11 @@ Route::get('/welcome', function () {
 });
 
 Route::get('/send-whatsapp', [WardController::class, 'send']);
-Route::get('/test-mail', function() {
+Route::get('/test-mail', function () {
     try {
-        Mail::raw('Test email from SGT Property Survey', function($message) {
+        Mail::raw('Test email from SGT Property Survey', function ($message) {
             $message->to('sheikdawood13579@gmail.com')
-                    ->subject('Test Email');
+                ->subject('Test Email');
         });
         return 'Mail sent successfully!';
     } catch (\Exception $e) {
@@ -197,4 +209,4 @@ Route::get('/test-mail', function() {
 
 
 
-Route::get('DC/Dashboard',[DcController::class,'dashboard'])->name('dc.dashboard');
+Route::get('DC/Dashboard', [DcController::class, 'dashboard'])->name('dc.dashboard');
