@@ -13,9 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 
     <!-- Google Fonts -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -72,7 +70,6 @@
                 transform: translate(0, 0) scale(1);
                 opacity: 0.2;
             }
-
             100% {
                 transform: translate(40px, 30px) scale(1.2);
                 opacity: 0.35;
@@ -84,7 +81,6 @@
                 transform: translate(0, 0) scale(1);
                 opacity: 0.2;
             }
-
             100% {
                 transform: translate(-30px, -40px) scale(1.3);
                 opacity: 0.3;
@@ -110,7 +106,6 @@
                 opacity: 0;
                 transform: translateY(40px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -150,7 +145,6 @@
             from {
                 transform: rotate(0deg);
             }
-
             to {
                 transform: rotate(360deg);
             }
@@ -227,32 +221,17 @@
             animation-delay: calc(0.1s * var(--order, 1));
         }
 
-        .feature-list li:nth-child(1) {
-            --order: 1;
-        }
-
-        .feature-list li:nth-child(2) {
-            --order: 2;
-        }
-
-        .feature-list li:nth-child(3) {
-            --order: 3;
-        }
-
-        .feature-list li:nth-child(4) {
-            --order: 4;
-        }
-
-        .feature-list li:nth-child(5) {
-            --order: 5;
-        }
+        .feature-list li:nth-child(1) { --order: 1; }
+        .feature-list li:nth-child(2) { --order: 2; }
+        .feature-list li:nth-child(3) { --order: 3; }
+        .feature-list li:nth-child(4) { --order: 4; }
+        .feature-list li:nth-child(5) { --order: 5; }
 
         @keyframes slideInLeft {
             from {
                 opacity: 0;
                 transform: translateX(-20px);
             }
-
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -389,13 +368,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* toast message */
@@ -421,7 +395,6 @@
                 opacity: 0;
                 transform: translateX(50px);
             }
-
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -507,24 +480,19 @@
             .auth-grid {
                 flex-direction: column;
             }
-
             .left-panel {
                 text-align: center;
                 padding: 2rem 1.5rem;
             }
-
             .feature-list li {
                 justify-content: center;
             }
-
             .right-panel {
                 padding: 2rem 1.5rem;
             }
-
             .top-emblem {
                 padding: 0.8rem 1.2rem;
             }
-
             .gov-text h2 {
                 font-size: 1.1rem;
             }
@@ -543,12 +511,7 @@
     <div class="auth-wrapper">
         <!-- top emblem - Municipal Corporation branding -->
         <div class="top-emblem">
-<<<<<<< HEAD
             <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="TamilNadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
-=======
-            <img src="{{ asset('images/TamilNadu_Logo.svg.png') }}" alt="TamilNadu" class="emblem-img"
-                onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
->>>>>>> 41ebf7847727530bf04151fcebe5e30cce51b422
             <div class="gov-text">
                 <h2>Tamil Nadu Municipal Corporation</h2>
                 <p>Urban Local Body | e-Governance & Citizen Services</p>
@@ -560,8 +523,7 @@
             <!-- left panel (static) - municipal specific features -->
             <div class="left-panel">
                 <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #F97300;"></i> மாநகராட்சி</h3>
-                <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and
-                    citizen grievance redressal — all in one place.</p>
+                <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and citizen grievance redressal — all in one place.</p>
                 <ul class="feature-list">
                     <li><i class="fas fa-file-invoice-dollar"></i> <span>Property Tax & e-Payment</span></li>
                     <li><i class="fas fa-hard-hat"></i> <span>Building Plan Approval</span></li>
@@ -575,8 +537,7 @@
                     <span><i class="fas fa-chart-line"></i> e-District 2.0</span>
                 </div>
                 <div class="mt-3">
-                    <span class="municipal-badge"><i class="fas fa-check-circle me-1"></i> Official Municipal
-                        Portal</span>
+                    <span class="municipal-badge"><i class="fas fa-check-circle me-1"></i> Official Municipal Portal</span>
                 </div>
             </div>
 
@@ -586,10 +547,8 @@
             </div>
         </div>
 
-        <div class="bg-white py-2 text-center border-top"
-            style="background: #E2DFD0 !important; font-size: 0.7rem; color: #524C42;">
-            <i class="fas fa-shield-alt"></i> Secure SSL Portal | © {{ date('Y') }} Tamil Nadu Municipal Corporation
-            | All Urban Local Bodies | e-Governance Initiative
+        <div class="bg-white py-2 text-center border-top" style="background: #E2DFD0 !important; font-size: 0.7rem; color: #524C42;">
+            <i class="fas fa-shield-alt"></i> Secure SSL Portal | © {{ date('Y') }} Tamil Nadu Municipal Corporation | All Urban Local Bodies | e-Governance Initiative
         </div>
     </div>
 
@@ -740,8 +699,7 @@
         });
 
         const styleSheet = document.createElement("style");
-        styleSheet.textContent =
-            `@keyframes rippleAnim { from { transform: scale(0); opacity: 0.6; } to { transform: scale(12); opacity: 0; } }`;
+        styleSheet.textContent = `@keyframes rippleAnim { from { transform: scale(0); opacity: 0.6; } to { transform: scale(12); opacity: 0; } }`;
         document.head.appendChild(styleSheet);
 
         // Initialize on page load
