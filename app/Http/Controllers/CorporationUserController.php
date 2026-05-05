@@ -9,7 +9,7 @@ use App\Models\Corporation;
 use App\Models\CorporationUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 
 class CorporationUserController extends Controller
@@ -17,7 +17,7 @@ class CorporationUserController extends Controller
     public function index()
     {
         $corporations = Corporation::all();
-        $roles = RoleEnum::getValues(); // Get all roles
+        $roles = RoleEnum::getValues();
         $genders = GenderEnum::getValues();
         $statuses = ActiveStatusEnum::getValues();
 
@@ -52,12 +52,23 @@ class CorporationUserController extends Controller
 
         $data = $request->except(['password', 'password_confirmation', 'profile']);
         $data['password'] = Hash::make($request->password);
-        $data['email_verified_at'] = now(); // Auto-verify email
+        $data['email_verified_at'] = now();
 
+        // Handle profile upload to public directory
         if ($request->hasFile('profile')) {
-            $path = $request->file('profile')->store('corporation-users/profiles', 'public');
-            $data['profile'] = $path;
-            $data['storage_path'] = $path;
+            $file = $request->file('profile');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Create directory if not exists
+            $uploadPath = public_path('uploads/corporation-users/profiles');
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0777, true);
+            }
+
+            // Move file to public directory
+            $file->move($uploadPath, $filename);
+            $data['profile'] = 'uploads/corporation-users/profiles/' . $filename;
+            $data['storage_path'] = 'uploads/corporation-users/profiles/' . $filename;
         }
 
         $user = CorporationUser::create($data);
@@ -99,14 +110,26 @@ class CorporationUserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        // Handle profile upload to public directory
         if ($request->hasFile('profile')) {
             // Delete old profile if exists
-            if ($user->profile && Storage::disk('public')->exists($user->profile)) {
-                Storage::disk('public')->delete($user->profile);
+            if ($user->profile && File::exists(public_path($user->profile))) {
+                File::delete(public_path($user->profile));
             }
-            $path = $request->file('profile')->store('corporation-users/profiles', 'public');
-            $data['profile'] = $path;
-            $data['storage_path'] = $path;
+
+            $file = $request->file('profile');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // Create directory if not exists
+            $uploadPath = public_path('uploads/corporation-users/profiles');
+            if (!File::exists($uploadPath)) {
+                File::makeDirectory($uploadPath, 0777, true);
+            }
+
+            // Move file to public directory
+            $file->move($uploadPath, $filename);
+            $data['profile'] = 'uploads/corporation-users/profiles/' . $filename;
+            $data['storage_path'] = 'uploads/corporation-users/profiles/' . $filename;
         }
 
         $user->update($data);
@@ -122,9 +145,9 @@ class CorporationUserController extends Controller
     {
         $user = CorporationUser::findOrFail($id);
 
-        // Delete profile image if exists
-        if ($user->profile && Storage::disk('public')->exists($user->profile)) {
-            Storage::disk('public')->delete($user->profile);
+        // Delete profile image if exists from public directory
+        if ($user->profile && File::exists(public_path($user->profile))) {
+            File::delete(public_path($user->profile));
         }
 
         $user->delete();
