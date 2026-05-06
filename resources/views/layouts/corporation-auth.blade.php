@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
@@ -8,7 +9,9 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <style>
         * {
@@ -18,7 +21,11 @@
         }
 
         body {
+<<<<<<< Updated upstream
             background: linear-gradient(#3c5e7e, #ebd9e9);
+=======
+            background: linear-gradient(#213C51, #DDAED3);
+>>>>>>> Stashed changes
             font-family: 'Inter', 'Poppins', system-ui, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -34,7 +41,11 @@
             position: absolute;
             width: 300px;
             height: 300px;
+<<<<<<< Updated upstream
             background: #2143a0;
+=======
+            background: #213C51;
+>>>>>>> Stashed changes
             filter: blur(120px);
             opacity: 0.2;
             top: -100px;
@@ -60,13 +71,27 @@
         }
 
         @keyframes floatBlob {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
-            100% { transform: translate(40px, 30px) scale(1.2); opacity: 0.35; }
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.2;
+            }
+
+            100% {
+                transform: translate(40px, 30px) scale(1.2);
+                opacity: 0.35;
+            }
         }
 
         @keyframes floatBlob2 {
-            0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
-            100% { transform: translate(-30px, -40px) scale(1.3); opacity: 0.3; }
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.2;
+            }
+
+            100% {
+                transform: translate(-30px, -40px) scale(1.3);
+                opacity: 0.3;
+            }
         }
 
         .auth-wrapper {
@@ -83,8 +108,15 @@
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .auth-grid {
@@ -94,7 +126,7 @@
 
         .left-panel {
             flex: 1.2;
-            background: linear-gradient(135deg, #32012F 0%, #1f0a1d 100%);
+            background: linear-gradient(135deg, #DDAED3 0%, #1f0a1d 100%);
             padding: 2.8rem 2.2rem;
             color: white;
             display: flex;
@@ -116,8 +148,13 @@
         }
 
         @keyframes spinSlow {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .right-panel {
@@ -134,7 +171,11 @@
             justify-content: flex-start;
             gap: 1rem;
             flex-wrap: wrap;
+<<<<<<< Updated upstream
             border-bottom: 3px solid #2143a0;
+=======
+            border-bottom: 3px solid #213C51;
+>>>>>>> Stashed changes
         }
 
         .emblem-img {
@@ -146,7 +187,7 @@
             font-size: 1.5rem;
             font-weight: 700;
             margin: 0;
-            color: #32012F;
+            color: #DDAED3;
         }
 
         .gov-text p {
@@ -159,7 +200,11 @@
         .tamil-text {
             font-size: 0.8rem;
             font-weight: 600;
+<<<<<<< Updated upstream
             color: #2143a0;
+=======
+            color: #213C51;
+>>>>>>> Stashed changes
         }
 
         .left-panel h3 {
@@ -184,19 +229,27 @@
         .feature-list li i {
             font-size: 1.25rem;
             width: 28px;
+<<<<<<< Updated upstream
             color: #2143a0;
+=======
+            color: #213C51;
+>>>>>>> Stashed changes
         }
 
         .form-label {
             font-weight: 600;
-            color: #32012F;
+            color: #DDAED3;
             font-size: 0.85rem;
         }
 
         .input-group-text {
             background-color: #fff6eb;
             border-right: none;
+<<<<<<< Updated upstream
             color: #2143a0;
+=======
+            color: #213C51;
+>>>>>>> Stashed changes
             border-color: #d6cfbf;
         }
 
@@ -209,12 +262,20 @@
         }
 
         .form-control:focus {
+<<<<<<< Updated upstream
             border-color: #2143a0;
+=======
+            border-color: #213C51;
+>>>>>>> Stashed changes
             box-shadow: 0 0 0 3px rgba(249, 115, 0, 0.2);
         }
 
         .btn-primary-custom {
+<<<<<<< Updated upstream
             background-color: #2143a0;
+=======
+            background-color: #213C51;
+>>>>>>> Stashed changes
             border: none;
             padding: 0.8rem;
             font-weight: 700;
@@ -226,7 +287,7 @@
         }
 
         .btn-primary-custom:hover {
-            background-color: #e06700;
+            background-color: #6594B1;
             transform: translateY(-2px);
         }
 
@@ -237,7 +298,11 @@
 
         .forgot-link {
             font-size: 0.8rem;
+<<<<<<< Updated upstream
             color: #2143a0;
+=======
+            color: #213C51;
+>>>>>>> Stashed changes
             text-decoration: none;
             font-weight: 600;
         }
@@ -264,14 +329,23 @@
             width: 60px;
             height: 60px;
             border: 5px solid #E2DFD0;
+<<<<<<< Updated upstream
             border-top: 5px solid #2143a0;
+=======
+            border-top: 5px solid #213C51;
+>>>>>>> Stashed changes
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .toast-message {
@@ -280,7 +354,11 @@
             right: 30px;
             z-index: 10000;
             background: white;
+<<<<<<< Updated upstream
             border-left: 5px solid #2143a0;
+=======
+            border-left: 5px solid #213C51;
+>>>>>>> Stashed changes
             border-radius: 14px;
             padding: 14px 20px;
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
@@ -292,8 +370,15 @@
         }
 
         @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(50px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .toast-success {
@@ -312,14 +397,30 @@
         }
 
         @media (max-width: 768px) {
-            .auth-grid { flex-direction: column; }
-            .left-panel { text-align: center; padding: 2rem 1.5rem; }
-            .feature-list li { justify-content: center; }
-            .right-panel { padding: 2rem 1.5rem; }
-            .gov-text h2 { font-size: 1.1rem; }
+            .auth-grid {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                text-align: center;
+                padding: 2rem 1.5rem;
+            }
+
+            .feature-list li {
+                justify-content: center;
+            }
+
+            .right-panel {
+                padding: 2rem 1.5rem;
+            }
+
+            .gov-text h2 {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="loader-overlay" id="loaderOverlay">
         <div class="spinner-custom"></div>
@@ -327,7 +428,8 @@
 
     <div class="auth-wrapper">
         <div class="top-emblem">
-            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="Tamil Nadu" class="emblem-img" onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
+            <img src="{{ asset('images/TamilNadu_Logo.png') }}" alt="Tamil Nadu" class="emblem-img"
+                onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
             <div class="gov-text">
                 <h2>Tamil Nadu Municipal Corporation</h2>
                 <p>Urban Local Body | e-Governance & Citizen Services</p>
@@ -337,8 +439,14 @@
 
         <div class="auth-grid">
             <div class="left-panel">
+<<<<<<< Updated upstream
                 <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #2143a0;"></i> மாநகராட்சி</h3>
                 <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and citizen grievance redressal — all in one place.</p>
+=======
+                <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #213C51;"></i> மாநகராட்சி</h3>
+                <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and
+                    citizen grievance redressal — all in one place.</p>
+>>>>>>> Stashed changes
                 <ul class="feature-list">
                     <li><i class="fas fa-file-invoice-dollar"></i> <span>Property Tax & e-Payment</span></li>
                     <li><i class="fas fa-hard-hat"></i> <span>Building Plan Approval</span></li>
@@ -351,7 +459,11 @@
                     <span class="ms-3"><i class="fas fa-globe"></i> Smart City Mission</span>
                 </div>
                 <div class="mt-3">
+<<<<<<< Updated upstream
                     <span class="badge" style="background: rgba(249,115,0,0.2); color:#2143a0;">
+=======
+                    <span class="badge" style="background: rgba(249,115,0,0.2); color:#213C51;">
+>>>>>>> Stashed changes
                         <i class="fas fa-check-circle me-1"></i> Official Municipal Portal
                     </span>
                 </div>
@@ -417,4 +529,5 @@
 
     @stack('scripts')
 </body>
+
 </html>
