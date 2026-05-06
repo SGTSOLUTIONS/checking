@@ -18,7 +18,7 @@
         }
 
         body {
-            background: linear-gradient(#0081f9, #ebd9e9);
+            background: linear-gradient(#3c5e7e, #ebd9e9);
             font-family: 'Inter', 'Poppins', system-ui, sans-serif;
             min-height: 100vh;
             display: flex;
@@ -34,7 +34,7 @@
             position: absolute;
             width: 300px;
             height: 300px;
-            background: #F97300;
+            background: #2143a0;
             filter: blur(120px);
             opacity: 0.2;
             top: -100px;
@@ -134,7 +134,7 @@
             justify-content: flex-start;
             gap: 1rem;
             flex-wrap: wrap;
-            border-bottom: 3px solid #F97300;
+            border-bottom: 3px solid #2143a0;
         }
 
         .emblem-img {
@@ -159,7 +159,7 @@
         .tamil-text {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #F97300;
+            color: #2143a0;
         }
 
         .left-panel h3 {
@@ -184,7 +184,7 @@
         .feature-list li i {
             font-size: 1.25rem;
             width: 28px;
-            color: #F97300;
+            color: #2143a0;
         }
 
         .form-label {
@@ -196,7 +196,7 @@
         .input-group-text {
             background-color: #fff6eb;
             border-right: none;
-            color: #F97300;
+            color: #2143a0;
             border-color: #d6cfbf;
         }
 
@@ -209,12 +209,12 @@
         }
 
         .form-control:focus {
-            border-color: #F97300;
+            border-color: #2143a0;
             box-shadow: 0 0 0 3px rgba(249, 115, 0, 0.2);
         }
 
         .btn-primary-custom {
-            background-color: #F97300;
+            background-color: #2143a0;
             border: none;
             padding: 0.8rem;
             font-weight: 700;
@@ -237,7 +237,7 @@
 
         .forgot-link {
             font-size: 0.8rem;
-            color: #F97300;
+            color: #2143a0;
             text-decoration: none;
             font-weight: 600;
         }
@@ -264,7 +264,7 @@
             width: 60px;
             height: 60px;
             border: 5px solid #E2DFD0;
-            border-top: 5px solid #F97300;
+            border-top: 5px solid #2143a0;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -280,7 +280,7 @@
             right: 30px;
             z-index: 10000;
             background: white;
-            border-left: 5px solid #F97300;
+            border-left: 5px solid #2143a0;
             border-radius: 14px;
             padding: 14px 20px;
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
@@ -337,7 +337,7 @@
 
         <div class="auth-grid">
             <div class="left-panel">
-                <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #F97300;"></i> மாநகராட்சி</h3>
+                <h3><i class="fas fa-city me-2" style="font-size: 1.8rem; color: #2143a0;"></i> மாநகராட்சி</h3>
                 <p>Access property tax, building approvals, trade licenses, water supply, solid waste management, and citizen grievance redressal — all in one place.</p>
                 <ul class="feature-list">
                     <li><i class="fas fa-file-invoice-dollar"></i> <span>Property Tax & e-Payment</span></li>
@@ -351,7 +351,7 @@
                     <span class="ms-3"><i class="fas fa-globe"></i> Smart City Mission</span>
                 </div>
                 <div class="mt-3">
-                    <span class="badge" style="background: rgba(249,115,0,0.2); color:#F97300;">
+                    <span class="badge" style="background: rgba(249,115,0,0.2); color:#2143a0;">
                         <i class="fas fa-check-circle me-1"></i> Official Municipal Portal
                     </span>
                 </div>
