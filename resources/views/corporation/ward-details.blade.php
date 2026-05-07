@@ -1,134 +1,93 @@
 @extends('layouts.commissioner')
 
-@section('title', 'Ward Details - Ward ' . ($ward->ward_no ?? ''))
+@section('title', 'Hyperlocal Ward View')
 
 @section('content-panels')
-<div class="content-panel" style="display: block;">
-    <div class="animate__animated animate__fadeInUp">
-        <!-- Header with Back Button -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <a href="{{ route('corporation.dashboard') }}" class="btn btn-outline-light mb-2">
-                    <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-                </a>
-                <h3 class="fw-bold text-white mt-2">
-                    <i class="fas fa-map-marker-alt me-2" style="color:#1679AB;"></i>
-                    Ward {{ $ward->ward_no }} Details
-                </h3>
-                <p class="text-white-50 mb-0">Zone: {{ $ward->zone }} | Corporation: {{ $corporation->name ?? '' }}</p>
-            </div>
-            <div class="stat-card p-3 text-center" style="min-width: 150px;">
-                <h5 class="mb-0">{{ $totalBuildings ?? 0 }}</h5>
-                <small class="text-muted">Total Buildings</small>
-            </div>
-        </div>
-
-        <!-- Statistics Row -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 text-center">
-                    <div class="stat-icon mx-auto mb-2"><i class="fas fa-building"></i></div>
-                    <h3 class="fw-bold mb-0">{{ $totalBuildings ?? 0 }}</h3>
-                    <small class="text-muted">Total Buildings</small>
+    <div class="content-panel">
+        <div class="mb-4"><a href="{{ route('corporation.dashboard') }}" class="btn btn-outline-secondary rounded-pill"><i
+                    class="fas fa-chevron-left me-2"></i>Back to Dashboard</a></div>
+        <div class="stat-card p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="fw-bold">Ward {{ $ward->ward_no }} · <span
+                            class="text-teal">{{ $ward->zone ?? 'Central Zone' }}</span></h2>
+                    <p class="text-secondary">Comprehensive GIS asset registry and infrastructure summary.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="bg-light rounded-3 p-3 d-inline-block"><span
+                            class="fw-bold fs-3">{{ $totalBuildings ?? 0 }}</span> <span class="text-muted">Total
+                            Assets</span></div>
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 text-center">
-                    <div class="stat-icon mx-auto mb-2"><i class="fas fa-check-circle"></i></div>
-                    <h3 class="fw-bold mb-0">{{ $gisIdCount ?? 0 }}</h3>
-                    <small class="text-muted">GIS ID Assigned</small>
+            <hr>
+            <div class="row g-4 mt-2">
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 text-center"><i class="fas fa-draw-polygon fa-2x text-teal mb-2"></i>
+                        <h4 class="fw-bold">{{ $gisIdCount ?? 0 }}</h4><small>GIS Tagged Properties</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 text-center"><i class="fas fa-road fa-2x text-teal mb-2"></i>
+                        <h4 class="fw-bold">{{ $totalRoads ?? 0 }}</h4><small>Road segments (km)</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded-4 p-3 text-center"><i class="fas fa-map-pin fa-2x text-teal mb-2"></i>
+                        <h4 class="fw-bold">{{ $totalPoints ?? 0 }}</h4><small>Point of Interest</small>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 text-center">
-                    <div class="stat-icon mx-auto mb-2"><i class="fas fa-road"></i></div>
-                    <h3 class="fw-bold mb-0">{{ $totalRoads ?? 0 }}</h3>
-                    <small class="text-muted">Road Networks</small>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 text-center">
-                    <div class="stat-icon mx-auto mb-2"><i class="fas fa-map-pin"></i></div>
-                    <h3 class="fw-bold mb-0">{{ $totalPoints ?? 0 }}</h3>
-                    <small class="text-muted">Point Data</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Map Section -->
-        <div class="stat-card p-4 mb-4">
-            <h5 class="fw-bold mb-3">
-                <i class="fas fa-map me-2" style="color:#1679AB;"></i>
-                Ward Map Visualization
-            </h5>
-            <div id="map" style="height: 500px; background: #f0f0f0; border-radius: 16px; display: flex; align-items: center; justify-content: center;">
-                <div class="text-center text-muted">
-                    <i class="fas fa-map-marked-alt fa-4x mb-3"></i>
-                    <p>Map integration ready. Load GIS data for visualization.</p>
-                    <small>Polygons: {{ count($polygons ?? []) }} | Roads: {{ count($roads ?? []) }} | Points: {{ count($points ?? []) }}</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- Data Tables -->
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="stat-card p-4">
-                    <h5 class="fw-bold mb-3">
-                        <i class="fas fa-draw-polygon me-2" style="color:#1679AB;"></i>
-                        Buildings (Polygons)
-                    </h5>
+            <div class="mt-4 p-3 bg-light rounded-4 text-center text-muted"><i class="fas fa-map me-2"></i> Interactive map
+                module ready · <strong>{{ count($polygons ?? []) }} buildings, {{ count($roads ?? []) }} roads</strong> —
+                full vector tiles integration pending official GIS layer.</div>
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="fw-semibold mb-2"><i class="fas fa-building me-2"></i>Building extract</div>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
-                                <tr><th>GIS ID</th><th>Owner Name</th><th>Status</th></tr>
+                                <tr>
+                                    <th>GIS ID</th>
+                                    <th>Owner</th>
+                                    <th>Status</th>
+                                </tr>
                             </thead>
                             <tbody>
-                                @forelse(($polygons ?? []) as $polygon)
-                                <tr>
-                                    <td>{{ $polygon->gisid ?? 'N/A' }}</td>
-                                    <td>{{ $polygon->owner_name ?? 'N/A' }}</td>
-                                    <td><span class="badge bg-success">Mapped</span></td>
-                                </tr>
-                                @empty
-                                <tr><td colspan="3" class="text-center">No building data available</td></tr>
+                                @forelse(($polygons ?? []) as $pg)
+                                    <tr>
+                                        <td>{{ $pg->gisid ?? '—' }}</td>
+                                        <td>{{ $pg->owner_name ?? 'NA' }}</td>
+                                        <td><span class="badge bg-success">Mapped</span></td>
+                                </tr>@empty <tr>
+                                        <td colspan="3" class="text-center">Pending upload</td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="stat-card p-4">
-                    <h5 class="fw-bold mb-3">
-                        <i class="fas fa-road me-2" style="color:#1679AB;"></i>
-                        Roads
-                    </h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>Road Name</th><th>Type</th></tr></thead>
-                            <tbody>
-                                @forelse(($roads ?? []) as $road)
+                <div class="col-md-6">
+                    <div class="fw-semibold mb-2"><i class="fas fa-road me-2"></i>Road network inventory</div>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Road name</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse(($roads ?? []) as $rd)
                                 <tr>
-                                    <td>{{ $road->road_name ?? 'Unnamed Road' }}</td>
-                                    <td><span class="badge bg-info">Line String</span></td>
+                                    <td>{{ $rd->road_name ?? 'Unnamed' }}</td>
+                                    <td>Arterial</td>
+                            </tr>@empty <tr>
+                                    <td colspan="2" class="text-center">No road data present</td>
                                 </tr>
-                                @empty
-                                <tr><td colspan="2" class="text-center">No road data available</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-@push('scripts')
-<script>
-    // You can integrate Leaflet or Google Maps here
-    console.log('Ward {{ $ward->ward_no }} - GIS Data Ready');
-</script>
-@endpush
 @endsection
