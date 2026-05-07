@@ -1,4 +1,4 @@
-@extends('layouts.corporation')
+@extends('layouts.commissioner')
 
 @section('title', 'Ward Details - Ward ' . ($ward->ward_no ?? ''))
 

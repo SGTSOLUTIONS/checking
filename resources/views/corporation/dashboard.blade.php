@@ -1,4 +1,4 @@
-@extends('layouts.corporation')
+@extends('layouts.commissioner')
 
 @section('title', 'Commissioner Dashboard')
 
