@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CommissionerController;
 use App\Http\Controllers\CorporationController;
 use App\Http\Controllers\CorporationUserController;
 use App\Http\Controllers\DcController;
@@ -24,19 +25,20 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [CorporationAuthController::class, 'login'])->name('login.submit');
-
         Route::get('/register', [CorporationAuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [CorporationAuthController::class, 'register'])->name('register.submit');
-
         Route::get('/forgot-password', [CorporationAuthController::class, 'showForgotPassword'])->name('password.request');
         Route::post('/forgot-password', [CorporationAuthController::class, 'sendResetLink'])->name('password.email');
-
         Route::get('/reset-password/{token}', [CorporationAuthController::class, 'showResetPassword'])->name('password.reset');
         Route::post('/reset-password', [CorporationAuthController::class, 'resetPassword'])->name('password.update');
     });
 
     Route::middleware('auth:corporation')->group(function () {
-        Route::get('/dashboard', [CorporationAuthController::class, 'dashboard'])->name('dashboard');
+        Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/commissioner/building/{id}', [CommissionerController::class, 'getBuildingDetails'])->name('commissioner.building.details');
+        Route::get('/commissioner/ward-summary', [CommissionerController::class, 'getWardSummary'])->name('commissioner.ward.summary');
+        Route::get('/commissioner/export/{type}', [CommissionerController::class, 'exportData'])->name('commissioner.export');
+        Route::get('/commissioner/stats', [CommissionerController::class, 'getStats'])->name('commissioner.stats');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
