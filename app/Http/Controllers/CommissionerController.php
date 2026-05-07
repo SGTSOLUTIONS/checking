@@ -225,24 +225,60 @@ class CommissionerController extends Controller
                     "zone"                     => $wardlist->zone,
                     "ward_no"                  => $wardlist->ward_no,
 
-                    // BUILDING POLYGON
+                    /*
+    |--------------------------------------------------------------------------
+    | TABLE NAMES
+    |--------------------------------------------------------------------------
+    */
+
+                    "pointdatatable"           => $pointdatatable,
+                    "polygondatatable"         => $polygondatatable,
+                    "polygontable"             => $polygontable,
+                    "roadtable"                => $roadtable,
+
+                    /*
+    |--------------------------------------------------------------------------
+    | BUILDING POLYGON
+    |--------------------------------------------------------------------------
+    */
+
                     "buildingCount"            => $buildingCount,
                     "polygonData"              => $polygonData,
 
-                    // SURVEYED BUILDINGS
+                    /*
+    |--------------------------------------------------------------------------
+    | SURVEYED BUILDINGS
+    |--------------------------------------------------------------------------
+    */
+
                     "surveyedBuildingCount"    => $surveyedBuildingCount,
                     "surveyedBuildingData"     => $surveyedBuildingData,
 
-                    // POINT DATA
+                    /*
+    |--------------------------------------------------------------------------
+    | POINT DATA
+    |--------------------------------------------------------------------------
+    */
+
                     "pointCount"               => $pointCount,
                     "uniqueBuildingCount"      => $uniqueBuildingCount,
                     "pointData"                => $pointData,
 
-                    // ROAD DATA
+                    /*
+    |--------------------------------------------------------------------------
+    | ROAD DATA
+    |--------------------------------------------------------------------------
+    */
+
                     "roadCount"                => $roadCount,
                     "roadData"                 => $roadData,
 
-                    // MIS
+                    /*
+    |--------------------------------------------------------------------------
+    | MIS
+    |--------------------------------------------------------------------------
+    */
+
                     "misCount"                 => $misCount,
                     "misData"                  => $misData,
                 ];
