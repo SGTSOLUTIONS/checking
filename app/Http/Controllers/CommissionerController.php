@@ -257,14 +257,22 @@ class CommissionerController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return response()->json([
+        // return response()->json([
 
-            "corporation"      => $corporation,
-            "ward_count"       => $ward_count,
-            "mis_count"        => $mis_count,
-            "collections"      => $collections
+        //     "corporation"      => $corporation,
+        //     "ward_count"       => $ward_count,
+        //     "mis_count"        => $mis_count,
+        //     "collections"      => $collections
 
-        ]);
+        // ]);
+        return view('corporation.dashboard', [
+
+    "corporation" => $corporation,
+    "ward_count"  => $ward_count,
+    "mis_count"   => $mis_count,
+    "collections" => $collections
+
+]);
     }
 
     /*
