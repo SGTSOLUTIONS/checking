@@ -43,8 +43,11 @@ class CommissionerController extends Controller
         $wards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->get();
+            $ward_count =Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->count();
 
-        return response()->json($wards);
+        return response()->json($ward_count);
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
     }
