@@ -383,7 +383,7 @@
                     <div class="text-center">
                         {{-- Corporation Logo from assets --}}
                         @php
-                            $logoUrl = asset('assets/corporation-logo/default-logo.png');
+                            $logoUrl = null;
 
                             if (isset($corporation) && !empty($corporation->logo)) {
                                 // Check if it's a path from storage
@@ -459,7 +459,7 @@
                                 <div class="user-avatar">
                                     @if(isset($corporation) && !empty($corporation->logo))
                                         @php
-                                            $avatarUrl = asset('assets/corporation-logo/default-logo.png');
+                                            $avatarUrl = null;
                                             if (file_exists(public_path($corporation->logo))) {
                                                 $avatarUrl = asset($corporation->logo);
                                             } elseif (file_exists(storage_path('app/public/' . $corporation->logo))) {
@@ -543,7 +543,7 @@
                 </div>
                 <div class="modal-body text-center">
                     @php
-                        $modalLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                        $modalLogoUrl = null;
                         if(isset($corporation) && !empty($corporation->logo)) {
                             if (file_exists(public_path($corporation->logo))) {
                                 $modalLogoUrl = asset($corporation->logo);
@@ -794,7 +794,7 @@
         // Corporation logo error fallback
         document.querySelectorAll('.corporation-logo, .corporation-logo-large, .corporation-profile-icon').forEach(img => {
             img.addEventListener('error', function() {
-                this.src = "{{ asset('assets/corporation-logo/default-logo.png') }}";
+                this.src = "null";
             });
         });
 
