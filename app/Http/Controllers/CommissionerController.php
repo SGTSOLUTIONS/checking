@@ -53,9 +53,7 @@ class CommissionerController extends Controller
             ->where('status', 'active')
             ->get();
 
-        $ward_count = Ward::where('corporation_id', $corporation->id)
-            ->where('status', 'active')
-            ->count();
+        $ward_count = $wards->count();
 
         $wards_per_zones = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
@@ -151,8 +149,6 @@ class CommissionerController extends Controller
                 |--------------------------------------------------------------------------
                 | TOTAL BUILDINGS
                 |--------------------------------------------------------------------------
-                | polygon_* => Total buildings in ward
-                |--------------------------------------------------------------------------
                 */
 
                 $buildingCount = 0;
@@ -168,8 +164,6 @@ class CommissionerController extends Controller
                 /*
                 |--------------------------------------------------------------------------
                 | SURVEYED BUILDINGS
-                |--------------------------------------------------------------------------
-                | polygondatatable_* => Surveyed buildings
                 |--------------------------------------------------------------------------
                 */
 
@@ -187,8 +181,6 @@ class CommissionerController extends Controller
                 |--------------------------------------------------------------------------
                 | POINT DATA
                 |--------------------------------------------------------------------------
-                | pointdata_* => Tax / bill / assessment entries
-                |--------------------------------------------------------------------------
                 */
 
                 $pointCount = 0;
@@ -204,8 +196,6 @@ class CommissionerController extends Controller
                 /*
                 |--------------------------------------------------------------------------
                 | ROAD DATA
-                |--------------------------------------------------------------------------
-                | line_* => Road / line GIS data
                 |--------------------------------------------------------------------------
                 */
 
@@ -275,9 +265,6 @@ class CommissionerController extends Controller
             "collections"      => $collections
 
         ]);
-
-        // Return view for web request
-        return view('corporation.dashboard', compact('dashboardData'));
     }
 
     /*
@@ -288,7 +275,7 @@ class CommissionerController extends Controller
 
     private function getpointdatatable($corporationId, $wardNo, $zone)
     {
-        $zone = strtolower($zone);
+        $zone = trim(strtolower($zone));
 
         $tableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
 
@@ -307,7 +294,7 @@ class CommissionerController extends Controller
 
     private function getpolygondatatable($corporationId, $wardNo, $zone)
     {
-        $zone = strtolower($zone);
+        $zone = trim(strtolower($zone));
 
         $tableName = "polygondatatable_{$corporationId}_{$zone}_{$wardNo}";
 
@@ -326,7 +313,7 @@ class CommissionerController extends Controller
 
     private function getpolygontable($corporationId, $wardNo, $zone)
     {
-        $zone = strtolower($zone);
+        $zone = trim(strtolower($zone));
 
         $tableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
 
@@ -345,7 +332,7 @@ class CommissionerController extends Controller
 
     private function getroadtable($corporationId, $wardNo, $zone)
     {
-        $zone = strtolower($zone);
+        $zone = trim(strtolower($zone));
 
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
 
