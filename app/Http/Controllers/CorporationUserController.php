@@ -100,7 +100,7 @@ class CorporationUserController extends Controller
             'gender' => 'nullable|in:' . implode(',', GenderEnum::getValues()),
             'date_of_birth' => 'nullable|date',
             'status' => 'required|in:' . implode(',', ActiveStatusEnum::getValues()),
-            'password' => 'nullable|string|min:6|confirmed',
+            'password' => 'nullable|string|min:6',
             'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
