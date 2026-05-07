@@ -1,4 +1,4 @@
-{{-- Update resources/views/corporation/dashboard.blade.php --}}
+{{-- resources/views/corporation/dashboard.blade.php --}}
 @extends('layouts.commissioner')
 
 @section('title', 'Dashboard - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))

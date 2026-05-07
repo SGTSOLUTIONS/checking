@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', ($corporation->name ?? 'Tamil Nadu Municipal Corporation') . ' | Admin Dashboard')</title>
+    <title>@yield('title', $corporation->name ?? 'Tamil Nadu Municipal Corporation') . ' | Admin Dashboard'</title>
 
     <!-- Bootstrap 5 CSS + Icons + Animate.css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -171,11 +171,12 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+            overflow: hidden;
         }
 
         .corporation-profile-icon {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #FFB1B1;
@@ -294,7 +295,13 @@
         .dropdown-item:active { background-color: #FFCBCB; }
 
         /* Map container */
-        #wardMap { height: 550px; border-radius: 20px; z-index: 1; width: 100%; }
+        #map {
+            height: 75vh;
+            border-radius: 20px;
+            z-index: 1;
+            width: 100%;
+        }
+
         .ol-popup {
             position: absolute;
             background-color: white;
@@ -307,6 +314,7 @@
             min-width: 250px;
             z-index: 1000;
         }
+
         .ol-popup:after, .ol-popup:before {
             top: 100%;
             border: solid transparent;
@@ -316,46 +324,29 @@
             position: absolute;
             pointer-events: none;
         }
+
         .ol-popup:after {
             border-top-color: white;
             border-width: 10px;
             left: 48px;
             margin-left: -10px;
         }
+
         .ol-popup:before {
             border-top-color: #cccccc;
             border-width: 11px;
             left: 48px;
             margin-left: -11px;
         }
-        .ol-attribution { display: none; }
 
-        /* Building list sidebar */
-        .building-list {
-            max-height: 500px;
-            overflow-y: auto;
-            border-radius: 16px;
-        }
-        .building-item {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .building-item:hover {
-            background-color: #FFCBCB;
-            transform: translateX(5px);
-        }
-        .building-item.active {
-            background-color: #1679AB;
-            color: white;
-        }
+        .ol-attribution { display: none; }
 
         /* Profile modal */
         .profile-modal-header {
             background: linear-gradient(135deg, #102C57, #1679AB);
             color: white;
         }
+
         .corporation-logo-large {
             width: 120px;
             height: 120px;
@@ -371,6 +362,11 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFCBCB; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #1679AB; border-radius: 10px; }
+
+        /* Flash message */
+        .alert {
+            z-index: 10000;
+        }
     </style>
     @stack('styles')
 </head>
@@ -381,28 +377,12 @@
             <div class="col-auto sidebar min-vh-100" id="sidebar">
                 <div class="logo-area">
                     <div class="text-center">
-                        {{-- Corporation Logo from assets --}}
                         @php
-                            $logoUrl = null;
-
-                            if (isset($corporation) && !empty($corporation->logo)) {
-                                // Check if it's a path from storage
-                                if (strpos($corporation->logo, 'storage/') === 0) {
-                                    $logoPath = $corporation->logo;
-                                    // Remove 'storage/' prefix to check actual file
-                                    $relativePath = substr($corporation->logo, 8);
-                                    if (file_exists(public_path($relativePath))) {
-                                        $logoUrl = asset($corporation->logo);
-                                    } elseif (file_exists(storage_path('app/public/' . $relativePath))) {
-                                        $logoUrl = asset($corporation->logo);
-                                    }
-                                } else {
-                                    // Try direct public path
-                                    if (file_exists(public_path($corporation->logo))) {
-                                        $logoUrl = asset($corporation->logo);
-                                    } elseif (file_exists(storage_path('app/public/' . $corporation->logo))) {
-                                        $logoUrl = asset('storage/' . $corporation->logo);
-                                    }
+                            $logoUrl = asset('assets/corporation-logo/default-logo.png');
+                            if(isset($corporation) && !empty($corporation->logo)) {
+                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                if(file_exists($fullLogoPath)) {
+                                    $logoUrl = asset('storage/' . $corporation->logo);
                                 }
                             }
                         @endphp
@@ -419,9 +399,9 @@
                        href="{{ route('corporation.dashboard') }}">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
-                    <a class="nav-link {{ request()->routeIs('corporation.ward.details*') ? 'active' : '' }}"
-                       href="{{ route('corporation.ward.details', ['ward_no' => 1]) }}">
-                        <i class="fas fa-map-marker-alt"></i> Ward Details
+                    <a class="nav-link {{ request()->routeIs('corporation.ward.map') ? 'active' : '' }}"
+                       href="{{ route('corporation.ward.map', ['ward_no' => 1]) }}">
+                        <i class="fas fa-map-marker-alt"></i> Ward Map
                     </a>
                     <a class="nav-link" href="#" data-page="analysis" id="analysisNavLink">
                         <i class="fas fa-chart-line"></i> Analysis
@@ -455,28 +435,24 @@
                             </svg>
                         </div>
                         <div class="dropdown user-dropdown">
-                            <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
-                                    @if(isset($corporation) && !empty($corporation->logo))
-                                        @php
-                                            $avatarUrl = null;
-                                            if (file_exists(public_path($corporation->logo))) {
-                                                $avatarUrl = asset($corporation->logo);
-                                            } elseif (file_exists(storage_path('app/public/' . $corporation->logo))) {
-                                                $avatarUrl = asset('storage/' . $corporation->logo);
+                                    @php
+                                        $profileLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                                        if(isset($corporation) && !empty($corporation->logo)) {
+                                            $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                            if(file_exists($fullLogoPath)) {
+                                                $profileLogoUrl = asset('storage/' . $corporation->logo);
                                             }
-                                        @endphp
-                                        <img src="{{ $avatarUrl }}"
-                                             class="corporation-profile-icon"
-                                             alt="Profile"
-                                             style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;">
-                                    @else
-                                        <i class="fas fa-building"></i>
-                                    @endif
+                                        }
+                                    @endphp
+                                    <img src="{{ $profileLogoUrl }}"
+                                         class="corporation-profile-icon"
+                                         alt="{{ $corporation->name ?? 'Profile' }}">
                                 </div>
                                 <div class="d-none d-md-block">
                                     <span class="fw-semibold" style="color:#102C57;">{{ $corporation->name ?? 'Admin User' }}</span>
-                                    <small class="d-block text-muted">Municipal Corporation</small>
+                                    <small class="d-block text-muted">{{ $corporation->commissioner_name ?? 'Municipal Corporation' }}</small>
                                 </div>
                                 <i class="fas fa-chevron-down text-muted"></i>
                             </div>
@@ -496,9 +472,7 @@
 
                 <!-- Dynamic Content -->
                 <div class="p-4">
-                    <div class="dashboard-content-area">
-                        @yield('content')
-                    </div>
+                    @yield('content')
 
                     <!-- Analysis Panel (hidden by default) -->
                     <div id="analysisPanel" class="content-panel" style="display: none;">
@@ -533,7 +507,7 @@
 
     {{-- Corporation Profile Modal --}}
     <div class="modal fade" id="corporationProfileModal" tabindex="-1" aria-labelledby="corporationProfileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header profile-modal-header">
                     <h5 class="modal-title" id="corporationProfileModalLabel">
@@ -541,63 +515,62 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center">
-                    @php
-                        $modalLogoUrl = null;
-                        if(isset($corporation) && !empty($corporation->logo)) {
-                            if (file_exists(public_path($corporation->logo))) {
-                                $modalLogoUrl = asset($corporation->logo);
-                            } elseif (file_exists(storage_path('app/public/' . $corporation->logo))) {
-                                $modalLogoUrl = asset('storage/' . $corporation->logo);
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        @php
+                            $modalLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                            if(isset($corporation) && !empty($corporation->logo)) {
+                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                if(file_exists($fullLogoPath)) {
+                                    $modalLogoUrl = asset('storage/' . $corporation->logo);
+                                }
                             }
-                        }
-                    @endphp
-                    <img src="{{ $modalLogoUrl }}"
-                         alt="{{ $corporation->name ?? 'Corporation Logo' }}"
-                         class="corporation-logo-large mb-3">
+                        @endphp
+                        <img src="{{ $modalLogoUrl }}"
+                             alt="{{ $corporation->name ?? 'Corporation Logo' }}"
+                             class="corporation-logo-large mb-3">
+                        <h4 class="fw-bold">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</h4>
+                        <p class="text-muted">{{ $corporation->district ?? '' }} District, {{ $corporation->state ?? 'Tamil Nadu' }}</p>
+                    </div>
 
-                    <div class="text-start mt-3">
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Corporation Name:</div>
-                            <div class="col-7">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Corporation Code:</div>
-                            <div class="col-7">{{ $corporation->code ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">District:</div>
-                            <div class="col-7">{{ $corporation->district ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">State:</div>
-                            <div class="col-7">{{ $corporation->state ?? 'Tamil Nadu' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Status:</div>
-                            <div class="col-7">
-                                <span class="badge bg-success">{{ ucfirst($corporation->status ?? 'active') }}</span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Corporation Code:</label>
+                                <p class="mb-0">{{ $corporation->code ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">District:</label>
+                                <p class="mb-0">{{ ucfirst($corporation->district ?? 'N/A') }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">State:</label>
+                                <p class="mb-0">{{ ucfirst($corporation->state ?? 'Tamil Nadu') }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Status:</label>
+                                <p class="mb-0">
+                                    <span class="badge bg-success">{{ ucfirst($corporation->status ?? 'active') }}</span>
+                                </p>
                             </div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Total Wards:</div>
-                            <div class="col-7">{{ $ward_count ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Email:</div>
-                            <div class="col-7">{{ $corporation->email ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Phone:</div>
-                            <div class="col-7">{{ $corporation->phone ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Established:</div>
-                            <div class="col-7">{{ $corporation->established_year ?? 'N/A' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Address:</div>
-                            <div class="col-7">{{ $corporation->address ?? 'Ripon Building, Chennai, Tamil Nadu - 600003' }}</div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Email:</label>
+                                <p class="mb-0">{{ $corporation->email ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Phone:</label>
+                                <p class="mb-0">{{ $corporation->phone ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Established:</label>
+                                <p class="mb-0">{{ $corporation->established_year ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Created At:</label>
+                                <p class="mb-0">{{ isset($corporation->created_at) ? $corporation->created_at->format('d-m-Y') : 'N/A' }}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -620,41 +593,44 @@
                 </div>
                 <div class="modal-body text-center">
                     <div class="user-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 40px;">
-                        <i class="fas fa-user-tie"></i>
+                        @php
+                            $commissionerLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                            if(isset($corporation) && !empty($corporation->logo)) {
+                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                if(file_exists($fullLogoPath)) {
+                                    $commissionerLogoUrl = asset('storage/' . $corporation->logo);
+                                }
+                            }
+                        @endphp
+                        <img src="{{ $commissionerLogoUrl }}" class="w-100 h-100 rounded-circle object-fit-cover" alt="Commissioner">
                     </div>
+                    <h4 class="fw-bold mb-1">{{ $corporation->commissioner_name ?? 'Dr. K. Senthil Raj, IAS' }}</h4>
+                    <p class="text-muted">Municipal Commissioner</p>
 
-                    <div class="text-start mt-3">
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Name:</div>
-                            <div class="col-7">{{ $corporation->commissioner_name ?? 'Dr. K. Senthil Raj, IAS' }}</div>
+                    <div class="text-start mt-4">
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">Corporation:</div>
+                            <div class="col-8">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Designation:</div>
-                            <div class="col-7">Municipal Commissioner</div>
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">District:</div>
+                            <div class="col-8">{{ ucfirst($corporation->district ?? 'Chennai') }}</div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Corporation:</div>
-                            <div class="col-7">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">Date of Joining:</div>
+                            <div class="col-8">{{ $corporation->commissioner_joining_date ?? '01-06-2023' }}</div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">District:</div>
-                            <div class="col-7">{{ $corporation->district ?? 'Chennai' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">Email:</div>
+                            <div class="col-8">{{ $corporation->commissioner_email ?? 'commissioner@tnmunicipal.gov.in' }}</div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Date of Joining:</div>
-                            <div class="col-7">{{ $corporation->commissioner_joining_date ?? '01-06-2023' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">Phone:</div>
+                            <div class="col-8">{{ $corporation->commissioner_phone ?? '9876543210' }}</div>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Email:</div>
-                            <div class="col-7">{{ $corporation->commissioner_email ?? 'commissioner@tnmunicipal.gov.in' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Phone:</div>
-                            <div class="col-7">{{ $corporation->commissioner_phone ?? '9876543210' }}</div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Office Address:</div>
-                            <div class="col-7">{{ $corporation->commissioner_office ?? 'Commissioner\'s Office, Main Building, Chennai - 600003' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-4 fw-bold text-primary">Office Address:</div>
+                            <div class="col-8">{{ $corporation->commissioner_office ?? 'Commissioner\'s Office, Main Building, ' . ($corporation->district ?? 'Chennai') }}</div>
                         </div>
                     </div>
                 </div>
@@ -675,16 +651,6 @@
                 sidebar.classList.toggle('show');
             });
         }
-
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile && sidebar && sidebar.classList.contains('show')) {
-                if (!sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-                    sidebar.classList.remove('show');
-                }
-            }
-        });
 
         // Logout handling
         const logoutBtns = document.querySelectorAll('#logoutBtn, #logoutDropdown');
@@ -717,15 +683,6 @@
                     initAnalysisCharts();
                     chartsInitialized = true;
                 }
-            });
-        }
-
-        // Show dashboard when clicking on dashboard link
-        const dashboardLink = document.querySelector('a[href="{{ route('corporation.dashboard') }}"]');
-        if (dashboardLink) {
-            dashboardLink.addEventListener('click', function() {
-                if (analysisPanel) analysisPanel.style.display = 'none';
-                if (dashboardContent) dashboardContent.style.display = 'block';
             });
         }
 
@@ -788,20 +745,12 @@
         // Show dashboard by default if on dashboard route
         @if(request()->routeIs('corporation.dashboard'))
             if (analysisPanel) analysisPanel.style.display = 'none';
-            if (dashboardContent) dashboardContent.style.display = 'block';
         @endif
 
         // Corporation logo error fallback
         document.querySelectorAll('.corporation-logo, .corporation-logo-large, .corporation-profile-icon').forEach(img => {
             img.addEventListener('error', function() {
-                this.src = "null";
-            });
-        });
-
-        // Close dropdown when clicking outside
-        document.querySelectorAll('.dropdown-toggle').forEach(dropdown => {
-            dropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
+                this.src = "{{ asset('assets/corporation-logo/default-logo.png') }}";
             });
         });
     </script>
