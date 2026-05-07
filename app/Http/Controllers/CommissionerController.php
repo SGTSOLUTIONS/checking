@@ -60,13 +60,13 @@ class CommissionerController extends Controller
         $polygondataTable = $this->getPolygondataTableName($corporation->id, $zone, $wardNo);
         $linedataTable = $this->getLinedataTableName($corporation->id, $zone, $wardNo);
 
-        // Fetch all data - FIXED METHOD NAMES
+        // Fetch all data
         $misData = $this->getMisData($corporation->id, $wardNo);
-        $pointData = $this->getPointdata($pointdataTable, $wardNo);  // Changed to getPointdata
-        $polygonData = $this->getPolygondata($polygondataTable);     // Changed to getPolygondata
-        $lineData = $this->getLinedata($linedataTable);              // Changed to getLinedata
+        $pointData = $this->getPointdata($pointdataTable, $wardNo);
+        $polygonData = $this->getPolygondata($polygondataTable);
+        $lineData = $this->getLinedata($linedataTable);
 
-        // Calculate statistics (returns arrays, not collections)
+        // Calculate statistics (returns arrays with float values)
         $statistics = $this->calculateStatistics($misData, $pointData, $polygonData);
 
         // Get recent activities
@@ -107,7 +107,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get MIS data for the corporation
+     * Get MIS data for the corporation with proper type casting
      */
     private function getMisData($corporationId, $wardNo = null)
     {
@@ -134,7 +134,18 @@ class CommissionerController extends Controller
                 $query->where('ward_no', $wardNo);
             }
 
-            return $query->get();
+            $data = $query->get();
+
+            // Cast numeric fields to float
+            foreach ($data as $item) {
+                $item->assessment = (float)($item->assessment ?? 0);
+                $item->old_assessment = (float)($item->old_assessment ?? 0);
+                $item->half_year_tax = (float)($item->half_year_tax ?? 0);
+                $item->balance = (float)($item->balance ?? 0);
+                $item->plot_area = (float)($item->plot_area ?? 0);
+            }
+
+            return $data;
 
         } catch (\Exception $e) {
             \Log::error("Error fetching MIS data: " . $e->getMessage());
@@ -143,7 +154,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get Pointdata (building data) - FIXED METHOD NAME
+     * Get Pointdata (building data) with proper type casting
      */
     private function getPointdata($tableName, $wardNo = null)
     {
@@ -171,7 +182,22 @@ class CommissionerController extends Controller
                 $query->where('ward_no', $wardNo);
             }
 
-            return $query->get();
+            $data = $query->get();
+
+            // Cast numeric fields to float
+            foreach ($data as $item) {
+                $item->assessment = (float)($item->assessment ?? 0);
+                $item->old_assessment = (float)($item->old_assessment ?? 0);
+                $item->halfyeartax = (float)($item->halfyeartax ?? 0);
+                $item->balance = (float)($item->balance ?? 0);
+                $item->water_tax = (float)($item->water_tax ?? 0);
+                $item->professional_tax = (float)($item->professional_tax ?? 0);
+                $item->gst = (float)($item->gst ?? 0);
+                $item->plot_area = (float)($item->plot_area ?? 0);
+                $item->trade_income = (float)($item->trade_income ?? 0);
+            }
+
+            return $data;
 
         } catch (\Exception $e) {
             \Log::error("Error fetching Pointdata: " . $e->getMessage());
@@ -180,7 +206,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get Polygondata - FIXED METHOD NAME
+     * Get Polygondata
      */
     private function getPolygondata($tableName)
     {
@@ -189,7 +215,7 @@ class CommissionerController extends Controller
                 return collect([]);
             }
 
-            return DB::table($tableName)
+            $data = DB::table($tableName)
                 ->select([
                     'id', 'gisid', 'number_bill', 'number_shop', 'number_floor',
                     'new_address', 'building_name', 'building_usage', 'construction_type',
@@ -203,6 +229,16 @@ class CommissionerController extends Controller
                 ->limit(1000)
                 ->get();
 
+            // Cast numeric fields
+            foreach ($data as $item) {
+                $item->number_bill = (int)($item->number_bill ?? 0);
+                $item->number_shop = (int)($item->number_shop ?? 0);
+                $item->number_floor = (int)($item->number_floor ?? 0);
+                $item->sqfeet = (float)($item->sqfeet ?? 0);
+            }
+
+            return $data;
+
         } catch (\Exception $e) {
             \Log::error("Error fetching Polygondata: " . $e->getMessage());
             return collect([]);
@@ -210,7 +246,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get Linedata (road/line data) - FIXED METHOD NAME
+     * Get Linedata (road/line data)
      */
     private function getLinedata($tableName)
     {
@@ -232,7 +268,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Calculate statistics for dashboard - Returns arrays instead of collections
+     * Calculate statistics for dashboard - Returns arrays with proper types
      */
     private function calculateStatistics($misData, $pointData, $polygonData)
     {
@@ -377,8 +413,8 @@ class CommissionerController extends Controller
             ->map(function($item) {
                 return (object)[
                     'name' => $item->owner_name ?? $item->present_owner_name ?? 'Unknown',
-                    'assessment' => (float) $item->assessment,
-                    'balance' => (float) $item->balance,
+                    'assessment' => (float) ($item->assessment ?? 0),
+                    'balance' => (float) ($item->balance ?? 0),
                     'phone' => $item->phone_number,
                     'type' => 'Building',
                     'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
@@ -392,8 +428,8 @@ class CommissionerController extends Controller
             ->map(function($item) {
                 return (object)[
                     'name' => $item->owner_name ?? 'Unknown',
-                    'assessment' => (float) $item->assessment,
-                    'balance' => (float) $item->balance,
+                    'assessment' => (float) ($item->assessment ?? 0),
+                    'balance' => (float) ($item->balance ?? 0),
                     'phone' => $item->phone_number,
                     'type' => 'MIS Record',
                     'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
@@ -416,7 +452,7 @@ class CommissionerController extends Controller
                 'type' => 'Building Update',
                 'icon' => 'fa-building',
                 'description' => "Building updated: " . ($item->owner_name ?? 'N/A'),
-                'assessment' => (float) $item->assessment,
+                'assessment' => (float) ($item->assessment ?? 0),
                 'location' => "Door No: " . ($item->new_door_no ?? $item->old_door_no ?? 'N/A'),
                 'date' => $item->updated_at ?? $item->created_at,
                 'status' => ($item->balance ?? 0) > 0 ? 'pending' : 'paid',
@@ -717,7 +753,6 @@ class CommissionerController extends Controller
      */
     private function getLinedataTableName($corporationId, $zone = null, $wardNo = null)
     {
-        // If we have both zone and ward, construct the specific table name
         if ($zone && $wardNo) {
             $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
             if (Schema::hasTable($tableName)) {
@@ -725,7 +760,6 @@ class CommissionerController extends Controller
             }
         }
 
-        // Try zone-specific without ward
         if ($zone) {
             $tableName = "line_{$corporationId}_{$zone}";
             if (Schema::hasTable($tableName)) {
@@ -733,7 +767,6 @@ class CommissionerController extends Controller
             }
         }
 
-        // Try to find existing table with pattern
         $possibleTables = [
             "line_{$corporationId}",
             "line_{$corporationId}_south_92",
@@ -755,7 +788,6 @@ class CommissionerController extends Controller
     private function getZoneWardMapping($corporationId, $wardNo)
     {
         try {
-            // Fetch ward from database
             $ward = Ward::where('corporation_id', $corporationId)
                 ->where('ward_no', $wardNo)
                 ->where('status', 'active')
@@ -772,7 +804,6 @@ class CommissionerController extends Controller
             \Log::error("Error fetching ward mapping: " . $e->getMessage());
         }
 
-        // Fallback to default
         return [
             'zone' => 'south',
             'ward' => $wardNo ?? '92'
@@ -814,7 +845,6 @@ class CommissionerController extends Controller
 
         $wardNo = $request->get('ward_no');
 
-        // Verify ward exists
         $ward = Ward::where('corporation_id', $user->corporation_id)
             ->where('ward_no', $wardNo)
             ->where('status', 'active')
@@ -824,7 +854,6 @@ class CommissionerController extends Controller
             return response()->json(['error' => 'Invalid ward'], 404);
         }
 
-        // Update user's selected ward (store in session)
         session(['current_ward' => $wardNo]);
 
         return response()->json([
@@ -848,7 +877,6 @@ class CommissionerController extends Controller
         $corporationId = $user->corporation_id;
         $wardNo = $request->get('ward_no', session('current_ward'));
 
-        // Get ward info
         $ward = null;
         if ($wardNo) {
             $ward = Ward::where('corporation_id', $corporationId)
@@ -866,17 +894,17 @@ class CommissionerController extends Controller
             }
 
             $totalBuildings = $query->count();
-            $totalTax = $query->sum('halfyeartax');
-            $totalBalance = $query->sum('balance');
-            $totalWaterTax = $query->sum('water_tax');
+            $totalTax = (float) $query->sum('halfyeartax');
+            $totalBalance = (float) $query->sum('balance');
+            $totalWaterTax = (float) $query->sum('water_tax');
 
             $collectionRate = $totalTax > 0 ? round((($totalTax - $totalBalance) / $totalTax) * 100, 2) : 0;
 
             $stats = [
                 'total_buildings' => $totalBuildings,
-                'total_tax_collected' => (float) $totalTax,
-                'total_balance' => (float) $totalBalance,
-                'total_water_tax' => (float) $totalWaterTax,
+                'total_tax_collected' => $totalTax,
+                'total_balance' => $totalBalance,
+                'total_water_tax' => $totalWaterTax,
                 'collection_rate' => $collectionRate,
                 'current_ward' => $ward,
                 'last_updated' => Carbon::now()->toDateTimeString()
@@ -888,150 +916,55 @@ class CommissionerController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Debug method to check all tables
+     */
     public function debugTables()
-{
-    $user = Auth::guard('corporation')->user();
+    {
+        $user = Auth::guard('corporation')->user();
 
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    $corporation = Corporation::find($user->corporation_id);
-
-    if (!$corporation) {
-        return response()->json(['error' => 'Corporation not found'], 404);
-    }
-
-    // Get wards
-    $wards = Ward::where('corporation_id', $corporation->id)
-        ->where('status', 'active')
-        ->get();
-
-    // Get current ward
-    $userWard = null;
-    if ($user->ward_no) {
-        $userWard = $wards->where('ward_no', $user->ward_no)->first();
-    } else {
-        $userWard = $wards->first();
-    }
-
-    $wardNo = $userWard->ward_no ?? null;
-    $zone = $userWard->zone ?? 'south';
-
-    // Table names
-    $misTable = "mis_corporation_{$corporation->id}";
-    $pointdataTable = $this->getPointdataTableName($corporation->id, $zone, $wardNo);
-    $polygondataTable = $this->getPolygondataTableName($corporation->id, $zone, $wardNo);
-    $linedataTable = $this->getLinedataTableName($corporation->id, $zone, $wardNo);
-
-    $response = [
-        'success' => true,
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'corporation_id' => $user->corporation_id,
-            'ward_no' => $user->ward_no
-        ],
-        'corporation' => [
-            'id' => $corporation->id,
-            'name' => $corporation->name
-        ],
-        'wards' => $wards->toArray(),
-        'current_ward' => $userWard ? $userWard->toArray() : null,
-        'tables' => [
-            'mis_table' => [
-                'name' => $misTable,
-                'exists' => Schema::hasTable($misTable),
-                'count' => Schema::hasTable($misTable) ? DB::table($misTable)->count() : 0,
-                'sample_data' => Schema::hasTable($misTable) ? DB::table($misTable)->limit(3)->get() : [],
-                'columns' => Schema::hasTable($misTable) ? Schema::getColumnListing($misTable) : []
-            ],
-            'pointdata_table' => [
-                'name' => $pointdataTable,
-                'exists' => Schema::hasTable($pointdataTable),
-                'count' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->count() : 0,
-                'sample_data' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->limit(3)->get() : [],
-                'columns' => Schema::hasTable($pointdataTable) ? Schema::getColumnListing($pointdataTable) : [],
-                'distinct_wards' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->select('ward_no')->distinct()->get() : [],
-                'distinct_zones' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->select('zone')->distinct()->get() : []
-            ],
-            'polygondata_table' => [
-                'name' => $polygondataTable,
-                'exists' => Schema::hasTable($polygondataTable),
-                'count' => Schema::hasTable($polygondataTable) ? DB::table($polygondataTable)->count() : 0,
-                'sample_data' => Schema::hasTable($polygondataTable) ? DB::table($polygondataTable)->limit(3)->get() : [],
-                'columns' => Schema::hasTable($polygondataTable) ? Schema::getColumnListing($polygondataTable) : []
-            ],
-            'linedata_table' => [
-                'name' => $linedataTable,
-                'exists' => Schema::hasTable($linedataTable),
-                'count' => Schema::hasTable($linedataTable) ? DB::table($linedataTable)->count() : 0,
-                'sample_data' => Schema::hasTable($linedataTable) ? DB::table($linedataTable)->limit(3)->get() : [],
-                'columns' => Schema::hasTable($linedataTable) ? Schema::getColumnListing($linedataTable) : []
-            ]
-        ],
-        'all_mis_data' => Schema::hasTable($misTable) ? DB::table($misTable)->limit(10)->get() : [],
-        'all_point_data' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->limit(10)->get() : [],
-        'filtered_mis_data' => Schema::hasTable($misTable) && $wardNo ? DB::table($misTable)->where('ward_no', $wardNo)->limit(10)->get() : [],
-        'filtered_point_data' => Schema::hasTable($pointdataTable) && $wardNo ? DB::table($pointdataTable)->where('ward_no', $wardNo)->limit(10)->get() : [],
-        'possible_table_patterns' => $this->findPossibleTables($corporation->id)
-    ];
-
-    return response()->json($response);
-}
-
-/**
- * Find all possible table names for debugging
- */
-private function findPossibleTables($corporationId)
-{
-    $patterns = [
-        "pointdata_{$corporationId}",
-        "pointdata_{$corporationId}_south",
-        "pointdata_{$corporationId}_south_92",
-        "pointdata_{$corporationId}_north",
-        "pointdata_{$corporationId}_north_92",
-        "pointdata_{$corporationId}_east",
-        "pointdata_{$corporationId}_west",
-        "polygondata_{$corporationId}",
-        "polygondata_{$corporationId}_south",
-        "polygondata_{$corporationId}_south_92",
-        "polygondata_{$corporationId}_north",
-        "polygondata_{$corporationId}_north_92",
-        "mis_corporation_{$corporationId}",
-        "line_{$corporationId}",
-        "line_{$corporationId}_south_92"
-    ];
-
-    $existingTables = [];
-    foreach ($patterns as $pattern) {
-        if (Schema::hasTable($pattern)) {
-            $existingTables[$pattern] = [
-                'exists' => true,
-                'count' => DB::table($pattern)->count()
-            ];
-        } else {
-            $existingTables[$pattern] = [
-                'exists' => false,
-                'count' => 0
-            ];
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        $corporation = Corporation::find($user->corporation_id);
+
+        $wards = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->get();
+
+        $userWard = $wards->first();
+        $wardNo = $userWard->ward_no ?? null;
+        $zone = $userWard->zone ?? 'south';
+
+        $misTable = "mis_corporation_{$corporation->id}";
+        $pointdataTable = $this->getPointdataTableName($corporation->id, $zone, $wardNo);
+        $polygondataTable = $this->getPolygondataTableName($corporation->id, $zone, $wardNo);
+
+        $response = [
+            'success' => true,
+            'tables' => [
+                'mis_table' => [
+                    'name' => $misTable,
+                    'exists' => Schema::hasTable($misTable),
+                    'count' => Schema::hasTable($misTable) ? DB::table($misTable)->count() : 0,
+                ],
+                'pointdata_table' => [
+                    'name' => $pointdataTable,
+                    'exists' => Schema::hasTable($pointdataTable),
+                    'count' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->count() : 0,
+                ],
+                'polygondata_table' => [
+                    'name' => $polygondataTable,
+                    'exists' => Schema::hasTable($polygondataTable),
+                    'count' => Schema::hasTable($polygondataTable) ? DB::table($polygondataTable)->count() : 0,
+                ]
+            ],
+            'sample_mis_data' => Schema::hasTable($misTable) ? DB::table($misTable)->limit(3)->get() : [],
+            'sample_point_data' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->limit(3)->get() : [],
+        ];
+
+        return response()->json($response);
     }
-
-    // Also get all tables that start with the patterns
-    $allTables = DB::select('SHOW TABLES');
-    $allTableNames = array_map('current', $allTables);
-    $matchingTables = array_filter($allTableNames, function($table) use ($corporationId) {
-        return strpos($table, "pointdata_{$corporationId}") === 0 ||
-               strpos($table, "polygondata_{$corporationId}") === 0 ||
-               strpos($table, "mis_corporation_{$corporationId}") === 0 ||
-               strpos($table, "line_{$corporationId}") === 0;
-    });
-
-    return [
-        'checked_patterns' => $existingTables,
-        'all_matching_tables' => array_values($matchingTables)
-    ];
-}
 }

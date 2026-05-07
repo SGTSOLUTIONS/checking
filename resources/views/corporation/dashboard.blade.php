@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <!-- Statistics Cards Row 1 -->
+    <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card h-100 border-0 shadow-sm">
@@ -37,10 +37,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1 fw-semibold">Total Buildings</p>
-                            <h3 class="mb-0 fw-bold">{{ number_format($dashboardData['statistics']['total_buildings'] ?? 0) }}</h3>
-                            <small class="text-success">
-                                <i class="fas fa-arrow-up"></i> +12% from last month
-                            </small>
+                            <h3 class="mb-0 fw-bold">{{ number_format((float)($dashboardData['statistics']['total_buildings'] ?? 0)) }}</h3>
                         </div>
                         <div class="stat-icon bg-primary bg-opacity-10 rounded-circle p-3">
                             <i class="fas fa-building fa-2x text-primary"></i>
@@ -56,10 +53,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1 fw-semibold">Total Tax Collected</p>
-                            <h3 class="mb-0 fw-bold">₹{{ number_format($dashboardData['statistics']['total_tax_collection'] ?? 0, 2) }}</h3>
-                            <small class="text-success">
-                                <i class="fas fa-arrow-up"></i> +8% from last month
-                            </small>
+                            <h3 class="mb-0 fw-bold">₹{{ number_format((float)($dashboardData['statistics']['total_tax_collection'] ?? 0), 2) }}</h3>
                         </div>
                         <div class="stat-icon bg-success bg-opacity-10 rounded-circle p-3">
                             <i class="fas fa-rupee-sign fa-2x text-success"></i>
@@ -75,10 +69,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1 fw-semibold">Outstanding Balance</p>
-                            <h3 class="mb-0 fw-bold text-danger">₹{{ number_format($dashboardData['statistics']['total_balance'] ?? 0, 2) }}</h3>
-                            <small class="text-warning">
-                                <i class="fas fa-exclamation-triangle"></i> Needs attention
-                            </small>
+                            <h3 class="mb-0 fw-bold text-danger">₹{{ number_format((float)($dashboardData['statistics']['total_balance'] ?? 0), 2) }}</h3>
                         </div>
                         <div class="stat-icon bg-warning bg-opacity-10 rounded-circle p-3">
                             <i class="fas fa-clock fa-2x text-warning"></i>
@@ -94,10 +85,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1 fw-semibold">Collection Efficiency</p>
-                            <h3 class="mb-0 fw-bold">{{ $dashboardData['statistics']['collection_efficiency'] ?? 0 }}%</h3>
-                            <small class="text-info">
-                                <i class="fas fa-chart-line"></i> Target: 85%
-                            </small>
+                            <h3 class="mb-0 fw-bold">{{ number_format((float)($dashboardData['statistics']['collection_efficiency'] ?? 0)) }}%</h3>
                         </div>
                         <div class="stat-icon bg-info bg-opacity-10 rounded-circle p-3">
                             <i class="fas fa-percent fa-2x text-info"></i>
@@ -108,7 +96,7 @@
         </div>
     </div>
 
-    <!-- Statistics Cards Row 2 -->
+    <!-- Second Row Statistics -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-3">
             <div class="card stat-card h-100 border-0 shadow-sm">
@@ -116,7 +104,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1">Water Tax Collection</p>
-                            <h4 class="mb-0 fw-bold">₹{{ number_format($dashboardData['statistics']['total_water_tax'] ?? 0, 2) }}</h4>
+                            <h4 class="mb-0 fw-bold">₹{{ number_format((float)($dashboardData['statistics']['total_water_tax'] ?? 0), 2) }}</h4>
                         </div>
                         <div class="stat-icon bg-info bg-opacity-10 rounded-circle p-2">
                             <i class="fas fa-water text-info"></i>
@@ -132,7 +120,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1">Professional Tax</p>
-                            <h4 class="mb-0 fw-bold">₹{{ number_format($dashboardData['statistics']['total_professional_tax'] ?? 0, 2) }}</h4>
+                            <h4 class="mb-0 fw-bold">₹{{ number_format((float)($dashboardData['statistics']['total_professional_tax'] ?? 0), 2) }}</h4>
                         </div>
                         <div class="stat-icon bg-danger bg-opacity-10 rounded-circle p-2">
                             <i class="fas fa-briefcase text-danger"></i>
@@ -148,7 +136,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1">GST Collection</p>
-                            <h4 class="mb-0 fw-bold">₹{{ number_format($dashboardData['statistics']['total_gst'] ?? 0, 2) }}</h4>
+                            <h4 class="mb-0 fw-bold">₹{{ number_format((float)($dashboardData['statistics']['total_gst'] ?? 0), 2) }}</h4>
                         </div>
                         <div class="stat-icon bg-success bg-opacity-10 rounded-circle p-2">
                             <i class="fas fa-chart-line text-success"></i>
@@ -164,7 +152,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-1">Total Shops</p>
-                            <h4 class="mb-0 fw-bold">{{ number_format($dashboardData['statistics']['total_shops'] ?? 0) }}</h4>
+                            <h4 class="mb-0 fw-bold">{{ number_format((float)($dashboardData['statistics']['total_shops'] ?? 0)) }}</h4>
                         </div>
                         <div class="stat-icon bg-secondary bg-opacity-10 rounded-circle p-2">
                             <i class="fas fa-store text-secondary"></i>
@@ -200,145 +188,7 @@
         </div>
     </div>
 
-    <!-- Recent Activities & Top Defaulters -->
-    <div class="row mb-4">
-        <div class="col-xl-6 col-md-12 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-3">
-                    <h5 class="mb-0 fw-bold">Recent Activities</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @forelse($dashboardData['recent_activities'] ?? [] as $activity)
-                        <div class="list-group-item border-0 py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle p-2 me-3" style="background: rgba(54, 162, 235, 0.1);">
-                                        <i class="fas {{ $activity['icon'] ?? 'fa-building' }} text-primary"></i>
-                                    </div>
-                                    <div>
-                                        <span class="badge bg-primary mb-1">{{ $activity['type'] }}</span>
-                                        <p class="mb-0">{{ $activity['description'] }}</p>
-                                        <small class="text-muted">{{ $activity['location'] }}</small>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <small class="text-muted">{{ \Carbon\Carbon::parse($activity['date'])->diffForHumans() }}</small>
-                                    @if($activity['balance'] > 0)
-                                        <span class="badge bg-danger d-block mt-1">Due: ₹{{ number_format($activity['balance'], 2) }}</span>
-                                    @else
-                                        <span class="badge bg-success d-block mt-1">Paid</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>No recent activities found</p>
-                        </div>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-6 col-md-12 mb-3">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-3">
-                    <h5 class="mb-0 fw-bold">Top Defaulters</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Owner Name</th>
-                                    <th>Door No</th>
-                                    <th>Assessment</th>
-                                    <th>Balance Due</th>
-                                    <th>Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($dashboardData['top_defaulters'] ?? [] as $defaulter)
-                                <tr>
-                                    <td class="fw-semibold">{{ $defaulter->name }}</td>
-                                    <td>{{ $defaulter->door_no }}</td>
-                                    <td>₹{{ number_format($defaulter->assessment, 2) }}</td>
-                                    <td class="text-danger fw-bold">₹{{ number_format($defaulter->balance, 2) }}</td>
-                                    <td><span class="badge bg-warning">{{ $defaulter->type }}</span></td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="fas fa-check-circle fa-2x mb-2 d-block text-success"></i>
-                                        No defaulters found
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Usage Statistics -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pt-3">
-                    <h5 class="mb-0 fw-bold">Building Usage Statistics</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Usage Type</th>
-                                    <th>Count</th>
-                                    <th>Percentage</th>
-                                    <th>Progress</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $usageData = $dashboardData['statistics']['by_usage']['buildings'] ?? [];
-                                    $totalUsage = is_array($usageData) ? array_sum($usageData) : 0;
-                                @endphp
-
-                                @forelse($usageData as $type => $count)
-                                <tr>
-                                    <td class="fw-semibold">{{ ucfirst(str_replace('_', ' ', $type)) }}</td>
-                                    <td>{{ number_format($count) }}</td>
-                                    <td>{{ $totalUsage > 0 ? round(($count/$totalUsage)*100, 1) : 0 }}%</td>
-                                    <td style="width: 50%;">
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar bg-primary" role="progressbar"
-                                                 style="width: {{ $totalUsage > 0 ? ($count/$totalUsage)*100 : 0 }}%">
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">
-                                        <i class="fas fa-chart-pie fa-2x mb-2 d-block"></i>
-                                        No usage data available
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MIS Data Table - FIXED COLUMN COUNT -->
+    <!-- MIS Data Table -->
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm">
@@ -370,9 +220,9 @@
                                     <td class="fw-semibold">{{ $mis->owner_name ?? 'N/A' }}</td>
                                     <td>{{ $mis->old_door_no ?? 'N/A' }}</td>
                                     <td>{{ $mis->new_door_no ?? 'N/A' }}</td>
-                                    <td>₹{{ number_format($mis->assessment ?? 0, 2) }}</td>
-                                    <td>₹{{ number_format($mis->half_year_tax ?? 0, 2) }}</td>
-                                    <td class="text-danger fw-bold">₹{{ number_format($mis->balance ?? 0, 2) }}</td>
+                                    <td>₹{{ number_format((float)($mis->assessment ?? 0), 2) }}</td>
+                                    <td>₹{{ number_format((float)($mis->half_year_tax ?? 0), 2) }}</td>
+                                    <td class="text-danger fw-bold">₹{{ number_format((float)($mis->balance ?? 0), 2) }}</td>
                                     <td><span class="badge bg-info">{{ $mis->zone ?? 'N/A' }}</span></td>
                                     <td>
                                         <button class="btn btn-sm btn-outline-info" onclick="viewDetails('mis', {{ $mis->id }})">
@@ -381,7 +231,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <!-- Empty - DataTables will handle the "No data available" message -->
+                                <tr><td colspan="10" class="text-center">No MIS data available</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -391,7 +241,7 @@
         </div>
     </div>
 
-    <!-- Building Data Table - FIXED COLUMN COUNT -->
+    <!-- Building Data Table -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -421,10 +271,10 @@
                                     <td>{{ $building->id }}</td>
                                     <td class="fw-semibold">{{ $building->owner_name ?? $building->present_owner_name ?? 'N/A' }}</td>
                                     <td>{{ $building->new_door_no ?? $building->old_door_no ?? 'N/A' }}</td>
-                                    <td>₹{{ number_format($building->assessment ?? 0, 2) }}</td>
-                                    <td>₹{{ number_format($building->halfyeartax ?? 0, 2) }}</td>
-                                    <td>₹{{ number_format($building->water_tax ?? 0, 2) }}</td>
-                                    <td class="text-danger fw-bold">₹{{ number_format($building->balance ?? 0, 2) }}</td>
+                                    <td>₹{{ number_format((float)($building->assessment ?? 0), 2) }}</td>
+                                    <td>₹{{ number_format((float)($building->halfyeartax ?? 0), 2) }}</td>
+                                    <td>₹{{ number_format((float)($building->water_tax ?? 0), 2) }}</td>
+                                    <td class="text-danger fw-bold">₹{{ number_format((float)($building->balance ?? 0), 2) }}</td>
                                     <td>{{ $building->phone_number ?? 'N/A' }}</td>
                                     <td><span class="badge bg-info">{{ $building->zone ?? 'N/A' }}</span></td>
                                     <td>
@@ -434,7 +284,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <!-- Empty - DataTables will handle the "No data available" message -->
+                                <tr><td colspan="10" class="text-center">No building data available</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -467,8 +317,6 @@
                         <label class="form-label fw-semibold">Format</label>
                         <select class="form-select" id="exportFormat">
                             <option value="csv">CSV</option>
-                            <option value="excel" disabled>Excel (Coming Soon)</option>
-                            <option value="pdf" disabled>PDF (Coming Soon)</option>
                         </select>
                     </div>
                 </form>
@@ -482,366 +330,115 @@
 </div>
 @endsection
 
-@push('styles')
-<style>
-    .stat-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border-radius: 15px;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
-    }
-
-    .stat-icon {
-        width: 55px;
-        height: 55px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .table > :not(caption) > * > * {
-        padding: 12px 8px;
-    }
-
-    .btn-outline-info:hover {
-        background-color: #0dcaf0;
-        border-color: #0dcaf0;
-        color: white;
-    }
-
-    @media (max-width: 768px) {
-        .stat-card {
-            margin-bottom: 1rem;
-        }
-
-        .stat-icon {
-            width: 45px;
-            height: 45px;
-        }
-
-        .stat-icon i {
-            font-size: 1.5rem;
-        }
-
-        h3 {
-            font-size: 1.5rem;
-        }
-    }
-</style>
-@endpush
-
 @push('scripts')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Initialize DataTables - FIXED with proper error handling
     $(document).ready(function() {
-        // Initialize MIS Table
-        if ($('#misTable').length && $('#misTable thead th').length > 0) {
-            try {
-                $('#misTable').DataTable({
-                    responsive: true,
-                    pageLength: 10,
-                    language: {
-                        search: "Search:",
-                        lengthMenu: "Show _MENU_ entries",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        infoEmpty: "Showing 0 to 0 of 0 entries",
-                        emptyTable: "No MIS data available in the database",
-                        zeroRecords: "No matching records found",
-                        loadingRecords: "Loading...",
-                        processing: "Processing..."
-                    },
-                    order: [[0, 'desc']],
-                    drawCallback: function() {
-                        // Optional: Add any post-draw logic here
-                    }
-                });
-                console.log('MIS DataTable initialized successfully');
-            } catch(e) {
-                console.error('DataTables error on MIS table:', e);
-            }
+        if ($('#misTable tbody tr').length > 0 && $('#misTable tbody tr:first td').length == 10) {
+            $('#misTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                language: {
+                    emptyTable: "No MIS data available"
+                }
+            });
         }
 
-        // Initialize Building Table
-        if ($('#buildingTable').length && $('#buildingTable thead th').length > 0) {
-            try {
-                $('#buildingTable').DataTable({
-                    responsive: true,
-                    pageLength: 10,
-                    language: {
-                        search: "Search:",
-                        lengthMenu: "Show _MENU_ entries",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        infoEmpty: "Showing 0 to 0 of 0 entries",
-                        emptyTable: "No building data available in the database",
-                        zeroRecords: "No matching records found",
-                        loadingRecords: "Loading...",
-                        processing: "Processing..."
-                    },
-                    order: [[0, 'desc']]
-                });
-                console.log('Building DataTable initialized successfully');
-            } catch(e) {
-                console.error('DataTables error on Building table:', e);
-            }
+        if ($('#buildingTable tbody tr').length > 0 && $('#buildingTable tbody tr:first td').length == 10) {
+            $('#buildingTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                language: {
+                    emptyTable: "No building data available"
+                }
+            });
         }
     });
 
     // Zone Chart
-    const zoneCtx = document.getElementById('zoneChart').getContext('2d');
-    let zoneData = @json($dashboardData['statistics']['by_zone']['buildings'] ?? []);
-
-    const zoneLabels = Object.keys(zoneData || {});
-    const zoneValues = Object.values(zoneData || {});
+    const zoneData = @json($dashboardData['statistics']['by_zone']['buildings'] ?? []);
+    const zoneLabels = Object.keys(zoneData);
+    const zoneValues = Object.values(zoneData);
 
     if (zoneLabels.length > 0) {
-        new Chart(zoneCtx, {
+        new Chart(document.getElementById('zoneChart'), {
             type: 'bar',
             data: {
                 labels: zoneLabels,
                 datasets: [{
                     label: 'Number of Buildings',
                     data: zoneValues,
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
                 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `Buildings: ${context.raw.toLocaleString()}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: 'Number of Buildings'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Zone'
-                        }
-                    }
-                }
             }
         });
-    } else {
-        zoneCtx.canvas.parentNode.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-chart-bar fa-3x mb-2 d-block"></i>No zone data available</div>';
     }
 
     // Tax Chart
-    const taxCtx = document.getElementById('taxChart').getContext('2d');
-    const taxData = {
-        labels: ['Half Year Tax', 'Water Tax', 'Professional Tax', 'GST'],
-        values: [
-            {{ $dashboardData['statistics']['total_tax_collection'] ?? 0 }},
-            {{ $dashboardData['statistics']['total_water_tax'] ?? 0 }},
-            {{ $dashboardData['statistics']['total_professional_tax'] ?? 0 }},
-            {{ $dashboardData['statistics']['total_gst'] ?? 0 }}
-        ]
-    };
+    new Chart(document.getElementById('taxChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Half Year Tax', 'Water Tax', 'Professional Tax', 'GST'],
+            datasets: [{
+                data: [
+                    {{ (float)($dashboardData['statistics']['total_tax_collection'] ?? 0) }},
+                    {{ (float)($dashboardData['statistics']['total_water_tax'] ?? 0) }},
+                    {{ (float)($dashboardData['statistics']['total_professional_tax'] ?? 0) }},
+                    {{ (float)($dashboardData['statistics']['total_gst'] ?? 0) }}
+                ],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+            }]
+        }
+    });
 
-    const hasTaxData = taxData.values.some(v => v > 0);
-
-    if (hasTaxData) {
-        new Chart(taxCtx, {
-            type: 'doughnut',
-            data: {
-                labels: taxData.labels,
-                datasets: [{
-                    data: taxData.values,
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(16, 185, 129, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(239, 68, 68, 0.8)'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ₹${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    } else {
-        taxCtx.canvas.parentNode.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-chart-pie fa-3x mb-2 d-block"></i>No tax data available</div>';
-    }
-
-    // View Details Function - FIXED with correct URL
     function viewDetails(type, id) {
         Swal.fire({
             title: 'Loading...',
-            text: 'Fetching details',
             showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
+            willOpen: () => { Swal.showLoading(); }
         });
 
-        // Fixed URL - using proper path
-        const url = `/corporation/commissioner/building/${id}?type=${type}`;
-
         $.ajax({
-            url: url,
+            url: `/corporation/commissioner/building/${id}?type=${type}`,
             method: 'GET',
             success: function(response) {
                 Swal.close();
                 if (response.success && response.data) {
-                    const data = response.data;
-                    let html = '<div class="text-start" style="max-height: 500px; overflow-y: auto;">';
-                    html += '<table class="table table-sm table-bordered">';
-
-                    // Loop through data properties
-                    for (let [key, value] of Object.entries(data)) {
+                    let html = '<div class="text-start"><table class="table table-sm">';
+                    for (let [key, value] of Object.entries(response.data)) {
                         if (value && typeof value !== 'object') {
-                            // Format the key name
-                            let formattedKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toUpperCase();
-                            html += `<tr>
-                                        <th style="width: 40%; background: #f8f9fa;">${formattedKey}</th>
-                                        <td style="width: 60%;">${value}</td>
-                                      </tr>`;
+                            html += `<tr><th>${key.replace(/_/g, ' ').toUpperCase()}</th><td>${value}</td></tr>`;
                         }
                     }
-
                     html += '</table></div>';
-
-                    Swal.fire({
-                        title: `${type.toUpperCase()} Details - ID: ${id}`,
-                        html: html,
-                        icon: 'info',
-                        width: '900px',
-                        confirmButtonText: 'Close',
-                        confirmButtonColor: '#3085d6'
-                    });
+                    Swal.fire({ title: `${type.toUpperCase()} Details`, html: html, width: '800px' });
                 } else {
-                    Swal.fire('Error', 'No data found for this record', 'error');
+                    Swal.fire('Error', 'No data found', 'error');
                 }
             },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                Swal.fire('Error', 'Failed to fetch details. Please try again.', 'error');
+            error: function() {
+                Swal.fire('Error', 'Failed to fetch details', 'error');
             }
         });
     }
 
-    // Export Data Function
     function exportData() {
         const exportType = document.getElementById('exportType').value;
-        const exportFormat = document.getElementById('exportFormat').value;
-
         if (!exportType) {
-            Swal.fire('Error', 'Please select data type to export', 'error');
+            Swal.fire('Error', 'Please select data type', 'error');
             return;
         }
-
-        Swal.fire({
-            title: 'Exporting...',
-            text: 'Please wait while we prepare your data',
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Fixed: Use proper URL construction
-        const exportUrl = `/corporation/commissioner/export/${exportType}?format=${exportFormat}`;
-        window.location.href = exportUrl;
-
-        setTimeout(() => {
-            Swal.close();
-            $('#exportModal').modal('hide');
-            Swal.fire('Success', 'Export completed successfully', 'success');
-        }, 2000);
+        window.location.href = `/corporation/commissioner/export/${exportType}?format=csv`;
+        $('#exportModal').modal('hide');
     }
 
-    // Refresh Data Function
     function refreshData() {
-        Swal.fire({
-            title: 'Refreshing Data',
-            text: 'Please wait while we refresh the dashboard',
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
+        Swal.fire({ title: 'Refreshing...', showConfirmButton: false, timer: 1000 });
+        setTimeout(() => location.reload(), 1000);
     }
-
-    // Auto refresh stats every 2 minutes
-    setInterval(function() {
-        if (!document.hidden) {
-            $.ajax({
-                url: '/corporation/commissioner/stats',
-                method: 'GET',
-                success: function(response) {
-                    console.log('Stats updated:', response);
-                },
-                error: function(error) {
-                    console.error('Error fetching stats:', error);
-                }
-            });
-        }
-    }, 120000);
-
-    // Auto refresh page every 5 minutes (only if page is visible)
-    let autoRefreshInterval = setInterval(function() {
-        if (!document.hidden) {
-            refreshData();
-        }
-    }, 300000);
-
-    // Clear interval on page unload
-    window.addEventListener('beforeunload', function() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-        }
-    });
 </script>
 @endpush
