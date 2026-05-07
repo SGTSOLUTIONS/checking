@@ -515,7 +515,7 @@
                 </div>
                 <div class="modal-body text-center">
                     @php
-                        $logoFullPath = asset(($corporation->profile ?? 'corporation-logo/default-logo.png'));
+                        $logoFullPath = asset(($corporation->logo ?? 'corporation-logo/default-logo.png'));
                         if (!file_exists(public_path('/' . ($corporation->logo ?? '')))) {
                             $logoFullPath = asset('assets/corporation-logo/default-logo.png');
                         }
