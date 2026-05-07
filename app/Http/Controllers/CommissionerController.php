@@ -888,4 +888,150 @@ class CommissionerController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    public function debugTables()
+{
+    $user = Auth::guard('corporation')->user();
+
+    if (!$user) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $corporation = Corporation::find($user->corporation_id);
+
+    if (!$corporation) {
+        return response()->json(['error' => 'Corporation not found'], 404);
+    }
+
+    // Get wards
+    $wards = Ward::where('corporation_id', $corporation->id)
+        ->where('status', 'active')
+        ->get();
+
+    // Get current ward
+    $userWard = null;
+    if ($user->ward_no) {
+        $userWard = $wards->where('ward_no', $user->ward_no)->first();
+    } else {
+        $userWard = $wards->first();
+    }
+
+    $wardNo = $userWard->ward_no ?? null;
+    $zone = $userWard->zone ?? 'south';
+
+    // Table names
+    $misTable = "mis_corporation_{$corporation->id}";
+    $pointdataTable = $this->getPointdataTableName($corporation->id, $zone, $wardNo);
+    $polygondataTable = $this->getPolygondataTableName($corporation->id, $zone, $wardNo);
+    $linedataTable = $this->getLinedataTableName($corporation->id, $zone, $wardNo);
+
+    $response = [
+        'success' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'corporation_id' => $user->corporation_id,
+            'ward_no' => $user->ward_no
+        ],
+        'corporation' => [
+            'id' => $corporation->id,
+            'name' => $corporation->name
+        ],
+        'wards' => $wards->toArray(),
+        'current_ward' => $userWard ? $userWard->toArray() : null,
+        'tables' => [
+            'mis_table' => [
+                'name' => $misTable,
+                'exists' => Schema::hasTable($misTable),
+                'count' => Schema::hasTable($misTable) ? DB::table($misTable)->count() : 0,
+                'sample_data' => Schema::hasTable($misTable) ? DB::table($misTable)->limit(3)->get() : [],
+                'columns' => Schema::hasTable($misTable) ? Schema::getColumnListing($misTable) : []
+            ],
+            'pointdata_table' => [
+                'name' => $pointdataTable,
+                'exists' => Schema::hasTable($pointdataTable),
+                'count' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->count() : 0,
+                'sample_data' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->limit(3)->get() : [],
+                'columns' => Schema::hasTable($pointdataTable) ? Schema::getColumnListing($pointdataTable) : [],
+                'distinct_wards' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->select('ward_no')->distinct()->get() : [],
+                'distinct_zones' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->select('zone')->distinct()->get() : []
+            ],
+            'polygondata_table' => [
+                'name' => $polygondataTable,
+                'exists' => Schema::hasTable($polygondataTable),
+                'count' => Schema::hasTable($polygondataTable) ? DB::table($polygondataTable)->count() : 0,
+                'sample_data' => Schema::hasTable($polygondataTable) ? DB::table($polygondataTable)->limit(3)->get() : [],
+                'columns' => Schema::hasTable($polygondataTable) ? Schema::getColumnListing($polygondataTable) : []
+            ],
+            'linedata_table' => [
+                'name' => $linedataTable,
+                'exists' => Schema::hasTable($linedataTable),
+                'count' => Schema::hasTable($linedataTable) ? DB::table($linedataTable)->count() : 0,
+                'sample_data' => Schema::hasTable($linedataTable) ? DB::table($linedataTable)->limit(3)->get() : [],
+                'columns' => Schema::hasTable($linedataTable) ? Schema::getColumnListing($linedataTable) : []
+            ]
+        ],
+        'all_mis_data' => Schema::hasTable($misTable) ? DB::table($misTable)->limit(10)->get() : [],
+        'all_point_data' => Schema::hasTable($pointdataTable) ? DB::table($pointdataTable)->limit(10)->get() : [],
+        'filtered_mis_data' => Schema::hasTable($misTable) && $wardNo ? DB::table($misTable)->where('ward_no', $wardNo)->limit(10)->get() : [],
+        'filtered_point_data' => Schema::hasTable($pointdataTable) && $wardNo ? DB::table($pointdataTable)->where('ward_no', $wardNo)->limit(10)->get() : [],
+        'possible_table_patterns' => $this->findPossibleTables($corporation->id)
+    ];
+
+    return response()->json($response);
+}
+
+/**
+ * Find all possible table names for debugging
+ */
+private function findPossibleTables($corporationId)
+{
+    $patterns = [
+        "pointdata_{$corporationId}",
+        "pointdata_{$corporationId}_south",
+        "pointdata_{$corporationId}_south_92",
+        "pointdata_{$corporationId}_north",
+        "pointdata_{$corporationId}_north_92",
+        "pointdata_{$corporationId}_east",
+        "pointdata_{$corporationId}_west",
+        "polygondata_{$corporationId}",
+        "polygondata_{$corporationId}_south",
+        "polygondata_{$corporationId}_south_92",
+        "polygondata_{$corporationId}_north",
+        "polygondata_{$corporationId}_north_92",
+        "mis_corporation_{$corporationId}",
+        "line_{$corporationId}",
+        "line_{$corporationId}_south_92"
+    ];
+
+    $existingTables = [];
+    foreach ($patterns as $pattern) {
+        if (Schema::hasTable($pattern)) {
+            $existingTables[$pattern] = [
+                'exists' => true,
+                'count' => DB::table($pattern)->count()
+            ];
+        } else {
+            $existingTables[$pattern] = [
+                'exists' => false,
+                'count' => 0
+            ];
+        }
+    }
+
+    // Also get all tables that start with the patterns
+    $allTables = DB::select('SHOW TABLES');
+    $allTableNames = array_map('current', $allTables);
+    $matchingTables = array_filter($allTableNames, function($table) use ($corporationId) {
+        return strpos($table, "pointdata_{$corporationId}") === 0 ||
+               strpos($table, "polygondata_{$corporationId}") === 0 ||
+               strpos($table, "mis_corporation_{$corporationId}") === 0 ||
+               strpos($table, "line_{$corporationId}") === 0;
+    });
+
+    return [
+        'checked_patterns' => $existingTables,
+        'all_matching_tables' => array_values($matchingTables)
+    ];
+}
 }
