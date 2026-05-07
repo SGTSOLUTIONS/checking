@@ -338,7 +338,7 @@
         </div>
     </div>
 
-    <!-- MIS Data Table -->
+    <!-- MIS Data Table - FIXED COLUMN COUNT -->
     <div class="row">
         <div class="col-12 mb-4">
             <div class="card border-0 shadow-sm">
@@ -381,12 +381,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted py-4">
-                                        <i class="fas fa-database fa-2x mb-2 d-block"></i>
-                                        No MIS data found
-                                    </td>
-                                </tr>
+                                <!-- Empty - DataTables will handle the "No data available" message -->
                                 @endforelse
                             </tbody>
                         </table>
@@ -396,7 +391,7 @@
         </div>
     </div>
 
-    <!-- Building Data Table -->
+    <!-- Building Data Table - FIXED COLUMN COUNT -->
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
@@ -439,12 +434,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted py-4">
-                                        <i class="fas fa-building fa-2x mb-2 d-block"></i>
-                                        No building data found
-                                    </td>
-                                </tr>
+                                <!-- Empty - DataTables will handle the "No data available" message -->
                                 @endforelse
                             </tbody>
                         </table>
@@ -490,7 +480,6 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @push('styles')
@@ -549,34 +538,57 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    // Initialize DataTables
+    // Initialize DataTables - FIXED with proper error handling
     $(document).ready(function() {
-        if ($('#misTable tbody tr').length > 0) {
-            $('#misTable').DataTable({
-                responsive: true,
-                pageLength: 10,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    emptyTable: "No MIS data available"
-                },
-                order: [[0, 'desc']]
-            });
+        // Initialize MIS Table
+        if ($('#misTable').length && $('#misTable thead th').length > 0) {
+            try {
+                $('#misTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        emptyTable: "No MIS data available in the database",
+                        zeroRecords: "No matching records found",
+                        loadingRecords: "Loading...",
+                        processing: "Processing..."
+                    },
+                    order: [[0, 'desc']],
+                    drawCallback: function() {
+                        // Optional: Add any post-draw logic here
+                    }
+                });
+                console.log('MIS DataTable initialized successfully');
+            } catch(e) {
+                console.error('DataTables error on MIS table:', e);
+            }
         }
 
-        if ($('#buildingTable tbody tr').length > 0) {
-            $('#buildingTable').DataTable({
-                responsive: true,
-                pageLength: 10,
-                language: {
-                    search: "Search:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                    emptyTable: "No building data available"
-                },
-                order: [[0, 'desc']]
-            });
+        // Initialize Building Table
+        if ($('#buildingTable').length && $('#buildingTable thead th').length > 0) {
+            try {
+                $('#buildingTable').DataTable({
+                    responsive: true,
+                    pageLength: 10,
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        emptyTable: "No building data available in the database",
+                        zeroRecords: "No matching records found",
+                        loadingRecords: "Loading...",
+                        processing: "Processing..."
+                    },
+                    order: [[0, 'desc']]
+                });
+                console.log('Building DataTable initialized successfully');
+            } catch(e) {
+                console.error('DataTables error on Building table:', e);
+            }
         }
     });
 
@@ -699,7 +711,7 @@
         taxCtx.canvas.parentNode.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-chart-pie fa-3x mb-2 d-block"></i>No tax data available</div>';
     }
 
-    // FIXED: View Details Function - Corrected the URL
+    // View Details Function - FIXED with correct URL
     function viewDetails(type, id) {
         Swal.fire({
             title: 'Loading...',
@@ -710,7 +722,7 @@
             }
         });
 
-        // Fixed URL - using proper path without route() helper
+        // Fixed URL - using proper path
         const url = `/corporation/commissioner/building/${id}?type=${type}`;
 
         $.ajax({
@@ -731,7 +743,7 @@
                             html += `<tr>
                                         <th style="width: 40%; background: #f8f9fa;">${formattedKey}</th>
                                         <td style="width: 60%;">${value}</td>
-                                     </tr>`;
+                                      </tr>`;
                         }
                     }
 
@@ -802,25 +814,19 @@
         }, 1000);
     }
 
-    // Get stats via AJAX
-    function refreshStats() {
-        $.ajax({
-            url: '/corporation/commissioner/stats',
-            method: 'GET',
-            success: function(response) {
-                console.log('Stats updated:', response);
-                // Update stats on page if needed
-            },
-            error: function(error) {
-                console.error('Error fetching stats:', error);
-            }
-        });
-    }
-
     // Auto refresh stats every 2 minutes
     setInterval(function() {
         if (!document.hidden) {
-            refreshStats();
+            $.ajax({
+                url: '/corporation/commissioner/stats',
+                method: 'GET',
+                success: function(response) {
+                    console.log('Stats updated:', response);
+                },
+                error: function(error) {
+                    console.error('Error fetching stats:', error);
+                }
+            });
         }
     }, 120000);
 
