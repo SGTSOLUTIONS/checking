@@ -109,7 +109,7 @@ class CommissionerController extends Controller
             }
         }
 
-        return response()->json($wardlists);
+        return response()->json($collections);
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
     }
