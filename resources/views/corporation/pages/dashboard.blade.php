@@ -51,7 +51,7 @@
                 <div>
                     <h6 class="text-muted mb-1">Total Buildings</h6>
                     <h2 class="fw-bold mb-0" style="color:#102C57;">
-                        {{ number_format($collections->sum('buildingCount')) }}
+                        {{-- {{ number_format($collections->sum('buildingCount')) }} --}}
                     </h2>
                     <small class="text-info"><i class="fas fa-building"></i> Registered</small>
                 </div>
