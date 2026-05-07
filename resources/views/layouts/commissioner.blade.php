@@ -126,6 +126,23 @@
             padding: 20px 16px;
             border-bottom: 1px solid rgba(255, 177, 177, 0.3);
             margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .corporation-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .corporation-logo:hover {
+            transform: scale(1.05);
         }
 
         .navbar-custom {
@@ -154,6 +171,14 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+        }
+
+        .corporation-profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #FFB1B1;
         }
 
         .main-content {
@@ -260,12 +285,6 @@
             border-color: #FFB1B1;
         }
 
-        .emblem-img {
-            width: 100px;
-            height: auto;
-            transition: transform 0.3s ease;
-        }
-
         .badge.bg-primary { background-color: #1679AB !important; }
         .badge.bg-success { background-color: #102C57 !important; }
         .badge.bg-info { background-color: #FFB1B1 !important; color: #102C57; }
@@ -332,6 +351,22 @@
             color: white;
         }
 
+        /* Profile modal */
+        .profile-modal-header {
+            background: linear-gradient(135deg, #102C57, #1679AB);
+            color: white;
+        }
+        .corporation-logo-large {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: white;
+            padding: 12px;
+            border: 3px solid #FFB1B1;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFCBCB; border-radius: 10px; }
@@ -344,11 +379,22 @@
         <div class="row g-0">
             <!-- SIDEBAR -->
             <div class="col-auto sidebar min-vh-100" id="sidebar">
-                <div class="logo-area text-center">
-                    <img src="{{ asset('images/tn-emblem.png') }}" alt="TamilNadu" class="emblem-img"
-                        onerror="this.src='https://via.placeholder.com/70x70?text=TN'">
-                    <h6 class="fw-bold mb-0 mt-2" style="color: #FFCBCB;">TN Municipal Corp</h6>
-                    <small class="text-white-50">e-Governance Suite</small>
+                <div class="logo-area">
+                    <div class="text-center">
+                        {{-- Corporation Logo from assets --}}
+                        @php
+                            $logoPath = asset('storage/' . ($corporation->logo ?? 'corporation-logo/default-logo.png'));
+                            if (!file_exists(public_path('storage/' . ($corporation->logo ?? '')))) {
+                                $logoPath = asset('assets/corporation-logo/default-logo.png');
+                            }
+                        @endphp
+                        <img src="{{ $logoPath }}"
+                             alt="{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}"
+                             class="corporation-logo"
+                             id="sidebarCorpLogo">
+                        <h6 class="fw-bold mb-0 mt-2" style="color: #FFCBCB;">{{ $corporation->name ?? 'TN Municipal Corp' }}</h6>
+                        <small class="text-white-50">e-Governance Suite</small>
+                    </div>
                 </div>
                 <nav class="nav flex-column">
                     <a class="nav-link {{ request()->routeIs('corporation.dashboard') ? 'active' : '' }}"
@@ -393,16 +439,27 @@
                         <div class="dropdown user-dropdown">
                             <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
-                                    <i class="fas fa-user"></i>
+                                    @if(isset($corporation) && $corporation->logo)
+                                        <img src="{{ asset('storage/' . $corporation->logo) }}"
+                                             class="corporation-profile-icon"
+                                             alt="Profile">
+                                    @else
+                                        <i class="fas fa-building"></i>
+                                    @endif
                                 </div>
                                 <div class="d-none d-md-block">
-                                    <span class="fw-semibold" style="color:#102C57;">{{ Auth::guard('corporation')->user()->name ?? 'Admin User' }}</span>
-                                    <small class="d-block text-muted">{{ $corporation->name ?? 'Municipal Commissioner' }}</small>
+                                    <span class="fw-semibold" style="color:#102C57;">{{ $corporation->name ?? 'Admin User' }}</span>
+                                    <small class="d-block text-muted">{{ $corporation->commissioner_name ?? 'Municipal Commissioner' }}</small>
                                 </div>
                                 <i class="fas fa-chevron-down text-muted"></i>
                             </div>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle me-2"></i> My Profile</a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#corporationProfileModal">
+                                    <i class="fas fa-building me-2"></i> Corporation Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#commissionerProfileModal">
+                                    <i class="fas fa-user-tie me-2"></i> Commissioner Profile
+                                </a></li>
                                 <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" id="logoutDropdown"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
@@ -446,6 +503,136 @@
         </div>
     </div>
 
+    {{-- Corporation Profile Modal --}}
+    <div class="modal fade" id="corporationProfileModal" tabindex="-1" aria-labelledby="corporationProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header profile-modal-header">
+                    <h5 class="modal-title" id="corporationProfileModalLabel">
+                        <i class="fas fa-building me-2"></i> Corporation Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    @php
+                        $logoFullPath = asset('storage/' . ($corporation->logo ?? 'corporation-logo/default-logo.png'));
+                        if (!file_exists(public_path('storage/' . ($corporation->logo ?? '')))) {
+                            $logoFullPath = asset('assets/corporation-logo/default-logo.png');
+                        }
+                    @endphp
+                    <img src="{{ $logoFullPath }}"
+                         alt="{{ $corporation->name ?? 'Corporation Logo' }}"
+                         class="corporation-logo-large mb-3">
+
+                    <div class="text-start mt-3">
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Corporation Name:</div>
+                            <div class="col-7">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Corporation Code:</div>
+                            <div class="col-7">{{ $corporation->code ?? 'TN-MC-001' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">District:</div>
+                            <div class="col-7">{{ $corporation->district ?? 'Chennai' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">State:</div>
+                            <div class="col-7">Tamil Nadu</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Established:</div>
+                            <div class="col-7">{{ $corporation->established_year ?? '1990' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Total Wards:</div>
+                            <div class="col-7">{{ $ward_count ?? 'N/A' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Email:</div>
+                            <div class="col-7">{{ $corporation->email ?? 'admin@tnmunicipal.gov.in' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Phone:</div>
+                            <div class="col-7">{{ $corporation->phone ?? '044-12345678' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Website:</div>
+                            <div class="col-7">
+                                <a href="{{ $corporation->website ?? '#' }}" target="_blank">
+                                    {{ $corporation->website ?? 'www.tnmunicipal.gov.in' }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Address:</div>
+                            <div class="col-7">{{ $corporation->address ?? 'Ripon Building, Chennai, Tamil Nadu - 600003' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Commissioner Profile Modal --}}
+    <div class="modal fade" id="commissionerProfileModal" tabindex="-1" aria-labelledby="commissionerProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header profile-modal-header">
+                    <h5 class="modal-title" id="commissionerProfileModalLabel">
+                        <i class="fas fa-user-tie me-2"></i> Commissioner Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="user-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 40px;">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+
+                    <div class="text-start mt-3">
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Name:</div>
+                            <div class="col-7">{{ $corporation->commissioner_name ?? 'Dr. K. Senthil Raj, IAS' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Designation:</div>
+                            <div class="col-7">Municipal Commissioner</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Grade:</div>
+                            <div class="col-7">Special Grade</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Date of Joining:</div>
+                            <div class="col-7">{{ $corporation->commissioner_joining_date ?? '01-06-2023' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Email:</div>
+                            <div class="col-7">{{ $corporation->commissioner_email ?? 'commissioner@tnmunicipal.gov.in' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Phone:</div>
+                            <div class="col-7">{{ $corporation->commissioner_phone ?? '9876543210' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">Office Address:</div>
+                            <div class="col-7">{{ $corporation->commissioner_office ?? 'Commissioner\'s Office, Main Building, Chennai - 600003' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a href="#" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Sidebar toggle for mobile
@@ -468,7 +655,7 @@
 
         // Analysis Panel toggle
         const analysisNavLink = document.getElementById('analysisNavLink');
-        const dashboardContent = document.querySelector('.dashboard-content-area');
+        const dashboardContent = document.querySelector('.dashboard-content-area, .ward-details-content');
         const analysisPanel = document.getElementById('analysisPanel');
         let chartsInitialized = false;
 
@@ -551,6 +738,13 @@
         @if(request()->routeIs('corporation.dashboard'))
             if (analysisPanel) analysisPanel.style.display = 'none';
         @endif
+
+        // Corporation logo error fallback
+        document.querySelectorAll('.corporation-logo, .corporation-logo-large, .corporation-profile-icon').forEach(img => {
+            img.addEventListener('error', function() {
+                this.src = "{{ asset('assets/corporation-logo/default-logo.png') }}";
+            });
+        });
     </script>
     @stack('scripts')
 </body>

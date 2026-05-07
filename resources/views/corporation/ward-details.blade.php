@@ -1,7 +1,7 @@
 {{-- resources/views/corporation/ward-details.blade.php --}}
 @extends('layouts.commissioner')
 
-@section('title', 'Ward ' . $ward->ward_no . ' Details - Tamil Nadu Municipal Corporation')
+@section('title', 'Ward ' . $ward->ward_no . ' Details - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
 
 @section('styles')
 @parent
@@ -232,45 +232,6 @@
                 map.getView().fit(extent, { padding: [50, 50, 50, 50] });
             }
         }
-    }
-
-    // Parse WKT to OpenLayers geometry
-    function wktToGeometry(wkt) {
-        if (!wkt) return null;
-        try {
-            // Simple WKT parser for Polygon and MultiPolygon
-            if (wkt.includes('POLYGON')) {
-                // Extract coordinates
-                const coordsMatch = wkt.match(/\(\((.*?)\)\)/);
-                if (coordsMatch) {
-                    const points = coordsMatch[1].split(',');
-                    const coordinates = points.map(point => {
-                        const [lng, lat] = point.trim().split(' ').map(Number);
-                        return ol.proj.fromLonLat([lng, lat]);
-                    });
-                    return new ol.geom.Polygon([coordinates]);
-                }
-            } else if (wkt.includes('LINESTRING')) {
-                const coordsMatch = wkt.match(/\((.*?)\)/);
-                if (coordsMatch) {
-                    const points = coordsMatch[1].split(',');
-                    const coordinates = points.map(point => {
-                        const [lng, lat] = point.trim().split(' ').map(Number);
-                        return ol.proj.fromLonLat([lng, lat]);
-                    });
-                    return new ol.geom.LineString(coordinates);
-                }
-            } else if (wkt.includes('POINT')) {
-                const coordsMatch = wkt.match(/\((.*?)\)/);
-                if (coordsMatch) {
-                    const [lng, lat] = coordsMatch[1].trim().split(' ').map(Number);
-                    return new ol.geom.Point(ol.proj.fromLonLat([lng, lat]));
-                }
-            }
-        } catch(e) {
-            console.error('WKT parsing error:', e);
-        }
-        return null;
     }
 
     // Add buildings (polygons) to map

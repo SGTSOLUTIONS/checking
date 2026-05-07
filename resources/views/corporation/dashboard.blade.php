@@ -1,7 +1,7 @@
 {{-- resources/views/corporation/dashboard.blade.php --}}
 @extends('layouts.commissioner')
 
-@section('title', 'Dashboard - Tamil Nadu Municipal Corporation')
+@section('title', 'Dashboard - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
 
 @section('content')
 <div class="dashboard-content-area">
@@ -52,11 +52,11 @@
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Road Networks</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ array_sum(array_column($collections, 'roadCount')) }}</h2>
-                        <small class="text-success"><i class="fas fa-road"></i> Total road segments</small>
+                        <h6 class="text-muted mb-1">MIS Records</h6>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $mis_count }}</h2>
+                        <small class="text-primary"><i class="fas fa-database"></i> Total entries</small>
                     </div>
-                    <div class="stat-icon"><i class="fas fa-road"></i></div>
+                    <div class="stat-icon"><i class="fas fa-database"></i></div>
                 </div>
             </div>
         </div>
@@ -76,20 +76,18 @@
                                     <th>Ward No</th>
                                     <th>Buildings</th>
                                     <th>Surveyed</th>
-                                    <th>Points</th>
                                     <th>Roads</th>
                                     <th>MIS Count</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($collections as $data)
+                                @forelse($collections as $data)
                                 <tr>
                                     <td>{{ ucfirst($data['zone']) }}</td>
                                     <td>{{ $data['ward_no'] }}</td>
                                     <td>{{ $data['buildingCount'] }}</td>
                                     <td>{{ $data['surveyedBuildingCount'] }}</td>
-                                    <td>{{ $data['pointCount'] }}</td>
                                     <td>{{ $data['roadCount'] }}</td>
                                     <td>{{ $data['misCount'] }}</td>
                                     <td>
@@ -99,7 +97,11 @@
                                         </a>
                                     </td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">No ward data available</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
