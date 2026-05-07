@@ -52,7 +52,7 @@ class CommissionerController extends Controller
         $polygonData = $this->getPolygonData($polygondataTable);
         $lineData = $this->getLineData($linedataTable);
 
-        // Calculate statistics
+        // Calculate statistics (returns arrays, not collections)
         $statistics = $this->calculateStatistics($misData, $pointData, $polygonData);
 
         // Get recent activities
@@ -138,7 +138,7 @@ class CommissionerController extends Controller
                     'shop_category', 'professional_tax', 'gst', 'number_of_employee',
                     'trade_income', 'plot_area', 'water_tax', 'old_water_tax',
                     'halfyeartax', 'balance', 'qc_area', 'qc_usage', 'zone',
-                    'created_at', 'updated_at'
+                    'ward_no', 'created_at', 'updated_at'
                 ])
                 ->orderBy('created_at', 'desc')
                 ->limit(1000)
@@ -203,25 +203,62 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Calculate statistics for dashboard
+     * Calculate statistics for dashboard - FIXED: Returns arrays instead of collections
      */
     private function calculateStatistics($misData, $pointData, $polygonData)
     {
+        // Convert collections to arrays for safe usage in blade
+        $byZoneBuildings = $pointData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byZoneMis = $misData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byZonePolygons = $polygonData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byUsageBuildings = $pointData->groupBy('bill_usage')->map(function($item) {
+            return $item->count();
+        })->filter(function($value) {
+            return !is_null($value);
+        })->toArray();
+
+        $byUsageMis = $misData->groupBy('usage')->map(function($item) {
+            return $item->count();
+        })->filter(function($value) {
+            return !is_null($value);
+        })->toArray();
+
+        $byWardBuildings = $pointData->groupBy('ward_no')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byWardMis = $misData->groupBy('ward_no')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byConstructionType = $polygonData->groupBy('construction_type')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
         return [
             'total_mis_records' => $misData->count(),
             'total_buildings' => $pointData->count(),
             'total_polygons' => $polygonData->count(),
 
-            'total_tax_collection' => $pointData->sum('halfyeartax'),
-            'total_old_tax_collection' => $misData->sum('half_year_tax'),
-            'total_balance' => $pointData->sum('balance') + $misData->sum('balance'),
+            'total_tax_collection' => (float) $pointData->sum('halfyeartax'),
+            'total_old_tax_collection' => (float) $misData->sum('half_year_tax'),
+            'total_balance' => (float) ($pointData->sum('balance') + $misData->sum('balance')),
 
-            'total_water_tax' => $pointData->sum('water_tax'),
-            'total_professional_tax' => $pointData->sum('professional_tax'),
-            'total_gst' => $pointData->sum('gst'),
+            'total_water_tax' => (float) $pointData->sum('water_tax'),
+            'total_professional_tax' => (float) $pointData->sum('professional_tax'),
+            'total_gst' => (float) $pointData->sum('gst'),
 
             'total_shops' => $pointData->whereNotNull('shop_name')->count(),
-            'total_floors' => $polygonData->sum('number_floor'),
+            'total_floors' => (int) $polygonData->sum('number_floor'),
             'total_bill_connections' => $pointData->whereNotNull('eb')->count(),
 
             'buildings_with_cctv' => $polygonData->where('cctv', 1)->count(),
@@ -229,30 +266,28 @@ class CommissionerController extends Controller
             'buildings_with_water_connection' => $polygonData->where('water_connection', 1)->count(),
             'buildings_with_ugd' => $polygonData->where('ugd', 1)->count(),
 
-            'total_assessment_value' => $pointData->sum('assessment'),
+            'total_assessment_value' => (float) $pointData->sum('assessment'),
             'average_tax_per_building' => $pointData->count() > 0 ? round($pointData->sum('halfyeartax') / $pointData->count(), 2) : 0,
             'collection_efficiency' => $pointData->sum('halfyeartax') > 0 ?
                 round((($pointData->sum('halfyeartax') - $pointData->sum('balance')) / $pointData->sum('halfyeartax')) * 100, 2) : 0,
 
             'by_zone' => [
-                'mis' => $misData->groupBy('zone')->map->count(),
-                'buildings' => $pointData->groupBy('zone')->map->count(),
-                'polygons' => $polygonData->groupBy('zone')->map->count(),
+                'mis' => $byZoneMis,
+                'buildings' => $byZoneBuildings,
+                'polygons' => $byZonePolygons,
             ],
 
             'by_ward' => [
-                'mis' => $misData->groupBy('ward_no')->map->count(),
-                'buildings' => $pointData->groupBy('ward_no')->map(function($item) {
-                    return $item->count();
-                })
+                'mis' => $byWardMis,
+                'buildings' => $byWardBuildings,
             ],
 
             'by_usage' => [
-                'mis' => $misData->groupBy('usage')->map->count(),
-                'buildings' => $pointData->groupBy('bill_usage')->map->count(),
+                'mis' => $byUsageMis,
+                'buildings' => $byUsageBuildings,
             ],
 
-            'by_construction_type' => $polygonData->groupBy('construction_type')->map->count(),
+            'by_construction_type' => $byConstructionType,
         ];
     }
 
@@ -267,25 +302,35 @@ class CommissionerController extends Controller
             $month = Carbon::now()->subMonths($i);
             $monthName = $month->format('M Y');
             $monthlyTax[$monthName] = [
-                'tax' => rand(50000, 200000), // Replace with actual data
+                'tax' => rand(50000, 200000), // Replace with actual data from your database
                 'balance' => rand(10000, 50000)
             ];
         }
 
-        // Zone wise distribution
+        // Zone wise distribution as array
         $zoneDistribution = $pointData->groupBy('zone')->map(function($item) {
             return [
                 'count' => $item->count(),
-                'total_tax' => $item->sum('halfyeartax'),
-                'total_balance' => $item->sum('balance')
+                'total_tax' => (float) $item->sum('halfyeartax'),
+                'total_balance' => (float) $item->sum('balance')
             ];
-        });
+        })->toArray();
+
+        // Usage distribution as array
+        $usageDistribution = $pointData->groupBy('bill_usage')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        // Floor distribution as array
+        $floorDistribution = $pointData->groupBy('floor')->map(function($item) {
+            return $item->count();
+        })->toArray();
 
         return [
             'monthly_tax' => $monthlyTax,
             'zone_distribution' => $zoneDistribution,
-            'usage_distribution' => $pointData->groupBy('bill_usage')->map->count(),
-            'floor_distribution' => $pointData->groupBy('floor')->map->count()
+            'usage_distribution' => $usageDistribution,
+            'floor_distribution' => $floorDistribution
         ];
     }
 
@@ -303,10 +348,11 @@ class CommissionerController extends Controller
             ->map(function($item) {
                 return (object)[
                     'name' => $item->owner_name ?? $item->present_owner_name ?? 'Unknown',
-                    'assessment' => $item->assessment,
-                    'balance' => $item->balance,
+                    'assessment' => (float) $item->assessment,
+                    'balance' => (float) $item->balance,
                     'phone' => $item->phone_number,
-                    'type' => 'Building'
+                    'type' => 'Building',
+                    'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
                 ];
             });
 
@@ -317,14 +363,15 @@ class CommissionerController extends Controller
             ->map(function($item) {
                 return (object)[
                     'name' => $item->owner_name ?? 'Unknown',
-                    'assessment' => $item->assessment,
-                    'balance' => $item->balance,
+                    'assessment' => (float) $item->assessment,
+                    'balance' => (float) $item->balance,
                     'phone' => $item->phone_number,
-                    'type' => 'MIS Record'
+                    'type' => 'MIS Record',
+                    'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
                 ];
             });
 
-        return $pointDefaulters->concat($misDefaulters)->sortByDesc('balance')->take(10);
+        return $pointDefaulters->concat($misDefaulters)->sortByDesc('balance')->take(10)->values();
     }
 
     /**
@@ -340,11 +387,11 @@ class CommissionerController extends Controller
                 'type' => 'Building Update',
                 'icon' => 'fa-building',
                 'description' => "Building updated: " . ($item->owner_name ?? 'N/A'),
-                'assessment' => $item->assessment,
+                'assessment' => (float) $item->assessment,
                 'location' => "Door No: " . ($item->new_door_no ?? $item->old_door_no ?? 'N/A'),
                 'date' => $item->updated_at ?? $item->created_at,
-                'status' => $item->balance > 0 ? 'pending' : 'paid',
-                'balance' => $item->balance ?? 0
+                'status' => ($item->balance ?? 0) > 0 ? 'pending' : 'paid',
+                'balance' => (float) ($item->balance ?? 0)
             ];
         });
 
@@ -354,7 +401,7 @@ class CommissionerController extends Controller
                 'type' => 'Property Update',
                 'icon' => 'fa-map-marker-alt',
                 'description' => "Property: " . ($item->building_name ?? 'N/A'),
-                'assessment' => $item->sqfeet,
+                'assessment' => (float) ($item->sqfeet ?? 0),
                 'location' => $item->new_address ?? 'N/A',
                 'date' => $item->updated_at ?? $item->created_at,
                 'status' => 'active',
@@ -495,7 +542,6 @@ class CommissionerController extends Controller
             if ($format == 'csv') {
                 return $this->exportToCSV($data, $fileName, $title);
             } else {
-                // For Excel/PDF, you can implement using Maatwebsite/Excel package
                 return response()->json(['message' => 'Excel/PDF export coming soon'], 501);
             }
 
@@ -551,7 +597,10 @@ class CommissionerController extends Controller
         $zoneWard = $this->getZoneWardMapping($corporationId, $wardNo);
 
         if ($zoneWard && isset($zoneWard['zone']) && isset($zoneWard['ward'])) {
-            return "pointdata_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            $tableName = "pointdata_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            if (Schema::hasTable($tableName)) {
+                return $tableName;
+            }
         }
 
         // Try to find existing table
@@ -578,7 +627,10 @@ class CommissionerController extends Controller
         $zoneWard = $this->getZoneWardMapping($corporationId, $wardNo);
 
         if ($zoneWard && isset($zoneWard['zone']) && isset($zoneWard['ward'])) {
-            return "polygondata_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            $tableName = "polygondata_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            if (Schema::hasTable($tableName)) {
+                return $tableName;
+            }
         }
 
         $possibleTables = [
@@ -604,7 +656,10 @@ class CommissionerController extends Controller
         $zoneWard = $this->getZoneWardMapping($corporationId, $wardNo);
 
         if ($zoneWard && isset($zoneWard['zone']) && isset($zoneWard['ward'])) {
-            return "line_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            $tableName = "line_{$corporationId}_{$zoneWard['zone']}_{$zoneWard['ward']}";
+            if (Schema::hasTable($tableName)) {
+                return $tableName;
+            }
         }
 
         $possibleTables = [
@@ -629,12 +684,10 @@ class CommissionerController extends Controller
     {
         // You can fetch from database configuration
         // For now, returning based on common pattern
-        $mapping = [
+        return [
             'zone' => 'south',
             'ward' => $wardNo ?? '92'
         ];
-
-        return $mapping;
     }
 
     /**
@@ -651,14 +704,27 @@ class CommissionerController extends Controller
         $corporationId = $user->corporation_id;
         $pointTable = $this->getPointdataTableName($corporationId);
 
-        $stats = [
-            'total_buildings' => DB::table($pointTable)->count(),
-            'total_tax_collected' => DB::table($pointTable)->sum('halfyeartax'),
-            'total_balance' => DB::table($pointTable)->sum('balance'),
-            'total_water_tax' => DB::table($pointTable)->sum('water_tax'),
-            'collection_rate' => $this->calculateStatistics(collect([]), DB::table($pointTable)->get(), collect([]))['collection_efficiency']
-        ];
+        try {
+            $totalBuildings = DB::table($pointTable)->count();
+            $totalTax = DB::table($pointTable)->sum('halfyeartax');
+            $totalBalance = DB::table($pointTable)->sum('balance');
+            $totalWaterTax = DB::table($pointTable)->sum('water_tax');
 
-        return response()->json($stats);
+            $collectionRate = $totalTax > 0 ? round((($totalTax - $totalBalance) / $totalTax) * 100, 2) : 0;
+
+            $stats = [
+                'total_buildings' => $totalBuildings,
+                'total_tax_collected' => (float) $totalTax,
+                'total_balance' => (float) $totalBalance,
+                'total_water_tax' => (float) $totalWaterTax,
+                'collection_rate' => $collectionRate,
+                'last_updated' => Carbon::now()->toDateTimeString()
+            ];
+
+            return response()->json($stats);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

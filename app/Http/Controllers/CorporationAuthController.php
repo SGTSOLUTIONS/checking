@@ -220,14 +220,6 @@ class CorporationAuthController extends Controller
         ], 422);
     }
 
-    public function dashboard()
-    {
-        $user = Auth::guard('corporation')->user();
-        return response()->json($user);
-        $corporations = Corporation::find('$user->corporation->id')->first();
-
-        return view('corporation.dashboard', compact('user'));
-    }
 
     public function logout(Request $request)
     {
