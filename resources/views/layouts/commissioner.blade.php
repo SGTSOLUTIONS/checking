@@ -521,7 +521,7 @@
                 </div>
                 <div class="modal-body text-center">
                     @php
-                        $modalLogoUrl = asset('assets/corporation-logo/default-logo.png');
+
                         if(isset($corporation) && !empty($corporation->logo)) {
                             $fullLogoPath = storage_path('app/public/' . $corporation->logo);
                             if(file_exists($fullLogoPath)) {
@@ -748,12 +748,7 @@
             if (analysisPanel) analysisPanel.style.display = 'none';
         @endif
 
-        // Corporation logo error fallback
-        document.querySelectorAll('.corporation-logo, .corporation-logo-large, .corporation-profile-icon').forEach(img => {
-            img.addEventListener('error', function() {
-                this.src = "{{ asset('assets/corporation-logo/default-logo.png') }}";
-            });
-        });
+
     </script>
     @stack('scripts')
 </body>
