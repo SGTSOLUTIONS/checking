@@ -54,14 +54,106 @@ class CommissionerController extends Controller
 
         $mis = DB::table("mis_corporation_{$corporation->id}")->get();
         $mis_count = DB::table("mis_corporation_{$corporation->id}")->count();
-        foreach($wards_per_zones as $wards_per_zone)
-            {
-                $wardlists = ward::where('zone',$wards_per_zone->zone)->get();
-            }
+        $collections = [];
 
+        foreach ($wards_per_zones as $wards_per_zone) {
+
+            $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
+
+            foreach ($wardlists as $wardlist) {
+
+                $pointdatatable = $this->getpointdatatable(
+                    $wardlist->corporation_id,
+                    $wardlist->ward_no,
+                    $wardlist->zone
+                );
+
+                $polygondatatable = $this->getpolygondatatable(
+                    $wardlist->corporation_id,
+                    $wardlist->ward_no,
+                    $wardlist->zone
+                );
+
+                $polygontable = $this->getpolygontable(
+                    $wardlist->corporation_id,
+                    $wardlist->ward_no,
+                    $wardlist->zone
+                );
+
+                $roadtable = $this->getroadtable(
+                    $wardlist->corporation_id,
+                    $wardlist->ward_no,
+                    $wardlist->zone
+                );
+
+                $misData = DB::table("mis_corporation_{$wardlist->corporation_id}")
+                    ->where('ward_no', $wardlist->ward_no)
+                    ->get();
+
+                $misCount = DB::table("mis_corporation_{$wardlist->corporation_id}")
+                    ->where('ward_no', $wardlist->ward_no)
+                    ->count();
+
+                $data = [
+                    "zone"               => $wardlist->zone,
+                    "ward_no"            => $wardlist->ward_no,
+                    "pointdatatable"     => $pointdatatable,
+                    "polygondatatable"   => $polygondatatable,
+                    "polygontable"       => $polygontable,
+                    "roadtable"          => $roadtable,
+                    "mis"                => $misData,
+                    "misCount"           => $misCount,
+                ];
+
+                $collections[] = $data;
+            }
+        }
 
         return response()->json($wardlists);
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
+    }
+
+    private function getpointdatatable($corporationId, $wardNo, $zone)
+    {
+        $tableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+
+        if (Schema::hasTable($tableName)) {
+            return $tableName;
+        }
+
+        return $tableName;
+    }
+
+    private function getpolygondatatable($corporationId, $wardNo, $zone)
+    {
+        $tableName = "polygondatatable_{$corporationId}_{$zone}_{$wardNo}";
+
+        if (Schema::hasTable($tableName)) {
+            return $tableName;
+        }
+
+        return $tableName;
+    }
+
+    private function getpolygontable($corporationId, $wardNo, $zone)
+    {
+        $tableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+
+        if (Schema::hasTable($tableName)) {
+            return $tableName;
+        }
+
+        return $tableName;
+    }
+    private function getroadtable($corporationId, $wardNo, $zone)
+    {
+        $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+
+        if (Schema::hasTable($tableName)) {
+            return $tableName;
+        }
+
+        return $tableName;
     }
 }
