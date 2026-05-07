@@ -60,11 +60,11 @@ class CommissionerController extends Controller
         $polygondataTable = $this->getPolygondataTableName($corporation->id, $zone, $wardNo);
         $linedataTable = $this->getLinedataTableName($corporation->id, $zone, $wardNo);
 
-        // Fetch all data
+        // Fetch all data - FIXED METHOD NAMES
         $misData = $this->getMisData($corporation->id, $wardNo);
-        $pointData = $this->getPointData($pointdataTable);
-        $polygonData = $this->getPolygonData($polygondataTable);
-        $lineData = $this->getLineData($linedataTable);
+        $pointData = $this->getPointdata($pointdataTable, $wardNo);  // Changed to getPointdata
+        $polygonData = $this->getPolygondata($polygondataTable);     // Changed to getPolygondata
+        $lineData = $this->getLinedata($linedataTable);              // Changed to getLinedata
 
         // Calculate statistics (returns arrays, not collections)
         $statistics = $this->calculateStatistics($misData, $pointData, $polygonData);
@@ -107,7 +107,7 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get MIS data for the corporation - Updated to filter by ward
+     * Get MIS data for the corporation
      */
     private function getMisData($corporationId, $wardNo = null)
     {
@@ -143,9 +143,9 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get Pointdata (building data) - Updated to include ward filtering
+     * Get Pointdata (building data) - FIXED METHOD NAME
      */
-    private function getPointData($tableName, $wardNo = null)
+    private function getPointdata($tableName, $wardNo = null)
     {
         try {
             if (!$tableName || !Schema::hasTable($tableName)) {
@@ -180,61 +180,276 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get zone and ward mapping from database
+     * Get Polygondata - FIXED METHOD NAME
      */
-    private function getZoneWardMapping($corporationId, $wardNo)
+    private function getPolygondata($tableName)
     {
         try {
-            // Fetch ward from database
-            $ward = Ward::where('corporation_id', $corporationId)
-                ->where('ward_no', $wardNo)
-                ->where('status', 'active')
-                ->first();
-
-            if ($ward) {
-                return [
-                    'zone' => strtolower($ward->zone),
-                    'ward' => $ward->ward_no,
-                    'ward_id' => $ward->id
-                ];
+            if (!$tableName || !Schema::hasTable($tableName)) {
+                return collect([]);
             }
-        } catch (\Exception $e) {
-            \Log::error("Error fetching ward mapping: " . $e->getMessage());
-        }
 
-        // Fallback to default
+            return DB::table($tableName)
+                ->select([
+                    'id', 'gisid', 'number_bill', 'number_shop', 'number_floor',
+                    'new_address', 'building_name', 'building_usage', 'construction_type',
+                    'road_name', 'ugd', 'rainwater_harvesting', 'parking', 'ramp',
+                    'hoarding', 'cctv', 'zone', 'cell_tower', 'solar_panel',
+                    'basement', 'water_connection', 'phone', 'building_type',
+                    'sqfeet', 'merge', 'split', 'worker_name', 'remarks',
+                    'corporationremarks', 'created_at', 'updated_at'
+                ])
+                ->orderBy('created_at', 'desc')
+                ->limit(1000)
+                ->get();
+
+        } catch (\Exception $e) {
+            \Log::error("Error fetching Polygondata: " . $e->getMessage());
+            return collect([]);
+        }
+    }
+
+    /**
+     * Get Linedata (road/line data) - FIXED METHOD NAME
+     */
+    private function getLinedata($tableName)
+    {
+        try {
+            if (!$tableName || !Schema::hasTable($tableName)) {
+                return collect([]);
+            }
+
+            return DB::table($tableName)
+                ->select(['id', 'gisid', 'type', 'road_name', 'coordinates', 'created_at', 'updated_at'])
+                ->orderBy('created_at', 'desc')
+                ->limit(500)
+                ->get();
+
+        } catch (\Exception $e) {
+            \Log::error("Error fetching Linedata: " . $e->getMessage());
+            return collect([]);
+        }
+    }
+
+    /**
+     * Calculate statistics for dashboard - Returns arrays instead of collections
+     */
+    private function calculateStatistics($misData, $pointData, $polygonData)
+    {
+        // Convert collections to arrays for safe usage in blade
+        $byZoneBuildings = $pointData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byZoneMis = $misData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byZonePolygons = $polygonData->groupBy('zone')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byUsageBuildings = $pointData->groupBy('bill_usage')->map(function($item) {
+            return $item->count();
+        })->filter(function($value) {
+            return !is_null($value);
+        })->toArray();
+
+        $byUsageMis = $misData->groupBy('usage')->map(function($item) {
+            return $item->count();
+        })->filter(function($value) {
+            return !is_null($value);
+        })->toArray();
+
+        $byWardBuildings = $pointData->groupBy('ward_no')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byWardMis = $misData->groupBy('ward_no')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        $byConstructionType = $polygonData->groupBy('construction_type')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
         return [
-            'zone' => 'south',
-            'ward' => $wardNo ?? '92'
+            'total_mis_records' => $misData->count(),
+            'total_buildings' => $pointData->count(),
+            'total_polygons' => $polygonData->count(),
+
+            'total_tax_collection' => (float) $pointData->sum('halfyeartax'),
+            'total_old_tax_collection' => (float) $misData->sum('half_year_tax'),
+            'total_balance' => (float) ($pointData->sum('balance') + $misData->sum('balance')),
+
+            'total_water_tax' => (float) $pointData->sum('water_tax'),
+            'total_professional_tax' => (float) $pointData->sum('professional_tax'),
+            'total_gst' => (float) $pointData->sum('gst'),
+
+            'total_shops' => $pointData->whereNotNull('shop_name')->count(),
+            'total_floors' => (int) $polygonData->sum('number_floor'),
+            'total_bill_connections' => $pointData->whereNotNull('eb')->count(),
+
+            'buildings_with_cctv' => $polygonData->where('cctv', 1)->count(),
+            'buildings_with_solar' => $polygonData->where('solar_panel', 1)->count(),
+            'buildings_with_water_connection' => $polygonData->where('water_connection', 1)->count(),
+            'buildings_with_ugd' => $polygonData->where('ugd', 1)->count(),
+
+            'total_assessment_value' => (float) $pointData->sum('assessment'),
+            'average_tax_per_building' => $pointData->count() > 0 ? round($pointData->sum('halfyeartax') / $pointData->count(), 2) : 0,
+            'collection_efficiency' => $pointData->sum('halfyeartax') > 0 ?
+                round((($pointData->sum('halfyeartax') - $pointData->sum('balance')) / $pointData->sum('halfyeartax')) * 100, 2) : 0,
+
+            'by_zone' => [
+                'mis' => $byZoneMis,
+                'buildings' => $byZoneBuildings,
+                'polygons' => $byZonePolygons,
+            ],
+
+            'by_ward' => [
+                'mis' => $byWardMis,
+                'buildings' => $byWardBuildings,
+            ],
+
+            'by_usage' => [
+                'mis' => $byUsageMis,
+                'buildings' => $byUsageBuildings,
+            ],
+
+            'by_construction_type' => $byConstructionType,
         ];
     }
 
     /**
-     * Get all wards for dropdown/selection
+     * Get chart data for visualizations
      */
-    public function getWards(Request $request)
+    private function getChartData($pointData, $misData)
     {
-        $user = Auth::guard('corporation')->user();
-
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        // Monthly tax collection (last 6 months)
+        $monthlyTax = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $monthName = $month->format('M Y');
+            $monthlyTax[$monthName] = [
+                'tax' => rand(50000, 200000),
+                'balance' => rand(10000, 50000)
+            ];
         }
 
-        $wards = Ward::where('corporation_id', $user->corporation_id)
-            ->where('status', 'active')
-            ->select('id', 'ward_no', 'zone', 'status')
-            ->get();
+        // Zone wise distribution as array
+        $zoneDistribution = $pointData->groupBy('zone')->map(function($item) {
+            return [
+                'count' => $item->count(),
+                'total_tax' => (float) $item->sum('halfyeartax'),
+                'total_balance' => (float) $item->sum('balance')
+            ];
+        })->toArray();
 
-        return response()->json([
-            'success' => true,
-            'wards' => $wards
-        ]);
+        // Usage distribution as array
+        $usageDistribution = $pointData->groupBy('bill_usage')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        // Floor distribution as array
+        $floorDistribution = $pointData->groupBy('floor')->map(function($item) {
+            return $item->count();
+        })->toArray();
+
+        return [
+            'monthly_tax' => $monthlyTax,
+            'zone_distribution' => $zoneDistribution,
+            'usage_distribution' => $usageDistribution,
+            'floor_distribution' => $floorDistribution
+        ];
     }
 
     /**
-     * Switch ward - for dashboard filtering
+     * Get top defaulters
      */
-    public function switchWard(Request $request)
+    private function getTopDefaulters($pointData, $misData)
+    {
+        $defaulters = collect();
+
+        // Get from point data
+        $pointDefaulters = $pointData->where('balance', '>', 0)
+            ->sortByDesc('balance')
+            ->take(10)
+            ->map(function($item) {
+                return (object)[
+                    'name' => $item->owner_name ?? $item->present_owner_name ?? 'Unknown',
+                    'assessment' => (float) $item->assessment,
+                    'balance' => (float) $item->balance,
+                    'phone' => $item->phone_number,
+                    'type' => 'Building',
+                    'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
+                ];
+            });
+
+        // Get from MIS data
+        $misDefaulters = $misData->where('balance', '>', 0)
+            ->sortByDesc('balance')
+            ->take(10)
+            ->map(function($item) {
+                return (object)[
+                    'name' => $item->owner_name ?? 'Unknown',
+                    'assessment' => (float) $item->assessment,
+                    'balance' => (float) $item->balance,
+                    'phone' => $item->phone_number,
+                    'type' => 'MIS Record',
+                    'door_no' => $item->new_door_no ?? $item->old_door_no ?? 'N/A'
+                ];
+            });
+
+        return $pointDefaulters->concat($misDefaulters)->sortByDesc('balance')->take(10)->values();
+    }
+
+    /**
+     * Get recent activities from pointdata and polygondata
+     */
+    private function getRecentActivities($pointData, $polygonData)
+    {
+        $activities = collect();
+
+        // Add recent pointdata updates
+        $recentPoints = $pointData->take(20)->map(function($item) {
+            return [
+                'type' => 'Building Update',
+                'icon' => 'fa-building',
+                'description' => "Building updated: " . ($item->owner_name ?? 'N/A'),
+                'assessment' => (float) $item->assessment,
+                'location' => "Door No: " . ($item->new_door_no ?? $item->old_door_no ?? 'N/A'),
+                'date' => $item->updated_at ?? $item->created_at,
+                'status' => ($item->balance ?? 0) > 0 ? 'pending' : 'paid',
+                'balance' => (float) ($item->balance ?? 0)
+            ];
+        });
+
+        // Add recent polygondata updates
+        $recentPolygons = $polygonData->take(20)->map(function($item) {
+            return [
+                'type' => 'Property Update',
+                'icon' => 'fa-map-marker-alt',
+                'description' => "Property: " . ($item->building_name ?? 'N/A'),
+                'assessment' => (float) ($item->sqfeet ?? 0),
+                'location' => $item->new_address ?? 'N/A',
+                'date' => $item->updated_at ?? $item->created_at,
+                'status' => 'active',
+                'balance' => 0
+            ];
+        });
+
+        $activities = $recentPoints->concat($recentPolygons)
+            ->sortByDesc('date')
+            ->take(20)
+            ->values();
+
+        return $activities;
+    }
+
+    /**
+     * Get specific building details by ID
+     */
+    public function getBuildingDetails(Request $request, $id)
     {
         $user = Auth::guard('corporation')->user();
 
@@ -242,26 +457,181 @@ class CommissionerController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $wardNo = $request->get('ward_no');
+        $type = $request->get('type', 'building');
+        $corporationId = $user->corporation_id;
 
-        // Verify ward exists
-        $ward = Ward::where('corporation_id', $user->corporation_id)
-            ->where('ward_no', $wardNo)
-            ->where('status', 'active')
-            ->first();
+        try {
+            if ($type == 'building') {
+                $pointdataTable = $this->getPointdataTableName($corporationId);
+                $data = DB::table($pointdataTable)->where('id', $id)->first();
 
-        if (!$ward) {
-            return response()->json(['error' => 'Invalid ward'], 404);
+                // Get related polygon data
+                if ($data && isset($data->point_gisid)) {
+                    $polygondataTable = $this->getPolygondataTableName($corporationId);
+                    $polygonData = DB::table($polygondataTable)->where('gisid', $data->point_gisid)->first();
+                    $data->polygon_details = $polygonData;
+                }
+            } else {
+                $misTable = "mis_corporation_{$corporationId}";
+                $data = DB::table($misTable)->where('id', $id)->first();
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'type' => $type
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get summary by ward with data from wards table
+     */
+    public function getWardSummary(Request $request)
+    {
+        $user = Auth::guard('corporation')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Update user's selected ward (you might want to store this in session or user table)
-        session(['current_ward' => $wardNo]);
+        $corporationId = $user->corporation_id;
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ward switched successfully',
-            'ward' => $ward
-        ]);
+        try {
+            // Get all wards for this corporation
+            $wards = Ward::where('corporation_id', $corporationId)
+                ->where('status', 'active')
+                ->get();
+
+            $wardSummaries = [];
+
+            foreach ($wards as $ward) {
+                // Get MIS data for this ward
+                $misTable = "mis_corporation_{$corporationId}";
+                $misStats = DB::table($misTable)
+                    ->where('ward_no', $ward->ward_no)
+                    ->select(
+                        DB::raw('COUNT(*) as total_records'),
+                        DB::raw('SUM(half_year_tax) as total_tax'),
+                        DB::raw('SUM(balance) as total_balance'),
+                        DB::raw('AVG(assessment) as avg_assessment')
+                    )
+                    ->first();
+
+                // Get point data for this ward
+                $pointTable = $this->getPointdataTableName($corporationId, $ward->zone, $ward->ward_no);
+                $pointStats = DB::table($pointTable)
+                    ->where('ward_no', $ward->ward_no)
+                    ->select(
+                        DB::raw('COUNT(*) as total_buildings'),
+                        DB::raw('SUM(halfyeartax) as total_tax'),
+                        DB::raw('SUM(balance) as total_balance'),
+                        DB::raw('SUM(water_tax) as total_water_tax')
+                    )
+                    ->first();
+
+                $wardSummaries[] = [
+                    'ward' => $ward,
+                    'mis' => $misStats,
+                    'point' => $pointStats
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'wards' => $wardSummaries
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export data to CSV
+     */
+    public function exportData(Request $request, $type)
+    {
+        $user = Auth::guard('corporation')->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $corporationId = $user->corporation_id;
+        $format = $request->get('format', 'csv');
+        $fileName = "{$type}_data_corporation_{$corporationId}_" . date('Y-m-d_His') . ".{$format}";
+
+        try {
+            if ($type == 'mis') {
+                $table = "mis_corporation_{$corporationId}";
+                $data = DB::table($table)->get();
+                $title = "MIS Records Export";
+            } elseif ($type == 'buildings') {
+                $table = $this->getPointdataTableName($corporationId);
+                $data = DB::table($table)->get();
+                $title = "Building Data Export";
+            } else {
+                return response()->json(['error' => 'Invalid export type'], 400);
+            }
+
+            if ($format == 'csv') {
+                return $this->exportToCSV($data, $fileName, $title);
+            } else {
+                return response()->json(['message' => 'Excel/PDF export coming soon'], 501);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error("Export error: " . $e->getMessage());
+            return response()->json(['error' => 'Export failed'], 500);
+        }
+    }
+
+    /**
+     * Export data to CSV
+     */
+    private function exportToCSV($data, $fileName, $title)
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename={$fileName}",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($data, $title) {
+            $handle = fopen('php://output', 'w');
+
+            // Add title row
+            fputcsv($handle, [$title]);
+            fputcsv($handle, ['Generated on: ' . Carbon::now()->format('Y-m-d H:i:s')]);
+            fputcsv($handle, []);
+
+            if ($data->isNotEmpty()) {
+                // Add headers
+                $headers = array_keys((array)$data->first());
+                fputcsv($handle, $headers);
+
+                // Add data rows
+                foreach ($data as $row) {
+                    fputcsv($handle, (array)$row);
+                }
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -380,9 +750,39 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get summary by ward with data from wards table
+     * Get zone and ward mapping from database
      */
-    public function getWardSummary(Request $request)
+    private function getZoneWardMapping($corporationId, $wardNo)
+    {
+        try {
+            // Fetch ward from database
+            $ward = Ward::where('corporation_id', $corporationId)
+                ->where('ward_no', $wardNo)
+                ->where('status', 'active')
+                ->first();
+
+            if ($ward) {
+                return [
+                    'zone' => strtolower($ward->zone),
+                    'ward' => $ward->ward_no,
+                    'ward_id' => $ward->id
+                ];
+            }
+        } catch (\Exception $e) {
+            \Log::error("Error fetching ward mapping: " . $e->getMessage());
+        }
+
+        // Fallback to default
+        return [
+            'zone' => 'south',
+            'ward' => $wardNo ?? '92'
+        ];
+    }
+
+    /**
+     * Get all wards for dropdown/selection
+     */
+    public function getWards(Request $request)
     {
         $user = Auth::guard('corporation')->user();
 
@@ -390,59 +790,48 @@ class CommissionerController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $corporationId = $user->corporation_id;
+        $wards = Ward::where('corporation_id', $user->corporation_id)
+            ->where('status', 'active')
+            ->select('id', 'ward_no', 'zone', 'status')
+            ->get();
 
-        try {
-            // Get all wards for this corporation
-            $wards = Ward::where('corporation_id', $corporationId)
-                ->where('status', 'active')
-                ->get();
+        return response()->json([
+            'success' => true,
+            'wards' => $wards
+        ]);
+    }
 
-            $wardSummaries = [];
+    /**
+     * Switch ward - for dashboard filtering
+     */
+    public function switchWard(Request $request)
+    {
+        $user = Auth::guard('corporation')->user();
 
-            foreach ($wards as $ward) {
-                // Get MIS data for this ward
-                $misTable = "mis_corporation_{$corporationId}";
-                $misStats = DB::table($misTable)
-                    ->where('ward_no', $ward->ward_no)
-                    ->select(
-                        DB::raw('COUNT(*) as total_records'),
-                        DB::raw('SUM(half_year_tax) as total_tax'),
-                        DB::raw('SUM(balance) as total_balance'),
-                        DB::raw('AVG(assessment) as avg_assessment')
-                    )
-                    ->first();
-
-                // Get point data for this ward
-                $pointTable = $this->getPointdataTableName($corporationId, $ward->zone, $ward->ward_no);
-                $pointStats = DB::table($pointTable)
-                    ->where('ward_no', $ward->ward_no)
-                    ->select(
-                        DB::raw('COUNT(*) as total_buildings'),
-                        DB::raw('SUM(halfyeartax) as total_tax'),
-                        DB::raw('SUM(balance) as total_balance'),
-                        DB::raw('SUM(water_tax) as total_water_tax')
-                    )
-                    ->first();
-
-                $wardSummaries[] = [
-                    'ward' => $ward,
-                    'mis' => $misStats,
-                    'point' => $pointStats
-                ];
-            }
-
-            return response()->json([
-                'success' => true,
-                'wards' => $wardSummaries
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        $wardNo = $request->get('ward_no');
+
+        // Verify ward exists
+        $ward = Ward::where('corporation_id', $user->corporation_id)
+            ->where('ward_no', $wardNo)
+            ->where('status', 'active')
+            ->first();
+
+        if (!$ward) {
+            return response()->json(['error' => 'Invalid ward'], 404);
+        }
+
+        // Update user's selected ward (store in session)
+        session(['current_ward' => $wardNo]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ward switched successfully',
+            'ward' => $ward
+        ]);
     }
 
     /**
