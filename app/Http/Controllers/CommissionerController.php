@@ -149,7 +149,9 @@ class CommissionerController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | BUILDING POLYGON DATA
+                | TOTAL BUILDINGS
+                |--------------------------------------------------------------------------
+                | polygon_* => Total buildings in ward
                 |--------------------------------------------------------------------------
                 */
 
@@ -165,7 +167,9 @@ class CommissionerController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | SURVEYED BUILDING DATA
+                | SURVEYED BUILDINGS
+                |--------------------------------------------------------------------------
+                | polygondatatable_* => Surveyed buildings
                 |--------------------------------------------------------------------------
                 */
 
@@ -183,6 +187,8 @@ class CommissionerController extends Controller
                 |--------------------------------------------------------------------------
                 | POINT DATA
                 |--------------------------------------------------------------------------
+                | pointdata_* => Tax / bill / assessment entries
+                |--------------------------------------------------------------------------
                 */
 
                 $pointCount = 0;
@@ -197,22 +203,9 @@ class CommissionerController extends Controller
 
                 /*
                 |--------------------------------------------------------------------------
-                | UNIQUE GISID BUILDING COUNT
-                |--------------------------------------------------------------------------
-                */
-
-                $uniqueBuildingCount = 0;
-
-                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
-
-                    $uniqueBuildingCount = DB::table($pointdatatable)
-                        ->distinct('gisid')
-                        ->count('gisid');
-                }
-
-                /*
-                |--------------------------------------------------------------------------
                 | ROAD DATA
+                |--------------------------------------------------------------------------
+                | line_* => Road / line GIS data
                 |--------------------------------------------------------------------------
                 */
 
@@ -237,13 +230,13 @@ class CommissionerController extends Controller
                     "zone"                     => $wardlist->zone,
                     "ward_no"                  => $wardlist->ward_no,
 
-                    // TABLES
+                    // TABLE NAMES
                     "pointdatatable"           => $pointdatatable,
                     "polygondatatable"         => $polygondatatable,
                     "polygontable"             => $polygontable,
                     "roadtable"                => $roadtable,
 
-                    // BUILDING POLYGON
+                    // TOTAL BUILDINGS
                     "buildingCount"            => $buildingCount,
                     "polygonData"              => $polygonData,
 
@@ -253,7 +246,6 @@ class CommissionerController extends Controller
 
                     // POINT DATA
                     "pointCount"               => $pointCount,
-                    "uniqueBuildingCount"      => $uniqueBuildingCount,
                     "pointData"                => $pointData,
 
                     // ROAD DATA
