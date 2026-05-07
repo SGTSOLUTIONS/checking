@@ -224,7 +224,7 @@ class CorporationAuthController extends Controller
     {
         $user = Auth::guard('corporation')->user();
 
-        return view('corporation-auth.dashboard', compact('user'));
+        return view('corporation.dashboard', compact('user'));
     }
 
     public function logout(Request $request)
