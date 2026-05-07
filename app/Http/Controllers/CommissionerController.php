@@ -62,7 +62,6 @@ class CommissionerController extends Controller
 
             foreach ($wardlists as $wardlist) {
 
-                // TABLE NAMES
                 $pointdatatable = $this->getpointdatatable(
                     $wardlist->corporation_id,
                     $wardlist->ward_no,
@@ -75,82 +74,17 @@ class CommissionerController extends Controller
                     $wardlist->zone
                 );
 
-                $roadtable = $this->getroadtable(
+                $polygontable = $this->getpolygontable(
                     $wardlist->corporation_id,
                     $wardlist->ward_no,
                     $wardlist->zone
                 );
 
-                /*
-        |--------------------------------------------------------------------------
-        | BUILDING SURVEY DATA (POLYGON)
-        |--------------------------------------------------------------------------
-        | One polygon = One building
-        */
-
-                $polygonData = [];
-                $buildingCount = 0;
-
-                if ($polygondatatable && Schema::hasTable($polygondatatable)) {
-
-                    $polygonData = DB::table($polygondatatable)->get();
-
-                    $buildingCount = DB::table($polygondatatable)->count();
-                }
-
-                /*
-        |--------------------------------------------------------------------------
-        | POINT DATA
-        |--------------------------------------------------------------------------
-        | Each building (gisid) may have multiple bills/assessments
-        */
-
-                $pointData = [];
-                $pointCount = 0;
-
-                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
-
-                    $pointData = DB::table($pointdatatable)->get();
-
-                    $pointCount = DB::table($pointdatatable)->count();
-                }
-
-                /*
-        |--------------------------------------------------------------------------
-        | UNIQUE SURVEYED BUILDINGS IN POINT DATA
-        |--------------------------------------------------------------------------
-        */
-
-                $surveyedBuildingCount = 0;
-
-                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
-
-                    $surveyedBuildingCount = DB::table($pointdatatable)
-                        ->distinct('gisid')
-                        ->count('gisid');
-                }
-
-                /*
-        |--------------------------------------------------------------------------
-        | ROAD / LINE DATA
-        |--------------------------------------------------------------------------
-        */
-
-                $roadData = [];
-                $roadCount = 0;
-
-                if ($roadtable && Schema::hasTable($roadtable)) {
-
-                    $roadData = DB::table($roadtable)->get();
-
-                    $roadCount = DB::table($roadtable)->count();
-                }
-
-                /*
-        |--------------------------------------------------------------------------
-        | MIS DATA
-        |--------------------------------------------------------------------------
-        */
+                $roadtable = $this->getroadtable(
+                    $wardlist->corporation_id,
+                    $wardlist->ward_no,
+                    $wardlist->zone
+                );
 
                 $misData = DB::table("mis_corporation_{$wardlist->corporation_id}")
                     ->where('ward_no', $wardlist->ward_no)
@@ -160,13 +94,14 @@ class CommissionerController extends Controller
                     ->where('ward_no', $wardlist->ward_no)
                     ->count();
 
-                /*
-        |--------------------------------------------------------------------------
-        | FINAL DATA
-        |--------------------------------------------------------------------------
-        */
+                $buildingCount = DB::table($polygontable)->count();
+                $polygonData = DB::table($polygontable)->get();
 
-                $data = [
+                $pointCount = DB::table($pointdatatable)->count();
+                $pointData = DB::table($pointdatatable)->get();
+
+                $surveyedBuildingCount = DB::table($polygondatatable)->count();
+                 $data = [
 
                     "zone"                     => $wardlist->zone,
                     "ward_no"                  => $wardlist->ward_no,
@@ -180,9 +115,7 @@ class CommissionerController extends Controller
                     "surveyedBuildingCount"    => $surveyedBuildingCount,
                     "pointData"                => $pointData,
 
-                    // ROAD DATA
-                    "roadCount"                => $roadCount,
-                    "roadData"                 => $roadData,
+
 
                     // MIS
                     "misCount"                 => $misCount,
