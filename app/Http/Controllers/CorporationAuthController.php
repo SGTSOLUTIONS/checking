@@ -223,6 +223,7 @@ class CorporationAuthController extends Controller
     public function dashboard()
     {
         $user = Auth::guard('corporation')->user();
+        return response()->json($user);
 
         return view('corporation.dashboard', compact('user'));
     }
