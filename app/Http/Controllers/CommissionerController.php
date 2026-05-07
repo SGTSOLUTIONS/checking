@@ -225,7 +225,7 @@ class CommissionerController extends Controller
         $gisIdCount = count(array_filter($polygons, function ($polygon) {
             return !empty($polygon->gisid);
         }));
-
+return response()->json( $corporation);
         return view('corporation.ward-details', [
             'corporation' => $corporation,
             'ward' => $ward,
