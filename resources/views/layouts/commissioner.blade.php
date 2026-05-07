@@ -514,11 +514,7 @@
             }
         });
 
-        // Global error handler
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.error);
-            showNotification('An error occurred. Please try again.', 'error');
-        });
+
 
         // CSRF token setup for AJAX
         $.ajaxSetup({
