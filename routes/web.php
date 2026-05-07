@@ -34,8 +34,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     });
 
     Route::middleware('auth:corporation')->group(function () {
-    Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
-    Route::get('/commissioner/debug', [CommissionerController::class, 'debugTables'])->name('commissioner.debug'); // Add this line
+        Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
     Route::get('/commissioner/building/{id}', [CommissionerController::class, 'getBuildingDetails'])->name('commissioner.building.details');
     Route::get('/commissioner/ward-summary', [CommissionerController::class, 'getWardSummary'])->name('commissioner.ward.summary');
     Route::get('/commissioner/export/{type}', [CommissionerController::class, 'exportData'])->name('commissioner.export');
@@ -43,7 +42,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::get('/commissioner/wards', [CommissionerController::class, 'getWards'])->name('commissioner.wards');
     Route::post('/commissioner/switch-ward', [CommissionerController::class, 'switchWard'])->name('commissioner.switch.ward');
     Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
-});
+    });
 });
 Route::get('/', function () {
     return redirect()->route('login');
