@@ -382,16 +382,19 @@
                 <div class="logo-area">
                     <div class="text-center">
                         {{-- Corporation Logo from assets --}}
-                        @php
-                            $logoUrl = asset('assets/corporation-logo/default-logo.png');
-                            if(isset($corporation) && !empty($corporation->logo)) {
-                                // Check if logo exists in storage
-                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
-                                if(file_exists($fullLogoPath)) {
-                                    $logoUrl = asset('storage/' . $corporation->logo);
-                                }
-                            }
-                        @endphp
+                      @php
+    $logoUrl = asset('assets/corporation-logo/default-logo.png');
+
+    if (isset($corporation) && !empty($corporation->logo)) {
+
+        // public path: public/assets/corporation-logo/xxx.png
+        $publicPath = public_path($corporation->logo);
+
+        if (file_exists($publicPath)) {
+            $logoUrl = asset( $corporation->logo);
+        }
+    }
+@endphp
                         <img src="{{ $logoUrl }}"
                              alt="{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}"
                              class="corporation-logo"
