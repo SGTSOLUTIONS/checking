@@ -23,9 +23,11 @@ class CommissionerController extends Controller
         $user = Auth::guard('corporation')->user();
 
         if (!$user) {
+
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
+
             return redirect()->route('corporation.login');
         }
 
@@ -33,9 +35,11 @@ class CommissionerController extends Controller
         $corporation = Corporation::find($user->corporation_id);
 
         if (!$corporation) {
+
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Corporation not found'], 404);
             }
+
             return back()->with('error', 'Corporation not found');
         }
 
@@ -43,17 +47,28 @@ class CommissionerController extends Controller
         $wards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->get();
+
         $ward_count = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->count();
+
         $wards_per_zones = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->select('zone', DB::raw('count(*) as total'))
             ->groupBy('zone')
             ->get();
 
-        $mis = DB::table("mis_corporation_{$corporation->id}")->get();
-        $mis_count = DB::table("mis_corporation_{$corporation->id}")->count();
+        // MIS DATA
+        $mis = [];
+        $mis_count = 0;
+
+        $misTable = "mis_corporation_{$corporation->id}";
+
+        if (Schema::hasTable($misTable)) {
+            $mis = DB::table($misTable)->get();
+            $mis_count = DB::table($misTable)->count();
+        }
+
         $collections = [];
 
         foreach ($wards_per_zones as $wards_per_zone) {
@@ -61,6 +76,12 @@ class CommissionerController extends Controller
             $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
 
             foreach ($wardlists as $wardlist) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | TABLE NAMES
+                |--------------------------------------------------------------------------
+                */
 
                 $pointdatatable = $this->getpointdatatable(
                     $wardlist->corporation_id,
@@ -86,22 +107,120 @@ class CommissionerController extends Controller
                     $wardlist->zone
                 );
 
-                $misData = DB::table("mis_corporation_{$wardlist->corporation_id}")
-                    ->where('ward_no', $wardlist->ward_no)
-                    ->get();
+                /*
+                |--------------------------------------------------------------------------
+                | MIS DATA
+                |--------------------------------------------------------------------------
+                */
 
-                $misCount = DB::table("mis_corporation_{$wardlist->corporation_id}")
-                    ->where('ward_no', $wardlist->ward_no)
-                    ->count();
+                $misData = [];
+                $misCount = 0;
 
-                $buildingCount = DB::table($polygontable)->count();
-                $polygonData = DB::table($polygontable)->get();
+                $misWardTable = "mis_corporation_{$wardlist->corporation_id}";
 
-                $pointCount = DB::table($pointdatatable)->count();
-                $pointData = DB::table($pointdatatable)->get();
+                if (Schema::hasTable($misWardTable)) {
 
-                $surveyedBuildingCount = DB::table($polygondatatable)->count();
-                 $data = [
+                    $misData = DB::table($misWardTable)
+                        ->where('ward_no', $wardlist->ward_no)
+                        ->get();
+
+                    $misCount = DB::table($misWardTable)
+                        ->where('ward_no', $wardlist->ward_no)
+                        ->count();
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | BUILDING POLYGON DATA
+                |--------------------------------------------------------------------------
+                | polygon_* => Total buildings
+                |--------------------------------------------------------------------------
+                */
+
+                $buildingCount = 0;
+                $polygonData = [];
+
+                if ($polygontable && Schema::hasTable($polygontable)) {
+
+                    $buildingCount = DB::table($polygontable)->count();
+
+                    $polygonData = DB::table($polygontable)->get();
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | SURVEYED BUILDINGS
+                |--------------------------------------------------------------------------
+                | polygondatatable_* => Surveyed buildings
+                |--------------------------------------------------------------------------
+                */
+
+                $surveyedBuildingCount = 0;
+                $surveyedBuildingData = [];
+
+                if ($polygondatatable && Schema::hasTable($polygondatatable)) {
+
+                    $surveyedBuildingCount = DB::table($polygondatatable)->count();
+
+                    $surveyedBuildingData = DB::table($polygondatatable)->get();
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | POINT DATA
+                |--------------------------------------------------------------------------
+                | pointdata_* => Bills / assessments linked by gisid
+                |--------------------------------------------------------------------------
+                */
+
+                $pointCount = 0;
+                $pointData = [];
+
+                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
+
+                    $pointCount = DB::table($pointdatatable)->count();
+
+                    $pointData = DB::table($pointdatatable)->get();
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | UNIQUE GISID COUNT
+                |--------------------------------------------------------------------------
+                */
+
+                $uniqueBuildingCount = 0;
+
+                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
+
+                    $uniqueBuildingCount = DB::table($pointdatatable)
+                        ->distinct('gisid')
+                        ->count('gisid');
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | ROAD / LINE DATA
+                |--------------------------------------------------------------------------
+                */
+
+                $roadCount = 0;
+                $roadData = [];
+
+                if ($roadtable && Schema::hasTable($roadtable)) {
+
+                    $roadCount = DB::table($roadtable)->count();
+
+                    $roadData = DB::table($roadtable)->get();
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | FINAL DATA
+                |--------------------------------------------------------------------------
+                */
+
+                $data = [
 
                     "zone"                     => $wardlist->zone,
                     "ward_no"                  => $wardlist->ward_no,
@@ -110,12 +229,18 @@ class CommissionerController extends Controller
                     "buildingCount"            => $buildingCount,
                     "polygonData"              => $polygonData,
 
-                    // POINT / BILL DATA
-                    "pointCount"               => $pointCount,
+                    // SURVEYED BUILDINGS
                     "surveyedBuildingCount"    => $surveyedBuildingCount,
+                    "surveyedBuildingData"     => $surveyedBuildingData,
+
+                    // POINT DATA
+                    "pointCount"               => $pointCount,
+                    "uniqueBuildingCount"      => $uniqueBuildingCount,
                     "pointData"                => $pointData,
 
-
+                    // ROAD DATA
+                    "roadCount"                => $roadCount,
+                    "roadData"                 => $roadData,
 
                     // MIS
                     "misCount"                 => $misCount,
@@ -126,10 +251,22 @@ class CommissionerController extends Controller
             }
         }
 
-        return response()->json($collections);
+        return response()->json([
+            "corporation"      => $corporation,
+            "ward_count"       => $ward_count,
+            "mis_count"        => $mis_count,
+            "collections"      => $collections
+        ]);
+
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | POINT TABLE
+    |--------------------------------------------------------------------------
+    */
 
     private function getpointdatatable($corporationId, $wardNo, $zone)
     {
@@ -139,8 +276,14 @@ class CommissionerController extends Controller
             return $tableName;
         }
 
-        return $tableName;
+        return null;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | POLYGON DATA TABLE
+    |--------------------------------------------------------------------------
+    */
 
     private function getpolygondatatable($corporationId, $wardNo, $zone)
     {
@@ -150,8 +293,14 @@ class CommissionerController extends Controller
             return $tableName;
         }
 
-        return $tableName;
+        return null;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | POLYGON TABLE
+    |--------------------------------------------------------------------------
+    */
 
     private function getpolygontable($corporationId, $wardNo, $zone)
     {
@@ -161,8 +310,15 @@ class CommissionerController extends Controller
             return $tableName;
         }
 
-        return $tableName;
+        return null;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROAD TABLE
+    |--------------------------------------------------------------------------
+    */
+
     private function getroadtable($corporationId, $wardNo, $zone)
     {
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
@@ -171,6 +327,6 @@ class CommissionerController extends Controller
             return $tableName;
         }
 
-        return $tableName;
+        return null;
     }
 }
