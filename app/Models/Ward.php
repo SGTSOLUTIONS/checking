@@ -38,4 +38,19 @@ class Ward extends Model
     {
         return $this->hasMany(Team::class);
     }
+     /**
+     * Scope for active wards
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope for specific zone
+     */
+    public function scopeInZone($query, $zone)
+    {
+        return $query->where('zone', $zone);
+    }
 }
