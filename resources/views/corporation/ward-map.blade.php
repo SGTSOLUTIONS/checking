@@ -259,39 +259,6 @@
         width: 100%;
     }
 
-    /* Building List */
-    .building-list {
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .building-item {
-        padding: 10px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .building-item:hover {
-        background: #FFCBCB;
-        transform: translateX(5px);
-    }
-
-    .building-item.active {
-        background: #1679AB;
-        color: white;
-    }
-
-    .building-item .gisid {
-        font-weight: 600;
-        font-size: 13px;
-    }
-
-    .building-item .address {
-        font-size: 11px;
-        color: #666;
-    }
-
     /* Popup Styling */
     .ol-popup {
         position: absolute;
@@ -570,9 +537,24 @@
         const usageTypes = @json($usageTypes);
         const areaVariations = @json($areaVariations);
 
-        // Drone image data
+        // Drone image data - FIXED: No json_decode needed since ward->boundary is already an array
         const droneImageURL = "{{ asset($ward->drone_image ?? '') }}";
-        const imageExtent = @json($ward->boundary ? json_decode($ward->boundary, true)[0] ?? null : null);
+
+        // FIXED: ward->boundary is already an array, so don't use json_decode
+        let imageExtent = null;
+        @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
+            @php
+                $firstBoundary = $ward->boundary[0] ?? null;
+                if ($firstBoundary && is_array($firstBoundary) && count($firstBoundary) > 0) {
+                    $minLon = min(array_column($firstBoundary, 0));
+                    $maxLon = max(array_column($firstBoundary, 0));
+                    $minLat = min(array_column($firstBoundary, 1));
+                    $maxLat = max(array_column($firstBoundary, 1));
+                    $imageExtent = [$minLon, $minLat, $maxLon, $maxLat];
+                }
+            @endphp
+            imageExtent = @json($imageExtent);
+        @endif
 
         // Map variables
         let map;
@@ -585,7 +567,8 @@
         // Layer definitions
         const osmLayer = new ol.layer.Tile({
             source: new ol.source.OSM(),
-            visible: true        });
+            visible: true
+        });
 
         const terrainLayer = new ol.layer.Tile({
             source: new ol.source.OSM({
@@ -603,11 +586,12 @@
 
         // Drone image layer
         let droneLayer = null;
-        if (droneImageURL && imageExtent && imageExtent.length === 4) {
+        if (droneImageURL && droneImageURL !== '' && imageExtent && imageExtent.length === 4) {
             droneLayer = new ol.layer.Image({
                 source: new ol.source.ImageStatic({
                     url: droneImageURL,
-                    imageExtent: imageExtent.map(coord => coord),
+                    imageExtent: imageExtent.map(coord => ol.proj.fromLonLat([coord[0], coord[1]])[0] !== undefined ?
+                        ol.proj.fromLonLat([coord[0], coord[1]]) : coord),
                     imageSmoothing: false
                 }),
                 opacity: 0.85,
@@ -623,36 +607,38 @@
             });
         }
 
-        // Boundary layer
+        // Boundary layer - FIXED: ward->boundary is already an array
         let boundaryLayer = null;
-        if (ward.boundary) {
-            try {
-                let boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
-                if (boundaryCoords && boundaryCoords[0]) {
-                    const transformedBoundary = boundaryCoords[0].map(coord => ol.proj.fromLonLat(coord));
-                    const boundaryGeometry = new ol.geom.Polygon([transformedBoundary]);
-                    boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({ geometry: boundaryGeometry })]
-                        }),
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({ color: '#FF0000', width: 3, lineDash: [8, 4] }),
-                            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' })
-                        }),
-                        visible: true
-                    });
-                }
-            } catch(e) {
-                console.error('Boundary parse error:', e);
+        @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
+            @php
+                $boundaryCoords = $ward->boundary[0] ?? [];
+            @endphp
+            const boundaryCoords = @json($boundaryCoords);
+            if (boundaryCoords && boundaryCoords.length > 0) {
+                const transformedBoundary = boundaryCoords.map(coord => ol.proj.fromLonLat(coord));
+                const boundaryGeometry = new ol.geom.Polygon([transformedBoundary]);
+                boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({ geometry: boundaryGeometry })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: '#FF0000', width: 3, lineDash: [8, 4] }),
+                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' })
+                    }),
+                    visible: true
+                });
+            } else {
+                boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector(),
+                    visible: false
+                });
             }
-        }
-
-        if (!boundaryLayer) {
+        @else
             boundaryLayer = new ol.layer.Vector({
                 source: new ol.source.Vector(),
                 visible: false
             });
-        }
+        @endif
 
         // Polygon layer (Buildings)
         const polygonSource = new ol.source.Vector();
@@ -838,21 +824,26 @@
         function initMap() {
             let center = [78.1198, 9.9252]; // Default center
 
-            if (imageExtent && imageExtent.length === 4) {
-                center = [(imageExtent[0] + imageExtent[2]) / 2, (imageExtent[1] + imageExtent[3]) / 2];
-            } else if (ward.boundary) {
-                try {
-                    const boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
-                    if (boundaryCoords && boundaryCoords[0] && boundaryCoords[0].length > 0) {
-                        let sumLon = 0, sumLat = 0;
-                        boundaryCoords[0].forEach(coord => {
-                            sumLon += coord[0];
-                            sumLat += coord[1];
-                        });
-                        center = [sumLon / boundaryCoords[0].length, sumLat / boundaryCoords[0].length];
+            // FIXED: Use boundary data for center calculation
+            @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
+                @php
+                    $firstBoundaryCoords = $ward->boundary[0] ?? [];
+                    if (count($firstBoundaryCoords) > 0) {
+                        $sumLon = 0;
+                        $sumLat = 0;
+                        foreach ($firstBoundaryCoords as $coord) {
+                            $sumLon += $coord[0];
+                            $sumLat += $coord[1];
+                        }
+                        $centerLon = $sumLon / count($firstBoundaryCoords);
+                        $centerLat = $sumLat / count($firstBoundaryCoords);
+                    } else {
+                        $centerLon = 78.1198;
+                        $centerLat = 9.9252;
                     }
-                } catch(e) {}
-            }
+                @endphp
+                center = [{{ $centerLon ?? 78.1198 }}, {{ $centerLat ?? 9.9252 }}];
+            @endif
 
             map = new ol.Map({
                 target: 'map',
@@ -864,17 +855,18 @@
             });
 
             // Fit to ward boundary if available
-            if (ward.boundary) {
-                try {
-                    const boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
-                    if (boundaryCoords && boundaryCoords[0]) {
-                        const extent = ol.extent.boundingExtent(
-                            boundaryCoords[0].map(coord => ol.proj.fromLonLat(coord))
-                        );
-                        map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
-                    }
-                } catch(e) {}
-            }
+            @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
+                @php
+                    $boundaryExtentCoords = $ward->boundary[0] ?? [];
+                @endphp
+                const fitBoundaryCoords = @json($boundaryExtentCoords);
+                if (fitBoundaryCoords && fitBoundaryCoords.length > 0) {
+                    const extent = ol.extent.boundingExtent(
+                        fitBoundaryCoords.map(coord => ol.proj.fromLonLat(coord))
+                    );
+                    map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
+                }
+            @endif
         }
 
         // Show popup
