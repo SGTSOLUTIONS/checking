@@ -2,319 +2,583 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>TN Municipal Corporation | Commissioner Suite</title>
 
-    <!-- Bootstrap 5 + Icons + Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>@yield('title', 'TN Municipal Corporation')</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        :root {
-            --primary-navy: #0B2B40;
-            --teal-bright: #1E7F6E;
-            --coral-soft: #F4A261;
-            --sand-light: #FFF3E0;
-            --accent-gold: #E9C46A;
-            --gray-cool: #F8F9FA;
-            --text-deep: #212529;
-            --shadow-sm: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
-            --shadow-md: 0 20px 25px -12px rgba(0, 0, 0, 0.08);
+        :root{
+            --primary:#0B2B40;
+            --secondary:#1E7F6E;
+            --accent:#F4A261;
+            --light:#EEF4F3;
+            --white:#ffffff;
+            --text:#1f2937;
+            --muted:#6b7280;
+
+            --shadow-sm:0 4px 12px rgba(0,0,0,0.05);
+            --shadow-md:0 12px 30px rgba(0,0,0,0.08);
         }
 
-        body {
-            font-family: 'Inter', 'Poppins', sans-serif;
-            background: linear-gradient(145deg, #EFF6F5 0%, #E2ECE9 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
+        body{
+            font-family:'Inter',sans-serif;
+            background:var(--light);
+            overflow-x:hidden;
+            color:var(--text);
         }
 
-        /* modern glass-morphism sidebar */
-        .sidebar {
-            background: rgba(11, 43, 64, 0.96);
-            backdrop-filter: blur(2px);
-            color: white;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 6px 0 24px rgba(0, 0, 0, 0.08);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
-            z-index: 1050;
+        a{
+            text-decoration:none;
         }
 
-        .sidebar .nav-link {
-            color: #CCE3DE;
-            padding: 12px 20px;
-            margin: 4px 12px;
-            border-radius: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar{
+            width:260px;
+            min-height:100vh;
+            background:linear-gradient(180deg,#0B2B40 0%,#123A54 100%);
+            position:fixed;
+            top:0;
+            left:0;
+            z-index:1000;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+            box-shadow:4px 0 20px rgba(0,0,0,0.08);
+            transition:0.3s;
         }
 
-        .sidebar .nav-link i {
-            width: 24px;
-            font-size: 1.2rem;
+        .logo-area{
+            padding:30px 20px;
+            text-align:center;
+            border-bottom:1px solid rgba(255,255,255,0.08);
         }
 
-        .sidebar .nav-link:hover {
-            background: #1E7F6E;
-            color: white;
-            transform: translateX(4px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        .emblem-icon{
+            width:70px;
+            height:70px;
+            border-radius:50%;
+            background:#F4A261;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            margin:auto;
+            color:#0B2B40;
+            font-size:30px;
+            margin-bottom:15px;
         }
 
-        .sidebar .nav-link.active {
-            background: linear-gradient(95deg, #1E7F6E, #0E5E50);
-            color: white;
-            box-shadow: 0 8px 18px rgba(30, 127, 110, 0.3);
+        .logo-area h4{
+            color:#fff;
+            font-weight:700;
+            margin-bottom:5px;
         }
 
-        .logo-area {
-            padding: 1.8rem 1rem;
-            border-bottom: 1px solid rgba(255, 215, 170, 0.2);
-            margin-bottom: 1.5rem;
+        .logo-area small{
+            color:#cdd8df;
         }
 
-        .emblem-icon {
-            background: #F4A261;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 28px;
-            margin: 0 auto 12px;
-            font-size: 28px;
-            color: #0B2B40;
-            box-shadow: 0 10px 18px -6px rgba(0,0,0,0.2);
+        .sidebar-menu{
+            padding:20px 12px;
         }
 
-        /* main navbar */
-        .navbar-custom {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            border-radius: 28px;
-            margin: 16px 24px 0 24px;
-            padding: 10px 24px;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid rgba(255,255,240,0.6);
+        .sidebar .nav-link{
+            color:#d8e3e8;
+            padding:14px 18px;
+            border-radius:14px;
+            margin-bottom:10px;
+            font-weight:500;
+            transition:0.3s;
+            display:flex;
+            align-items:center;
+            gap:12px;
         }
 
-        .user-avatar {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, #1E7F6E, #0B2B40);
-            border-radius: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
+        .sidebar .nav-link i{
+            width:22px;
         }
 
-        /* stat cards premium */
-        .stat-card {
-            background: white;
-            border-radius: 32px;
-            border: none;
-            transition: all 0.25s ease;
-            box-shadow: var(--shadow-sm);
-            padding: 1.35rem;
+        .sidebar .nav-link:hover{
+            background:rgba(255,255,255,0.08);
+            color:#fff;
+            transform:translateX(4px);
         }
 
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-bottom: 3px solid #F4A261;
+        .sidebar .nav-link.active{
+            background:linear-gradient(90deg,#1E7F6E,#14695d);
+            color:#fff;
+            box-shadow:0 8px 20px rgba(30,127,110,0.25);
         }
 
-        .stat-icon {
-            background: rgba(30, 127, 110, 0.12);
-            border-radius: 28px;
-            width: 56px;
-            height: 56px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
-            color: #1E7F6E;
+        .logout-area{
+            padding:20px 12px;
+            border-top:1px solid rgba(255,255,255,0.08);
         }
 
-        .content-panel {
-            animation: fadeSlide 0.45s ease-out;
+        /* =====================================================
+           MAIN CONTENT
+        ===================================================== */
+
+        .main-wrapper{
+            margin-left:260px;
+            min-height:100vh;
+            padding:20px;
+            transition:0.3s;
         }
 
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(18px);}
-            to { opacity: 1; transform: translateY(0);}
+        /* =====================================================
+           NAVBAR
+        ===================================================== */
+
+        .top-navbar{
+            background:#fff;
+            border-radius:22px;
+            padding:14px 24px;
+            box-shadow:var(--shadow-sm);
+            margin-bottom:25px;
         }
 
-        /* ward card grid */
-        .ward-grid-card {
-            background: white;
-            border-radius: 28px;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: 1px solid #eef2f0;
-            padding: 1rem;
+        .menu-toggle{
+            border:none;
+            background:#f3f4f6;
+            width:42px;
+            height:42px;
+            border-radius:12px;
         }
 
-        .ward-grid-card:hover {
-            transform: translateY(-6px);
-            background: #FFFFFF;
-            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.12);
-            border-color: #F4A261;
+        .location-badge{
+            background:#f5f7f9;
+            padding:10px 16px;
+            border-radius:50px;
+            font-weight:600;
+            font-size:14px;
         }
 
-        .table-modern {
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-        }
-        .table-modern thead th {
-            background: #0B2B40;
-            color: white;
-            font-weight: 600;
-            border: none;
-            padding: 14px 12px;
+        .user-avatar{
+            width:46px;
+            height:46px;
+            border-radius:50%;
+            background:linear-gradient(135deg,#1E7F6E,#0B2B40);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:18px;
         }
 
-        .btn-soft-primary {
-            background: #EFF6F5;
-            color: #1E7F6E;
-            border: none;
-            border-radius: 40px;
-            padding: 8px 18px;
-            font-weight: 500;
-        }
-        .btn-soft-primary:hover {
-            background: #1E7F6E;
-            color: white;
+        /* =====================================================
+           CARD
+        ===================================================== */
+
+        .dashboard-card{
+            background:#fff;
+            border-radius:24px;
+            padding:24px;
+            box-shadow:var(--shadow-sm);
+            transition:0.3s;
+            border:none;
         }
 
-        .badge-completion {
-            background: #E9C46A20;
-            color: #B86B2E;
-            border-radius: 40px;
-            padding: 6px 12px;
-            font-weight: 600;
+        .dashboard-card:hover{
+            transform:translateY(-5px);
+            box-shadow:var(--shadow-md);
         }
 
-        @media (max-width: 768px) {
-            .sidebar { position: fixed; left: -280px; top: 0; bottom: 0; width: 280px; transition: left 0.25s; }
-            .sidebar.show { left: 0; }
-            .navbar-custom { margin: 12px 16px; }
-            .main-content { padding-top: 0; }
+        .card-icon{
+            width:60px;
+            height:60px;
+            border-radius:18px;
+            background:#EEF7F5;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:24px;
+            color:#1E7F6E;
         }
-        @media (min-width: 769px) {
-            .menu-toggle { display: none; }
+
+        /* =====================================================
+           TABLE
+        ===================================================== */
+
+        .table-card{
+            background:#fff;
+            border-radius:24px;
+            overflow:hidden;
+            box-shadow:var(--shadow-sm);
         }
+
+        .table-modern{
+            margin-bottom:0;
+        }
+
+        .table-modern thead{
+            background:#F8FAFA;
+        }
+
+        .table-modern thead th{
+            padding:18px 16px;
+            border:none;
+            color:#0B2B40;
+            font-weight:700;
+        }
+
+        .table-modern tbody td{
+            padding:18px 16px;
+            border-top:1px solid #edf2f7;
+            vertical-align:middle;
+        }
+
+        .table-modern tbody tr:hover{
+            background:#fafdfd;
+        }
+
+        /* =====================================================
+           BUTTON
+        ===================================================== */
+
+        .btn-soft-primary{
+            background:#EAF5F2;
+            color:#1E7F6E;
+            border:none;
+            border-radius:40px;
+            padding:8px 18px;
+            font-weight:600;
+            transition:0.3s;
+        }
+
+        .btn-soft-primary:hover{
+            background:#1E7F6E;
+            color:#fff;
+        }
+
+        /* =====================================================
+           PANEL ANIMATION
+        ===================================================== */
+
+        .content-panel{
+            animation:fadeSlide .4s ease;
+        }
+
+        @keyframes fadeSlide{
+            from{
+                opacity:0;
+                transform:translateY(15px);
+            }
+            to{
+                opacity:1;
+                transform:translateY(0);
+            }
+        }
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media(max-width:991px){
+
+            .sidebar{
+                left:-270px;
+            }
+
+            .sidebar.show{
+                left:0;
+            }
+
+            .main-wrapper{
+                margin-left:0;
+            }
+
+            .menu-toggle{
+                display:block;
+            }
+        }
+
+        @media(min-width:992px){
+
+            .menu-toggle{
+                display:none;
+            }
+        }
+
+        @media(max-width:768px){
+
+            .main-wrapper{
+                padding:15px;
+            }
+
+            .top-navbar{
+                padding:14px 18px;
+            }
+
+            .dashboard-card{
+                padding:18px;
+            }
+
+            .table-responsive{
+                overflow-x:auto;
+            }
+
+            .table-modern{
+                min-width:700px;
+            }
+        }
+
     </style>
 </head>
+
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0">
-        <!-- SIDEBAR elevated -->
-        <div class="col-auto sidebar min-vh-100" id="sidebar">
-            <div class="logo-area text-center">
-                <div class="emblem-icon mx-auto">
-                    <i class="fas fa-city"></i>
-                </div>
-                <h5 class="fw-bold mb-0 mt-2" style="letter-spacing: -0.3px;">TN Municipal Corp</h5>
-                <small class="opacity-75">Commissioner Console</small>
+<div class="sidebar" id="sidebar">
+
+    <!-- Logo -->
+    <div>
+
+        <div class="logo-area">
+            <div class="emblem-icon">
+                <i class="fas fa-city"></i>
             </div>
+
+            <h4>TN Municipal Corp</h4>
+            <small>Commissioner Console</small>
+        </div>
+
+        <!-- Menu -->
+        <div class="sidebar-menu">
+
             <nav class="nav flex-column">
-                <a class="nav-link active" data-page="dashboard" href="#"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-                <a class="nav-link" data-page="wards" href="#"><i class="fas fa-layer-group"></i> Wards & Zones</a>
-                <a class="nav-link" data-page="analysis" href="#"><i class="fas fa-chart-pie"></i> Analytics</a>
-                <a class="nav-link" data-page="reports" href="#"><i class="fas fa-file-contract"></i> Reports</a>
-            </nav>
-            <div class="mt-auto p-3 pb-4">
-                <hr class="bg-white-50">
-                <a class="nav-link text-white-70" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt"></i> Secure Logout
+
+                <a href="#" class="nav-link active" data-page="dashboard">
+                    <i class="fas fa-chart-pie"></i>
+                    Dashboard
                 </a>
-                <form id="logout-form" action="{{ route('corporation.logout') }}" method="POST" class="d-none">@csrf</form>
-            </div>
-        </div>
 
-        <!-- MAIN SECTION -->
-        <div class="col main-content">
-            <nav class="navbar-custom d-flex justify-content-between align-items-center">
-                <button class="btn btn-light rounded-pill menu-toggle shadow-sm" id="menuToggle" style="border: none; background: #F8F9FA;"><i class="fas fa-bars text-dark"></i></button>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-light rounded-pill px-3 py-1 d-none d-md-block">
-                        <i class="fas fa-map-pin text-teal"></i> <span class="small fw-semibold">{{ $corporation->name ?? 'Greater Chennai Corp' }}</span>
-                    </div>
-                    <div class="dropdown user-dropdown">
-                        <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
-                            <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
-                            <div class="d-none d-sm-block">
-                                <span class="fw-semibold">{{ Auth::guard('corporation')->user()->name ?? 'Dr. Meera Iyer' }}</span>
-                                <small class="d-block text-muted">Commissioner</small>
-                            </div>
-                            <i class="fas fa-chevron-down text-secondary"></i>
-                        </div>
-                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-4 mt-2">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-id-card me-2"></i>Profile</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt me-2"></i>Sign out</a></li>
-                        </ul>
-                    </div>
-                </div>
+                <a href="#" class="nav-link" data-page="wards">
+                    <i class="fas fa-map"></i>
+                    Wards & Zones
+                </a>
+
+                <a href="#" class="nav-link" data-page="analysis">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+
+                <a href="#" class="nav-link" data-page="reports">
+                    <i class="fas fa-file-alt"></i>
+                    Reports
+                </a>
+
             </nav>
 
-            <div class="p-4 pt-2">
-                @yield('content-panels')
-            </div>
         </div>
+
     </div>
+
+    <!-- Logout -->
+    <div class="logout-area">
+
+        <a href="#"
+            class="nav-link"
+            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+
+            <i class="fas fa-sign-out-alt"></i>
+            Logout
+
+        </a>
+
+        <form id="logout-form"
+            action="{{ route('corporation.logout') }}"
+            method="POST"
+            class="d-none">
+
+            @csrf
+
+        </form>
+
+    </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-    if(menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('show'));
+<!-- =====================================================
+     MAIN
+===================================================== -->
 
-    // panels controller
+<div class="main-wrapper">
+
+    <!-- NAVBAR -->
+    <div class="top-navbar d-flex justify-content-between align-items-center">
+
+        <div class="d-flex align-items-center gap-3">
+
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="location-badge d-none d-md-block">
+                <i class="fas fa-map-marker-alt text-success me-1"></i>
+
+                {{ $corporation->name ?? 'Greater Chennai Corporation' }}
+            </div>
+
+        </div>
+
+        <!-- USER -->
+        <div class="dropdown">
+
+            <div class="d-flex align-items-center gap-3"
+                data-bs-toggle="dropdown"
+                style="cursor:pointer;">
+
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+
+                <div class="d-none d-sm-block">
+
+                    <div class="fw-bold">
+                        {{ Auth::guard('corporation')->user()->name ?? 'Commissioner' }}
+                    </div>
+
+                    <small class="text-muted">
+                        Commissioner
+                    </small>
+
+                </div>
+
+                <i class="fas fa-chevron-down text-muted"></i>
+
+            </div>
+
+            <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 mt-3">
+
+                <li>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-user me-2"></i>
+                        Profile
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a href="#"
+                        class="dropdown-item text-danger"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Logout
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+    </div>
+
+    <!-- PAGE CONTENT -->
+    @yield('content-panels')
+
+</div>
+
+<!-- =====================================================
+     JS
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.getElementById('menuToggle');
+
+    if(menuToggle){
+        menuToggle.addEventListener('click', function(){
+            sidebar.classList.toggle('show');
+        });
+    }
+
     const panels = {
         dashboard: document.getElementById('dashboardPanel'),
         wards: document.getElementById('wardsPanel'),
         analysis: document.getElementById('analysisPanel'),
         reports: document.getElementById('reportsPanel')
     };
-    window.showPanel = function(panelId) {
-        Object.keys(panels).forEach(p => { if(panels[p]) panels[p].style.display = 'none'; });
-        if(panels[panelId]) panels[panelId].style.display = 'block';
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+
+    function showPanel(panel){
+
+        Object.keys(panels).forEach(function(key){
+
+            if(panels[key]){
+                panels[key].style.display = 'none';
+            }
+
+        });
+
+        if(panels[panel]){
+            panels[panel].style.display = 'block';
+        }
+
+        document.querySelectorAll('.sidebar .nav-link').forEach(function(link){
+
             link.classList.remove('active');
-            if(link.getAttribute('data-page') === panelId) link.classList.add('active');
+
+            if(link.dataset.page === panel){
+                link.classList.add('active');
+            }
+
         });
-        if(window.innerWidth < 769) sidebar.classList.remove('show');
-        if(panelId === 'analysis' && !window.chartsDrawn) { setTimeout(() => { if(typeof window.initCharts === 'function') window.initCharts(); window.chartsDrawn = true; }, 120); }
-    };
-    document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = link.getAttribute('data-page');
-            if(page && panels[page]) showPanel(page);
+
+        if(window.innerWidth < 992){
+            sidebar.classList.remove('show');
+        }
+    }
+
+    document.querySelectorAll('.sidebar .nav-link').forEach(function(link){
+
+        link.addEventListener('click', function(e){
+
+            const page = this.dataset.page;
+
+            if(page){
+
+                e.preventDefault();
+
+                showPanel(page);
+            }
+
         });
+
     });
+
+    showPanel('dashboard');
+
 </script>
 
 @stack('scripts')
+
 </body>
 </html>
