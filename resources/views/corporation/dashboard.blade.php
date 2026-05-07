@@ -580,11 +580,10 @@
         }
     });
 
-    // Zone Chart - FIXED to handle arrays properly
+    // Zone Chart
     const zoneCtx = document.getElementById('zoneChart').getContext('2d');
     let zoneData = @json($dashboardData['statistics']['by_zone']['buildings'] ?? []);
 
-    // Ensure zoneData is an object/array
     const zoneLabels = Object.keys(zoneData || {});
     const zoneValues = Object.values(zoneData || {});
 
@@ -700,7 +699,7 @@
         taxCtx.canvas.parentNode.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-chart-pie fa-3x mb-2 d-block"></i>No tax data available</div>';
     }
 
-    // View Details Function
+    // FIXED: View Details Function - Corrected the URL
     function viewDetails(type, id) {
         Swal.fire({
             title: 'Loading...',
@@ -711,36 +710,48 @@
             }
         });
 
+        // Fixed URL - using proper path without route() helper
+        const url = `/corporation/commissioner/building/${id}?type=${type}`;
+
         $.ajax({
-            url: '{{ route("corporation.commissioner.building.details", "") }}/' + id,
+            url: url,
             method: 'GET',
-            data: { type: type },
             success: function(response) {
                 Swal.close();
                 if (response.success && response.data) {
                     const data = response.data;
-                    let html = '<div class="text-start">';
-                    html += '<table class="table table-sm">';
+                    let html = '<div class="text-start" style="max-height: 500px; overflow-y: auto;">';
+                    html += '<table class="table table-sm table-bordered">';
+
+                    // Loop through data properties
                     for (let [key, value] of Object.entries(data)) {
                         if (value && typeof value !== 'object') {
-                            html += `<tr><th>${key.replace(/_/g, ' ').toUpperCase()}</th><td>${value}</td></tr>`;
+                            // Format the key name
+                            let formattedKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toUpperCase();
+                            html += `<tr>
+                                        <th style="width: 40%; background: #f8f9fa;">${formattedKey}</th>
+                                        <td style="width: 60%;">${value}</td>
+                                     </tr>`;
                         }
                     }
+
                     html += '</table></div>';
 
                     Swal.fire({
-                        title: `${type.toUpperCase()} Details`,
+                        title: `${type.toUpperCase()} Details - ID: ${id}`,
                         html: html,
                         icon: 'info',
-                        width: '800px',
-                        confirmButtonText: 'Close'
+                        width: '900px',
+                        confirmButtonText: 'Close',
+                        confirmButtonColor: '#3085d6'
                     });
                 } else {
-                    Swal.fire('Error', 'No data found', 'error');
+                    Swal.fire('Error', 'No data found for this record', 'error');
                 }
             },
-            error: function() {
-                Swal.fire('Error', 'Failed to fetch details', 'error');
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', error);
+                Swal.fire('Error', 'Failed to fetch details. Please try again.', 'error');
             }
         });
     }
@@ -764,7 +775,9 @@
             }
         });
 
-        window.location.href = '{{ route("corporation.commissioner.export", "") }}/' + exportType + '?format=' + exportFormat;
+        // Fixed: Use proper URL construction
+        const exportUrl = `/corporation/commissioner/export/${exportType}?format=${exportFormat}`;
+        window.location.href = exportUrl;
 
         setTimeout(() => {
             Swal.close();
@@ -789,7 +802,29 @@
         }, 1000);
     }
 
-    // Auto refresh every 5 minutes (only if page is visible)
+    // Get stats via AJAX
+    function refreshStats() {
+        $.ajax({
+            url: '/corporation/commissioner/stats',
+            method: 'GET',
+            success: function(response) {
+                console.log('Stats updated:', response);
+                // Update stats on page if needed
+            },
+            error: function(error) {
+                console.error('Error fetching stats:', error);
+            }
+        });
+    }
+
+    // Auto refresh stats every 2 minutes
+    setInterval(function() {
+        if (!document.hidden) {
+            refreshStats();
+        }
+    }, 120000);
+
+    // Auto refresh page every 5 minutes (only if page is visible)
     let autoRefreshInterval = setInterval(function() {
         if (!document.hidden) {
             refreshData();
