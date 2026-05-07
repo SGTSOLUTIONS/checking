@@ -296,7 +296,7 @@ class CommissionerController extends Controller
     {
         $zone = trim(strtolower($zone));
 
-        $tableName = "polygondatatable_{$corporationId}_{$zone}_{$wardNo}";
+        $tableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
 
         if (Schema::hasTable($tableName)) {
             return $tableName;
