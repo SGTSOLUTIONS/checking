@@ -1,4 +1,4 @@
-{{-- resources/views/corporation/dashboard.blade.php --}}
+{{-- Update resources/views/corporation/dashboard.blade.php --}}
 @extends('layouts.commissioner')
 
 @section('title', 'Dashboard - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
@@ -91,7 +91,7 @@
                                     <td>{{ $data['roadCount'] }}</td>
                                     <td>{{ $data['misCount'] }}</td>
                                     <td>
-                                        <a href="{{ route('corporation.ward.details', $data['ward_no']) }}"
+                                        <a href="{{ route('corporation.ward.map', $data['ward_no']) }}"
                                            class="btn btn-sm btn-primary">
                                             <i class="fas fa-map-marked-alt"></i> View Map
                                         </a>

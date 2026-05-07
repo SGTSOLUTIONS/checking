@@ -33,9 +33,9 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     });
 
     Route::middleware('auth:corporation')->group(function () {
-        Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
-        Route::get('/commissioner/ward/{ward_no}', [CommissionerController::class, 'showWardDetails'])->name('ward.details');
-        Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
+       Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/commissioner/ward/{ward_no}/map', [CommissionerController::class, 'mapView'])->name('ward.map');
+    Route::get('/commissioner/search-building', [CommissionerController::class, 'searchBuilding'])->name('search.building'); Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
 Route::get('/', function () {
