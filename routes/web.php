@@ -21,26 +21,27 @@ use App\Http\Controllers\CorporationAuthController;
 // Corporation Auth Routes
 
 Route::prefix('corporation')->name('corporation.')->group(function () {
+
     Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [CorporationAuthController::class, 'login'])->name('login.submit');
         Route::get('/register', [CorporationAuthController::class, 'showRegister'])->name('register');
         Route::post('/register', [CorporationAuthController::class, 'register'])->name('register.submit');
-        Route::get('/forgot-password', [CorporationAuthController::class, 'showForgotPassword'])->name('password.request');
-        Route::post('/forgot-password', [CorporationAuthController::class, 'sendResetLink'])->name('password.email');
-        Route::get('/reset-password/{token}', [CorporationAuthController::class, 'showResetPassword'])->name('password.reset');
-        Route::post('/reset-password', [CorporationAuthController::class, 'resetPassword'])->name('password.update');
     });
 
     Route::middleware('auth:corporation')->group(function () {
-        Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
-        Route::get('/commissioner/ward/{ward_no}', [CommissionerController::class, 'showWardDetails'])->name('commissioner.ward.details');
-        Route::get('/commissioner/building/{id}', [CommissionerController::class, 'getBuildingDetails'])->name('commissioner.building.details');
-        Route::get('/commissioner/ward-summary', [CommissionerController::class, 'getWardSummary'])->name('commissioner.ward.summary');
-        Route::get('/commissioner/export/{type}', [CommissionerController::class, 'exportData'])->name('commissioner.export');
-        Route::get('/commissioner/stats', [CommissionerController::class, 'getStats'])->name('commissioner.stats');
-        Route::get('/commissioner/wards', [CommissionerController::class, 'getWards'])->name('commissioner.wards');
-        Route::post('/commissioner/switch-ward', [CommissionerController::class, 'switchWard'])->name('commissioner.switch.ward');
+        // Main Pages
+        Route::get('/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/wards', [CommissionerController::class, 'wards'])->name('wards');
+        Route::get('/analysis', [CommissionerController::class, 'analysis'])->name('analysis');
+        Route::get('/profile', [CommissionerController::class, 'profile'])->name('profile');
+        Route::post('/profile/update', [CommissionerController::class, 'updateProfile'])->name('profile.update');
+
+        // Ward Details
+        Route::get('/ward/{ward_no}', [CommissionerController::class, 'showWardDetails'])->name('ward.details');
+        Route::get('/ward-data/{ward_no}', [CommissionerController::class, 'getWardData'])->name('ward.data');
+
+        // Logout
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });

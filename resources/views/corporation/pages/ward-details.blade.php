@@ -369,3 +369,4 @@
 </script>
 
 @endsection
+ward-details.blade.php
