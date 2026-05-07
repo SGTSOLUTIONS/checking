@@ -1,144 +1,549 @@
-{{-- resources/views/corporation/ward-details.blade.php --}}
+{{-- resources/views/corporation/ward-map.blade.php --}}
 @extends('layouts.commissioner')
 
-@section('title', 'Ward ' . $ward->ward_no . ' Details - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
+@section('title', 'Ward ' . $ward->ward_no . ' Map View - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
 
 @section('styles')
 @parent
 <style>
-    .map-toolbar {
-        background: white;
-        padding: 10px 15px;
+    /* Map Container */
+    #map {
+        width: 100%;
+        height: 75vh;
         border-radius: 12px;
+        border: 2px solid #ddd;
+        background: #f0f0f0;
+    }
+
+    /* Layer Switcher Panel */
+    .layer-switcher {
+        position: absolute;
+        top: 80px;
+        right: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+        padding: 15px;
+        z-index: 1000;
+        width: 240px;
+        font-size: 13px;
+    }
+
+    .layer-switcher h4 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #102C57;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .layer-group {
         margin-bottom: 15px;
+    }
+
+    .layer-group h5 {
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1679AB;
+    }
+
+    .layer-option {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+        cursor: pointer;
+    }
+
+    .layer-option input {
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    .layer-option label {
+        cursor: pointer;
+        margin: 0;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .layer-option i {
+        width: 18px;
+        font-size: 12px;
+    }
+
+    /* Search Panel */
+    .search-panel {
+        position: absolute;
+        top: 80px;
+        left: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+        padding: 15px;
+        z-index: 1000;
+        width: 320px;
+    }
+
+    .search-panel h4 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #102C57;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .search-type-group {
         display: flex;
         gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
+        margin-bottom: 10px;
     }
-    .building-info-card {
-        background: white;
-        border-radius: 16px;
-        padding: 16px;
-        margin-bottom: 16px;
-        border-left: 4px solid #1679AB;
+
+    .search-type-group .form-check {
+        margin-right: 15px;
     }
+
+    .search-type-group .form-check-label {
+        font-size: 12px;
+    }
+
     .search-box {
-        border-radius: 25px;
-        padding: 8px 16px;
-        border: 1px solid #ddd;
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
     }
-    .stat-badge {
-        background: linear-gradient(135deg, #102C57, #1679AB);
+
+    .search-box input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+
+    .search-box button {
+        background: #1679AB;
         color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 15px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .search-box button:hover {
+        background: #102C57;
+    }
+
+    .search-results {
+        max-height: 250px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        display: none;
+    }
+
+    .search-result-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+    }
+
+    .search-result-item:hover {
+        background: #FFCBCB;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .result-gisid {
+        font-weight: 600;
+        color: #1679AB;
+    }
+
+    .result-assessment {
+        font-size: 11px;
+        color: #666;
+    }
+
+    /* Feature Info Panel */
+    .feature-info {
+        position: absolute;
+        bottom: 20px;
+        right: 10px;
+        background: white;
         border-radius: 12px;
-        padding: 8px 16px;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+        padding: 15px;
+        z-index: 1000;
+        max-width: 320px;
+        max-height: 400px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .feature-info h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #102C57;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .feature-info .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #999;
+    }
+
+    .feature-detail-row {
+        margin-bottom: 8px;
+        font-size: 12px;
+    }
+
+    .feature-detail-label {
+        font-weight: 600;
+        color: #1679AB;
+        width: 100px;
+        display: inline-block;
+    }
+
+    /* Statistics Cards */
+    .stat-card-mini {
+        background: white;
+        border-radius: 12px;
+        padding: 10px 15px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-card-mini h3 {
+        font-size: 24px;
+        font-weight: 700;
+        margin: 0;
+        color: #102C57;
+    }
+
+    .stat-card-mini p {
+        margin: 0;
+        font-size: 11px;
+        color: #666;
+    }
+
+    /* Chart Containers */
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        height: 200px;
+    }
+
+    canvas {
+        max-height: 160px;
+        width: 100%;
+    }
+
+    /* Building List */
+    .building-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .building-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .building-item:hover {
+        background: #FFCBCB;
+        transform: translateX(5px);
+    }
+
+    .building-item.active {
+        background: #1679AB;
+        color: white;
+    }
+
+    .building-item .gisid {
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .building-item .address {
+        font-size: 11px;
+        color: #666;
+    }
+
+    /* Popup Styling */
+    .ol-popup {
+        position: absolute;
+        background: white;
+        border-radius: 12px;
+        padding: 12px;
+        min-width: 250px;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+        border-left: 4px solid #1679AB;
+        z-index: 1000;
+    }
+
+    .ol-popup:after {
+        top: 100%;
+        border: solid transparent;
+        content: " ";
+        height: 0;
+        width: 0;
+        position: absolute;
+        pointer-events: none;
+        border-top-color: white;
+        border-width: 8px;
+        left: 20px;
+        margin-left: -8px;
+    }
+
+    /* Zoom Controls */
+    .zoom-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 10px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+
+    .zoom-controls button {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: white;
+        cursor: pointer;
+        font-size: 18px;
+        transition: background 0.2s;
+    }
+
+    .zoom-controls button:first-child {
+        border-radius: 8px 8px 0 0;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .zoom-controls button:last-child {
+        border-radius: 0 0 8px 8px;
+    }
+
+    .zoom-controls button:hover {
+        background: #FFCBCB;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .search-panel {
+            width: 280px;
+        }
+        .layer-switcher {
+            width: 200px;
+        }
+        .feature-info {
+            max-width: 280px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-panel, .layer-switcher {
+            display: none;
+        }
+        #map {
+            height: 65vh;
+        }
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        z-index: 2000;
+        display: none;
         text-align: center;
     }
 </style>
 @endsection
 
 @section('content')
-<div class="ward-details-content">
-    <div class="animate__animated animate__fadeInUp">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-            <h3 class="fw-bold" style="color:#ffffff;">
-                <i class="fas fa-map-marker-alt me-2" style="color:#1679AB;"></i>
-                Ward {{ $ward->ward_no }}: {{ ucfirst($ward->zone) }} Zone
-            </h3>
-            <div>
-                <a href="{{ route('corporation.dashboard') }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </a>
+<div class="container-fluid px-0">
+    <!-- Statistics Row -->
+    <div class="row g-2 mb-3 px-3">
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini">
+                <h3>{{ $totalBuildings }}</h3>
+                <p>Total Buildings</p>
             </div>
         </div>
-
-        <!-- Statistics Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-badge">
-                    <h5 class="mb-0">{{ $totalBuildings }}</h5>
-                    <small>Total Buildings</small>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-badge" style="background: linear-gradient(135deg, #1679AB, #FFB1B1);">
-                    <h5 class="mb-0">{{ $gisIdCount }}</h5>
-                    <small>GIS ID Assigned</small>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-badge" style="background: linear-gradient(135deg, #102C57, #1679AB);">
-                    <h5 class="mb-0">{{ $totalRoads }}</h5>
-                    <small>Road Segments</small>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-badge" style="background: linear-gradient(135deg, #FFB1B1, #102C57);">
-                    <h5 class="mb-0">{{ $totalPoints }}</h5>
-                    <small>Point Features</small>
-                </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini">
+                <h3>{{ $gisIdCount }}</h3>
+                <p>GIS ID Assigned</p>
             </div>
         </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini">
+                <h3>{{ $totalRoads }}</h3>
+                <p>Road Segments</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card-mini">
+                <h3>{{ $totalPoints }}</h3>
+                <p>Point Features</p>
+            </div>
+        </div>
+    </div>
 
-        <!-- Map and Building List Row -->
-        <div class="row g-4">
-            <!-- Map Column -->
-            <div class="col-lg-8">
-                <div class="stat-card p-3">
-                    <div class="map-toolbar">
-                        <i class="fas fa-draw-polygon text-primary"></i>
-                        <span class="fw-semibold">Building Polygons with GIS ID</span>
-                        <div class="ms-auto">
-                            <button class="btn btn-sm btn-outline-secondary" id="zoomFitBtn">
-                                <i class="fas fa-expand"></i> Fit to View
-                            </button>
-                            <button class="btn btn-sm btn-outline-secondary" id="resetViewBtn">
-                                <i class="fas fa-home"></i> Reset
-                            </button>
-                        </div>
+    <!-- Map Container -->
+    <div class="position-relative px-3">
+        <div id="map"></div>
+    </div>
+
+    <!-- Layer Switcher Panel -->
+    <div class="layer-switcher">
+        <h4><i class="fas fa-layer-group me-2"></i>Map Layers</h4>
+        <div class="layer-group">
+            <h5>Base Maps</h5>
+            <div class="layer-option">
+                <input type="radio" id="osmLayer" name="baseLayer" value="osm" checked>
+                <label for="osmLayer"><i class="fas fa-map"></i> OpenStreetMap</label>
+            </div>
+            <div class="layer-option">
+                <input type="radio" id="terrainLayer" name="baseLayer" value="terrain">
+                <label for="terrainLayer"><i class="fas fa-mountain"></i> Terrain</label>
+            </div>
+            <div class="layer-option">
+                <input type="radio" id="satelliteLayer" name="baseLayer" value="satellite">
+                <label for="satelliteLayer"><i class="fas fa-satellite"></i> Satellite</label>
+            </div>
+        </div>
+        <div class="layer-group">
+            <h5>Overlays</h5>
+            <div class="layer-option">
+                <input type="checkbox" id="droneLayer" checked>
+                <label for="droneLayer"><i class="fas fa-drone"></i> Drone Image</label>
+            </div>
+            <div class="layer-option">
+                <input type="checkbox" id="boundaryLayer" checked>
+                <label for="boundaryLayer"><i class="fas fa-vector-square"></i> Ward Boundary</label>
+            </div>
+            <div class="layer-option">
+                <input type="checkbox" id="polygonLayer" checked>
+                <label for="polygonLayer"><i class="fas fa-draw-polygon"></i> Buildings</label>
+            </div>
+            <div class="layer-option">
+                <input type="checkbox" id="lineLayer" checked>
+                <label for="lineLayer"><i class="fas fa-road"></i> Roads</label>
+            </div>
+            <div class="layer-option">
+                <input type="checkbox" id="pointLayer" checked>
+                <label for="pointLayer"><i class="fas fa-map-marker-alt"></i> Points</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Panel -->
+    <div class="search-panel">
+        <h4><i class="fas fa-search me-2"></i>Search Building</h4>
+        <div class="search-type-group">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="searchType" id="searchAssessment" value="assessment" checked>
+                <label class="form-check-label" for="searchAssessment">Assessment No</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="searchType" id="searchGisid" value="gisid">
+                <label class="form-check-label" for="searchGisid">GIS ID</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="searchType" id="searchBoth" value="both">
+                <label class="form-check-label" for="searchBoth">Both</label>
+            </div>
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Enter Assessment No or GIS ID...">
+            <button id="searchBtn"><i class="fas fa-search"></i> Search</button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Feature Info Panel -->
+    <div class="feature-info" id="featureInfo">
+        <button class="close-btn" id="closeFeatureInfo">&times;</button>
+        <h4><i class="fas fa-info-circle me-2"></i>Feature Details</h4>
+        <div id="featureDetails"></div>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="zoom-controls">
+        <button id="zoomInBtn" title="Zoom In"><i class="fas fa-plus"></i></button>
+        <button id="zoomOutBtn" title="Zoom Out"><i class="fas fa-minus"></i></button>
+        <button id="fitViewBtn" title="Fit to View"><i class="fas fa-expand"></i></button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-light mb-2"></div>
+        <div>Loading...</div>
+    </div>
+</div>
+
+<!-- Charts and Statistics Modal -->
+<div class="modal fade" id="statisticsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #102C57, #1679AB); color: white;">
+                <h5 class="modal-title"><i class="fas fa-chart-bar me-2"></i>Building Statistics</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Building Type Distribution</h6>
+                        <canvas id="buildingTypeChart" height="200"></canvas>
                     </div>
-                    <div id="wardMap" style="height: 550px; width: 100%;"></div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold">Construction Type Distribution</h6>
+                        <canvas id="constructionTypeChart" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <h6 class="fw-bold">Building Usage Distribution</h6>
+                        <canvas id="usageTypeChart" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <h6 class="fw-bold">Area Variation</h6>
+                        <canvas id="areaVariationChart" height="200"></canvas>
+                    </div>
                 </div>
             </div>
-
-            <!-- Building List Column -->
-            <div class="col-lg-4">
-                <div class="stat-card p-3">
-                    <h5 class="fw-bold mb-3">
-                        <i class="fas fa-building me-2" style="color:#1679AB;"></i>
-                        Buildings with GIS ID
-                        <span class="badge bg-primary ms-2">{{ $gisIdCount }}</span>
-                    </h5>
-                    <input type="text" id="buildingSearch" class="form-control search-box mb-3"
-                           placeholder="🔍 Search by GIS ID or Owner Name...">
-                    <div class="building-list" id="buildingList">
-                        @php
-                            $filteredBuildings = array_filter($polygons, function($polygon) {
-                                return !empty($polygon->gisid);
-                            });
-                        @endphp
-                        @forelse($filteredBuildings as $index => $polygon)
-                        <div class="building-item" data-gisid="{{ $polygon->gisid }}" data-index="{{ $index }}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong class="text-primary">GIS ID: {{ $polygon->gisid }}</strong>
-                                    <div class="small text-muted">
-                                        Owner: {{ $polygon->owner_name ?? 'N/A' }}
-                                    </div>
-                                </div>
-                                <i class="fas fa-location-dot text-danger"></i>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-draw-polygon fa-2x mb-2"></i>
-                            <p>No buildings with GIS ID found in this ward.</p>
-                        </div>
-                        @endforelse
-                    </div>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -147,157 +552,233 @@
 
 @section('scripts')
 @parent
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    // Store building data for map
-    const buildingsData = @json($polygons);
-    const roadsData = @json($roads);
-    const pointsData = @json($points);
+    $(document).ready(function() {
+        // Data from Laravel
+        const polygonsData = @json($polygons);
+        const linesData = @json($lines);
+        const pointsData = @json($points);
+        const buildingData = @json($buildingData);
+        const misData = @json($misData);
+        const ward = @json($ward);
+        const corporation = @json($corporation);
 
-    let map;
-    let vectorSource;
-    let vectorLayer;
-    let currentPopup;
-    let buildingFeatures = [];
+        // Building statistics
+        const buildingTypes = @json($buildingTypes);
+        const constructionTypes = @json($constructionTypes);
+        const usageTypes = @json($usageTypes);
+        const areaVariations = @json($areaVariations);
 
-    // Initialize OpenLayers Map
-    function initMap() {
-        // Create vector source
-        vectorSource = new ol.source.Vector();
+        // Drone image data
+        const droneImageURL = "{{ asset($ward->drone_image ?? '') }}";
+        const imageExtent = @json($ward->boundary ? json_decode($ward->boundary, true)[0] ?? null : null);
 
-        // Create vector layer with styling
-        vectorLayer = new ol.layer.Vector({
-            source: vectorSource,
-            style: function(feature) {
-                const gisid = feature.get('gisid');
-                // Buildings with GIS ID get special styling
-                if (gisid && gisid !== '') {
-                    return new ol.style.Style({
-                        fill: new ol.style.Fill({
-                            color: 'rgba(22, 121, 171, 0.3)'
+        // Map variables
+        let map;
+        let vectorSource;
+        let vectorLayer;
+        let currentPopup;
+        let buildingFeatures = [];
+        let currentHighlightedFeature = null;
+
+        // Layer definitions
+        const osmLayer = new ol.layer.Tile({
+            source: new ol.source.OSM(),
+            visible: true        });
+
+        const terrainLayer = new ol.layer.Tile({
+            source: new ol.source.OSM({
+                url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png'
+            }),
+            visible: false
+        });
+
+        const satelliteLayer = new ol.layer.Tile({
+            source: new ol.source.OSM({
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            }),
+            visible: false
+        });
+
+        // Drone image layer
+        let droneLayer = null;
+        if (droneImageURL && imageExtent && imageExtent.length === 4) {
+            droneLayer = new ol.layer.Image({
+                source: new ol.source.ImageStatic({
+                    url: droneImageURL,
+                    imageExtent: imageExtent.map(coord => coord),
+                    imageSmoothing: false
+                }),
+                opacity: 0.85,
+                visible: true
+            });
+        } else {
+            droneLayer = new ol.layer.Image({
+                source: new ol.source.ImageStatic({
+                    url: '',
+                    imageExtent: [0, 0, 0, 0]
+                }),
+                visible: false
+            });
+        }
+
+        // Boundary layer
+        let boundaryLayer = null;
+        if (ward.boundary) {
+            try {
+                let boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
+                if (boundaryCoords && boundaryCoords[0]) {
+                    const transformedBoundary = boundaryCoords[0].map(coord => ol.proj.fromLonLat(coord));
+                    const boundaryGeometry = new ol.geom.Polygon([transformedBoundary]);
+                    boundaryLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({ geometry: boundaryGeometry })]
                         }),
-                        stroke: new ol.style.Stroke({
-                            color: '#1679AB',
-                            width: 2
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: '#FF0000', width: 3, lineDash: [8, 4] }),
+                            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' })
                         }),
-                        text: new ol.style.Text({
-                            text: gisid.toString(),
-                            font: '12px Poppins',
-                            fill: new ol.style.Fill({ color: '#102C57' }),
-                            stroke: new ol.style.Stroke({ color: 'white', width: 2 }),
-                            offsetY: -10
-                        })
-                    });
-                } else {
-                    return new ol.style.Style({
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255, 177, 177, 0.2)'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#FFB1B1',
-                            width: 1.5
-                        })
+                        visible: true
                     });
                 }
-            }
-        });
-
-        // Create map with OSM base layer
-        map = new ol.Map({
-            target: 'wardMap',
-            layers: [
-                new ol.layer.Tile({
-                    source: new ol.source.OSM()
-                }),
-                vectorLayer
-            ],
-            view: new ol.View({
-                center: ol.proj.fromLonLat([78.1198, 9.9252]), // Default to Tamil Nadu center
-                zoom: 12
-            })
-        });
-
-        // Add buildings to map
-        addBuildingsToMap();
-
-        // Add roads to map
-        addRoadsToMap();
-
-        // Add points to map
-        addPointsToMap();
-
-        // Fit to buildings if any exist
-        if (buildingFeatures.length > 0) {
-            const extent = vectorSource.getExtent();
-            if (extent && !ol.extent.isEmpty(extent)) {
-                map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+            } catch(e) {
+                console.error('Boundary parse error:', e);
             }
         }
-    }
 
-    // Add buildings (polygons) to map
-    function addBuildingsToMap() {
-        buildingsData.forEach((building, index) => {
-            if (building.geojson) {
+        if (!boundaryLayer) {
+            boundaryLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                visible: false
+            });
+        }
+
+        // Polygon layer (Buildings)
+        const polygonSource = new ol.source.Vector();
+        polygonsData.forEach(poly => {
+            if (poly.geojson) {
                 try {
-                    const geojson = JSON.parse(building.geojson);
+                    const geojson = JSON.parse(poly.geojson);
                     const format = new ol.format.GeoJSON();
                     const feature = format.readFeature(geojson, {
                         dataProjection: 'EPSG:4326',
                         featureProjection: 'EPSG:3857'
                     });
-
                     if (feature) {
-                        feature.set('id', building.id);
-                        feature.set('gisid', building.gisid);
-                        feature.set('owner_name', building.owner_name);
+                        feature.set('id', poly.id);
+                        feature.set('gisid', poly.gisid);
                         feature.set('type', 'building');
 
-                        vectorSource.addFeature(feature);
+                        // Find building data for styling
+                        const buildingInfo = buildingData.find(b => b.gisid == poly.gisid);
+                        if (buildingInfo) {
+                            feature.set('building_type', buildingInfo.building_type);
+                            feature.set('construction_type', buildingInfo.construction_type);
+                            feature.set('building_usage', buildingInfo.building_usage);
+                            feature.set('number_bill', buildingInfo.number_bill);
+                            feature.set('number_shop', buildingInfo.number_shop);
+                            feature.set('number_floor', buildingInfo.number_floor);
+                            feature.set('owner_name', buildingInfo.owner_name);
+                            feature.set('phone', buildingInfo.phone);
+                            feature.set('plot_area', buildingInfo.plot_area);
+                        }
+
+                        polygonSource.addFeature(feature);
                         buildingFeatures.push(feature);
                     }
                 } catch(e) {
-                    console.error('Error parsing GeoJSON:', e);
+                    console.error('Polygon parse error:', e);
                 }
             }
         });
-    }
 
-    // Add roads (lines) to map
-    function addRoadsToMap() {
-        roadsData.forEach(road => {
-            if (road.geojson) {
+        const polygonLayer = new ol.layer.Vector({
+            source: polygonSource,
+            style: function(feature) {
+                const gisid = feature.get('gisid');
+                const buildingType = feature.get('building_type');
+                const hasData = buildingData.some(b => b.gisid == gisid);
+
+                let fillColor = 'rgba(22, 121, 171, 0.3)';
+                let strokeColor = '#1679AB';
+
+                // Color coding based on building type
+                if (buildingType) {
+                    if (buildingType.includes('Residential') || buildingType.includes('Independent')) {
+                        fillColor = 'rgba(40, 167, 69, 0.3)';
+                        strokeColor = '#28a745';
+                    } else if (buildingType.includes('Commercial') || buildingType.includes('Shop')) {
+                        fillColor = 'rgba(255, 193, 7, 0.3)';
+                        strokeColor = '#ffc107';
+                    } else if (buildingType.includes('Industrial')) {
+                        fillColor = 'rgba(23, 162, 184, 0.3)';
+                        strokeColor = '#17a2b8';
+                    } else if (buildingType.includes('Government') || buildingType.includes('Municipality')) {
+                        fillColor = 'rgba(111, 66, 193, 0.3)';
+                        strokeColor = '#6f42c1';
+                    } else if (buildingType.includes('Educational')) {
+                        fillColor = 'rgba(220, 53, 69, 0.3)';
+                        strokeColor = '#dc3545';
+                    } else if (buildingType.includes('Vacant')) {
+                        fillColor = 'rgba(108, 117, 125, 0.3)';
+                        strokeColor = '#6c757d';
+                    }
+                }
+
+                return new ol.style.Style({
+                    fill: new ol.style.Fill({ color: fillColor }),
+                    stroke: new ol.style.Stroke({ color: strokeColor, width: 2 }),
+                    text: new ol.style.Text({
+                        text: gisid ? gisid.toString() : '',
+                        font: '10px Poppins',
+                        fill: new ol.style.Fill({ color: '#102C57' }),
+                        stroke: new ol.style.Stroke({ color: 'white', width: 2 }),
+                        offsetY: -8
+                    })
+                });
+            },
+            visible: true
+        });
+
+        // Line layer (Roads)
+        const lineSource = new ol.source.Vector();
+        linesData.forEach(line => {
+            if (line.geojson) {
                 try {
-                    const geojson = JSON.parse(road.geojson);
+                    const geojson = JSON.parse(line.geojson);
                     const format = new ol.format.GeoJSON();
                     const feature = format.readFeature(geojson, {
                         dataProjection: 'EPSG:4326',
                         featureProjection: 'EPSG:3857'
                     });
-
                     if (feature) {
-                        feature.set('id', road.id);
-                        feature.set('road_name', road.road_name);
+                        feature.set('id', line.id);
+                        feature.set('gisid', line.gisid);
+                        feature.set('road_name', line.road_name);
                         feature.set('type', 'road');
-
-                        feature.setStyle(new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#FFB1B1',
-                                width: 3,
-                                lineDash: [5, 5]
-                            })
-                        }));
-
-                        vectorSource.addFeature(feature);
+                        lineSource.addFeature(feature);
                     }
                 } catch(e) {
-                    console.error('Error parsing road GeoJSON:', e);
+                    console.error('Line parse error:', e);
                 }
             }
         });
-    }
 
-    // Add points to map
-    function addPointsToMap() {
+        const lineLayer = new ol.layer.Vector({
+            source: lineSource,
+            style: new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: '#FFB1B1',
+                    width: 3,
+                    lineDash: [8, 6]
+                })
+            }),
+            visible: true
+        });
+
+        // Point layer
+        const pointSource = new ol.source.Vector();
         pointsData.forEach(point => {
             if (point.geojson) {
                 try {
@@ -307,203 +788,510 @@
                         dataProjection: 'EPSG:4326',
                         featureProjection: 'EPSG:3857'
                     });
-
                     if (feature) {
                         feature.set('id', point.id);
                         feature.set('gisid', point.gisid);
-                        feature.set('owner_name', point.owner_name);
-                        feature.set('door_no', point.new_door_no);
                         feature.set('type', 'point');
 
-                        feature.setStyle(new ol.style.Style({
-                            image: new ol.style.Circle({
-                                radius: 6,
-                                fill: new ol.style.Fill({ color: '#FFB1B1' }),
-                                stroke: new ol.style.Stroke({ color: '#1679AB', width: 2 })
-                            })
-                        }));
+                        // Find point data
+                        const pointInfo = buildingData.find(b => b.gisid == point.gisid);
+                        if (pointInfo) {
+                            feature.set('owner_name', pointInfo.owner_name);
+                        }
 
-                        vectorSource.addFeature(feature);
+                        pointSource.addFeature(feature);
                     }
                 } catch(e) {
-                    console.error('Error parsing point GeoJSON:', e);
+                    console.error('Point parse error:', e);
                 }
             }
         });
-    }
 
-    // Show popup with building details
-    function showPopup(feature, coordinate) {
-        if (currentPopup) {
-            map.removeOverlay(currentPopup);
-        }
-
-        const gisid = feature.get('gisid');
-        const ownerName = feature.get('owner_name') || 'N/A';
-        const type = feature.get('type');
-
-        let content = '';
-        if (type === 'building') {
-            content = `
-                <div class="building-info-card" style="min-width: 220px;">
-                    <h6 class="fw-bold mb-2" style="color:#102C57;">
-                        <i class="fas fa-building"></i> Building Details
-                    </h6>
-                    <hr class="my-2">
-                    <div><strong>GIS ID:</strong> ${gisid || 'Not Assigned'}</div>
-                    <div><strong>Owner Name:</strong> ${ownerName}</div>
-                    <div><strong>Feature Type:</strong> Building Polygon</div>
-                    ${gisid ? `<button class="btn btn-sm btn-primary mt-2" onclick="alert('Viewing details for GIS ID: ${gisid}')">
-                        <i class="fas fa-info-circle"></i> View Details
-                    </button>` : ''}
-                </div>
-            `;
-        } else if (type === 'road') {
-            content = `
-                <div class="building-info-card" style="min-width: 200px;">
-                    <h6 class="fw-bold mb-2" style="color:#102C57;">
-                        <i class="fas fa-road"></i> Road Details
-                    </h6>
-                    <hr class="my-2">
-                    <div><strong>Road Name:</strong> ${feature.get('road_name') || 'N/A'}</div>
-                    <div><strong>Feature Type:</strong> Road Line</div>
-                </div>
-            `;
-        } else if (type === 'point') {
-            content = `
-                <div class="building-info-card" style="min-width: 220px;">
-                    <h6 class="fw-bold mb-2" style="color:#102C57;">
-                        <i class="fas fa-map-pin"></i> Point Feature
-                    </h6>
-                    <hr class="my-2">
-                    <div><strong>GIS ID:</strong> ${gisid || 'N/A'}</div>
-                    <div><strong>Owner Name:</strong> ${ownerName}</div>
-                    <div><strong>Door No:</strong> ${feature.get('door_no') || 'N/A'}</div>
-                </div>
-            `;
-        }
-
-        const popupElement = document.createElement('div');
-        popupElement.className = 'ol-popup';
-        popupElement.innerHTML = content;
-
-        const popup = new ol.Overlay({
-            element: popupElement,
-            positioning: 'bottom-center',
-            stopEvent: true,
-            offset: [0, -10]
+        const pointLayer = new ol.layer.Vector({
+            source: pointSource,
+            style: new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 6,
+                    fill: new ol.style.Fill({ color: '#FFB1B1' }),
+                    stroke: new ol.style.Stroke({ color: '#1679AB', width: 2 })
+                })
+            }),
+            visible: true
         });
 
-        map.addOverlay(popup);
-        popup.setPosition(coordinate);
-        currentPopup = popup;
-    }
-
-    // Hide popup
-    function hidePopup() {
-        if (currentPopup) {
-            map.removeOverlay(currentPopup);
-            currentPopup = null;
-        }
-    }
-
-    // Zoom to a specific building by GIS ID
-    function zoomToBuilding(gisid) {
-        const feature = buildingFeatures.find(f => f.get('gisid') == gisid);
-        if (feature) {
-            const geometry = feature.getGeometry();
-            const extent = geometry.getExtent();
-            map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
-
-            // Show popup
-            const center = ol.extent.getCenter(extent);
-            showPopup(feature, center);
-
-            // Highlight the feature temporarily
-            const originalStyle = feature.getStyle();
-            feature.setStyle(new ol.style.Style({
-                fill: new ol.style.Fill({ color: 'rgba(255, 177, 177, 0.8)' }),
-                stroke: new ol.style.Stroke({ color: '#FF0000', width: 3 })
-            }));
-            setTimeout(() => {
-                feature.setStyle(originalStyle);
-            }, 2000);
-        }
-    }
-
-    // Map click handler
-    function setupMapClick() {
-        map.on('click', function(evt) {
-            const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
-                return feature;
-            });
-
-            if (feature) {
-                const coordinate = evt.coordinate;
-                showPopup(feature, coordinate);
-            } else {
-                hidePopup();
-            }
-        });
-    }
-
-    // Setup building list click handlers
-    function setupBuildingList() {
-        const buildingItems = document.querySelectorAll('.building-item');
-        buildingItems.forEach(item => {
-            item.addEventListener('click', function() {
-                const gisid = this.getAttribute('data-gisid');
-                if (gisid) {
-                    zoomToBuilding(gisid);
-
-                    // Highlight active item
-                    buildingItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                }
-            });
+        // Highlight layer
+        const highlightSource = new ol.source.Vector();
+        const highlightLayer = new ol.layer.Vector({
+            source: highlightSource,
+            style: new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: '#FF0000', width: 4 }),
+                fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' }),
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: new ol.style.Fill({ color: '#FF0000' }),
+                    stroke: new ol.style.Stroke({ color: '#FFFFFF', width: 2 })
+                })
+            })
         });
 
-        // Search functionality
-        const searchInput = document.getElementById('buildingSearch');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const searchTerm = this.value.toLowerCase();
-                buildingItems.forEach(item => {
-                    const text = item.innerText.toLowerCase();
-                    if (text.includes(searchTerm)) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
+        // Initialize Map
+        function initMap() {
+            let center = [78.1198, 9.9252]; // Default center
+
+            if (imageExtent && imageExtent.length === 4) {
+                center = [(imageExtent[0] + imageExtent[2]) / 2, (imageExtent[1] + imageExtent[3]) / 2];
+            } else if (ward.boundary) {
+                try {
+                    const boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
+                    if (boundaryCoords && boundaryCoords[0] && boundaryCoords[0].length > 0) {
+                        let sumLon = 0, sumLat = 0;
+                        boundaryCoords[0].forEach(coord => {
+                            sumLon += coord[0];
+                            sumLat += coord[1];
+                        });
+                        center = [sumLon / boundaryCoords[0].length, sumLat / boundaryCoords[0].length];
                     }
-                });
-            });
-        }
-    }
+                } catch(e) {}
+            }
 
-    // Setup map controls
-    function setupMapControls() {
-        document.getElementById('zoomFitBtn')?.addEventListener('click', () => {
+            map = new ol.Map({
+                target: 'map',
+                layers: [osmLayer, terrainLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat(center),
+                    zoom: 18
+                })
+            });
+
+            // Fit to ward boundary if available
+            if (ward.boundary) {
+                try {
+                    const boundaryCoords = typeof ward.boundary === 'string' ? JSON.parse(ward.boundary) : ward.boundary;
+                    if (boundaryCoords && boundaryCoords[0]) {
+                        const extent = ol.extent.boundingExtent(
+                            boundaryCoords[0].map(coord => ol.proj.fromLonLat(coord))
+                        );
+                        map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
+                    }
+                } catch(e) {}
+            }
+        }
+
+        // Show popup
+        function showPopup(feature, coordinate) {
+            if (currentPopup) {
+                map.removeOverlay(currentPopup);
+            }
+
+            const gisid = feature.get('gisid');
+            const type = feature.get('type');
+            let content = '';
+
+            if (type === 'building') {
+                const buildingInfo = buildingData.find(b => b.gisid == gisid);
+                content = `
+                    <div style="min-width: 260px;">
+                        <h6 style="color:#102C57; margin-bottom:10px;"><i class="fas fa-building"></i> Building Details</h6>
+                        <hr style="margin:5px 0">
+                        <div><strong>GIS ID:</strong> ${gisid || 'N/A'}</div>
+                        <div><strong>Building Type:</strong> ${buildingInfo?.building_type || 'N/A'}</div>
+                        <div><strong>Construction Type:</strong> ${buildingInfo?.construction_type || 'N/A'}</div>
+                        <div><strong>Usage:</strong> ${buildingInfo?.building_usage || 'N/A'}</div>
+                        <div><strong>Floors:</strong> ${buildingInfo?.number_floor || 'N/A'}</div>
+                        <div><strong>Shops:</strong> ${buildingInfo?.number_shop || 'N/A'}</div>
+                        <div><strong>Bills:</strong> ${buildingInfo?.number_bill || 'N/A'}</div>
+                        <div><strong>Owner:</strong> ${buildingInfo?.owner_name || 'N/A'}</div>
+                        <div><strong>Phone:</strong> ${buildingInfo?.phone || 'N/A'}</div>
+                        <div><strong>Area:</strong> ${buildingInfo?.plot_area || buildingInfo?.building_area || 'N/A'} sq ft</div>
+                        <button class="btn btn-sm btn-primary mt-2 w-100" onclick="viewBuildingDetails('${gisid}')">
+                            <i class="fas fa-info-circle"></i> View Full Details
+                        </button>
+                    </div>
+                `;
+            } else if (type === 'road') {
+                content = `
+                    <div style="min-width: 200px;">
+                        <h6 style="color:#102C57;"><i class="fas fa-road"></i> Road Details</h6>
+                        <hr>
+                        <div><strong>GIS ID:</strong> ${gisid || 'N/A'}</div>
+                        <div><strong>Road Name:</strong> ${feature.get('road_name') || 'N/A'}</div>
+                    </div>
+                `;
+            } else if (type === 'point') {
+                content = `
+                    <div style="min-width: 220px;">
+                        <h6 style="color:#102C57;"><i class="fas fa-map-pin"></i> Point Feature</h6>
+                        <hr>
+                        <div><strong>GIS ID:</strong> ${gisid || 'N/A'}</div>
+                        <div><strong>Owner:</strong> ${feature.get('owner_name') || 'N/A'}</div>
+                    </div>
+                `;
+            }
+
+            const popupElement = document.createElement('div');
+            popupElement.className = 'ol-popup';
+            popupElement.innerHTML = content;
+
+            const popup = new ol.Overlay({
+                element: popupElement,
+                positioning: 'bottom-center',
+                stopEvent: true,
+                offset: [0, -10]
+            });
+
+            map.addOverlay(popup);
+            popup.setPosition(coordinate);
+            currentPopup = popup;
+        }
+
+        function hidePopup() {
+            if (currentPopup) {
+                map.removeOverlay(currentPopup);
+                currentPopup = null;
+            }
+        }
+
+        // Zoom to building by GIS ID
+        function zoomToBuilding(gisid) {
+            const feature = buildingFeatures.find(f => f.get('gisid') == gisid);
+            if (feature) {
+                const geometry = feature.getGeometry();
+                const extent = geometry.getExtent();
+                map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
+
+                const center = ol.extent.getCenter(extent);
+                showPopup(feature, center);
+
+                // Highlight feature
+                highlightSource.clear();
+                highlightSource.addFeature(feature.clone());
+
+                setTimeout(() => {
+                    highlightSource.clear();
+                }, 3000);
+            } else {
+                showFlashMessage('Building with GIS ID ' + gisid + ' not found', 'warning');
+            }
+        }
+
+        // Search function
+        function searchBuilding(searchTerm, searchType) {
+            if (!searchTerm || searchTerm.trim() === '') {
+                showFlashMessage('Please enter a search term', 'warning');
+                return;
+            }
+
+            $('#loadingSpinner').show();
+            $('#searchResults').hide().empty();
+
+            searchTerm = searchTerm.trim();
+            let foundResults = [];
+
+            // Search in building data by GIS ID
+            if (searchType === 'gisid' || searchType === 'both') {
+                const buildingMatch = buildingData.filter(b =>
+                    b.gisid && b.gisid.toString().toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                buildingMatch.forEach(b => {
+                    foundResults.push({
+                        type: 'gisid',
+                        value: b.gisid,
+                        label: `GIS ID: ${b.gisid}`,
+                        data: b
+                    });
+                });
+            }
+
+            // Search in MIS data by Assessment
+            if (searchType === 'assessment' || searchType === 'both') {
+                const misMatch = misData.filter(m =>
+                    m.assessment && m.assessment.toString().toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                misMatch.forEach(m => {
+                    foundResults.push({
+                        type: 'assessment',
+                        value: m.assessment,
+                        label: `Assessment: ${m.assessment}`,
+                        data: m
+                    });
+                });
+            }
+
+            $('#loadingSpinner').hide();
+
+            if (foundResults.length === 0) {
+                showFlashMessage('No results found for: ' + searchTerm, 'info');
+                return;
+            }
+
+            // Display results
+            const resultsContainer = $('#searchResults');
+            resultsContainer.empty();
+
+            foundResults.forEach(result => {
+                const resultItem = $(`
+                    <div class="search-result-item">
+                        <div class="result-gisid">${result.label}</div>
+                        <div class="result-assessment">${result.type === 'assessment' ? 'Click to view building' : 'Click to zoom to building'}</div>
+                    </div>
+                `);
+
+                resultItem.on('click', function() {
+                    if (result.type === 'assessment') {
+                        // Find GIS ID from assessment
+                        const building = buildingData.find(b => b.assessment == result.value);
+                        if (building && building.gisid) {
+                            zoomToBuilding(building.gisid);
+                        } else {
+                            showFlashMessage('No GIS ID found for this assessment', 'warning');
+                        }
+                    } else {
+                        zoomToBuilding(result.value);
+                    }
+                    resultsContainer.hide();
+                });
+
+                resultsContainer.append(resultItem);
+            });
+
+            resultsContainer.show();
+        }
+
+        // Layer switcher handlers
+        $('#osmLayer').on('change', function() {
+            osmLayer.setVisible(true);
+            terrainLayer.setVisible(false);
+            satelliteLayer.setVisible(false);
+        });
+
+        $('#terrainLayer').on('change', function() {
+            osmLayer.setVisible(false);
+            terrainLayer.setVisible(true);
+            satelliteLayer.setVisible(false);
+        });
+
+        $('#satelliteLayer').on('change', function() {
+            osmLayer.setVisible(false);
+            terrainLayer.setVisible(false);
+            satelliteLayer.setVisible(true);
+        });
+
+        $('#droneLayer').on('change', function(e) {
+            if (droneLayer) droneLayer.setVisible(e.target.checked);
+        });
+
+        $('#boundaryLayer').on('change', function(e) {
+            boundaryLayer.setVisible(e.target.checked);
+        });
+
+        $('#polygonLayer').on('change', function(e) {
+            polygonLayer.setVisible(e.target.checked);
+        });
+
+        $('#lineLayer').on('change', function(e) {
+            lineLayer.setVisible(e.target.checked);
+        });
+
+        $('#pointLayer').on('change', function(e) {
+            pointLayer.setVisible(e.target.checked);
+        });
+
+        // Search button handler
+        $('#searchBtn').on('click', function() {
+            const searchTerm = $('#searchInput').val();
+            const searchType = $('input[name="searchType"]:checked').val();
+            searchBuilding(searchTerm, searchType);
+        });
+
+        $('#searchInput').on('keypress', function(e) {
+            if (e.which === 13) {
+                const searchTerm = $(this).val();
+                const searchType = $('input[name="searchType"]:checked').val();
+                searchBuilding(searchTerm, searchType);
+            }
+        });
+
+        // Zoom controls
+        $('#zoomInBtn').on('click', function() {
+            const view = map.getView();
+            view.setZoom(view.getZoom() + 1);
+        });
+
+        $('#zoomOutBtn').on('click', function() {
+            const view = map.getView();
+            view.setZoom(view.getZoom() - 1);
+        });
+
+        $('#fitViewBtn').on('click', function() {
             if (buildingFeatures.length > 0) {
-                const extent = vectorSource.getExtent();
+                const extent = polygonSource.getExtent();
                 if (extent && !ol.extent.isEmpty(extent)) {
                     map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
                 }
             }
         });
 
-        document.getElementById('resetViewBtn')?.addEventListener('click', () => {
-            map.getView().setCenter(ol.proj.fromLonLat([78.1198, 9.9252]));
-            map.getView().setZoom(12);
-            hidePopup();
-        });
-    }
+        // Map click handler
+        map.on('click', function(evt) {
+            const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+                return feature;
+            });
 
-    // Initialize everything when page loads
-    document.addEventListener('DOMContentLoaded', function() {
+            if (feature && feature.get('type')) {
+                showPopup(feature, evt.coordinate);
+            } else {
+                hidePopup();
+            }
+        });
+
+        // Feature info panel close
+        $('#closeFeatureInfo').on('click', function() {
+            $('#featureInfo').hide();
+        });
+
+        // Initialize charts
+        function initCharts() {
+            // Building Type Chart
+            if (Object.keys(buildingTypes).length > 0) {
+                const ctx1 = document.getElementById('buildingTypeChart')?.getContext('2d');
+                if (ctx1) {
+                    new Chart(ctx1, {
+                        type: 'pie',
+                        data: {
+                            labels: Object.keys(buildingTypes),
+                            datasets: [{
+                                data: Object.values(buildingTypes),
+                                backgroundColor: ['#1679AB', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#dc3545', '#6c757d']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true }
+                    });
+                }
+            }
+
+            // Construction Type Chart
+            if (Object.keys(constructionTypes).length > 0) {
+                const ctx2 = document.getElementById('constructionTypeChart')?.getContext('2d');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(constructionTypes),
+                            datasets: [{
+                                label: 'Count',
+                                data: Object.values(constructionTypes),
+                                backgroundColor: '#1679AB'
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true }
+                    });
+                }
+            }
+
+            // Usage Type Chart
+            if (Object.keys(usageTypes).length > 0) {
+                const ctx3 = document.getElementById('usageTypeChart')?.getContext('2d');
+                if (ctx3) {
+                    new Chart(ctx3, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(usageTypes),
+                            datasets: [{
+                                data: Object.values(usageTypes),
+                                backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#dc3545']
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true }
+                    });
+                }
+            }
+
+            // Area Variation Chart
+            if (Object.keys(areaVariations).length > 0) {
+                const ctx4 = document.getElementById('areaVariationChart')?.getContext('2d');
+                if (ctx4) {
+                    new Chart(ctx4, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(areaVariations),
+                            datasets: [{
+                                label: 'Number of Buildings',
+                                data: Object.values(areaVariations),
+                                backgroundColor: '#FFB1B1',
+                                borderColor: '#1679AB',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: true }
+                    });
+                }
+            }
+        }
+
+        // Flash message function
+        function showFlashMessage(message, type = 'info') {
+            const alertClass = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            }[type] || 'alert-info';
+
+            const flashHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 10000; min-width: 250px;">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('body').append(flashHtml);
+            setTimeout(() => $('.alert').alert('close'), 4000);
+        }
+
+        // Global function for building details
+        window.viewBuildingDetails = function(gisid) {
+            const building = buildingData.find(b => b.gisid == gisid);
+            if (building) {
+                let details = `
+                    <div class="feature-detail-row"><span class="feature-detail-label">GIS ID:</span> ${building.gisid || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Building Type:</span> ${building.building_type || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Construction Type:</span> ${building.construction_type || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Building Usage:</span> ${building.building_usage || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Number of Floors:</span> ${building.number_floor || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Number of Shops:</span> ${building.number_shop || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Number of Bills:</span> ${building.number_bill || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Owner Name:</span> ${building.owner_name || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Phone:</span> ${building.phone || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Plot Area:</span> ${building.plot_area || building.building_area || 'N/A'} sq ft</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Road Name:</span> ${building.road_name || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Water Connection:</span> ${building.water_connection || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">UGD:</span> ${building.ugd || 'N/A'}</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Remarks:</span> ${building.remarks || 'N/A'}</div>
+                `;
+                $('#featureDetails').html(details);
+                $('#featureInfo').show();
+                hidePopup();
+            } else {
+                showFlashMessage('Building details not found', 'error');
+            }
+        };
+
+        // Initialize everything
         initMap();
-        setupMapClick();
-        setupBuildingList();
-        setupMapControls();
+        setTimeout(initCharts, 500);
+
+        // Add statistics button to sidebar
+        $('.sidebar .nav').append(`
+            <a class="nav-link" href="#" id="statsNavLink">
+                <i class="fas fa-chart-pie"></i> Statistics
+            </a>
+        `);
+
+        $('#statsNavLink').on('click', function(e) {
+            e.preventDefault();
+            $('#statisticsModal').modal('show');
+        });
+
+        console.log('Ward Map View Loaded Successfully');
     });
 </script>
 @endsection
