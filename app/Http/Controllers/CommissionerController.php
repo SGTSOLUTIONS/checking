@@ -46,7 +46,7 @@ class CommissionerController extends Controller
         $ward_count = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->count();
-        $wards_per_zone = Ward::where('corporation_id', $corporation->id)
+        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->select('zone', DB::raw('count(*) as total'))
             ->groupBy('zone')
@@ -54,9 +54,13 @@ class CommissionerController extends Controller
 
         $mis = DB::table("mis_corporation_{$corporation->id}")->get();
         $mis_count = DB::table("mis_corporation_{$corporation->id}")->count();
+        foreach($wards_per_zones as $wards_per_zone)
+            {
+                $wardlists = ward::where('zone',$wards_per_zone->zone)->get();
+            }
 
 
-        return response()->json($wards_per_zone);
+        return response()->json($wardlists);
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
     }
