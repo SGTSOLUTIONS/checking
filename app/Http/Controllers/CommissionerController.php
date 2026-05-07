@@ -6,36 +6,38 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Hash;
 use App\Models\Corporation;
 use App\Models\Ward;
-use App\Models\CorporationUser;
 
 class CommissionerController extends Controller
 {
+    /**
+     * Display the commissioner dashboard with all data.
+     */
     public function dashboard()
     {
         $user = Auth::guard('corporation')->user();
+
         if (!$user) {
             return redirect()->route('corporation.login');
         }
 
         $corporation = Corporation::find($user->corporation_id);
+
         if (!$corporation) {
             return back()->with('error', 'Corporation not found');
         }
 
-        // Get wards data
+        // Get wards
         $wards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->get();
 
         $ward_count = $wards->count();
 
-        // Get zones with wards
-        $zones = Ward::where('corporation_id', $corporation->id)
+        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
-            ->select('zone', DB::raw('COUNT(*) as ward_count'))
+            ->select('zone', DB::raw('count(*) as total'))
             ->groupBy('zone')
             ->get();
 
@@ -46,167 +48,98 @@ class CommissionerController extends Controller
             $mis_count = DB::table($misTable)->count();
         }
 
-        // Prepare ward collections with statistics
+        // Build collections
         $collections = [];
-        foreach ($wards as $ward) {
-            $polygontable = $this->getPolygonTable($corporation->id, $ward->ward_no, $ward->zone);
-            $roadtable = $this->getRoadTable($corporation->id, $ward->ward_no, $ward->zone);
-            $pointdatatable = $this->getPointDataTable($corporation->id, $ward->ward_no, $ward->zone);
+        $zonesWithWards = [];
 
-            $buildingCount = 0;
-            if ($polygontable && Schema::hasTable($polygontable)) {
-                $buildingCount = DB::table($polygontable)->count();
-            }
+        foreach ($wards_per_zones as $wards_per_zone) {
+            $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
 
-            $roadCount = 0;
-            if ($roadtable && Schema::hasTable($roadtable)) {
-                $roadCount = DB::table($roadtable)->count();
-            }
-
-            $pointCount = 0;
-            if ($pointdatatable && Schema::hasTable($pointdatatable)) {
-                $pointCount = DB::table($pointdatatable)->count();
-            }
-
-            $surveyedCount = 0;
-            $polygondatatable = $this->getPolygonDataTable($corporation->id, $ward->ward_no, $ward->zone);
-            if ($polygondatatable && Schema::hasTable($polygondatatable)) {
-                $surveyedCount = DB::table($polygondatatable)->count();
-            }
-
-            $collections[] = (object)[
-                'zone' => $ward->zone,
-                'ward_no' => $ward->ward_no,
-                'buildingCount' => $buildingCount,
-                'surveyedBuildingCount' => $surveyedCount,
-                'roadCount' => $roadCount,
-                'pointCount' => $pointCount,
-                'misCount' => $mis_count
+            $zoneData = [
+                'zone' => $wards_per_zone->zone,
+                'wards' => []
             ];
-        }
 
-        // Zone performance data
-        $zonePerformance = [];
-        foreach ($zones as $zone) {
-            $zoneWards = Ward::where('corporation_id', $corporation->id)
-                ->where('zone', $zone->zone)
-                ->where('status', 'active')
-                ->get();
+            foreach ($wardlists as $wardlist) {
+                $pointdatatable = $this->getPointDataTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $polygondatatable = $this->getPolygonDataTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $polygontable = $this->getPolygonTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $roadtable = $this->getRoadTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
 
-            $totalBuildings = 0;
-            foreach ($zoneWards as $zw) {
-                $table = $this->getPolygonTable($corporation->id, $zw->ward_no, $zw->zone);
-                if ($table && Schema::hasTable($table)) {
-                    $totalBuildings += DB::table($table)->count();
+                // Get counts
+                $buildingCount = 0;
+                if ($polygontable && Schema::hasTable($polygontable)) {
+                    $buildingCount = DB::table($polygontable)->count();
                 }
+
+                $surveyedBuildingCount = 0;
+                if ($polygondatatable && Schema::hasTable($polygondatatable)) {
+                    $surveyedBuildingCount = DB::table($polygondatatable)->count();
+                }
+
+                $pointCount = 0;
+                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
+                    $pointCount = DB::table($pointdatatable)->count();
+                }
+
+                $roadCount = 0;
+                if ($roadtable && Schema::hasTable($roadtable)) {
+                    $roadCount = DB::table($roadtable)->count();
+                }
+
+                $misCount = 0;
+                $misWardTable = "mis_corporation_{$corporation->id}";
+                if (Schema::hasTable($misWardTable)) {
+                    $misCount = DB::table($misWardTable)
+                        ->where('ward_no', $wardlist->ward_no)
+                        ->count();
+                }
+
+                $data = [
+                    "zone"                     => $wardlist->zone,
+                    "ward_no"                  => $wardlist->ward_no,
+                    "pointdatatable"           => $pointdatatable,
+                    "polygondatatable"         => $polygondatatable,
+                    "polygontable"             => $polygontable,
+                    "roadtable"                => $roadtable,
+                    "buildingCount"            => $buildingCount,
+                    "surveyedBuildingCount"    => $surveyedBuildingCount,
+                    "pointCount"               => $pointCount,
+                    "roadCount"                => $roadCount,
+                    "misCount"                 => $misCount,
+                ];
+
+                $collections[] = $data;
+
+                $zoneData['wards'][] = [
+                    'ward_no' => $wardlist->ward_no,
+                    'buildingCount' => $buildingCount,
+                    'surveyedCount' => $surveyedBuildingCount,
+                    'pointCount' => $pointCount,
+                    'roadCount' => $roadCount,
+                    'misCount' => $misCount
+                ];
             }
 
-            $zonePerformance[] = (object)[
-                'zone' => $zone->zone,
-                'wards' => $zone->ward_count,
-                'buildings' => $totalBuildings,
-                'collected' => rand(15, 45),
-                'resolved' => rand(85, 98)
-            ];
+            $zonesWithWards[] = $zoneData;
         }
 
-        // Recent activities (sample data)
-        $recentActivities = [
-            (object)['ward' => 'Ward 12', 'activity' => 'Property Tax Payment', 'status' => 'Completed', 'status_type' => 'success', 'date' => date('Y-m-d')],
-            (object)['ward' => 'Ward 34', 'activity' => 'Building Plan Approval', 'status' => 'Under Review', 'status_type' => 'warning', 'date' => date('Y-m-d', strtotime('-1 day'))],
-            (object)['ward' => 'Ward 7', 'activity' => 'Grievance: Water Supply', 'status' => 'Assigned', 'status_type' => 'info', 'date' => date('Y-m-d', strtotime('-1 day'))],
-            (object)['ward' => 'Ward 22', 'activity' => 'Solid Waste Collection', 'status' => 'Completed', 'status_type' => 'success', 'date' => date('Y-m-d', strtotime('-2 days'))],
-        ];
-
-        return view('corporation.pages.dashboard', compact(
-            'corporation', 'ward_count', 'mis_count', 'collections',
-            'zones', 'zonePerformance', 'recentActivities'
-        ));
-    }
-
-    public function wards()
-    {
-        $user = Auth::guard('corporation')->user();
-        if (!$user) {
-            return redirect()->route('corporation.login');
-        }
-
-        $corporation = Corporation::find($user->corporation_id);
-        if (!$corporation) {
-            return back()->with('error', 'Corporation not found');
-        }
-
-        $wards = Ward::where('corporation_id', $corporation->id)
-            ->where('status', 'active')
-            ->get();
-
-        $wardData = [];
-        foreach ($wards as $ward) {
-            $polygontable = $this->getPolygonTable($corporation->id, $ward->ward_no, $ward->zone);
-            $buildingCount = 0;
-            if ($polygontable && Schema::hasTable($polygontable)) {
-                $buildingCount = DB::table($polygontable)->count();
-            }
-
-            $wardData[] = (object)[
-                'id' => $ward->id,
-                'zone' => $ward->zone,
-                'ward_no' => $ward->ward_no,
-                'buildingCount' => $buildingCount
-            ];
-        }
-
-        return view('corporation.pages.wards', compact('corporation', 'wardData'));
-    }
-
-    public function analysis()
-    {
-        $user = Auth::guard('corporation')->user();
-        if (!$user) {
-            return redirect()->route('corporation.login');
-        }
-
-        $corporation = Corporation::find($user->corporation_id);
-        return view('corporation.pages.analysis', compact('corporation'));
-    }
-
-    public function profile()
-    {
-        $user = Auth::guard('corporation')->user();
-        if (!$user) {
-            return redirect()->route('corporation.login');
-        }
-
-        $corporation = Corporation::find($user->corporation_id);
-        return view('corporation.pages.profile', compact('corporation', 'user'));
-    }
-
-    public function updateProfile(Request $request)
-    {
-        $user = Auth::guard('corporation')->user();
-        if (!$user) {
-            return redirect()->route('corporation.login');
-        }
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:corporation_users,email,' . $user->id,
-            'phone' => 'nullable|string|max:20',
+        return view('corporation.dashboard', [
+            "corporation" => $corporation,
+            "ward_count"  => $ward_count,
+            "mis_count"   => $mis_count,
+            "collections" => $collections,
+            "zonesWithWards" => $zonesWithWards
         ]);
-
-        $user->update($request->only(['name', 'email', 'phone']));
-
-        if ($request->filled('password')) {
-            $request->validate(['password' => 'min:6|confirmed']);
-            $user->update(['password' => Hash::make($request->password)]);
-        }
-
-        return back()->with('success', 'Profile updated successfully');
     }
 
+    /**
+     * Display ward details with map.
+     */
     public function showWardDetails($ward_no)
     {
         $user = Auth::guard('corporation')->user();
+
         if (!$user) {
             return redirect()->route('corporation.login');
         }
@@ -231,7 +164,7 @@ class CommissionerController extends Controller
         $polygons = [];
         if ($polygontable && Schema::hasTable($polygontable)) {
             $polygons = DB::table($polygontable)
-                ->select('id', 'gisid', 'owner_name', 'new_door_no', DB::raw('ST_AsGeoJSON(geometry) as geojson'))
+                ->select('id', 'gisid', 'owner_name', DB::raw('ST_AsGeoJSON(geometry) as geojson'))
                 ->get()
                 ->toArray();
         }
@@ -254,17 +187,57 @@ class CommissionerController extends Controller
                 ->toArray();
         }
 
+        // Get zones and wards for sidebar
+        $zonesWithWards = [];
+        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->select('zone', DB::raw('count(*) as total'))
+            ->groupBy('zone')
+            ->get();
+
+        foreach ($wards_per_zones as $wards_per_zone) {
+            $wardlists = Ward::where('zone', $wards_per_zone->zone)
+                ->where('status', 'active')
+                ->get();
+
+            $zoneData = [
+                'zone' => $wards_per_zone->zone,
+                'wards' => []
+            ];
+
+            foreach ($wardlists as $w) {
+                $polyTable = $this->getPolygonTable($corporation->id, $w->ward_no, $w->zone);
+                $buildingCount = ($polyTable && Schema::hasTable($polyTable)) ? DB::table($polyTable)->count() : 0;
+
+                $zoneData['wards'][] = [
+                    'ward_no' => $w->ward_no,
+                    'buildingCount' => $buildingCount
+                ];
+            }
+
+            $zonesWithWards[] = $zoneData;
+        }
+
+        // Calculate statistics
         $totalBuildings = count($polygons);
         $totalRoads = count($roads);
         $totalPoints = count($points);
-        $gisIdCount = count(array_filter($polygons, function($polygon) {
+        $gisIdCount = count(array_filter($polygons, function ($polygon) {
             return !empty($polygon->gisid);
         }));
 
-        return view('corporation.pages.ward-details', compact(
-            'corporation', 'ward', 'polygons', 'roads', 'points',
-            'totalBuildings', 'totalRoads', 'totalPoints', 'gisIdCount'
-        ));
+        return view('corporation.ward-details', [
+            'corporation' => $corporation,
+            'ward' => $ward,
+            'polygons' => $polygons,
+            'roads' => $roads,
+            'points' => $points,
+            'zonesWithWards' => $zonesWithWards,
+            'totalBuildings' => $totalBuildings,
+            'totalRoads' => $totalRoads,
+            'totalPoints' => $totalPoints,
+            'gisIdCount' => $gisIdCount
+        ]);
     }
 
     private function getPointDataTable($corporationId, $wardNo, $zone)
