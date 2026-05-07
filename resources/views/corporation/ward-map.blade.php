@@ -6,13 +6,21 @@
 @section('styles')
 @parent
 <style>
-    /* Map Container */
+    /* Map Container - Important:必须有明确的高度 */
     #map {
         width: 100%;
-        height: 75vh;
+        height: 550px;
         border-radius: 12px;
         border: 2px solid #ddd;
         background: #f0f0f0;
+        position: relative;
+    }
+
+    /* Ensure map container is visible */
+    .map-wrapper {
+        position: relative;
+        width: 100%;
+        min-height: 550px;
     }
 
     /* Layer Switcher Panel */
@@ -246,19 +254,6 @@
         color: #666;
     }
 
-    /* Chart Containers */
-    .chart-container {
-        background: white;
-        border-radius: 12px;
-        padding: 12px;
-        height: 200px;
-    }
-
-    canvas {
-        max-height: 160px;
-        width: 100%;
-    }
-
     /* Popup Styling */
     .ol-popup {
         position: absolute;
@@ -355,6 +350,20 @@
         display: none;
         text-align: center;
     }
+
+    /* Error message */
+    .map-error {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        z-index: 10;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    }
 </style>
 @endsection
 
@@ -364,32 +373,32 @@
     <div class="row g-2 mb-3 px-3">
         <div class="col-md-3 col-6">
             <div class="stat-card-mini">
-                <h3>{{ $totalBuildings }}</h3>
+                <h3 id="totalBuildingsCount">0</h3>
                 <p>Total Buildings</p>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card-mini">
-                <h3>{{ $gisIdCount }}</h3>
+                <h3 id="gisIdCount">0</h3>
                 <p>GIS ID Assigned</p>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card-mini">
-                <h3>{{ $totalRoads }}</h3>
+                <h3 id="totalRoadsCount">0</h3>
                 <p>Road Segments</p>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card-mini">
-                <h3>{{ $totalPoints }}</h3>
+                <h3 id="totalPointsCount">0</h3>
                 <p>Point Features</p>
             </div>
         </div>
     </div>
 
     <!-- Map Container -->
-    <div class="position-relative px-3">
+    <div class="position-relative px-3 map-wrapper">
         <div id="map"></div>
     </div>
 
@@ -414,24 +423,24 @@
         <div class="layer-group">
             <h5>Overlays</h5>
             <div class="layer-option">
-                <input type="checkbox" id="droneLayer" checked>
-                <label for="droneLayer"><i class="fas fa-drone"></i> Drone Image</label>
+                <input type="checkbox" id="droneLayerCheck" checked>
+                <label for="droneLayerCheck"><i class="fas fa-drone"></i> Drone Image</label>
             </div>
             <div class="layer-option">
-                <input type="checkbox" id="boundaryLayer" checked>
-                <label for="boundaryLayer"><i class="fas fa-vector-square"></i> Ward Boundary</label>
+                <input type="checkbox" id="boundaryLayerCheck" checked>
+                <label for="boundaryLayerCheck"><i class="fas fa-vector-square"></i> Ward Boundary</label>
             </div>
             <div class="layer-option">
-                <input type="checkbox" id="polygonLayer" checked>
-                <label for="polygonLayer"><i class="fas fa-draw-polygon"></i> Buildings</label>
+                <input type="checkbox" id="polygonLayerCheck" checked>
+                <label for="polygonLayerCheck"><i class="fas fa-draw-polygon"></i> Buildings</label>
             </div>
             <div class="layer-option">
-                <input type="checkbox" id="lineLayer" checked>
-                <label for="lineLayer"><i class="fas fa-road"></i> Roads</label>
+                <input type="checkbox" id="lineLayerCheck" checked>
+                <label for="lineLayerCheck"><i class="fas fa-road"></i> Roads</label>
             </div>
             <div class="layer-option">
-                <input type="checkbox" id="pointLayer" checked>
-                <label for="pointLayer"><i class="fas fa-map-marker-alt"></i> Points</label>
+                <input type="checkbox" id="pointLayerCheck" checked>
+                <label for="pointLayerCheck"><i class="fas fa-map-marker-alt"></i> Points</label>
             </div>
         </div>
     </div>
@@ -477,7 +486,7 @@
     <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner-border text-light mb-2"></div>
-        <div>Loading...</div>
+        <div>Loading Map...</div>
     </div>
 </div>
 
@@ -522,14 +531,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Show loading spinner
+        $('#loadingSpinner').show();
+
         // Data from Laravel
-        const polygonsData = @json($polygons);
-        const linesData = @json($lines);
-        const pointsData = @json($points);
-        const buildingData = @json($buildingData);
-        const misData = @json($misData);
-        const ward = @json($ward);
-        const corporation = @json($corporation);
+        let polygonsData = @json($polygons);
+        let linesData = @json($lines);
+        let pointsData = @json($points);
+        let buildingData = @json($buildingData);
+        let misData = @json($misData);
+        let ward = @json($ward);
+        let corporation = @json($corporation);
+
+        // Update statistics display
+        $('#totalBuildingsCount').text(polygonsData.length);
+        $('#totalRoadsCount').text(linesData.length);
+        $('#totalPointsCount').text(pointsData.length);
+
+        let gisIdCountValue = polygonsData.filter(p => p.gisid && p.gisid !== null).length;
+        $('#gisIdCount').text(gisIdCountValue);
 
         // Building statistics
         const buildingTypes = @json($buildingTypes);
@@ -537,11 +557,13 @@
         const usageTypes = @json($usageTypes);
         const areaVariations = @json($areaVariations);
 
-        // Drone image data - FIXED: No json_decode needed since ward->boundary is already an array
+        // Drone image data
         const droneImageURL = "{{ asset($ward->drone_image ?? '') }}";
 
-        // FIXED: ward->boundary is already an array, so don't use json_decode
+        // Calculate image extent from boundary
         let imageExtent = null;
+        let boundaryCoordinates = [];
+
         @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
             @php
                 $firstBoundary = $ward->boundary[0] ?? null;
@@ -551,322 +573,408 @@
                     $minLat = min(array_column($firstBoundary, 1));
                     $maxLat = max(array_column($firstBoundary, 1));
                     $imageExtent = [$minLon, $minLat, $maxLon, $maxLat];
+                    $boundaryCoordinates = $firstBoundary;
                 }
             @endphp
             imageExtent = @json($imageExtent);
+            boundaryCoordinates = @json($boundaryCoordinates);
         @endif
 
         // Map variables
-        let map;
-        let vectorSource;
-        let vectorLayer;
-        let currentPopup;
+        let map = null;
+        let currentPopup = null;
         let buildingFeatures = [];
-        let currentHighlightedFeature = null;
 
-        // Layer definitions
-        const osmLayer = new ol.layer.Tile({
-            source: new ol.source.OSM(),
-            visible: true
-        });
-
-        const terrainLayer = new ol.layer.Tile({
-            source: new ol.source.OSM({
-                url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png'
-            }),
-            visible: false
-        });
-
-        const satelliteLayer = new ol.layer.Tile({
-            source: new ol.source.OSM({
-                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-            }),
-            visible: false
-        });
-
-        // Drone image layer
-        let droneLayer = null;
-        if (droneImageURL && droneImageURL !== '' && imageExtent && imageExtent.length === 4) {
-            droneLayer = new ol.layer.Image({
-                source: new ol.source.ImageStatic({
-                    url: droneImageURL,
-                    imageExtent: imageExtent.map(coord => ol.proj.fromLonLat([coord[0], coord[1]])[0] !== undefined ?
-                        ol.proj.fromLonLat([coord[0], coord[1]]) : coord),
-                    imageSmoothing: false
-                }),
-                opacity: 0.85,
-                visible: true
-            });
-        } else {
-            droneLayer = new ol.layer.Image({
-                source: new ol.source.ImageStatic({
-                    url: '',
-                    imageExtent: [0, 0, 0, 0]
-                }),
-                visible: false
-            });
-        }
-
-        // Boundary layer - FIXED: ward->boundary is already an array
-        let boundaryLayer = null;
-        @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
-            @php
-                $boundaryCoords = $ward->boundary[0] ?? [];
-            @endphp
-            const boundaryCoords = @json($boundaryCoords);
-            if (boundaryCoords && boundaryCoords.length > 0) {
-                const transformedBoundary = boundaryCoords.map(coord => ol.proj.fromLonLat(coord));
-                const boundaryGeometry = new ol.geom.Polygon([transformedBoundary]);
-                boundaryLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({ geometry: boundaryGeometry })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#FF0000', width: 3, lineDash: [8, 4] }),
-                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' })
-                    }),
-                    visible: true
-                });
+        // Wait for OpenLayers to be fully loaded
+        function waitForOpenLayers() {
+            if (typeof ol !== 'undefined') {
+                initMap();
             } else {
-                boundaryLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector(),
-                    visible: false
-                });
+                console.log('Waiting for OpenLayers to load...');
+                setTimeout(waitForOpenLayers, 100);
             }
-        @else
-            boundaryLayer = new ol.layer.Vector({
-                source: new ol.source.Vector(),
-                visible: false
-            });
-        @endif
-
-        // Polygon layer (Buildings)
-        const polygonSource = new ol.source.Vector();
-        polygonsData.forEach(poly => {
-            if (poly.geojson) {
-                try {
-                    const geojson = JSON.parse(poly.geojson);
-                    const format = new ol.format.GeoJSON();
-                    const feature = format.readFeature(geojson, {
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
-                    });
-                    if (feature) {
-                        feature.set('id', poly.id);
-                        feature.set('gisid', poly.gisid);
-                        feature.set('type', 'building');
-
-                        // Find building data for styling
-                        const buildingInfo = buildingData.find(b => b.gisid == poly.gisid);
-                        if (buildingInfo) {
-                            feature.set('building_type', buildingInfo.building_type);
-                            feature.set('construction_type', buildingInfo.construction_type);
-                            feature.set('building_usage', buildingInfo.building_usage);
-                            feature.set('number_bill', buildingInfo.number_bill);
-                            feature.set('number_shop', buildingInfo.number_shop);
-                            feature.set('number_floor', buildingInfo.number_floor);
-                            feature.set('owner_name', buildingInfo.owner_name);
-                            feature.set('phone', buildingInfo.phone);
-                            feature.set('plot_area', buildingInfo.plot_area);
-                        }
-
-                        polygonSource.addFeature(feature);
-                        buildingFeatures.push(feature);
-                    }
-                } catch(e) {
-                    console.error('Polygon parse error:', e);
-                }
-            }
-        });
-
-        const polygonLayer = new ol.layer.Vector({
-            source: polygonSource,
-            style: function(feature) {
-                const gisid = feature.get('gisid');
-                const buildingType = feature.get('building_type');
-                const hasData = buildingData.some(b => b.gisid == gisid);
-
-                let fillColor = 'rgba(22, 121, 171, 0.3)';
-                let strokeColor = '#1679AB';
-
-                // Color coding based on building type
-                if (buildingType) {
-                    if (buildingType.includes('Residential') || buildingType.includes('Independent')) {
-                        fillColor = 'rgba(40, 167, 69, 0.3)';
-                        strokeColor = '#28a745';
-                    } else if (buildingType.includes('Commercial') || buildingType.includes('Shop')) {
-                        fillColor = 'rgba(255, 193, 7, 0.3)';
-                        strokeColor = '#ffc107';
-                    } else if (buildingType.includes('Industrial')) {
-                        fillColor = 'rgba(23, 162, 184, 0.3)';
-                        strokeColor = '#17a2b8';
-                    } else if (buildingType.includes('Government') || buildingType.includes('Municipality')) {
-                        fillColor = 'rgba(111, 66, 193, 0.3)';
-                        strokeColor = '#6f42c1';
-                    } else if (buildingType.includes('Educational')) {
-                        fillColor = 'rgba(220, 53, 69, 0.3)';
-                        strokeColor = '#dc3545';
-                    } else if (buildingType.includes('Vacant')) {
-                        fillColor = 'rgba(108, 117, 125, 0.3)';
-                        strokeColor = '#6c757d';
-                    }
-                }
-
-                return new ol.style.Style({
-                    fill: new ol.style.Fill({ color: fillColor }),
-                    stroke: new ol.style.Stroke({ color: strokeColor, width: 2 }),
-                    text: new ol.style.Text({
-                        text: gisid ? gisid.toString() : '',
-                        font: '10px Poppins',
-                        fill: new ol.style.Fill({ color: '#102C57' }),
-                        stroke: new ol.style.Stroke({ color: 'white', width: 2 }),
-                        offsetY: -8
-                    })
-                });
-            },
-            visible: true
-        });
-
-        // Line layer (Roads)
-        const lineSource = new ol.source.Vector();
-        linesData.forEach(line => {
-            if (line.geojson) {
-                try {
-                    const geojson = JSON.parse(line.geojson);
-                    const format = new ol.format.GeoJSON();
-                    const feature = format.readFeature(geojson, {
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
-                    });
-                    if (feature) {
-                        feature.set('id', line.id);
-                        feature.set('gisid', line.gisid);
-                        feature.set('road_name', line.road_name);
-                        feature.set('type', 'road');
-                        lineSource.addFeature(feature);
-                    }
-                } catch(e) {
-                    console.error('Line parse error:', e);
-                }
-            }
-        });
-
-        const lineLayer = new ol.layer.Vector({
-            source: lineSource,
-            style: new ol.style.Style({
-                stroke: new ol.style.Stroke({
-                    color: '#FFB1B1',
-                    width: 3,
-                    lineDash: [8, 6]
-                })
-            }),
-            visible: true
-        });
-
-        // Point layer
-        const pointSource = new ol.source.Vector();
-        pointsData.forEach(point => {
-            if (point.geojson) {
-                try {
-                    const geojson = JSON.parse(point.geojson);
-                    const format = new ol.format.GeoJSON();
-                    const feature = format.readFeature(geojson, {
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
-                    });
-                    if (feature) {
-                        feature.set('id', point.id);
-                        feature.set('gisid', point.gisid);
-                        feature.set('type', 'point');
-
-                        // Find point data
-                        const pointInfo = buildingData.find(b => b.gisid == point.gisid);
-                        if (pointInfo) {
-                            feature.set('owner_name', pointInfo.owner_name);
-                        }
-
-                        pointSource.addFeature(feature);
-                    }
-                } catch(e) {
-                    console.error('Point parse error:', e);
-                }
-            }
-        });
-
-        const pointLayer = new ol.layer.Vector({
-            source: pointSource,
-            style: new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: 6,
-                    fill: new ol.style.Fill({ color: '#FFB1B1' }),
-                    stroke: new ol.style.Stroke({ color: '#1679AB', width: 2 })
-                })
-            }),
-            visible: true
-        });
-
-        // Highlight layer
-        const highlightSource = new ol.source.Vector();
-        const highlightLayer = new ol.layer.Vector({
-            source: highlightSource,
-            style: new ol.style.Style({
-                stroke: new ol.style.Stroke({ color: '#FF0000', width: 4 }),
-                fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' }),
-                image: new ol.style.Circle({
-                    radius: 10,
-                    fill: new ol.style.Fill({ color: '#FF0000' }),
-                    stroke: new ol.style.Stroke({ color: '#FFFFFF', width: 2 })
-                })
-            })
-        });
+        }
 
         // Initialize Map
         function initMap() {
-            let center = [78.1198, 9.9252]; // Default center
+            try {
+                console.log('Initializing map...');
 
-            // FIXED: Use boundary data for center calculation
-            @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
-                @php
-                    $firstBoundaryCoords = $ward->boundary[0] ?? [];
-                    if (count($firstBoundaryCoords) > 0) {
-                        $sumLon = 0;
-                        $sumLat = 0;
-                        foreach ($firstBoundaryCoords as $coord) {
-                            $sumLon += $coord[0];
-                            $sumLat += $coord[1];
-                        }
-                        $centerLon = $sumLon / count($firstBoundaryCoords);
-                        $centerLat = $sumLat / count($firstBoundaryCoords);
-                    } else {
-                        $centerLon = 78.1198;
-                        $centerLat = 9.9252;
+                // Check if map container exists
+                const mapElement = document.getElementById('map');
+                if (!mapElement) {
+                    console.error('Map container not found');
+                    $('#loadingSpinner').hide();
+                    return;
+                }
+
+                // Calculate center from boundary
+                let center = [78.1198, 9.9252]; // Default Tamil Nadu center
+                if (boundaryCoordinates && boundaryCoordinates.length > 0) {
+                    let sumLon = 0, sumLat = 0;
+                    boundaryCoordinates.forEach(coord => {
+                        sumLon += coord[0];
+                        sumLat += coord[1];
+                    });
+                    center = [sumLon / boundaryCoordinates.length, sumLat / boundaryCoordinates.length];
+                }
+
+                // Create layers
+                const osmLayerObj = new ol.layer.Tile({
+                    source: new ol.source.OSM(),
+                    visible: true
+                });
+
+                const terrainLayerObj = new ol.layer.Tile({
+                    source: new ol.source.OSM({
+                        url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png'
+                    }),
+                    visible: false
+                });
+
+                const satelliteLayerObj = new ol.layer.Tile({
+                    source: new ol.source.OSM({
+                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                    }),
+                    visible: false
+                });
+
+                // Drone image layer
+                let droneLayerObj = new ol.layer.Image({
+                    visible: false
+                });
+
+                if (droneImageURL && droneImageURL !== '' && imageExtent && imageExtent.length === 4) {
+                    try {
+                        const minCoord = ol.proj.fromLonLat([imageExtent[0], imageExtent[1]]);
+                        const maxCoord = ol.proj.fromLonLat([imageExtent[2], imageExtent[3]]);
+                        const extent3857 = [minCoord[0], minCoord[1], maxCoord[0], maxCoord[1]];
+
+                        droneLayerObj = new ol.layer.Image({
+                            source: new ol.source.ImageStatic({
+                                url: droneImageURL,
+                                imageExtent: extent3857,
+                                imageSmoothing: false
+                            }),
+                            opacity: 0.85,
+                            visible: true
+                        });
+                        console.log('Drone layer added successfully');
+                    } catch(e) {
+                        console.error('Drone layer error:', e);
                     }
-                @endphp
-                center = [{{ $centerLon ?? 78.1198 }}, {{ $centerLat ?? 9.9252 }}];
-            @endif
+                }
 
-            map = new ol.Map({
-                target: 'map',
-                layers: [osmLayer, terrainLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer],
-                view: new ol.View({
-                    center: ol.proj.fromLonLat(center),
-                    zoom: 18
-                })
+                // Boundary layer
+                let boundaryLayerObj = new ol.layer.Vector({
+                    source: new ol.source.Vector(),
+                    visible: true
+                });
+
+                if (boundaryCoordinates && boundaryCoordinates.length > 0) {
+                    const transformedBoundary = boundaryCoordinates.map(coord => ol.proj.fromLonLat(coord));
+                    const boundaryGeometry = new ol.geom.Polygon([transformedBoundary]);
+                    boundaryLayerObj = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({ geometry: boundaryGeometry })]
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: '#FF0000', width: 3, lineDash: [8, 4] }),
+                            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' })
+                        }),
+                        visible: true
+                    });
+                }
+
+                // Polygon layer (Buildings)
+                const polygonSourceObj = new ol.source.Vector();
+
+                polygonsData.forEach(poly => {
+                    if (poly.geojson) {
+                        try {
+                            const geojson = JSON.parse(poly.geojson);
+                            const format = new ol.format.GeoJSON();
+                            const feature = format.readFeature(geojson, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+                            if (feature) {
+                                feature.set('id', poly.id);
+                                feature.set('gisid', poly.gisid);
+                                feature.set('type', 'building');
+
+                                const buildingInfo = buildingData.find(b => b.gisid == poly.gisid);
+                                if (buildingInfo) {
+                                    feature.set('building_type', buildingInfo.building_type);
+                                    feature.set('construction_type', buildingInfo.construction_type);
+                                    feature.set('building_usage', buildingInfo.building_usage);
+                                    feature.set('owner_name', buildingInfo.owner_name);
+                                    feature.set('plot_area', buildingInfo.plot_area);
+                                }
+
+                                polygonSourceObj.addFeature(feature);
+                                buildingFeatures.push(feature);
+                            }
+                        } catch(e) {
+                            console.error('Polygon parse error:', e);
+                        }
+                    }
+                });
+
+                console.log('Added ' + buildingFeatures.length + ' building features');
+
+                const polygonLayerObj = new ol.layer.Vector({
+                    source: polygonSourceObj,
+                    style: function(feature) {
+                        const gisid = feature.get('gisid');
+                        const buildingType = feature.get('building_type');
+
+                        let fillColor = 'rgba(22, 121, 171, 0.3)';
+                        let strokeColor = '#1679AB';
+
+                        if (buildingType) {
+                            if (buildingType.includes('Residential') || buildingType.includes('Independent')) {
+                                fillColor = 'rgba(40, 167, 69, 0.3)';
+                                strokeColor = '#28a745';
+                            } else if (buildingType.includes('Commercial') || buildingType.includes('Shop')) {
+                                fillColor = 'rgba(255, 193, 7, 0.3)';
+                                strokeColor = '#ffc107';
+                            } else if (buildingType.includes('Industrial')) {
+                                fillColor = 'rgba(23, 162, 184, 0.3)';
+                                strokeColor = '#17a2b8';
+                            } else if (buildingType.includes('Government')) {
+                                fillColor = 'rgba(111, 66, 193, 0.3)';
+                                strokeColor = '#6f42c1';
+                            } else if (buildingType.includes('Educational')) {
+                                fillColor = 'rgba(220, 53, 69, 0.3)';
+                                strokeColor = '#dc3545';
+                            } else if (buildingType.includes('Vacant')) {
+                                fillColor = 'rgba(108, 117, 125, 0.3)';
+                                strokeColor = '#6c757d';
+                            }
+                        }
+
+                        return new ol.style.Style({
+                            fill: new ol.style.Fill({ color: fillColor }),
+                            stroke: new ol.style.Stroke({ color: strokeColor, width: 2 }),
+                            text: new ol.style.Text({
+                                text: gisid ? gisid.toString() : '',
+                                font: '10px Poppins',
+                                fill: new ol.style.Fill({ color: '#102C57' }),
+                                stroke: new ol.style.Stroke({ color: 'white', width: 2 }),
+                                offsetY: -8
+                            })
+                        });
+                    },
+                    visible: true
+                });
+
+                // Line layer (Roads)
+                const lineSourceObj = new ol.source.Vector();
+                linesData.forEach(line => {
+                    if (line.geojson) {
+                        try {
+                            const geojson = JSON.parse(line.geojson);
+                            const format = new ol.format.GeoJSON();
+                            const feature = format.readFeature(geojson, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+                            if (feature) {
+                                feature.set('id', line.id);
+                                feature.set('gisid', line.gisid);
+                                feature.set('road_name', line.road_name);
+                                feature.set('type', 'road');
+                                lineSourceObj.addFeature(feature);
+                            }
+                        } catch(e) {
+                            console.error('Line parse error:', e);
+                        }
+                    }
+                });
+
+                const lineLayerObj = new ol.layer.Vector({
+                    source: lineSourceObj,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#FFB1B1',
+                            width: 3,
+                            lineDash: [8, 6]
+                        })
+                    }),
+                    visible: true
+                });
+
+                // Point layer
+                const pointSourceObj = new ol.source.Vector();
+                pointsData.forEach(point => {
+                    if (point.geojson) {
+                        try {
+                            const geojson = JSON.parse(point.geojson);
+                            const format = new ol.format.GeoJSON();
+                            const feature = format.readFeature(geojson, {
+                                dataProjection: 'EPSG:4326',
+                                featureProjection: 'EPSG:3857'
+                            });
+                            if (feature) {
+                                feature.set('id', point.id);
+                                feature.set('gisid', point.gisid);
+                                feature.set('type', 'point');
+                                pointSourceObj.addFeature(feature);
+                            }
+                        } catch(e) {
+                            console.error('Point parse error:', e);
+                        }
+                    }
+                });
+
+                const pointLayerObj = new ol.layer.Vector({
+                    source: pointSourceObj,
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 6,
+                            fill: new ol.style.Fill({ color: '#FFB1B1' }),
+                            stroke: new ol.style.Stroke({ color: '#1679AB', width: 2 })
+                        })
+                    }),
+                    visible: true
+                });
+
+                // Highlight layer
+                const highlightSourceObj = new ol.source.Vector();
+                const highlightLayerObj = new ol.layer.Vector({
+                    source: highlightSourceObj,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: '#FF0000', width: 4 }),
+                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' }),
+                        image: new ol.style.Circle({
+                            radius: 10,
+                            fill: new ol.style.Fill({ color: '#FF0000' }),
+                            stroke: new ol.style.Stroke({ color: '#FFFFFF', width: 2 })
+                        })
+                    })
+                });
+
+                // Create map
+                map = new ol.Map({
+                    target: 'map',
+                    layers: [osmLayerObj, terrainLayerObj, satelliteLayerObj, droneLayerObj, boundaryLayerObj, polygonLayerObj, lineLayerObj, pointLayerObj, highlightLayerObj],
+                    view: new ol.View({
+                        center: ol.proj.fromLonLat(center),
+                        zoom: 17,
+                        projection: 'EPSG:3857'
+                    })
+                });
+
+                console.log('Map created successfully');
+
+                // Fit to boundary if available
+                if (boundaryCoordinates && boundaryCoordinates.length > 0) {
+                    const extent = ol.extent.boundingExtent(
+                        boundaryCoordinates.map(coord => ol.proj.fromLonLat(coord))
+                    );
+                    map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 1000 });
+                }
+
+                // Layer switcher event handlers
+                setupLayerSwitchers(osmLayerObj, terrainLayerObj, satelliteLayerObj, droneLayerObj, boundaryLayerObj, polygonLayerObj, lineLayerObj, pointLayerObj);
+
+                // Map click handler
+                map.on('click', function(evt) {
+                    const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+                        return feature;
+                    });
+
+                    if (feature && feature.get('type')) {
+                        showPopup(feature, evt.coordinate);
+                    } else {
+                        hidePopup();
+                    }
+                });
+
+                // Zoom controls
+                setupZoomControls(map);
+
+                // Hide loading spinner
+                $('#loadingSpinner').hide();
+
+            } catch(error) {
+                console.error('Map initialization error:', error);
+                $('#loadingSpinner').hide();
+                $('#map').html('<div class="map-error"><i class="fas fa-exclamation-triangle fa-2x mb-2"></i><p>Error loading map: ' + error.message + '</p></div>');
+            }
+        }
+
+        // Setup layer switchers
+        function setupLayerSwitchers(osm, terrain, satellite, drone, boundary, polygon, line, point) {
+            $('#osmLayer').on('change', function() {
+                osm.setVisible(true);
+                terrain.setVisible(false);
+                satellite.setVisible(false);
             });
 
-            // Fit to ward boundary if available
-            @if($ward->boundary && is_array($ward->boundary) && count($ward->boundary) > 0)
-                @php
-                    $boundaryExtentCoords = $ward->boundary[0] ?? [];
-                @endphp
-                const fitBoundaryCoords = @json($boundaryExtentCoords);
-                if (fitBoundaryCoords && fitBoundaryCoords.length > 0) {
+            $('#terrainLayer').on('change', function() {
+                osm.setVisible(false);
+                terrain.setVisible(true);
+                satellite.setVisible(false);
+            });
+
+            $('#satelliteLayer').on('change', function() {
+                osm.setVisible(false);
+                terrain.setVisible(false);
+                satellite.setVisible(true);
+            });
+
+            $('#droneLayerCheck').on('change', function(e) {
+                drone.setVisible(e.target.checked);
+            });
+
+            $('#boundaryLayerCheck').on('change', function(e) {
+                boundary.setVisible(e.target.checked);
+            });
+
+            $('#polygonLayerCheck').on('change', function(e) {
+                polygon.setVisible(e.target.checked);
+            });
+
+            $('#lineLayerCheck').on('change', function(e) {
+                line.setVisible(e.target.checked);
+            });
+
+            $('#pointLayerCheck').on('change', function(e) {
+                point.setVisible(e.target.checked);
+            });
+        }
+
+        // Setup zoom controls
+        function setupZoomControls(mapObj) {
+            $('#zoomInBtn').on('click', function() {
+                const view = mapObj.getView();
+                view.setZoom(view.getZoom() + 1);
+            });
+
+            $('#zoomOutBtn').on('click', function() {
+                const view = mapObj.getView();
+                view.setZoom(view.getZoom() - 1);
+            });
+
+            $('#fitViewBtn').on('click', function() {
+                if (buildingFeatures.length > 0) {
+                    const source = buildingFeatures[0].getGeometry().getSource ?
+                        buildingFeatures[0].getGeometry().getSource() : null;
+                    if (source) {
+                        const extent = source.getExtent();
+                        if (extent && !ol.extent.isEmpty(extent)) {
+                            mapObj.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
+                        }
+                    }
+                } else if (boundaryCoordinates && boundaryCoordinates.length > 0) {
                     const extent = ol.extent.boundingExtent(
-                        fitBoundaryCoords.map(coord => ol.proj.fromLonLat(coord))
+                        boundaryCoordinates.map(coord => ol.proj.fromLonLat(coord))
                     );
-                    map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
+                    mapObj.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
                 }
-            @endif
+            });
         }
 
         // Show popup
@@ -889,12 +997,8 @@
                         <div><strong>Building Type:</strong> ${buildingInfo?.building_type || 'N/A'}</div>
                         <div><strong>Construction Type:</strong> ${buildingInfo?.construction_type || 'N/A'}</div>
                         <div><strong>Usage:</strong> ${buildingInfo?.building_usage || 'N/A'}</div>
-                        <div><strong>Floors:</strong> ${buildingInfo?.number_floor || 'N/A'}</div>
-                        <div><strong>Shops:</strong> ${buildingInfo?.number_shop || 'N/A'}</div>
-                        <div><strong>Bills:</strong> ${buildingInfo?.number_bill || 'N/A'}</div>
                         <div><strong>Owner:</strong> ${buildingInfo?.owner_name || 'N/A'}</div>
-                        <div><strong>Phone:</strong> ${buildingInfo?.phone || 'N/A'}</div>
-                        <div><strong>Area:</strong> ${buildingInfo?.plot_area || buildingInfo?.building_area || 'N/A'} sq ft</div>
+                        <div><strong>Area:</strong> ${buildingInfo?.plot_area || 'N/A'} sq ft</div>
                         <button class="btn btn-sm btn-primary mt-2 w-100" onclick="viewBuildingDetails('${gisid}')">
                             <i class="fas fa-info-circle"></i> View Full Details
                         </button>
@@ -915,7 +1019,6 @@
                         <h6 style="color:#102C57;"><i class="fas fa-map-pin"></i> Point Feature</h6>
                         <hr>
                         <div><strong>GIS ID:</strong> ${gisid || 'N/A'}</div>
-                        <div><strong>Owner:</strong> ${feature.get('owner_name') || 'N/A'}</div>
                     </div>
                 `;
             }
@@ -946,7 +1049,7 @@
         // Zoom to building by GIS ID
         function zoomToBuilding(gisid) {
             const feature = buildingFeatures.find(f => f.get('gisid') == gisid);
-            if (feature) {
+            if (feature && map) {
                 const geometry = feature.getGeometry();
                 const extent = geometry.getExtent();
                 map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
@@ -954,13 +1057,7 @@
                 const center = ol.extent.getCenter(extent);
                 showPopup(feature, center);
 
-                // Highlight feature
-                highlightSource.clear();
-                highlightSource.addFeature(feature.clone());
-
-                setTimeout(() => {
-                    highlightSource.clear();
-                }, 3000);
+                showFlashMessage('Zoomed to GIS ID: ' + gisid, 'success');
             } else {
                 showFlashMessage('Building with GIS ID ' + gisid + ' not found', 'warning');
             }
@@ -1020,7 +1117,7 @@
             const resultsContainer = $('#searchResults');
             resultsContainer.empty();
 
-            foundResults.forEach(result => {
+            foundResults.slice(0, 10).forEach(result => {
                 const resultItem = $(`
                     <div class="search-result-item">
                         <div class="result-gisid">${result.label}</div>
@@ -1030,7 +1127,6 @@
 
                 resultItem.on('click', function() {
                     if (result.type === 'assessment') {
-                        // Find GIS ID from assessment
                         const building = buildingData.find(b => b.assessment == result.value);
                         if (building && building.gisid) {
                             zoomToBuilding(building.gisid);
@@ -1049,45 +1145,6 @@
             resultsContainer.show();
         }
 
-        // Layer switcher handlers
-        $('#osmLayer').on('change', function() {
-            osmLayer.setVisible(true);
-            terrainLayer.setVisible(false);
-            satelliteLayer.setVisible(false);
-        });
-
-        $('#terrainLayer').on('change', function() {
-            osmLayer.setVisible(false);
-            terrainLayer.setVisible(true);
-            satelliteLayer.setVisible(false);
-        });
-
-        $('#satelliteLayer').on('change', function() {
-            osmLayer.setVisible(false);
-            terrainLayer.setVisible(false);
-            satelliteLayer.setVisible(true);
-        });
-
-        $('#droneLayer').on('change', function(e) {
-            if (droneLayer) droneLayer.setVisible(e.target.checked);
-        });
-
-        $('#boundaryLayer').on('change', function(e) {
-            boundaryLayer.setVisible(e.target.checked);
-        });
-
-        $('#polygonLayer').on('change', function(e) {
-            polygonLayer.setVisible(e.target.checked);
-        });
-
-        $('#lineLayer').on('change', function(e) {
-            lineLayer.setVisible(e.target.checked);
-        });
-
-        $('#pointLayer').on('change', function(e) {
-            pointLayer.setVisible(e.target.checked);
-        });
-
         // Search button handler
         $('#searchBtn').on('click', function() {
             const searchTerm = $('#searchInput').val();
@@ -1100,39 +1157,6 @@
                 const searchTerm = $(this).val();
                 const searchType = $('input[name="searchType"]:checked').val();
                 searchBuilding(searchTerm, searchType);
-            }
-        });
-
-        // Zoom controls
-        $('#zoomInBtn').on('click', function() {
-            const view = map.getView();
-            view.setZoom(view.getZoom() + 1);
-        });
-
-        $('#zoomOutBtn').on('click', function() {
-            const view = map.getView();
-            view.setZoom(view.getZoom() - 1);
-        });
-
-        $('#fitViewBtn').on('click', function() {
-            if (buildingFeatures.length > 0) {
-                const extent = polygonSource.getExtent();
-                if (extent && !ol.extent.isEmpty(extent)) {
-                    map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
-                }
-            }
-        });
-
-        // Map click handler
-        map.on('click', function(evt) {
-            const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
-                return feature;
-            });
-
-            if (feature && feature.get('type')) {
-                showPopup(feature, evt.coordinate);
-            } else {
-                hidePopup();
             }
         });
 
@@ -1156,7 +1180,7 @@
                                 backgroundColor: ['#1679AB', '#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#dc3545', '#6c757d']
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: true }
+                        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
                     });
                 }
             }
@@ -1193,7 +1217,7 @@
                                 backgroundColor: ['#28a745', '#ffc107', '#17a2b8', '#6f42c1', '#dc3545']
                             }]
                         },
-                        options: { responsive: true, maintainAspectRatio: true }
+                        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
                     });
                 }
             }
@@ -1230,7 +1254,7 @@
             }[type] || 'alert-info';
 
             const flashHtml = `
-                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 10000; min-width: 250px;">
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 80px; right: 20px; z-index: 10000; min-width: 250px;">
                     ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -1253,7 +1277,7 @@
                     <div class="feature-detail-row"><span class="feature-detail-label">Number of Bills:</span> ${building.number_bill || 'N/A'}</div>
                     <div class="feature-detail-row"><span class="feature-detail-label">Owner Name:</span> ${building.owner_name || 'N/A'}</div>
                     <div class="feature-detail-row"><span class="feature-detail-label">Phone:</span> ${building.phone || 'N/A'}</div>
-                    <div class="feature-detail-row"><span class="feature-detail-label">Plot Area:</span> ${building.plot_area || building.building_area || 'N/A'} sq ft</div>
+                    <div class="feature-detail-row"><span class="feature-detail-label">Plot Area:</span> ${building.plot_area || 'N/A'} sq ft</div>
                     <div class="feature-detail-row"><span class="feature-detail-label">Road Name:</span> ${building.road_name || 'N/A'}</div>
                     <div class="feature-detail-row"><span class="feature-detail-label">Water Connection:</span> ${building.water_connection || 'N/A'}</div>
                     <div class="feature-detail-row"><span class="feature-detail-label">UGD:</span> ${building.ugd || 'N/A'}</div>
@@ -1267,18 +1291,20 @@
             }
         };
 
-        // Initialize everything
-        initMap();
-        setTimeout(initCharts, 500);
+        // Start map initialization
+        waitForOpenLayers();
+        setTimeout(initCharts, 1000);
 
         // Add statistics button to sidebar
-        $('.sidebar .nav').append(`
-            <a class="nav-link" href="#" id="statsNavLink">
-                <i class="fas fa-chart-pie"></i> Statistics
-            </a>
-        `);
+        if ($('#statsNavLink').length === 0) {
+            $('.sidebar .nav').append(`
+                <a class="nav-link" href="#" id="statsNavLink">
+                    <i class="fas fa-chart-pie"></i> Statistics
+                </a>
+            `);
+        }
 
-        $('#statsNavLink').on('click', function(e) {
+        $('#statsNavLink').off('click').on('click', function(e) {
             e.preventDefault();
             $('#statisticsModal').modal('show');
         });
