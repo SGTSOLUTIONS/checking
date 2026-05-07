@@ -48,7 +48,7 @@ class CommissionerController extends Controller
             ->count();
         $mis = DB::table("mis_corporation_{$corporation->id}")->get();
         $mis_count = DB::table("mis_corporation_{$corporation->id}")->count();
-        return response()->json($ward_count);
+        return response()->json($mis_count);
         // Return view for web request
         return view('corporation.dashboard', compact('dashboardData'));
     }
