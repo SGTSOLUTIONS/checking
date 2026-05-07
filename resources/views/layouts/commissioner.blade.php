@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Tamil Nadu Municipal Corporation | Admin Dashboard')</title>
+    <title>@yield('title', $corporation->name ?? 'Tamil Nadu Municipal Corporation') . ' | Admin Dashboard'</title>
 
     <!-- Bootstrap 5 CSS + Icons + Animate.css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -383,17 +383,21 @@
                     <div class="text-center">
                         {{-- Corporation Logo from assets --}}
                         @php
-                            $logoPath = asset('storage/' . ($corporation->logo ?? 'corporation-logo/default-logo.png'));
-                            if (!file_exists(public_path('storage/' . ($corporation->logo ?? '')))) {
-                                $logoPath = asset('assets/corporation-logo/default-logo.png');
+                            $logoUrl = asset('assets/corporation-logo/default-logo.png');
+                            if(isset($corporation) && !empty($corporation->logo)) {
+                                // Check if logo exists in storage
+                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                if(file_exists($fullLogoPath)) {
+                                    $logoUrl = asset('storage/' . $corporation->logo);
+                                }
                             }
                         @endphp
-                        <img src="{{ $logoPath }}"
+                        <img src="{{ $logoUrl }}"
                              alt="{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}"
                              class="corporation-logo"
                              id="sidebarCorpLogo">
                         <h6 class="fw-bold mb-0 mt-2" style="color: #FFCBCB;">{{ $corporation->name ?? 'TN Municipal Corp' }}</h6>
-                        <small class="text-white-50">e-Governance Suite</small>
+                        <small class="text-white-50">{{ $corporation->district ?? '' }} District | e-Governance Suite</small>
                     </div>
                 </div>
                 <nav class="nav flex-column">
@@ -439,7 +443,7 @@
                         <div class="dropdown user-dropdown">
                             <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
-                                    @if(isset($corporation) && $corporation->logo)
+                                    @if(isset($corporation) && !empty($corporation->logo) && file_exists(storage_path('app/public/' . $corporation->logo)))
                                         <img src="{{ asset('storage/' . $corporation->logo) }}"
                                              class="corporation-profile-icon"
                                              alt="Profile">
@@ -449,7 +453,7 @@
                                 </div>
                                 <div class="d-none d-md-block">
                                     <span class="fw-semibold" style="color:#102C57;">{{ $corporation->name ?? 'Admin User' }}</span>
-                                    <small class="d-block text-muted">{{ $corporation->commissioner_name ?? 'Municipal Commissioner' }}</small>
+                                    <small class="d-block text-muted">Municipal Corporation</small>
                                 </div>
                                 <i class="fas fa-chevron-down text-muted"></i>
                             </div>
@@ -460,7 +464,6 @@
                                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#commissionerProfileModal">
                                     <i class="fas fa-user-tie me-2"></i> Commissioner Profile
                                 </a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i> Settings</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" id="logoutDropdown"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                             </ul>
@@ -515,12 +518,15 @@
                 </div>
                 <div class="modal-body text-center">
                     @php
-                        $logoFullPath = asset(($corporation->logo ?? 'corporation-logo/default-logo.png'));
-                        if (!file_exists(public_path('/' . ($corporation->logo ?? '')))) {
-                            $logoFullPath = asset('assets/corporation-logo/default-logo.png');
+                        $modalLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                        if(isset($corporation) && !empty($corporation->logo)) {
+                            $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                            if(file_exists($fullLogoPath)) {
+                                $modalLogoUrl = asset('storage/' . $corporation->logo);
+                            }
                         }
                     @endphp
-                    <img src="{{ $logoFullPath }}"
+                    <img src="{{ $modalLogoUrl }}"
                          alt="{{ $corporation->name ?? 'Corporation Logo' }}"
                          class="corporation-logo-large mb-3">
 
@@ -531,19 +537,21 @@
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Corporation Code:</div>
-                            <div class="col-7">{{ $corporation->code ?? 'TN-MC-001' }}</div>
+                            <div class="col-7">{{ $corporation->code ?? 'N/A' }}</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">District:</div>
-                            <div class="col-7">{{ $corporation->district ?? 'Chennai' }}</div>
+                            <div class="col-7">{{ $corporation->district ?? 'N/A' }}</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">State:</div>
-                            <div class="col-7">Tamil Nadu</div>
+                            <div class="col-7">{{ $corporation->state ?? 'Tamil Nadu' }}</div>
                         </div>
                         <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Established:</div>
-                            <div class="col-7">{{ $corporation->established_year ?? '1990' }}</div>
+                            <div class="col-5 fw-bold text-primary">Status:</div>
+                            <div class="col-7">
+                                <span class="badge bg-success">{{ ucfirst($corporation->status ?? 'active') }}</span>
+                            </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Total Wards:</div>
@@ -551,19 +559,15 @@
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Email:</div>
-                            <div class="col-7">{{ $corporation->email ?? 'admin@tnmunicipal.gov.in' }}</div>
+                            <div class="col-7">{{ $corporation->email ?? 'N/A' }}</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Phone:</div>
-                            <div class="col-7">{{ $corporation->phone ?? '044-12345678' }}</div>
+                            <div class="col-7">{{ $corporation->phone ?? 'N/A' }}</div>
                         </div>
                         <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Website:</div>
-                            <div class="col-7">
-                                <a href="{{ $corporation->website ?? '#' }}" target="_blank">
-                                    {{ $corporation->website ?? 'www.tnmunicipal.gov.in' }}
-                                </a>
-                            </div>
+                            <div class="col-5 fw-bold text-primary">Established:</div>
+                            <div class="col-7">{{ $corporation->established_year ?? 'N/A' }}</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Address:</div>
@@ -573,7 +577,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="#" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Profile</a>
                 </div>
             </div>
         </div>
@@ -604,8 +607,12 @@
                             <div class="col-7">Municipal Commissioner</div>
                         </div>
                         <div class="row mb-2">
-                            <div class="col-5 fw-bold text-primary">Grade:</div>
-                            <div class="col-7">Special Grade</div>
+                            <div class="col-5 fw-bold text-primary">Corporation:</div>
+                            <div class="col-7">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold text-primary">District:</div>
+                            <div class="col-7">{{ $corporation->district ?? 'Chennai' }}</div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-5 fw-bold text-primary">Date of Joining:</div>
@@ -627,7 +634,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <a href="#" class="btn btn-primary"><i class="fas fa-edit"></i> Edit Profile</a>
                 </div>
             </div>
         </div>
