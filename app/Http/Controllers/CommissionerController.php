@@ -123,7 +123,7 @@ class CommissionerController extends Controller
 
             $zonesWithWards[] = $zoneData;
         }
-
+return response()->json( $corporation);
         return view('corporation.dashboard', [
             "corporation" => $corporation,
             "ward_count"  => $ward_count,
