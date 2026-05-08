@@ -40,7 +40,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #E8F4F0 0%, #F0EDE5 100%);
+            /* background: linear-gradient(135deg, #E8F4F0 0%, #F0EDE5 100%); */
             font-family: 'Inter', 'Poppins', system-ui, sans-serif;
             overflow-x: hidden;
             position: relative;
