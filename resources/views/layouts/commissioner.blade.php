@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', $corporation->name ?? 'Tamil Nadu Municipal Corporation') . ' | Admin Dashboard'</title>
+    <title>@yield('title', isset($corporation) ? $corporation->name : 'Tamil Nadu Municipal Corporation') . ' | Admin Dashboard'</title>
 
     <!-- Bootstrap 5 CSS + Icons + Animate.css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,9 +14,8 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- OpenLayers -->
-    <!-- OpenLayers -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
-<script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9.2.4/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9.2.4/dist/ol.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -379,8 +378,21 @@
                 <div class="logo-area">
                     <div class="text-center">
                         @php
-                            $logoUrl = asset('assets/corporation-logo/default-logo.png');
-                            if(isset($corporation) && !empty($corporation->logo)) {
+                            // Auth user logo logic - priority order:
+                            // 1. Auth user's custom logo if exists
+                            // 2. Corporation logo from corporation model
+                            // 3. Default Tamil Nadu logo
+                            $logoUrl = asset('images/TamilNadu_Logo.png');
+
+                            // Check for auth user's custom logo
+                            if(auth()->check() && !empty(auth()->user()->logo)) {
+                                $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
+                                if(file_exists($fullLogoPath)) {
+                                    $logoUrl = asset('storage/' . auth()->user()->logo);
+                                }
+                            }
+                            // Fallback to corporation logo
+                            elseif(isset($corporation) && !empty($corporation->logo)) {
                                 $fullLogoPath = storage_path('app/public/' . $corporation->logo);
                                 if(file_exists($fullLogoPath)) {
                                     $logoUrl = asset('storage/' . $corporation->logo);
@@ -388,11 +400,15 @@
                             }
                         @endphp
                         <img src="{{ $logoUrl }}"
-                             alt="{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}"
+                             alt="{{ auth()->user()->name ?? ($corporation->name ?? 'Tamil Nadu Municipal Corporation') }}"
                              class="corporation-logo"
                              id="sidebarCorpLogo">
-                        <h6 class="fw-bold mb-0 mt-2" style="color: #FFCBCB;">{{ $corporation->name ?? 'TN Municipal Corp' }}</h6>
-                        <small class="text-white-50">{{ $corporation->district ?? '' }} District | e-Governance Suite</small>
+                        <h6 class="fw-bold mb-0 mt-2" style="color: #FFCBCB;">
+                            {{ auth()->user()->name ?? ($corporation->name ?? 'TN Municipal Corp') }}
+                        </h6>
+                        <small class="text-white-50">
+                            {{ auth()->user()->role ?? ($corporation->district ?? '') }} {{ auth()->user()->role ? '|' : '' }} e-Governance Suite
+                        </small>
                     </div>
                 </div>
                 <nav class="nav flex-column">
@@ -439,31 +455,61 @@
                             <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
                                     @php
-                                        $profileLogoUrl = asset('assets/corporation-logo/default-logo.png');
-                                        if(isset($corporation) && !empty($corporation->logo)) {
-                                            $fullLogoPath = storage_path('app/public/' . $corporation->logo);
-                                            if(file_exists($fullLogoPath)) {
+                                        // Auth user profile picture logic
+                                        $profileLogoUrl = asset('images/TamilNadu_Logo.png');
+
+                                        if(auth()->check()) {
+                                            // Check for auth user's profile picture
+                                            if(!empty(auth()->user()->profile_picture)) {
+                                                $fullProfilePath = storage_path('app/public/' . auth()->user()->profile_picture);
+                                                if(file_exists($fullProfilePath)) {
+                                                    $profileLogoUrl = asset('storage/' . auth()->user()->profile_picture);
+                                                }
+                                            }
+                                            // Fallback to auth user's logo
+                                            elseif(!empty(auth()->user()->logo)) {
+                                                $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
+                                                if(file_exists($fullLogoPath)) {
+                                                    $profileLogoUrl = asset('storage/' . auth()->user()->logo);
+                                                }
+                                            }
+                                            // Fallback to corporation logo
+                                            elseif(isset($corporation) && !empty($corporation->logo)) {
+                                                $fullCorpLogoPath = storage_path('app/public/' . $corporation->logo);
+                                                if(file_exists($fullCorpLogoPath)) {
+                                                    $profileLogoUrl = asset('storage/' . $corporation->logo);
+                                                }
+                                            }
+                                        } elseif(isset($corporation) && !empty($corporation->logo)) {
+                                            $fullCorpLogoPath = storage_path('app/public/' . $corporation->logo);
+                                            if(file_exists($fullCorpLogoPath)) {
                                                 $profileLogoUrl = asset('storage/' . $corporation->logo);
                                             }
                                         }
                                     @endphp
                                     <img src="{{ $profileLogoUrl }}"
                                          class="corporation-profile-icon"
-                                         alt="{{ $corporation->name ?? 'Profile' }}">
+                                         alt="{{ auth()->user()->name ?? ($corporation->name ?? 'Profile') }}">
                                 </div>
                                 <div class="d-none d-md-block">
-                                    <span class="fw-semibold" style="color:#102C57;">{{ $corporation->name ?? 'Admin User' }}</span>
-                                    <small class="d-block text-muted">{{ $corporation->commissioner_name ?? 'Municipal Corporation' }}</small>
+                                    <span class="fw-semibold" style="color:#102C57;">
+                                        {{ auth()->user()->name ?? ($corporation->commissioner_name ?? 'Admin User') }}
+                                    </span>
+                                    <small class="d-block text-muted">
+                                        {{ ucfirst(auth()->user()->role ?? 'Commissioner') }}
+                                    </small>
                                 </div>
                                 <i class="fas fa-chevron-down text-muted"></i>
                             </div>
                             <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#userProfileModal">
+                                    <i class="fas fa-user-circle me-2"></i> My Profile
+                                </a></li>
+                                @if(isset($corporation))
                                 <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#corporationProfileModal">
                                     <i class="fas fa-building me-2"></i> Corporation Profile
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#commissionerProfileModal">
-                                    <i class="fas fa-user-tie me-2"></i> Commissioner Profile
-                                </a></li>
+                                @endif
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item text-danger" href="#" id="logoutDropdown"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                             </ul>
@@ -506,7 +552,88 @@
         </div>
     </div>
 
+    {{-- User Profile Modal (Auth User) --}}
+    <div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header profile-modal-header">
+                    <h5 class="modal-title" id="userProfileModalLabel">
+                        <i class="fas fa-user-circle me-2"></i> My Profile
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        @php
+                            $userProfilePic = asset('images/TamilNadu_Logo.png');
+                            if(auth()->check()) {
+                                if(!empty(auth()->user()->profile_picture)) {
+                                    $fullProfilePath = storage_path('app/public/' . auth()->user()->profile_picture);
+                                    if(file_exists($fullProfilePath)) {
+                                        $userProfilePic = asset('storage/' . auth()->user()->profile_picture);
+                                    }
+                                } elseif(!empty(auth()->user()->logo)) {
+                                    $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
+                                    if(file_exists($fullLogoPath)) {
+                                        $userProfilePic = asset('storage/' . auth()->user()->logo);
+                                    }
+                                }
+                            }
+                        @endphp
+                        <img src="{{ $userProfilePic }}"
+                             alt="{{ auth()->user()->name ?? 'User Profile' }}"
+                             class="corporation-logo-large mb-3">
+                        <h4 class="fw-bold">{{ auth()->user()->name ?? 'User Name' }}</h4>
+                        <p class="text-muted">
+                            <span class="badge bg-primary">{{ ucfirst(auth()->user()->role ?? 'Commissioner') }}</span>
+                        </p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Full Name:</label>
+                                <p class="mb-0">{{ auth()->user()->name ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Email Address:</label>
+                                <p class="mb-0">{{ auth()->user()->email ?? 'N/A' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Phone Number:</label>
+                                <p class="mb-0">{{ auth()->user()->phone ?? 'N/A' }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Role:</label>
+                                <p class="mb-0">{{ ucfirst(auth()->user()->role ?? 'Commissioner') }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Department:</label>
+                                <p class="mb-0">{{ auth()->user()->department ?? 'Municipal Administration' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold text-primary">Member Since:</label>
+                                <p class="mb-0">{{ auth()->user()->created_at ? auth()->user()->created_at->format('d-m-Y') : 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        For profile picture updates, please contact your system administrator.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Corporation Profile Modal --}}
+    @if(isset($corporation))
     <div class="modal fade" id="corporationProfileModal" tabindex="-1" aria-labelledby="corporationProfileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -519,7 +646,7 @@
                 <div class="modal-body">
                     <div class="text-center mb-4">
                         @php
-                            $modalLogoUrl = asset('assets/corporation-logo/default-logo.png');
+                            $modalLogoUrl = asset('images/TamilNadu_Logo.png');
                             if(isset($corporation) && !empty($corporation->logo)) {
                                 $fullLogoPath = storage_path('app/public/' . $corporation->logo);
                                 if(file_exists($fullLogoPath)) {
@@ -581,66 +708,7 @@
             </div>
         </div>
     </div>
-
-    {{-- Commissioner Profile Modal --}}
-    <div class="modal fade" id="commissionerProfileModal" tabindex="-1" aria-labelledby="commissionerProfileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header profile-modal-header">
-                    <h5 class="modal-title" id="commissionerProfileModalLabel">
-                        <i class="fas fa-user-tie me-2"></i> Commissioner Profile
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <div class="user-avatar mx-auto mb-3" style="width: 100px; height: 100px; font-size: 40px;">
-                        @php
-                            $commissionerLogoUrl = asset('assets/corporation-logo/default-logo.png');
-                            if(isset($corporation) && !empty($corporation->logo)) {
-                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
-                                if(file_exists($fullLogoPath)) {
-                                    $commissionerLogoUrl = asset('storage/' . $corporation->logo);
-                                }
-                            }
-                        @endphp
-                        <img src="{{ $commissionerLogoUrl }}" class="w-100 h-100 rounded-circle object-fit-cover" alt="Commissioner">
-                    </div>
-                    <h4 class="fw-bold mb-1">{{ $corporation->commissioner_name ?? 'Dr. K. Senthil Raj, IAS' }}</h4>
-                    <p class="text-muted">Municipal Commissioner</p>
-
-                    <div class="text-start mt-4">
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">Corporation:</div>
-                            <div class="col-8">{{ $corporation->name ?? 'Tamil Nadu Municipal Corporation' }}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">District:</div>
-                            <div class="col-8">{{ ucfirst($corporation->district ?? 'Chennai') }}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">Date of Joining:</div>
-                            <div class="col-8">{{ $corporation->commissioner_joining_date ?? '01-06-2023' }}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">Email:</div>
-                            <div class="col-8">{{ $corporation->commissioner_email ?? 'commissioner@tnmunicipal.gov.in' }}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">Phone:</div>
-                            <div class="col-8">{{ $corporation->commissioner_phone ?? '9876543210' }}</div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 fw-bold text-primary">Office Address:</div>
-                            <div class="col-8">{{ $corporation->commissioner_office ?? 'Commissioner\'s Office, Main Building, ' . ($corporation->district ?? 'Chennai') }}</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -748,10 +816,10 @@
             if (analysisPanel) analysisPanel.style.display = 'none';
         @endif
 
-        // Corporation logo error fallback
+        // Logo error fallback to default Tamil Nadu logo
         document.querySelectorAll('.corporation-logo, .corporation-logo-large, .corporation-profile-icon').forEach(img => {
             img.addEventListener('error', function() {
-                this.src = "{{ asset('assets/corporation-logo/default-logo.png') }}";
+                this.src = "{{ asset('images/TamilNadu_Logo.png') }}";
             });
         });
     </script>
