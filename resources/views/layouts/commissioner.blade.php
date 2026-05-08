@@ -15,7 +15,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+   <!-- OpenLayers JS -->    <!-- OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
     <style>
         * {
             margin: 0;
@@ -381,7 +383,7 @@
         .alert-danger { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; }
         .alert-info { background: linear-gradient(135deg, #d1ecf1, #bee5eb); color: #0c5460; }
     </style>
-    @yield('styles')
+    @stack('styles')
 </head>
 <body>
     <div class="container-fluid p-0">
