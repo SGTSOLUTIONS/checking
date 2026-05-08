@@ -177,8 +177,7 @@ class CommissionerController extends Controller
             ->pluck('road_name');
 
         return view('corporation.ward-map', compact(
-            'teamMember',
-            'ward',
+
             'polygons',
             'points',
             'lines',
