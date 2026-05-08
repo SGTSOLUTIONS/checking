@@ -1,6 +1,8 @@
+{{-- resources/views/corporation/ward-map.blade.php --}}
+@extends('layouts.commissioner')
 
-<!-- resources/views/surveyor/ward-map.blade.php -->
-@extends('layouts.surveyor-layout')
+@section('title', 'Ward ' . $ward->ward_no . ' Map View - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
+
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
