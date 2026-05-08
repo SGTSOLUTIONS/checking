@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Simple OpenLayers Map</title>
+{{-- resources/views/corporation/ward-map.blade.php --}}
+@extends('layouts.commissioner')
 
-    <!-- OpenLayers CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
 
+@section('styles')
     <style>
         body {
             margin: 0;
@@ -20,15 +15,17 @@
             height: 100vh;
         }
     </style>
-</head>
-<body>
+@endsection
 
     <div id="map"></div>
 
-    <!-- OpenLayers JS -->
-    <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
-    <script>
+
+
+
+@endsection
+@section('scripts')
+ <script>
         // Create map
         const map = new ol.Map({
             target: 'map',
@@ -48,5 +45,4 @@
         });
     </script>
 
-</body>
-</html>
+@endsection
