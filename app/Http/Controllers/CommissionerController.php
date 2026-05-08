@@ -175,9 +175,10 @@ class CommissionerController extends Controller
             ->distinct()
             ->orderBy('road_name')
             ->pluck('road_name');
-
+        $ward = $warddetail;
         return view('corporation.ward-map', compact(
 
+            'ward',
             'polygons',
             'points',
             'lines',
