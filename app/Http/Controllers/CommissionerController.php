@@ -135,7 +135,8 @@ class CommissionerController extends Controller
 
    public function mapView()
     {
-        $userId = Auth::id();
+        $userId = Auth::user();
+        return response()->json($userId);
         $teamMember = TeamMember::with(['team.ward'])
             ->where('user_id', $userId)
             ->first();

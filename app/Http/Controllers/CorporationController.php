@@ -330,7 +330,6 @@ class CorporationController extends Controller
                 'data' => $corporation,
                 'import_stats' => $importStats
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
