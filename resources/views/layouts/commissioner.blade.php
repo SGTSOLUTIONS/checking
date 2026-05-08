@@ -381,7 +381,7 @@
         .alert-danger { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; }
         .alert-info { background: linear-gradient(135deg, #d1ecf1, #bee5eb); color: #0c5460; }
     </style>
-    @stack('styles')
+    @yield('styles')
 </head>
 <body>
     <div class="container-fluid p-0">
