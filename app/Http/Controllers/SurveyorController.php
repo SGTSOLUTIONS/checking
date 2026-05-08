@@ -734,10 +734,15 @@ class SurveyorController extends Controller
             'new_address' => 'nullable|string|max:500',
             'road_name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
+
             'building_usage' => 'required|in:RESIDENTIAL,COMMERCIAL,MIXED,INDUSTRIAL,INSTITUTIONAL,GOVERNMENT,VACANT',
+
             'construction_type' => 'required|in:PERMANENT,SEMI_PERMANENT,VACANT_LAND,SHED,CAR_SHED,TEMPORARY',
+
             'building_type' => 'required|in:Independent,Flat,Kalyana_Mandapam,Hotel,Cinema_Theatre,Central_Government_Building,State_Government_Building,Municipality_Corporation,Educational_Institution,Hospital,Commercial_Complex,Shop,Office,Temple,Mosque,Church,Amma_Unavagam,Public_Toilet,Vacant Land,Under Construction,Others',
+
             'ugd' => 'nullable|in:No_Connection,Manhole_Available_but_Connection_Not_Given_to_House,Stage_1_Completed,Stage_1_2_Completed,Stage_1_2_Completed_but_Not_Connected,Stage_1_2_3_Completed,Direct_Connection_Given,1_UGD_Connection_-_3_Stage_Completed,2_UGD_Connection_-_3_Stage_Completed',
+
             'liftroom' => 'nullable|in:Yes,No',
             'headroom' => 'nullable|in:Yes,No',
             'overhead_tank' => 'nullable|in:Yes,No',
@@ -749,11 +754,16 @@ class SurveyorController extends Controller
             'zone' => 'nullable',
             'cell_tower' => 'nullable|in:Yes,No',
             'solar_panel' => 'nullable|in:Yes,No',
+
             'basement' => 'required|integer|min:0|max:5',
             'water_connection' => 'nullable',
+
             'percentage' => 'required|numeric|min:0|max:100',
+
             'remarks' => 'nullable|string|max:500',
             'corporationremarks' => 'nullable|string|max:500',
+
+            // Images are NOT required in validation by default
             'image' => 'nullable|image|mimes:jpg,jpeg,png',
             'image2' => 'nullable|image|mimes:jpg,jpeg,png',
         ]);
@@ -766,173 +776,182 @@ class SurveyorController extends Controller
             ], 422);
         }
 
-        $data = $request->all();
-        $userId = Auth::id();
-
-        $teamMember = TeamMember::with(['team.ward'])
-            ->where('user_id', $userId)
-            ->first();
-
-        if (!$teamMember) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You are not assigned to any team.',
-            ], 403);
-        }
-
-        $ward = $teamMember->team->ward;
-        $zone = strtolower(trim($ward->zone));
-        $wardNo = (int)$ward->ward_no;
-        $corp = (int)$ward->corporation_id;
-        $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
-
-        // Check if record exists
-        $existingRecord = DB::table($polygonDataTableName)->where('gisid', $data['building_gisid'])->first();
-
-
-        // Validate Flat building condition
-        if ($request->building_type == "Flat" && $request->number_floor < 3) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => [
-                    'number_floor' => ['Flat building must have at least 3 floors.'],
-                    'building_type' => ['If building type is Flat, number of floors must be at least 3.']
-                ]
-            ], 422);
-        }
-
-        // Handle image uploads
-        $imagePath1 = null;
-        $imagePath2 = null;
-
-        // Create directory if not exists
-        $uploadDir = public_path("uploads/{$corp}/{$polygonDataTableName}");
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        // Handle first image (image column)
-        if ($request->hasFile('image')) {
-            $image1 = $request->file('image');
-            $fileName1 = $data['building_gisid'] . '_image1.' . $image1->getClientOriginalExtension();
-            $image1->move($uploadDir, $fileName1);
-            $imagePath1 = "uploads/{$corp}/{$polygonDataTableName}/{$fileName1}";
-        }
-
-        // Handle second image (image2 column)
-        if ($request->hasFile('image2')) {
-            $image2 = $request->file('image2');
-            $fileName2 = $data['building_gisid'] . '_image2.' . $image2->getClientOriginalExtension();
-            $image2->move($uploadDir, $fileName2);
-            $imagePath2 = "uploads/{$corp}/{$polygonDataTableName}/{$fileName2}";
-        }
-
-        // Prepare data for insert/update
-        $insertData = [
-            'gisid' => $data['building_gisid'],
-            'number_bill' => $data['number_bill'] ?? null,
-            'number_shop' => $data['number_shop'],
-            'number_floor' => $data['number_floor'],
-            'building_name' => $data['building_name'] ?? null,
-            'new_address' => $data['new_address'] ?? null,
-            'road_name' => $data['road_name'],
-            'phone' => $data['phone'] ?? null,
-            'building_usage' => $data['building_usage'],
-            'construction_type' => $data['construction_type'],
-            'building_type' => $data['building_type'],
-            'ugd' => $data['ugd'] ?? null,
-            'liftroom' => $data['liftroom'] ?? 'No',
-            'headroom' => $data['headroom'] ?? 'No',
-            'overhead_tank' => $data['overhead_tank'] ?? 'No',
-            'rainwater_harvesting' => $data['rainwater_harvesting'] ?? 'No',
-            'parking' => $data['parking'] ?? 'No',
-            'ramp' => $data['ramp'] ?? 'No',
-            'hoarding' => $data['hoarding'] ?? 'No',
-            'cctv' => $data['cctv'] ?? 'No',
-            'zone' => $data['zone'] ?? 'No',
-            'cell_tower' => $data['cell_tower'] ?? 'No',
-            'solar_panel' => $data['solar_panel'] ?? 'No',
-            'basement' => $data['basement'],
-            'water_connection' => $data['water_connection'] ?? null,
-            'percentage' => $data['percentage'],
-            'remarks' => $data['remarks'] ?? null,
-            'worker_name' => $teamMember->user->id . '-' . $teamMember->user->name,
-            'corporationremarks' => $data['corporationremarks'] ?? null,
-            'updated_at' => now(),
-        ];
-
-        // Add image paths only if new images were uploaded (using correct column names: 'image' and 'image2')
-        if ($imagePath1) {
-            $insertData['image'] = $imagePath1;
-        }
-        if ($imagePath2) {
-            $insertData['image2'] = $imagePath2;
-        }
-        if (!$existingRecord->image) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'image' => [
-                    'image' => ['image required']
-                ]
-            ], 422);
-        }
         try {
+            $data = $request->all();
+            $userId = Auth::id();
+
+            $teamMember = TeamMember::with(['team.ward', 'user'])
+                ->where('user_id', $userId)
+                ->first();
+
+            if (!$teamMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not assigned to any team.',
+                ], 403);
+            }
+
+            $ward = $teamMember->team->ward;
+            $zone = strtolower(trim($ward->zone));
+            $wardNo = (int)$ward->ward_no;
+            $corp = (int)$ward->corporation_id;
+
+            $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
+
+            // Check existing record
+            $existingRecord = DB::table($polygonDataTableName)
+                ->where('gisid', $data['building_gisid'])
+                ->first();
+
+            // ========== IMAGE VALIDATION LOGIC ==========
+            // For NEW records: At least one image is required
+            if (!$existingRecord && !$request->hasFile('image') && !$request->hasFile('image2')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'image' => ['At least one image is required for new building records.']
+                    ]
+                ], 422);
+            }
+
+            // For EXISTING records: Images are optional (can update without images)
+            // No validation needed - they can skip images
+
+            // Flat validation
+            if ($request->building_type == "Flat" && $request->number_floor < 3) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'number_floor' => [
+                            'Flat building must have at least 3 floors.'
+                        ]
+                    ]
+                ], 422);
+            }
+
+            // Upload directory setup
+            $uploadDir = public_path("uploads/{$corp}/{$polygonDataTableName}");
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+
+            $imagePath1 = null;
+            $imagePath2 = null;
+
+            // Process image1 (overwrite if uploaded)
+            if ($request->hasFile('image')) {
+                $image1 = $request->file('image');
+                $fileName1 = $data['building_gisid'] . '_image1.' . $image1->getClientOriginalExtension();
+                $image1->move($uploadDir, $fileName1);
+                $imagePath1 = "uploads/{$corp}/{$polygonDataTableName}/{$fileName1}";
+
+                // Delete old image if exists and we're updating
+                if ($existingRecord && isset($existingRecord->image) && file_exists(public_path($existingRecord->image))) {
+                    unlink(public_path($existingRecord->image));
+                }
+            }
+
+            // Process image2 (overwrite if uploaded)
+            if ($request->hasFile('image2')) {
+                $image2 = $request->file('image2');
+                $fileName2 = $data['building_gisid'] . '_image2.' . $image2->getClientOriginalExtension();
+                $image2->move($uploadDir, $fileName2);
+                $imagePath2 = "uploads/{$corp}/{$polygonDataTableName}/{$fileName2}";
+
+                // Delete old image if exists and we're updating
+                if ($existingRecord && isset($existingRecord->image2) && file_exists(public_path($existingRecord->image2))) {
+                    unlink(public_path($existingRecord->image2));
+                }
+            }
+
+            // Prepare insert/update data
+            $insertData = [
+                'gisid' => $data['building_gisid'],
+                'number_bill' => $data['number_bill'] ?? null,
+                'number_shop' => $data['number_shop'],
+                'number_floor' => $data['number_floor'],
+                'building_name' => $data['building_name'] ?? null,
+                'new_address' => $data['new_address'] ?? null,
+                'road_name' => $data['road_name'],
+                'phone' => $data['phone'] ?? null,
+                'building_usage' => $data['building_usage'],
+                'construction_type' => $data['construction_type'],
+                'building_type' => $data['building_type'],
+                'ugd' => $data['ugd'] ?? null,
+                'liftroom' => $data['liftroom'] ?? 'No',
+                'headroom' => $data['headroom'] ?? 'No',
+                'overhead_tank' => $data['overhead_tank'] ?? 'No',
+                'rainwater_harvesting' => $data['rainwater_harvesting'] ?? 'No',
+                'parking' => $data['parking'] ?? 'No',
+                'ramp' => $data['ramp'] ?? 'No',
+                'hoarding' => $data['hoarding'] ?? 'No',
+                'cctv' => $data['cctv'] ?? 'No',
+                'zone' => $data['zone'] ?? 'No',
+                'cell_tower' => $data['cell_tower'] ?? 'No',
+                'solar_panel' => $data['solar_panel'] ?? 'No',
+                'basement' => $data['basement'],
+                'water_connection' => $data['water_connection'] ?? null,
+                'percentage' => $data['percentage'],
+                'remarks' => $data['remarks'] ?? null,
+                'worker_name' => $teamMember->user->id . '-' . $teamMember->user->name,
+                'corporationremarks' => $data['corporationremarks'] ?? null,
+                'updated_at' => now(),
+            ];
+
+            // Set image paths (keep old ones if no new images uploaded)
+            if ($imagePath1) {
+                $insertData['image'] = $imagePath1;
+            } elseif ($existingRecord && isset($existingRecord->image)) {
+                // Keep existing image if no new one uploaded
+                $insertData['image'] = $existingRecord->image;
+            }
+
+            if ($imagePath2) {
+                $insertData['image2'] = $imagePath2;
+            } elseif ($existingRecord && isset($existingRecord->image2)) {
+                // Keep existing image if no new one uploaded
+                $insertData['image2'] = $existingRecord->image2;
+            }
+
+            // UPDATE or INSERT
             if ($existingRecord) {
                 $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
 
-                // Check if point data table exists before counting
                 if (Schema::hasTable($pointDataTableName)) {
-                    $count = DB::table($pointDataTableName)->WHERE('point_gisid',$existingRecord->gisid)->count();
+                    $count = DB::table($pointDataTableName)
+                        ->where('point_gisid', $existingRecord->gisid)
+                        ->count();
 
-                    if ($count > 0) {
-                        // Safely access number_bill property
-                        if (!isset($existingRecord->number_bill) || $existingRecord->number_bill < $count) {
-                            return response()->json([
-                                'success' => false,
-                                'message' => 'Validation errors',
-                                'errors' => [
-                                    'number_bill' => ['Number of bill less than typed assessment']
+                    if ($count > 0 && (!isset($existingRecord->number_bill) || $existingRecord->number_bill < $count)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Validation errors',
+                            'errors' => [
+                                'number_bill' => [
+                                    'Number of bill less than typed assessment'
                                 ]
-                            ], 422);
-                        }
+                            ]
+                        ], 422);
                     }
-                }
-                // If no new images uploaded, keep existing images (using correct column names)
-                if (!$imagePath1 && isset($existingRecord->image) && $existingRecord->image) {
-                    $insertData['image'] = $existingRecord->image;
-                }
-                if (!$imagePath2 && isset($existingRecord->image2) && $existingRecord->image2) {
-                    $insertData['image2'] = $existingRecord->image2;
                 }
 
-                DB::table($polygonDataTableName)->where('gisid', $data['building_gisid'])->update($insertData);
-
-                // Delete old images if new ones were uploaded (using correct column names)
-                if ($imagePath1 && isset($existingRecord->image) && $existingRecord->image) {
-                    $oldImagePath = public_path($existingRecord->image);
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
-                if ($imagePath2 && isset($existingRecord->image2) && $existingRecord->image2) {
-                    $oldImagePath2 = public_path($existingRecord->image2);
-                    if (file_exists($oldImagePath2)) {
-                        unlink($oldImagePath2);
-                    }
-                }
+                DB::table($polygonDataTableName)
+                    ->where('gisid', $data['building_gisid'])
+                    ->update($insertData);
 
                 $message = 'Building data updated successfully';
             } else {
-                // INSERT new record
                 $insertData['created_at'] = now();
                 DB::table($polygonDataTableName)->insert($insertData);
                 $message = 'Building data saved successfully';
             }
 
-            // Fetch updated data to return
-            $updatedRecord = DB::table($polygonDataTableName)->where('gisid', $data['building_gisid'])->first();
+            // Fetch updated record
+            $updatedRecord = DB::table($polygonDataTableName)
+                ->where('gisid', $data['building_gisid'])
+                ->first();
 
             return response()->json([
                 'success' => true,
