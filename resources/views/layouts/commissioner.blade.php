@@ -379,23 +379,45 @@
                     <div class="text-center">
                         @php
                             // Auth user logo logic - priority order:
-                            // 1. Auth user's custom logo if exists
-                            // 2. Corporation logo from corporation model
-                            // 3. Default Tamil Nadu logo
+                            // 1. Auth user's profile image (if stored in public path)
+                            // 2. Auth user's custom logo
+                            // 3. Corporation logo from corporation model
+                            // 4. Default Tamil Nadu logo
                             $logoUrl = asset('images/TamilNadu_Logo.png');
 
-                            // Check for auth user's custom logo
-                            if(auth()->check() && !empty(auth()->user()->logo)) {
-                                $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
-                                if(file_exists($fullLogoPath)) {
-                                    $logoUrl = asset('storage/' . auth()->user()->logo);
+                            if(auth()->check()) {
+                                // Check for auth user's profile image (public path)
+                                if(!empty(auth()->user()->profile)) {
+                                    // Check if profile path starts with 'uploads/' or similar
+                                    $profilePath = auth()->user()->profile;
+                                    // Remove leading slash if exists
+                                    $profilePath = ltrim($profilePath, '/');
+                                    $fullProfilePath = public_path($profilePath);
+                                    if(file_exists($fullProfilePath)) {
+                                        $logoUrl = asset($profilePath);
+                                    }
                                 }
-                            }
-                            // Fallback to corporation logo
-                            elseif(isset($corporation) && !empty($corporation->logo)) {
-                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
-                                if(file_exists($fullLogoPath)) {
-                                    $logoUrl = asset('storage/' . $corporation->logo);
+                                // Fallback to auth user's logo
+                                elseif(!empty(auth()->user()->logo)) {
+                                    $logoPath = ltrim(auth()->user()->logo, '/');
+                                    $fullLogoPath = public_path($logoPath);
+                                    if(file_exists($fullLogoPath)) {
+                                        $logoUrl = asset($logoPath);
+                                    }
+                                }
+                                // Fallback to corporation logo
+                                elseif(isset($corporation) && !empty($corporation->logo)) {
+                                    $corpLogoPath = ltrim($corporation->logo, '/');
+                                    $fullCorpLogoPath = public_path($corpLogoPath);
+                                    if(file_exists($fullCorpLogoPath)) {
+                                        $logoUrl = asset($corpLogoPath);
+                                    }
+                                }
+                            } elseif(isset($corporation) && !empty($corporation->logo)) {
+                                $corpLogoPath = ltrim($corporation->logo, '/');
+                                $fullCorpLogoPath = public_path($corpLogoPath);
+                                if(file_exists($fullCorpLogoPath)) {
+                                    $logoUrl = asset($corpLogoPath);
                                 }
                             }
                         @endphp
@@ -455,35 +477,39 @@
                             <div class="d-flex align-items-center gap-2" data-bs-toggle="dropdown">
                                 <div class="user-avatar">
                                     @php
-                                        // Auth user profile picture logic
+                                        // Auth user profile picture logic (public path)
                                         $profileLogoUrl = asset('images/TamilNadu_Logo.png');
 
                                         if(auth()->check()) {
-                                            // Check for auth user's profile picture
-                                            if(!empty(auth()->user()->profile_picture)) {
-                                                $fullProfilePath = storage_path('app/public/' . auth()->user()->profile_picture);
+                                            // Check for auth user's profile image (public path)
+                                            if(!empty(auth()->user()->profile)) {
+                                                $profilePath = ltrim(auth()->user()->profile, '/');
+                                                $fullProfilePath = public_path($profilePath);
                                                 if(file_exists($fullProfilePath)) {
-                                                    $profileLogoUrl = asset('storage/' . auth()->user()->profile_picture);
+                                                    $profileLogoUrl = asset($profilePath);
                                                 }
                                             }
                                             // Fallback to auth user's logo
                                             elseif(!empty(auth()->user()->logo)) {
-                                                $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
+                                                $logoPath = ltrim(auth()->user()->logo, '/');
+                                                $fullLogoPath = public_path($logoPath);
                                                 if(file_exists($fullLogoPath)) {
-                                                    $profileLogoUrl = asset('storage/' . auth()->user()->logo);
+                                                    $profileLogoUrl = asset($logoPath);
                                                 }
                                             }
                                             // Fallback to corporation logo
                                             elseif(isset($corporation) && !empty($corporation->logo)) {
-                                                $fullCorpLogoPath = storage_path('app/public/' . $corporation->logo);
+                                                $corpLogoPath = ltrim($corporation->logo, '/');
+                                                $fullCorpLogoPath = public_path($corpLogoPath);
                                                 if(file_exists($fullCorpLogoPath)) {
-                                                    $profileLogoUrl = asset('storage/' . $corporation->logo);
+                                                    $profileLogoUrl = asset($corpLogoPath);
                                                 }
                                             }
                                         } elseif(isset($corporation) && !empty($corporation->logo)) {
-                                            $fullCorpLogoPath = storage_path('app/public/' . $corporation->logo);
+                                            $corpLogoPath = ltrim($corporation->logo, '/');
+                                            $fullCorpLogoPath = public_path($corpLogoPath);
                                             if(file_exists($fullCorpLogoPath)) {
-                                                $profileLogoUrl = asset('storage/' . $corporation->logo);
+                                                $profileLogoUrl = asset($corpLogoPath);
                                             }
                                         }
                                     @endphp
@@ -567,15 +593,20 @@
                         @php
                             $userProfilePic = asset('images/TamilNadu_Logo.png');
                             if(auth()->check()) {
-                                if(!empty(auth()->user()->profile_picture)) {
-                                    $fullProfilePath = storage_path('app/public/' . auth()->user()->profile_picture);
+                                // Check for profile image in public path
+                                if(!empty(auth()->user()->profile)) {
+                                    $profilePath = ltrim(auth()->user()->profile, '/');
+                                    $fullProfilePath = public_path($profilePath);
                                     if(file_exists($fullProfilePath)) {
-                                        $userProfilePic = asset('storage/' . auth()->user()->profile_picture);
+                                        $userProfilePic = asset($profilePath);
                                     }
-                                } elseif(!empty(auth()->user()->logo)) {
-                                    $fullLogoPath = storage_path('app/public/' . auth()->user()->logo);
+                                }
+                                // Fallback to logo
+                                elseif(!empty(auth()->user()->logo)) {
+                                    $logoPath = ltrim(auth()->user()->logo, '/');
+                                    $fullLogoPath = public_path($logoPath);
                                     if(file_exists($fullLogoPath)) {
-                                        $userProfilePic = asset('storage/' . auth()->user()->logo);
+                                        $userProfilePic = asset($logoPath);
                                     }
                                 }
                             }
@@ -614,6 +645,10 @@
                                 <p class="mb-0">{{ auth()->user()->department ?? 'Municipal Administration' }}</p>
                             </div>
                             <div class="mb-3">
+                                <label class="fw-bold text-primary">Profile Image Path:</label>
+                                <p class="mb-0 text-muted small">{{ auth()->user()->profile ?? 'Not set' }}</p>
+                            </div>
+                            <div class="mb-3">
                                 <label class="fw-bold text-primary">Member Since:</label>
                                 <p class="mb-0">{{ auth()->user()->created_at ? auth()->user()->created_at->format('d-m-Y') : 'N/A' }}</p>
                             </div>
@@ -622,7 +657,7 @@
 
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle me-2"></i>
-                        For profile picture updates, please contact your system administrator.
+                        Profile image is stored in: <strong>public/{{ auth()->user()->profile ?? 'Not set' }}</strong>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -648,9 +683,10 @@
                         @php
                             $modalLogoUrl = asset('images/TamilNadu_Logo.png');
                             if(isset($corporation) && !empty($corporation->logo)) {
-                                $fullLogoPath = public_path( $corporation->logo);
+                                $logoPath = ltrim($corporation->logo, '/');
+                                $fullLogoPath = public_path($logoPath);
                                 if(file_exists($fullLogoPath)) {
-                                    $modalLogoUrl = asset( $corporation->logo);
+                                    $modalLogoUrl = asset($logoPath);
                                 }
                             }
                         @endphp
