@@ -140,7 +140,7 @@ class CommissionerController extends Controller
         $warddetail = Ward::where('corporation_id', $userId->corporation_id)->where('ward_no',$ward_no)->first();
 
         $zone = strtolower(trim($warddetail->zone));
-        $wardNo = (int)$ward->ward_no;
+        $wardNo = (int)$warddetail->ward_no;
         $corp = (int)$warddetail->corporation_id;
 
         // Table names
