@@ -648,9 +648,9 @@
                         @php
                             $modalLogoUrl = asset('images/TamilNadu_Logo.png');
                             if(isset($corporation) && !empty($corporation->logo)) {
-                                $fullLogoPath = storage_path('app/public/' . $corporation->logo);
+                                $fullLogoPath = public_path( $corporation->logo);
                                 if(file_exists($fullLogoPath)) {
-                                    $modalLogoUrl = asset('storage/' . $corporation->logo);
+                                    $modalLogoUrl = asset( $corporation->logo);
                                 }
                             }
                         @endphp
