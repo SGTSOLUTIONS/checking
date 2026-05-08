@@ -396,7 +396,7 @@
             100% { transform: scale(1); opacity: 1; }
         }
     </style>
-@endsection
+@endpush
 
 @section('content')
     <div id="map"></div>
@@ -1032,4 +1032,4 @@
             console.log("Commissioner Map Loaded Successfully");
         });
     </script>
-@endsection
+@endpush
