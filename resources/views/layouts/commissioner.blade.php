@@ -438,13 +438,7 @@
                        href="{{ route('corporation.dashboard') }}">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
-                    <a class="nav-link {{ request()->routeIs('corporation.ward.map') ? 'active' : '' }}"
-                       href="{{ route('corporation.ward.map', ['ward_no' => 1]) }}">
-                        <i class="fas fa-map-marker-alt"></i> Ward Map
-                    </a>
-                    <a class="nav-link" href="#" data-page="analysis" id="analysisNavLink">
-                        <i class="fas fa-chart-line"></i> Analysis
-                    </a>
+
                 </nav>
                 <div class="mt-auto p-3">
                     <hr class="bg-secondary" style="opacity:0.3;">
