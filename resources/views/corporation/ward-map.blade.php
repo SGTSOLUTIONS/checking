@@ -1,7 +1,7 @@
 {{-- resources/views/corporation/ward-map.blade.php --}}
 @extends('layouts.commissioner')
 
-@section('title', 'Ward Map - ' . ($ward->ward_no ?? '') . ' | Corporation Dashboard')
+@section('title', 'Ward Map - ' . ($ward->ward_no ?? ''))
 
 @push('styles')
 <style>
@@ -519,6 +519,7 @@
                         <button class="search-tab" data-tab="assessment">Assessment No</button>
                     </div>
 
+                    <!-- GIS ID Search Panel -->
                     <div class="search-panel active" id="gisidPanel">
                         <div class="search-box">
                             <input type="text" id="gisidSearchInput" placeholder="Enter GIS ID..." autocomplete="off">
@@ -527,6 +528,7 @@
                         <div class="search-results" id="gisidResults"></div>
                     </div>
 
+                    <!-- Assessment Search Panel -->
                     <div class="search-panel" id="assessmentPanel">
                         <div class="search-box">
                             <input type="text" id="assessmentSearchInput" placeholder="Enter Assessment Number..." autocomplete="off">
@@ -617,9 +619,13 @@
 @endsection
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 <script>
+// Wait for DOM and jQuery to be fully loaded
 $(document).ready(function() {
+    console.log("Document ready, initializing map...");
+
     // Data from server
     let polygons = @json($polygons ?? []);
     let lines = @json($lines ?? []);
@@ -731,15 +737,26 @@ $(document).ready(function() {
         visible: false
     });
 
-    const droneLayer = new ol.layer.Image({
-        source: new ol.source.ImageStatic({
-            url: droneImageURL,
-            imageExtent: imageExtent,
-            imageSmoothing: false
-        }),
-        opacity: 0.85,
-        visible: true
-    });
+    let droneLayer = null;
+    if (droneImageURL && imageExtent[0] !== 0) {
+        droneLayer = new ol.layer.Image({
+            source: new ol.source.ImageStatic({
+                url: droneImageURL,
+                imageExtent: imageExtent,
+                imageSmoothing: false
+            }),
+            opacity: 0.85,
+            visible: true
+        });
+    } else {
+        droneLayer = new ol.layer.Image({
+            source: new ol.source.ImageStatic({
+                url: "",
+                imageExtent: [0, 0, 0, 0]
+            }),
+            visible: false
+        });
+    }
 
     // Polygon Layer
     const polygonSource = new ol.source.Vector();
@@ -751,7 +768,7 @@ $(document).ready(function() {
                 gisid: poly.gisid,
                 type: "Polygon"
             }));
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Polygon error:', e); }
     });
     const polygonLayer = new ol.layer.Vector({
         source: polygonSource,
@@ -774,7 +791,7 @@ $(document).ready(function() {
                     type: "Line"
                 }));
             }
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Line error:', e); }
     });
     const lineLayer = new ol.layer.Vector({
         source: lineSource,
@@ -792,7 +809,7 @@ $(document).ready(function() {
                 gisid: p.gisid,
                 type: "Point"
             }));
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('Point error:', e); }
     });
     const pointLayer = new ol.layer.Vector({
         source: pointSource,
@@ -847,13 +864,21 @@ $(document).ready(function() {
         })
     });
 
+    // Set default center
+    let defaultCenter;
+    if (imageExtent[0] !== 0) {
+        defaultCenter = ol.extent.getCenter(imageExtent);
+    } else {
+        defaultCenter = ol.proj.fromLonLat([80.2707, 13.0827]);
+    }
+
     // Initialize Map
     const map = new ol.Map({
         target: 'map',
         layers: [osmLayer, satelliteLayer, terrainLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
         view: new ol.View({
             projection: "EPSG:3857",
-            center: imageExtent[0] !== 0 ? ol.extent.getCenter(imageExtent) : ol.proj.fromLonLat([80.2707, 13.0827]),
+            center: defaultCenter,
             zoom: 15
         }),
         controls: []
