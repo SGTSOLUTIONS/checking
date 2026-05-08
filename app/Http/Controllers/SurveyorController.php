@@ -969,7 +969,7 @@ class SurveyorController extends Controller
     public function uploadPointData(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:OLD,NEW,OTHER',
+            'type' => 'required|in:OLD,NEW,OTHER,NO_TAX,VACCAND',
             'point_gisid' => 'required|string|max:50',
             'assessment' => 'nullable|string|max:100',
             'old_assessment' => 'nullable|string|max:100',
