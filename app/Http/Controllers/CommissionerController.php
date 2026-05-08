@@ -133,25 +133,15 @@ class CommissionerController extends Controller
         ]);
     }
 
-   public function mapView()
+     public function mapView($ward_no)
     {
         $userId = Auth::user();
         return response()->json($userId);
-        $teamMember = TeamMember::with(['team.ward'])
-            ->where('user_id', $userId)
-            ->first();
+        $warddetail = Ward::where('corporation_id', $userId->corporation_id)->where('ward_no',$ward_no)->first();
 
-        if (!$teamMember) {
-            return view('surveyor.dashboard', [
-                'hasTeam' => false,
-                'message' => 'You are not assigned to any team.',
-            ]);
-        }
-
-        $ward = $teamMember->team->ward;
-        $zone = strtolower(trim($ward->zone));
+        $zone = strtolower(trim($$warddetail->zone));
         $wardNo = (int)$ward->ward_no;
-        $corp = (int)$ward->corporation_id;
+        $corp = (int)$warddetail->corporation_id;
 
         // Table names
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
