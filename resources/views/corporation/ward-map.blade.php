@@ -11,7 +11,7 @@
         border-radius: 15px;
         overflow: hidden;
         position: relative;
-        background: #e8e8e8;
+        /* background: #e8e8e8; */
     }
 
     .map-container {
