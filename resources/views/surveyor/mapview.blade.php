@@ -1858,7 +1858,7 @@
 
                 const gisid = feature.get("gisid");
                 const sqft = feature.get("sqfeet");
-                console.log(feature.properties);
+                console.log(feature);
 
                 const polygonData = polygonDatas.find(data => data.gisid == gisid);
 
