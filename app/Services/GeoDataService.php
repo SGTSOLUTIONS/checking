@@ -76,7 +76,7 @@ class GeoDataService
                 Log::info("✅ Point table created: {$pointTable}");
             }
 
-            // ✅ Create Polygon Data Table FIRST (this must exist before point data table)
+            // ✅ Create Polygon Data Table FIRST
             if (!Schema::hasTable($polygonDataTable)) {
                 Schema::create($polygonDataTable, function (Blueprint $table) {
                     $table->id();
@@ -120,12 +120,10 @@ class GeoDataService
                 Log::info("✅ Polygon data table created: {$polygonDataTable}");
             }
 
-            // ✅ Create Point Data Table SECOND (with foreign key to polygon data table)
+            // ✅ Create Point Data Table SECOND
             if (!Schema::hasTable($pointDataTable)) {
                 Schema::create($pointDataTable, function (Blueprint $table) use ($polygonDataTable) {
                     $table->id();
-
-                    // Foreign key - defined only once
                     $table->unsignedBigInteger('building_data_id')->nullable();
                     $table->foreign('building_data_id')
                         ->references('id')
@@ -139,7 +137,6 @@ class GeoDataService
                     $table->string('old_assessment')->nullable();
                     $table->string('owner_name')->nullable();
                     $table->string('present_owner_name')->nullable();
-
                     $table->string('number_persons')->nullable();
                     $table->string('eb')->nullable();
                     $table->string('floor')->nullable();
@@ -178,11 +175,10 @@ class GeoDataService
 
                 Log::info("✅ Point data table created: {$pointDataTable}");
             }
+
             if (!Schema::hasTable($shopDataTable)) {
                 Schema::create($shopDataTable, function (Blueprint $table) use ($pointDataTable) {
                     $table->id();
-
-                    // Foreign key (relation with point table)
                     $table->unsignedBigInteger('point_data_id')->nullable();
                     $table->foreign('point_data_id')
                         ->references('id')
@@ -196,10 +192,8 @@ class GeoDataService
                     $table->string('shop_mobile', 10)->nullable();
                     $table->string('license')->nullable();
                     $table->integer('number_of_employee')->nullable();
-
                     $table->string('type')->default('Point');
                     $table->json('coordinates')->nullable();
-
                     $table->timestamps();
                     $table->softDeletes();
                 });
@@ -221,13 +215,100 @@ class GeoDataService
     }
 
     /**
-     * ✅ Store polygons & points from GeoJSON with GIS_ID validation
-     * Optimized for performance with large files
+     * ✅ Calculate polygon area directly in SQUARE FEET
+     * Supports both degrees and microdegrees coordinates
+     * @param array $coordinates - Polygon coordinates
+     * @return float - Area in square feet
+     */
+    private function calculatePolygonAreaInSquareFeet($coordinates)
+    {
+        try {
+            // Validate input
+            if (!is_array($coordinates) || count($coordinates) === 0) {
+                Log::warning("Invalid coordinates array");
+                return 0;
+            }
+
+            // Get the outer ring
+            $ring = $coordinates[0] ?? null;
+            if (!$ring || !is_array($ring) || count($ring) < 3) {
+                Log::warning("Invalid polygon ring - need at least 3 points");
+                return 0;
+            }
+
+            // Check if coordinates need conversion (microdegrees detection)
+            $needsConversion = false;
+            $firstPoint = $ring[0];
+            if (isset($firstPoint[0]) && isset($firstPoint[1])) {
+                $sampleLat = abs($firstPoint[1]);
+                $sampleLon = abs($firstPoint[0]);
+
+                // If values are > 180, they're likely in microdegrees (multiplied by 1,000,000)
+                if ($sampleLat > 180 || $sampleLon > 180) {
+                    $needsConversion = true;
+                    Log::info("Detected microdegrees format, converting to degrees");
+                }
+            }
+
+            // Convert coordinates to degrees if needed
+            $convertedRing = [];
+            foreach ($ring as $point) {
+                if (count($point) >= 2) {
+                    $lon = floatval($point[0]);
+                    $lat = floatval($point[1]);
+
+                    if ($needsConversion) {
+                        // Convert from microdegrees to degrees
+                        $lon = $lon / 1000000;
+                        $lat = $lat / 1000000;
+                    }
+
+                    $convertedRing[] = [$lon, $lat];
+                }
+            }
+
+            // Calculate area in square meters using spherical formula
+            $earthRadius = 6378137; // Earth radius in meters (WGS84)
+            $area = 0;
+            $count = count($convertedRing);
+
+            for ($i = 0; $i < $count; $i++) {
+                $point1 = $convertedRing[$i];
+                $point2 = $convertedRing[($i + 1) % $count];
+
+                $lon1 = deg2rad($point1[0]);
+                $lat1 = deg2rad($point1[1]);
+                $lon2 = deg2rad($point2[0]);
+                $lat2 = deg2rad($point2[1]);
+
+                $area += ($lon2 - $lon1) * (2 + sin($lat1) + sin($lat2));
+            }
+
+            // Area in square meters
+            $areaInSqMeters = abs($area * $earthRadius * $earthRadius / 2);
+
+            // Convert to square feet (1 sq meter = 10.7639 sq ft)
+            $areaInSqFeet = $areaInSqMeters * 10.7639;
+
+            // Round to 2 decimal places
+            $result = round($areaInSqFeet, 2);
+
+            Log::info("Area calculated: {$areaInSqMeters} sq meters = {$result} sq feet");
+
+            return $result;
+
+        } catch (\Exception $e) {
+            Log::error("Area calculation failed: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * ✅ Store polygons & points from GeoJSON
      */
     public function storePolygonData($polygonTable, $pointTable, $geoJsonContent, $mode = 'create')
     {
-        // Increase execution time for large files
-        set_time_limit(600); // 10 minutes
+        set_time_limit(600);
 
         try {
             $geoData = json_decode($geoJsonContent, true);
@@ -246,9 +327,7 @@ class GeoDataService
 
             Log::info("📊 Starting Polygon GeoJSON processing. Total features: " . count($geoData['features']));
 
-            // First pass: Identify unique GIS_IDs and prepare features
             foreach ($geoData['features'] as $index => $feature) {
-                // Progress logging for large files
                 if ($index % 100 === 0) {
                     Log::info("🔍 Processing polygon feature {$index} of " . count($geoData['features']));
                 }
@@ -256,28 +335,23 @@ class GeoDataService
                 $geometryType = $feature['geometry']['type'] ?? null;
                 $coords = $feature['geometry']['coordinates'] ?? null;
 
-                // Extract GIS_ID or generate unique one
                 $gisid = $feature['properties']['GIS_ID'] ??
                     $feature['properties']['gisid'] ??
                     $feature['properties']['GisId'] ??
                     uniqid('GIS_');
 
-                // Skip if GIS_ID is already processed in this upload (duplicate in file)
                 if (in_array($gisid, $processedGisIds)) {
                     $duplicateGisIds[] = $gisid;
                     $skippedFeatures++;
                     continue;
                 }
 
-                // For update mode: Check if GIS_ID already exists in database
                 if ($mode === 'update') {
                     $existingRecord = DB::table($polygonTable)->where('gisid', $gisid)->first();
                     $action = $existingRecord ? 'update' : 'create';
                 } else {
-                    // For create mode: Check if GIS_ID already exists in database
                     $existingRecord = DB::table($polygonTable)->where('gisid', $gisid)->first();
                     if ($existingRecord) {
-                        // Skip this feature but continue with others
                         $duplicateGisIds[] = $gisid;
                         $skippedFeatures++;
                         continue;
@@ -295,11 +369,10 @@ class GeoDataService
                 ];
             }
 
-            // If all features are skipped due to duplicates
             if (count($featuresToProcess) === 0) {
                 return [
                     'success' => false,
-                    'message' => 'All polygon features were skipped due to duplicate GIS_IDs. No data was processed.',
+                    'message' => 'All polygon features were skipped due to duplicate GIS_IDs.',
                     'total_features' => count($geoData['features']),
                     'skipped_features' => $skippedFeatures,
                     'duplicate_gisids' => array_unique($duplicateGisIds)
@@ -309,11 +382,9 @@ class GeoDataService
             $successfulFeatures = 0;
             $failedFeatures = 0;
 
-            // Use transaction for better performance
             DB::beginTransaction();
 
             try {
-                // Second pass: Process unique features (insert or update)
                 foreach ($featuresToProcess as $featureIndex => $feature) {
                     try {
                         $gisid = $feature['gisid'];
@@ -326,7 +397,9 @@ class GeoDataService
                             continue;
                         }
 
-                        // 🔹 Flatten polygon/multipolygon
+                        // Calculate area in square feet
+                        $sqfeet = $this->calculatePolygonAreaInSquareFeet($coords);
+
                         $flattened = $this->flattenCoordinates($geometryType, $coords);
 
                         if (empty($flattened)) {
@@ -334,10 +407,6 @@ class GeoDataService
                             continue;
                         }
 
-                        // Calculate area in square feet
-                        $sqfeet = $this->calculateAreaInSqFt($geometryType, $coords);
-
-                        // ✅ Store/Update in polygon table
                         $polygonData = [
                             'type' => 'Polygon',
                             'coordinates' => json_encode($flattened, JSON_UNESCAPED_UNICODE),
@@ -354,7 +423,6 @@ class GeoDataService
                                 ->update($polygonData);
                         }
 
-                        // ✅ Calculate midpoint for points table (simplified for performance)
                         $midpoint = $this->calculateMidpoint($flattened);
 
                         if ($midpoint) {
@@ -376,14 +444,12 @@ class GeoDataService
 
                         $successfulFeatures++;
 
-                        // Progress logging
                         if ($featureIndex % 50 === 0) {
-                            Log::info("📝 Processed polygon feature {$featureIndex} of " . count($featuresToProcess) . " features");
+                            Log::info("📝 Processed polygon feature {$featureIndex} of " . count($featuresToProcess));
                         }
                     } catch (\Exception $e) {
                         $failedFeatures++;
-                        Log::error("❌ Failed to process polygon feature with GIS_ID {$gisid}: " . $e->getMessage());
-                        // Continue with next feature even if this one fails
+                        Log::error("❌ Failed to process polygon feature: " . $e->getMessage());
                     }
                 }
 
@@ -395,7 +461,7 @@ class GeoDataService
 
             $result = [
                 'success' => true,
-                'message' => 'Polygon GeoJSON data processed successfully with some duplicates omitted',
+                'message' => 'Polygon GeoJSON data processed successfully',
                 'total_features' => count($geoData['features']),
                 'processed_features' => count($featuresToProcess),
                 'successful_features' => $successfulFeatures,
@@ -405,7 +471,7 @@ class GeoDataService
                 'mode' => $mode
             ];
 
-            Log::info("✅ Polygon & point data processing completed: " . json_encode($result));
+            Log::info("✅ Polygon processing completed: " . json_encode($result));
             return $result;
         } catch (\Exception $e) {
             Log::error("❌ Failed to process Polygon GeoJSON: " . $e->getMessage());
@@ -417,12 +483,11 @@ class GeoDataService
     }
 
     /**
-     * ✅ Store line data from GeoJSON with GIS_ID validation
+     * ✅ Store line data from GeoJSON
      */
     public function storeLineData($lineTable, $geoJsonContent, $mode = 'create')
     {
-        // Increase execution time for large files
-        set_time_limit(600); // 10 minutes
+        set_time_limit(600);
 
         try {
             $geoData = json_decode($geoJsonContent, true);
@@ -441,9 +506,7 @@ class GeoDataService
 
             Log::info("📊 Starting Line GeoJSON processing. Total features: " . count($geoData['features']));
 
-            // First pass: Identify unique GIS_IDs and prepare features
             foreach ($geoData['features'] as $index => $feature) {
-                // Progress logging for large files
                 if ($index % 100 === 0) {
                     Log::info("🔍 Processing line feature {$index} of " . count($geoData['features']));
                 }
@@ -451,35 +514,29 @@ class GeoDataService
                 $geometryType = $feature['geometry']['type'] ?? null;
                 $coords = $feature['geometry']['coordinates'] ?? null;
 
-                // Extract GIS_ID or generate unique one
                 $gisid = $feature['properties']['GIS_ID'] ??
                     $feature['properties']['gisid'] ??
                     $feature['properties']['GisId'] ??
                     uniqid('LINE_');
 
-                // Extract road_name from properties
                 $roadName = $feature['properties']['road_name'] ??
                     $feature['properties']['Road_Name'] ??
                     $feature['properties']['name'] ??
                     $feature['properties']['NAME'] ??
                     null;
 
-                // Skip if GIS_ID is already processed in this upload (duplicate in file)
                 if (in_array($gisid, $processedGisIds)) {
                     $duplicateGisIds[] = $gisid;
                     $skippedFeatures++;
                     continue;
                 }
 
-                // For update mode: Check if GIS_ID already exists in database
                 if ($mode === 'update') {
                     $existingRecord = DB::table($lineTable)->where('gisid', $gisid)->first();
                     $action = $existingRecord ? 'update' : 'create';
                 } else {
-                    // For create mode: Check if GIS_ID already exists in database
                     $existingRecord = DB::table($lineTable)->where('gisid', $gisid)->first();
                     if ($existingRecord) {
-                        // Skip this feature but continue with others
                         $duplicateGisIds[] = $gisid;
                         $skippedFeatures++;
                         continue;
@@ -498,11 +555,10 @@ class GeoDataService
                 ];
             }
 
-            // If all features are skipped due to duplicates
             if (count($featuresToProcess) === 0) {
                 return [
                     'success' => false,
-                    'message' => 'All line features were skipped due to duplicate GIS_IDs. No data was processed.',
+                    'message' => 'All line features were skipped due to duplicate GIS_IDs.',
                     'total_features' => count($geoData['features']),
                     'skipped_features' => $skippedFeatures,
                     'duplicate_gisids' => array_unique($duplicateGisIds)
@@ -512,11 +568,9 @@ class GeoDataService
             $successfulFeatures = 0;
             $failedFeatures = 0;
 
-            // Use transaction for better performance
             DB::beginTransaction();
 
             try {
-                // Second pass: Process unique features (insert or update)
                 foreach ($featuresToProcess as $featureIndex => $feature) {
                     try {
                         $gisid = $feature['gisid'];
@@ -527,18 +581,14 @@ class GeoDataService
 
                         if (!$coords) {
                             $failedFeatures++;
-                            Log::warning("❌ No coordinates found for line feature with GIS_ID: {$gisid}");
                             continue;
                         }
 
-                        // Validate it's actually a line geometry
                         if (!in_array($geometryType, ['LineString', 'MultiLineString'])) {
                             $failedFeatures++;
-                            Log::warning("❌ Invalid geometry type for line: {$geometryType} for GIS_ID: {$gisid}");
                             continue;
                         }
 
-                        // ✅ Store/Update in line table
                         $lineData = [
                             'gisid' => $gisid,
                             'type' => $geometryType,
@@ -557,15 +607,9 @@ class GeoDataService
                         }
 
                         $successfulFeatures++;
-
-                        // Progress logging
-                        if ($featureIndex % 50 === 0) {
-                            Log::info("📝 Processed line feature {$featureIndex} of " . count($featuresToProcess) . " features");
-                        }
                     } catch (\Exception $e) {
                         $failedFeatures++;
-                        Log::error("❌ Failed to process line feature with GIS_ID {$gisid}: " . $e->getMessage());
-                        // Continue with next feature even if this one fails
+                        Log::error("❌ Failed to process line feature: " . $e->getMessage());
                     }
                 }
 
@@ -577,7 +621,7 @@ class GeoDataService
 
             $result = [
                 'success' => true,
-                'message' => 'Line GeoJSON data processed successfully with some duplicates omitted',
+                'message' => 'Line GeoJSON data processed successfully',
                 'total_features' => count($geoData['features']),
                 'processed_features' => count($featuresToProcess),
                 'successful_features' => $successfulFeatures,
@@ -599,107 +643,21 @@ class GeoDataService
     }
 
     /**
-     * ✅ Calculate area of a polygon in square feet
-     * Uses the correct spherical formula for WGS84 coordinates (latitude/longitude)
-     * Returns area in square feet
-     */
-    private function calculateAreaInSqFt($geometryType, $coordinates)
-    {
-        try {
-            // Only calculate for Polygon or MultiPolygon
-            if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
-                return 0;
-            }
-
-            $totalAreaSqMeters = 0;
-
-            // Handle MultiPolygon
-            if ($geometryType === 'MultiPolygon') {
-                foreach ($coordinates as $polygon) {
-                    if (isset($polygon[0])) {
-                        $totalAreaSqMeters += $this->calculateRingAreaInSqMeters($polygon[0]);
-                    }
-                }
-            }
-            // Handle single Polygon
-            else {
-                if (isset($coordinates[0])) {
-                    $totalAreaSqMeters = $this->calculateRingAreaInSqMeters($coordinates[0]);
-                }
-            }
-
-            // Convert square meters to square feet (1 sq meter = 10.7639 sq ft)
-            $areaInSqFt = $totalAreaSqMeters * 10.7639;
-
-            // Round to 2 decimal places, minimum 0
-            return max(0, round($areaInSqFt, 2));
-
-        } catch (\Exception $e) {
-            Log::error("❌ Failed to calculate area: " . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Calculate area of a single polygon ring in square meters
-     * Using the spherical law of cosines for accurate area on Earth's surface
-     */
-    private function calculateRingAreaInSqMeters($ring)
-    {
-        $numPoints = count($ring);
-        if ($numPoints < 3) {
-            return 0;
-        }
-
-        $earthRadius = 6371000; // Earth radius in meters
-        $area = 0;
-
-        // Make a copy and ensure the polygon is closed
-        $points = $ring;
-        if ($points[0] != $points[$numPoints - 1]) {
-            $points[] = $points[0];
-            $numPoints++;
-        }
-
-        for ($i = 0; $i < $numPoints - 1; $i++) {
-            $p1 = $points[$i];
-            $p2 = $points[$i + 1];
-
-            // Convert to radians
-            $lat1 = deg2rad($p1[1]); // latitude
-            $lon1 = deg2rad($p1[0]); // longitude
-            $lat2 = deg2rad($p2[1]);
-            $lon2 = deg2rad($p2[0]);
-
-            // Using the spherical law of cosines formula
-            $area += ($lon2 - $lon1) * (2 + sin($lat1) + sin($lat2));
-        }
-
-        // Convert to square meters
-        $areaInSqMeters = abs($area * $earthRadius * $earthRadius / 2);
-
-        return $areaInSqMeters;
-    }
-
-    /**
-     * ✅ Store Single Polygon with automatic sqfeet calculation and point generation
+     * ✅ Store Single Polygon
      */
     public function storeSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
     {
         try {
-            // Extract geometry
             $geometryType = $geoJsonContent['type'] ?? null;
             $coords = $geoJsonContent['coordinates'] ?? null;
 
-            // Validate geometry type
             if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid geometry type. Expected Polygon or MultiPolygon, got: ' . $geometryType,
+                    'message' => 'Invalid geometry type. Expected Polygon or MultiPolygon',
                 ];
             }
 
-            // Decode coordinates if string
             if (is_string($coords)) {
                 $coords = json_decode($coords, true);
                 if ($coords === null) {
@@ -710,7 +668,6 @@ class GeoDataService
                 }
             }
 
-            // Validate coordinates exist
             if (empty($coords)) {
                 return [
                     'success' => false,
@@ -718,19 +675,15 @@ class GeoDataService
                 ];
             }
 
-            // -------------------------------
-            // Calculate square footage
-            // -------------------------------
-            $sqfeet = $this->calculateAreaInSqFt($geometryType, $coords);
+            // Calculate square footage directly in square feet
+            $sqfeet = $this->calculatePolygonAreaInSquareFeet($coords);
 
             Log::info("Calculated area for new polygon: {$sqfeet} sq ft");
 
-            // -------------------------------
-            // Determine new GIS_ID based on last numeric portion
-            // -------------------------------
+            // Determine new GIS_ID
             $allIds = DB::table($polygonTable)->pluck('gisid');
             $maxNumber = 0;
-            $prefix = 'GIS_'; // Default prefix
+            $prefix = 'GIS_';
 
             foreach ($allIds as $id) {
                 if (preg_match_all('/\d+/', $id, $matches)) {
@@ -738,10 +691,9 @@ class GeoDataService
                     $lastNum = (int)end($numbers);
                     if ($lastNum > $maxNumber) {
                         $maxNumber = $lastNum;
-                        // Preserve prefix: everything before last numeric part
-                        $prefix = substr($id, 0, strrpos($id, (string)$lastNum));
-                        if ($prefix === false) {
-                            $prefix = '';
+                        $pos = strrpos($id, (string)$lastNum);
+                        if ($pos !== false) {
+                            $prefix = substr($id, 0, $pos);
                         }
                     }
                 }
@@ -750,9 +702,6 @@ class GeoDataService
             $newGisNumber = $maxNumber + 1;
             $gisid = $prefix . $newGisNumber;
 
-            // -------------------------------
-            // Check duplicate just in case
-            // -------------------------------
             $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
 
             if ($exists) {
@@ -762,11 +711,9 @@ class GeoDataService
                 ];
             }
 
-            // Start transaction to ensure data consistency
             DB::beginTransaction();
 
             try {
-                // Insert polygon with sqfeet
                 DB::table($polygonTable)->insert([
                     'gisid' => $gisid,
                     'type' => $geometryType,
@@ -776,12 +723,10 @@ class GeoDataService
                     'updated_at' => now(),
                 ]);
 
-                // Flatten coordinates and calculate midpoint for point
                 $flattened = $this->flattenCoordinates($geometryType, $coords);
                 $midpoint = $this->calculateMidpoint($flattened);
 
                 if ($midpoint && is_array($midpoint) && count($midpoint) >= 2) {
-                    // Insert corresponding point with same GIS_ID
                     DB::table($pointTable)->insert([
                         'gisid' => $gisid,
                         'type' => 'Point',
@@ -790,7 +735,6 @@ class GeoDataService
                         'updated_at' => now(),
                     ]);
                 } else {
-                    // Rollback if midpoint calculation fails
                     DB::rollBack();
                     return [
                         'success' => false,
@@ -802,7 +746,7 @@ class GeoDataService
 
                 return [
                     'success' => true,
-                    'message' => 'Polygon inserted successfully with calculated area',
+                    'message' => 'Polygon inserted successfully',
                     'gisid' => $gisid,
                     'sqfeet' => $sqfeet,
                     'midpoint' => $midpoint
@@ -823,12 +767,11 @@ class GeoDataService
     }
 
     /**
-     * ✅ Update Single Polygon with automatic sqfeet recalculation and point update
+     * ✅ Update Single Polygon
      */
     public function updateSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
     {
         try {
-            // Extract GIS_ID from various possible locations
             $gisid = $geoJsonContent['properties']['GIS_ID']
                 ?? $geoJsonContent['properties']['gisid']
                 ?? $geoJsonContent['gisid']
@@ -838,15 +781,13 @@ class GeoDataService
             $geometryType = $geoJsonContent['type'] ?? null;
             $coords = $geoJsonContent['coordinates'] ?? null;
 
-            // Validate geometry type
             if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid geometry type. Expected Polygon or MultiPolygon, got: ' . $geometryType,
+                    'message' => 'Invalid geometry type',
                 ];
             }
 
-            // Decode coordinates if string
             if (is_string($coords)) {
                 $coords = json_decode($coords, true);
                 if ($coords === null) {
@@ -857,7 +798,6 @@ class GeoDataService
                 }
             }
 
-            // Validate coordinates exist
             if (empty($coords)) {
                 return [
                     'success' => false,
@@ -872,7 +812,6 @@ class GeoDataService
                 ];
             }
 
-            // Check if polygon exists
             $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
 
             if (!$exists) {
@@ -882,18 +821,14 @@ class GeoDataService
                 ];
             }
 
-            // -------------------------------
-            // Recalculate square footage from updated polygon coordinates
-            // -------------------------------
-            $sqfeet = $this->calculateAreaInSqFt($geometryType, $coords);
+            // Recalculate square footage
+            $sqfeet = $this->calculatePolygonAreaInSquareFeet($coords);
 
             Log::info("Recalculated area for polygon {$gisid}: {$sqfeet} sq ft");
 
-            // Start transaction
             DB::beginTransaction();
 
             try {
-                // Update polygon with recalculated sqfeet
                 DB::table($polygonTable)
                     ->where('gisid', $gisid)
                     ->update([
@@ -903,16 +838,13 @@ class GeoDataService
                         'updated_at' => now(),
                     ]);
 
-                // Flatten coordinates and calculate midpoint
                 $flattened = $this->flattenCoordinates($geometryType, $coords);
                 $midpoint = $this->calculateMidpoint($flattened);
 
                 if ($midpoint && is_array($midpoint) && count($midpoint) >= 2) {
-                    // Check if point exists
                     $pointExists = DB::table($pointTable)->where('gisid', $gisid)->exists();
 
                     if ($pointExists) {
-                        // Update existing point
                         DB::table($pointTable)
                             ->where('gisid', $gisid)
                             ->update([
@@ -921,7 +853,6 @@ class GeoDataService
                                 'updated_at' => now(),
                             ]);
                     } else {
-                        // Create new point if doesn't exist
                         DB::table($pointTable)->insert([
                             'gisid' => $gisid,
                             'type' => 'Point',
@@ -930,16 +861,13 @@ class GeoDataService
                             'updated_at' => now(),
                         ]);
                     }
-                } else {
-                    // Log warning but don't rollback - point is optional
-                    Log::warning("⚠️ Could not calculate midpoint for GIS_ID: {$gisid}");
                 }
 
                 DB::commit();
 
                 return [
                     'success' => true,
-                    'message' => 'Polygon updated successfully with recalculated area',
+                    'message' => 'Polygon updated successfully',
                     'gisid' => $gisid,
                     'sqfeet' => $sqfeet,
                     'midpoint' => $midpoint
@@ -960,7 +888,7 @@ class GeoDataService
     }
 
     /**
-     * ✅ Flatten coordinates for different geometry types
+     * ✅ Flatten coordinates
      */
     private function flattenCoordinates($geometryType, $coordinates)
     {
@@ -968,14 +896,12 @@ class GeoDataService
 
         try {
             if ($geometryType === 'Polygon') {
-                // For polygon, coordinates is an array of rings
                 foreach ($coordinates as $ring) {
                     if (is_array($ring) && count($ring) > 0) {
                         $flattened[] = $ring;
                     }
                 }
             } elseif ($geometryType === 'MultiPolygon') {
-                // For multipolygon, coordinates is array of polygons
                 foreach ($coordinates as $polygon) {
                     foreach ($polygon as $ring) {
                         if (is_array($ring) && count($ring) > 0) {
@@ -992,7 +918,7 @@ class GeoDataService
     }
 
     /**
-     * ✅ Calculate midpoint (centroid) of a polygon
+     * ✅ Calculate midpoint
      */
     private function calculateMidpoint($flattened)
     {
@@ -1001,7 +927,6 @@ class GeoDataService
         }
 
         try {
-            // Use the first ring (outer boundary)
             $points = $flattened[0];
             $count = count($points);
 
@@ -1009,7 +934,6 @@ class GeoDataService
                 return null;
             }
 
-            // Calculate centroid of all points in the ring
             $totalX = 0;
             $totalY = 0;
 
@@ -1032,59 +956,52 @@ class GeoDataService
     }
 
     /**
-     * ✅ Get polygon data by GIS_ID
+     * ✅ Get polygon by GIS_ID
      */
     public function getPolygonByGisId($polygonTable, $gisid)
     {
         try {
             return DB::table($polygonTable)->where('gisid', $gisid)->first();
         } catch (\Exception $e) {
-            Log::error("❌ Failed to get polygon by GIS_ID: " . $e->getMessage());
+            Log::error("❌ Failed to get polygon: " . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * ✅ Get point data by GIS_ID
+     * ✅ Get point by GIS_ID
      */
     public function getPointByGisId($pointTable, $gisid)
     {
         try {
             return DB::table($pointTable)->where('gisid', $gisid)->first();
         } catch (\Exception $e) {
-            Log::error("❌ Failed to get point by GIS_ID: " . $e->getMessage());
+            Log::error("❌ Failed to get point: " . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * ✅ Get line data by GIS_ID
+     * ✅ Get line by GIS_ID
      */
     public function getLineByGisId($lineTable, $gisid)
     {
         try {
             return DB::table($lineTable)->where('gisid', $gisid)->first();
         } catch (\Exception $e) {
-            Log::error("❌ Failed to get line by GIS_ID: " . $e->getMessage());
+            Log::error("❌ Failed to get line: " . $e->getMessage());
             return null;
         }
     }
 
     /**
-     * ✅ Delete feature by GIS_ID from both polygon and point tables
+     * ✅ Delete feature by GIS_ID
      */
     public function deleteFeatureByGisId($polygonTable, $pointTable, $gisid)
     {
         try {
-            // Delete from Polygon Table
-            $polygonDeleted = DB::table($polygonTable)
-                ->where('gisid', $gisid)
-                ->delete();
-
-            // Delete from Point Table
-            $pointDeleted = DB::table($pointTable)
-                ->where('gisid', $gisid)
-                ->delete();
+            $polygonDeleted = DB::table($polygonTable)->where('gisid', $gisid)->delete();
+            $pointDeleted = DB::table($pointTable)->where('gisid', $gisid)->delete();
 
             if ($polygonDeleted || $pointDeleted) {
                 return [
@@ -1105,7 +1022,7 @@ class GeoDataService
         }
     }
 
-    /** ✅ Public table name generators */
+    /** ✅ Table name generators */
     public function generatePolygonTableName($corporationId, $zone, $wardNumber)
     {
         return 'polygon_' . $corporationId . '_' . $this->sanitize($zone) . '_' . $this->sanitize($wardNumber);
