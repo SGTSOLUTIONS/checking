@@ -1855,69 +1855,97 @@
             }
 
            function createPolygonStyle(feature) {
+    // Get properties from the feature
+    const properties = feature.getProperties();
+    const gisid = properties.gisid || feature.get("gisid");
 
-                const gisid = feature.get("gisid");
-                const sqft = feature.get("sqfeet");
+    // Get sqfeet - check multiple possible locations
+    let sqft = properties.sqfeet || feature.get("sqfeet") || properties.sqft || "0";
 
-                const polygonData = polygonDatas.find(data => data.gisid == gisid);
+    // Format sqft to show with proper number formatting
+    if (sqft && sqft !== "0" && sqft !== 0) {
+        // Parse as float and format with 2 decimal places
+        const sqftNumber = parseFloat(sqft);
+        if (!isNaN(sqftNumber)) {
+            sqft = sqftNumber.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+    } else {
+        sqft = "N/A";
+    }
 
-                const color = polygonData ? "red" : "blue";
+    // Find polygon data (for color logic)
+    const polygonData = polygonDatas.find(data => data.gisid == gisid);
+    const color = polygonData ? "red" : "blue";
 
-                // Get polygon center point
-                const geometry = feature.getGeometry();
-                const centerPoint = geometry.getInteriorPoint();
+    // Get polygon center point
+    const geometry = feature.getGeometry();
+    let centerPoint = null;
 
-                return [
-                    // Polygon Border Style
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: color,
-                            width: 4,
-                            lineJoin: "round",
-                            lineCap: "round"
-                        })
+    // Try to get interior point, fallback to extent center
+    if (geometry && geometry.getType() === 'Polygon') {
+        centerPoint = geometry.getInteriorPoint();
+        if (!centerPoint) {
+            const extent = geometry.getExtent();
+            const center = ol.extent.getCenter(extent);
+            centerPoint = new ol.geom.Point(center);
+        }
+    }
+
+    // Only create label style if we have a valid center point
+    const styles = [
+        // Polygon Border Style
+        new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: color,
+                width: 4,
+                lineJoin: "round",
+                lineCap: "round"
+            }),
+            fill: new ol.style.Fill({
+                color: color === "red" ? "rgba(255, 0, 0, 0.1)" : "rgba(0, 0, 255, 0.1)"
+            })
+        })
+    ];
+
+    // Add label style only if we have a center point and sqft value
+    if (centerPoint && sqft !== "N/A") {
+        styles.push(
+            new ol.style.Style({
+                geometry: centerPoint,
+                text: new ol.style.Text({
+                    text: sqft + " SQFT",
+                    font: "bold 12px Arial",
+                    fill: new ol.style.Fill({
+                        color: "#ffffff"
                     }),
-
-                    // Label Style
-                    new ol.style.Style({
-                        geometry: centerPoint,
-
-                        text: new ol.style.Text({
-                            text: sqft + " SQFT",
-
-                            font: "bold 14px Arial",
-
-                            fill: new ol.style.Fill({
-                                color: "#ffffff"
-                            }),
-
-                            stroke: new ol.style.Stroke({
-                                color: "#000000",
-                                width: 3
-                            }),
-
-                            overflow: true,
-
-                            textAlign: "center",
-
-                            offsetY: 0
-                        }),
-
-                        image: new ol.style.Circle({
-                            radius: 4,
-
-                            fill: new ol.style.Fill({
-                                color: "yellow"
-                            }),
-
-                            stroke: new ol.style.Stroke({
-                                color: "#000",
-                                width: 1
-                            })
-                        })
+                    stroke: new ol.style.Stroke({
+                        color: "#000000",
+                        width: 3
+                    }),
+                    overflow: true,
+                    textAlign: "center",
+                    offsetY: 0,
+                    padding: [5, 5, 5, 5]
+                }),
+                image: new ol.style.Circle({
+                    radius: 4,
+                    fill: new ol.style.Fill({
+                        color: "yellow"
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: "#000",
+                        width: 1
                     })
-                ];
-            }
+                })
+            })
+        );
+    }
+
+    return styles;
+}
 
             function createLineStyle(feature) {
                 const road_name = feature.get("road_name");
