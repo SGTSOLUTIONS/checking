@@ -3622,7 +3622,8 @@
                         polygonSource.addFeature(new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
                             gisid: poly.gisid,
-                            type: "Polygon"
+                            type: "Polygon",
+                            sqfeet: poly.sqfeet || "0"  // ← ADD THIS LINE
                         }));
                     } catch (e) {}
                 });
