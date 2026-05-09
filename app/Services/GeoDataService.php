@@ -59,6 +59,7 @@ class GeoDataService
                     $table->string('gisid')->unique();
                     $table->string('type')->default('Polygon');
                     $table->json('coordinates')->nullable();
+                    $table->string('sqfeet')->nullable();
                     $table->timestamps();
                     $table->softDeletes();
                 });
@@ -148,7 +149,7 @@ class GeoDataService
                     $table->string('bill_usage')->nullable();
                     $table->string('aadhar_no')->nullable();
                     $table->string('ration_no')->nullable();
-                     $table->string('phone_number')->nullable();
+                    $table->string('phone_number')->nullable();
                     $table->string('shop_floor')->nullable();
                     $table->string('shop_name')->nullable();
                     $table->string('shop_owner_name')->nullable();
@@ -729,134 +730,186 @@ class GeoDataService
     {
         return preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($string));
     }
-    public function storeSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
+    public function storeSinglePolygon($polygonsTableName, $pointsTableName, $data)
     {
-        // Extract geometry
-        $geometryType = $geoJsonContent['type'] ?? null;
-        $coords = $geoJsonContent['coordinates'] ?? null;
+        try {
+            // Extract data from request
+            $gisid = $data['properties']['GIS_ID'] ?? $data['properties']['gisid'] ?? $data['gisid'] ?? null;
+            $coordinates = $data['coordinates'] ?? null;
 
-        // Decode coordinates if string
-        if (is_string($coords)) {
-            $coords = json_decode($coords, true);
-            if ($coords === null) {
+            if (!$gisid) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid coordinates JSON',
+                    'message' => 'GIS_ID is required'
                 ];
             }
-        }
 
-        // -------------------------------
-        // Determine new GIS_ID based on last numeric portion
-        // -------------------------------
-        $allIds = DB::table($polygonTable)->pluck('gisid');
-        $maxNumber = 0;
-        $prefix = '';
-
-        foreach ($allIds as $id) {
-            if (preg_match_all('/\d+/', $id, $matches)) {
-                $numbers = $matches[0];
-                $lastNum = (int)end($numbers); // last numeric part
-                if ($lastNum > $maxNumber) {
-                    $maxNumber = $lastNum;
-                    // Preserve prefix: everything before last numeric part
-                    $prefix = substr($id, 0, strrpos($id, (string)$lastNum));
-                }
+            if (!$coordinates) {
+                return [
+                    'success' => false,
+                    'message' => 'Coordinates are required'
+                ];
             }
-        }
 
-        $newGisNumber = $maxNumber + 1;
-        $gisid = $prefix . $newGisNumber; // final GIS_ID to insert
+            // Calculate sqfeet from coordinates (store as string)
+            $sqfeet = $this->calculateSqfeetFromCoordinates($coordinates);
+            $sqfeetString = (string)$sqfeet; // Convert to string for storage
 
-        // -------------------------------
-        // Check duplicate just in case
-        // -------------------------------
-        $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
-
-        if (!$exists) {
-            // Insert polygon
-            DB::table($polygonTable)->insert([
+            // Prepare polygon data
+            $polygonData = [
                 'gisid' => $gisid,
-                'type' => $geometryType,
-                'coordinates' => json_encode($coords, JSON_NUMERIC_CHECK),
+                'type' => 'Polygon',
+                'coordinates' => is_string($coordinates) ? $coordinates : json_encode($coordinates, JSON_NUMERIC_CHECK),
+                'sqfeet' => $sqfeetString, // Store as string
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
 
-            // Flatten coordinates and calculate midpoint
-            $flattened = $this->flattenCoordinates($geometryType, $coords);
+            // Add other properties if they exist in the data
+            if (isset($data['properties'])) {
+                foreach ($data['properties'] as $key => $value) {
+                    if (!in_array($key, ['GIS_ID', 'gisid', 'coordinates', 'type'])) {
+                        $polygonData[$key] = $value;
+                    }
+                }
+            }
+
+            // Check if polygon already exists
+            $existing = DB::table($polygonsTableName)->where('gisid', $gisid)->first();
+
+            if ($existing) {
+                // Update existing polygon
+                DB::table($polygonsTableName)
+                    ->where('gisid', $gisid)
+                    ->update($polygonData);
+
+                $message = "Polygon updated successfully. Area: {$sqfeetString} sq ft";
+            } else {
+                // Insert new polygon
+                DB::table($polygonsTableName)->insert($polygonData);
+                $message = "Polygon added successfully. Area: {$sqfeetString} sq ft";
+            }
+
+            // Handle points if needed (extract centroid/midpoint)
+            $flattened = $this->flattenCoordinates('Polygon', $coordinates);
             $midpoint = $this->calculateMidpoint($flattened);
 
             if ($midpoint) {
-                DB::table($pointTable)->insert([
+                $pointData = [
                     'gisid' => $gisid,
                     'type' => 'Point',
                     'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
-                    'created_at' => now(),
                     'updated_at' => now(),
-                ]);
-            }
-        }
+                ];
 
-        return [
-            'success' => true,
-            'message' => 'Polygon inserted successfully',
-            'gisid' => $gisid
-        ];
+                $existingPoint = DB::table($pointsTableName)->where('gisid', $gisid)->first();
+
+                if ($existingPoint) {
+                    DB::table($pointsTableName)->where('gisid', $gisid)->update($pointData);
+                } else {
+                    $pointData['created_at'] = now();
+                    DB::table($pointsTableName)->insert($pointData);
+                }
+            }
+
+            return [
+                'success' => true,
+                'message' => $message,
+                'sqfeet' => $sqfeetString,
+                'gisid' => $gisid
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error storing polygon: ' . $e->getMessage()
+            ];
+        }
     }
-    public function updateSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
+    public function updateSinglePolygon($polygonsTableName, $pointsTableName, $data)
     {
-        $gisid = $geoJsonContent['properties']['GIS_ID']
-            ?? $geoJsonContent['properties']['gisid']
-            ?? $geoJsonContent['gisid']
-            ?? null;
+        try {
+            // Extract data from request
+            $gisid = $data['properties']['GIS_ID'] ?? $data['properties']['gisid'] ?? $data['gisid'] ?? null;
+            $coordinates = $data['coordinates'] ?? null;
 
-        $geometryType = $geoJsonContent['type'] ?? null;
-        $coords = $geoJsonContent['coordinates'] ?? null;
-
-        if (is_string($coords)) {
-            $coords = json_decode($coords, true);
-            if ($coords === null) {
-                return ['success' => false, 'message' => 'Invalid coordinates JSON'];
+            if (!$gisid) {
+                return [
+                    'success' => false,
+                    'message' => 'GIS_ID is required'
+                ];
             }
-        }
 
-        if (!$gisid) {
-            return ['success' => false, 'message' => 'GIS_ID missing in request'];
-        }
+            if (!$coordinates) {
+                return [
+                    'success' => false,
+                    'message' => 'Coordinates are required'
+                ];
+            }
 
-        $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
-
-        if (!$exists) {
-            return ['success' => false, 'message' => 'Record not found for GIS_ID: ' . $gisid];
-        }
-
-        DB::table($polygonTable)
-            ->where('gisid', $gisid)
-            ->update([
-                'type' => $geometryType,
-                'coordinates' => json_encode($coords, JSON_NUMERIC_CHECK),
-                'updated_at' => now(),
-            ]);
-
-        $flattened = $this->flattenCoordinates($geometryType, $coords);
-        $midpoint = $this->calculateMidpoint($flattened);
-
-        if ($midpoint) {
-            DB::table($pointTable)
+            // Check if polygon exists
+            $existingPolygon = DB::table($polygonsTableName)
                 ->where('gisid', $gisid)
-                ->update([
-                    'type' => 'Point',
-                    'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
-                    'updated_at' => now(),
-                ]);
-        }
+                ->first();
 
-        return [
-            'success' => true,
-            'message' => 'Polygon updated successfully',
-            'gisid' => $gisid
-        ];
+            if (!$existingPolygon) {
+                return [
+                    'success' => false,
+                    'message' => "Polygon with GIS_ID {$gisid} not found"
+                ];
+            }
+
+            // Calculate new sqfeet from coordinates (store as string)
+            $sqfeet = $this->calculateSqfeetFromCoordinates($coordinates);
+            $sqfeetString = (string)$sqfeet; // Convert to string for storage
+
+            // Prepare polygon data for update
+            $polygonData = [
+                'type' => 'Polygon',
+                'coordinates' => is_string($coordinates) ? $coordinates : json_encode($coordinates, JSON_NUMERIC_CHECK),
+                'sqfeet' => $sqfeetString, // Update square feet as string
+                'updated_at' => now(),
+            ];
+
+            // Add other properties if needed
+            if (isset($data['properties'])) {
+                foreach ($data['properties'] as $key => $value) {
+                    if (!in_array($key, ['GIS_ID', 'gisid', 'coordinates', 'type'])) {
+                        $polygonData[$key] = $value;
+                    }
+                }
+            }
+
+            // Update polygon table
+            DB::table($polygonsTableName)
+                ->where('gisid', $gisid)
+                ->update($polygonData);
+
+            // Update point (centroid/midpoint)
+            $flattened = $this->flattenCoordinates('Polygon', $coordinates);
+            $midpoint = $this->calculateMidpoint($flattened);
+
+            if ($midpoint) {
+                DB::table($pointsTableName)
+                    ->where('gisid', $gisid)
+                    ->update([
+                        'type' => 'Point',
+                        'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
+                        'updated_at' => now(),
+                    ]);
+            }
+
+            return [
+                'success' => true,
+                'message' => "Polygon updated successfully. New area: {$sqfeetString} sq ft",
+                'sqfeet' => $sqfeetString,
+                'gisid' => $gisid
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error updating polygon: ' . $e->getMessage()
+            ];
+        }
     }
     public function deleteFeatureByGisId($polygonTable, $pointTable, $gisid)
     {
@@ -888,5 +941,53 @@ class GeoDataService
                 'message' => 'Error: ' . $e->getMessage(),
             ];
         }
+    }
+
+    private function calculateSqfeetFromCoordinates($coordinates)
+    {
+        // Decode coordinates if it's a string
+        if (is_string($coordinates)) {
+            $coordinates = json_decode($coordinates, true);
+        }
+
+        // Get the outer ring (first ring of the polygon)
+        $ring = $coordinates;
+
+        // Handle different coordinate structures
+        if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+            // This is a polygon with rings, take the first ring (outer boundary)
+            $ring = $coordinates[0];
+        } elseif (isset($coordinates[0]) && is_array($coordinates[0]) && !isset($coordinates[0][0][0])) {
+            // This is already a ring
+            $ring = $coordinates;
+        } elseif (isset($coordinates[0][0][0])) {
+            // Multi-polygon or nested structure
+            $ring = $coordinates[0][0];
+        }
+
+        $n = count($ring);
+        if ($n < 3) {
+            return 0;
+        }
+
+        // Calculate area using Shoelace formula with Earth curvature
+        $area = 0;
+        $radius = 6371000; // Earth's radius in meters
+
+        for ($i = 0; $i < $n; $i++) {
+            $j = ($i + 1) % $n;
+
+            $lat1 = $ring[$i][1] * pi() / 180;
+            $lat2 = $ring[$j][1] * pi() / 180;
+            $lng1 = $ring[$i][0] * pi() / 180;
+            $lng2 = $ring[$j][0] * pi() / 180;
+
+            $area += ($lng2 - $lng1) * (2 + sin($lat1) + sin($lat2));
+        }
+
+        $areaSqMeters = $area * $radius * $radius / 2;
+        $areaSqFeet = $areaSqMeters * 10.7639; // Convert to square feet
+
+        return round($areaSqFeet, 2);
     }
 }
