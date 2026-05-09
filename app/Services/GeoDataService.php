@@ -213,96 +213,157 @@ class GeoDataService
             throw $e;
         }
     }
-
-    /**
-     * ✅ Calculate polygon area directly in SQUARE FEET
-     * Supports both degrees and microdegrees coordinates
-     * @param array $coordinates - Polygon coordinates
-     * @return float - Area in square feet
-     */
-    private function calculatePolygonAreaInSquareFeet($coordinates)
-    {
-        try {
-            // Validate input
-            if (!is_array($coordinates) || count($coordinates) === 0) {
-                Log::warning("Invalid coordinates array");
-                return 0;
-            }
-
-            // Get the outer ring
-            $ring = $coordinates[0] ?? null;
-            if (!$ring || !is_array($ring) || count($ring) < 3) {
-                Log::warning("Invalid polygon ring - need at least 3 points");
-                return 0;
-            }
-
-            // Check if coordinates need conversion (microdegrees detection)
-            $needsConversion = false;
-            $firstPoint = $ring[0];
-            if (isset($firstPoint[0]) && isset($firstPoint[1])) {
-                $sampleLat = abs($firstPoint[1]);
-                $sampleLon = abs($firstPoint[0]);
-
-                // If values are > 180, they're likely in microdegrees (multiplied by 1,000,000)
-                if ($sampleLat > 180 || $sampleLon > 180) {
-                    $needsConversion = true;
-                    Log::info("Detected microdegrees format, converting to degrees");
-                }
-            }
-
-            // Convert coordinates to degrees if needed
-            $convertedRing = [];
-            foreach ($ring as $point) {
-                if (count($point) >= 2) {
-                    $lon = floatval($point[0]);
-                    $lat = floatval($point[1]);
-
-                    if ($needsConversion) {
-                        // Convert from microdegrees to degrees
-                        $lon = $lon / 1000000;
-                        $lat = $lat / 1000000;
-                    }
-
-                    $convertedRing[] = [$lon, $lat];
-                }
-            }
-
-            // Calculate area in square meters using spherical formula
-            $earthRadius = 6378137; // Earth radius in meters (WGS84)
-            $area = 0;
-            $count = count($convertedRing);
-
-            for ($i = 0; $i < $count; $i++) {
-                $point1 = $convertedRing[$i];
-                $point2 = $convertedRing[($i + 1) % $count];
-
-                $lon1 = deg2rad($point1[0]);
-                $lat1 = deg2rad($point1[1]);
-                $lon2 = deg2rad($point2[0]);
-                $lat2 = deg2rad($point2[1]);
-
-                $area += ($lon2 - $lon1) * (2 + sin($lat1) + sin($lat2));
-            }
-
-            // Area in square meters
-            $areaInSqMeters = abs($area * $earthRadius * $earthRadius / 2);
-
-            // Convert to square feet (1 sq meter = 10.7639 sq ft)
-            $areaInSqFeet = $areaInSqMeters * 10.7639;
-
-            // Round to 2 decimal places
-            $result = round($areaInSqFeet, 2);
-
-            Log::info("Area calculated: {$areaInSqMeters} sq meters = {$result} sq feet");
-
-            return $result;
-
-        } catch (\Exception $e) {
-            Log::error("Area calculation failed: " . $e->getMessage());
+/**
+ * Calculate polygon area directly in SQUARE FEET
+ * Supports Degrees, Microdegrees, and UTM/Meter coordinates
+ * @param array $coordinates - Polygon coordinates
+ * @return float - Area in square feet
+ */
+private function calculatePolygonAreaInSquareFeet($coordinates)
+{
+    try {
+        // Validate input
+        if (!is_array($coordinates) || count($coordinates) === 0) {
+            Log::warning("Invalid coordinates array");
             return 0;
         }
+
+        // Get the outer ring
+        $ring = $coordinates[0] ?? null;
+        if (!$ring || !is_array($ring) || count($ring) < 3) {
+            Log::warning("Invalid polygon ring - need at least 3 points");
+            return 0;
+        }
+
+        // Analyze coordinate system by checking first point
+        $firstPoint = $ring[0];
+        if (!isset($firstPoint[0]) || !isset($firstPoint[1])) {
+            return 0;
+        }
+
+        $sampleX = abs($firstPoint[0]);
+        $sampleY = abs($firstPoint[1]);
+
+        $coordinateSystem = $this->detectCoordinateSystem($sampleX, $sampleY);
+        Log::info("Detected coordinate system: {$coordinateSystem}");
+
+        $areaInSqMeters = 0;
+
+        switch ($coordinateSystem) {
+            case 'microdegrees':
+                // Convert microdegrees to degrees first
+                $convertedRing = [];
+                foreach ($ring as $point) {
+                    $convertedRing[] = [
+                        $point[0] / 1000000,
+                        $point[1] / 1000000
+                    ];
+                }
+                $areaInSqMeters = $this->calculateSphericalAreaInMeters($convertedRing);
+                break;
+
+            case 'degrees':
+                $areaInSqMeters = $this->calculateSphericalAreaInMeters($ring);
+                break;
+
+            case 'utm_meters':
+                // Coordinates are already in meters (UTM projection)
+                $areaInSqMeters = $this->calculatePlanarAreaInMeters($ring);
+                break;
+
+            default:
+                // Try both and use the more reasonable result
+                $areaDegrees = $this->calculateSphericalAreaInMeters($ring);
+                $areaMeters = $this->calculatePlanarAreaInMeters($ring);
+
+                // Use the smaller area (more likely correct for small buildings)
+                $areaInSqMeters = min($areaDegrees, $areaMeters);
+                Log::info("Ambiguous coordinate system - Degrees area: {$areaDegrees}, Meters area: {$areaMeters}, Using: {$areaInSqMeters}");
+                break;
+        }
+
+        // Convert square meters to square feet
+        $areaInSqFeet = $areaInSqMeters * 10.7639;
+
+        // Round to nearest whole number for buildings
+        $result = round($areaInSqFeet, 0);
+
+        Log::info("Final area: {$result} sq ft ({$areaInSqMeters} sq meters)");
+
+        return $result;
+
+    } catch (\Exception $e) {
+        Log::error("Area calculation failed: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Detect coordinate system based on coordinate values
+ */
+private function detectCoordinateSystem($x, $y)
+{
+    // Microdegrees: values around 1,000,000 to 10,000,000
+    if ($x > 1000000 || $y > 1000000) {
+        return 'microdegrees';
     }
 
+    // Degrees: values between -180 and 180 for lon, -90 to 90 for lat
+    if ($x <= 180 && $x >= -180 && $y <= 90 && $y >= -90) {
+        return 'degrees';
+    }
+
+    // UTM Meters: values between 100,000 and 10,000,000
+    if ($x > 1000 && $x < 10000000 && $y > 0 && $y < 10000000) {
+        return 'utm_meters';
+    }
+
+    return 'unknown';
+}
+
+/**
+ * Calculate area using spherical formula (for WGS84 degrees)
+ * Returns area in square meters
+ */
+private function calculateSphericalAreaInMeters($ring)
+{
+    $earthRadius = 6378137; // Earth radius in meters
+    $area = 0;
+    $count = count($ring);
+
+    for ($i = 0; $i < $count; $i++) {
+        $p1 = $ring[$i];
+        $p2 = $ring[($i + 1) % $count];
+
+        $lon1 = deg2rad($p1[0]);
+        $lat1 = deg2rad($p1[1]);
+        $lon2 = deg2rad($p2[0]);
+        $lat2 = deg2rad($p2[1]);
+
+        $area += ($lon2 - $lon1) * (2 + sin($lat1) + sin($lat2));
+    }
+
+    return abs($area * $earthRadius * $earthRadius / 2);
+}
+
+/**
+ * Calculate area using planar formula (for projected coordinates like UTM)
+ * Returns area in square meters
+ */
+private function calculatePlanarAreaInMeters($ring)
+{
+    $count = count($ring);
+    $area = 0;
+
+    for ($i = 0; $i < $count; $i++) {
+        $p1 = $ring[$i];
+        $p2 = $ring[($i + 1) % $count];
+
+        $area += ($p1[0] * $p2[1]) - ($p2[0] * $p1[1]);
+    }
+
+    return abs($area) / 2;
+}
     /**
      * ✅ Store polygons & points from GeoJSON
      */
