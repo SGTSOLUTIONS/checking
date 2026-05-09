@@ -138,12 +138,6 @@ class SurveyorController extends Controller
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
         $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
 
-        // Calculate sqfeet from coordinates before storing
-        if (isset($data['coordinates'])) {
-            $sqfeet = $this->calculateSqfeetFromCoordinates($data['coordinates']);
-            $data['sqfeet'] = (string)$sqfeet; // Convert to string
-        }
-
         // Insert polygon/point
         $polygonProcessResult = $this->geoDataService->storeSinglePolygon(
             $polygonsTableName,
@@ -162,7 +156,6 @@ class SurveyorController extends Controller
             'points'   => $allPoints,
         ]);
     }
-
     public function modifyFeature(Request $request)
     {
         $data = $request->all();
@@ -184,7 +177,11 @@ class SurveyorController extends Controller
         $wardNo = (int)$ward->ward_no;
         $corp = (int)$ward->corporation_id;
 
+        // Dynamic table names
+
+
         if ($data['type'] === 'LineString' || $data['type'] === 'Line') {
+
             $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
 
             // Extract GIS_ID from request
@@ -202,7 +199,7 @@ class SurveyorController extends Controller
 
             // Extract geometry details
             $coords = $data['coordinates'] ?? null;
-            $geometryType = "LineString";
+            $geometryType = "LineString"; // Always correct for DB
 
             // Decode if string
             if (is_string($coords)) {
@@ -237,21 +234,14 @@ class SurveyorController extends Controller
                 'lines' => DB::table($linesTableName)->get()
             ]);
         } elseif ($data['type'] === 'Polygon') {
-            // Calculate sqfeet from coordinates before updating
-            if (isset($data['coordinates'])) {
-                $sqfeet = $this->calculateSqfeetFromCoordinates($data['coordinates']);
-                $data['sqfeet'] = (string)$sqfeet; // Convert to string
-            }
-
             $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
             $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
-
             $polygonProcessResult = $this->geoDataService->updateSinglePolygon(
                 $polygonsTableName,
                 $pointsTableName,
                 $data,
-            );
 
+            );
             // Fetch all polygons and points from the tables
             $allPolygons = DB::table($polygonsTableName)->get();
             $allPoints = DB::table($pointsTableName)->get();
@@ -264,79 +254,8 @@ class SurveyorController extends Controller
             ]);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid feature type'
-        ], 400);
-    }
+        // Insert polygon/point
 
-    /**
-     * Calculate square feet from polygon coordinates
-     *
-     * @param array|string $coordinates Polygon coordinates
-     * @return float Calculated area in square feet
-     */
-    private function calculateSqfeetFromCoordinates($coordinates)
-    {
-        // Decode coordinates if it's a string
-        if (is_string($coordinates)) {
-            $coordinates = json_decode($coordinates, true);
-        }
-
-        // Handle GeoJSON format (polygon coordinates are usually an array of rings)
-        // The first ring is the outer boundary
-        $ring = $coordinates;
-
-        // If it's a polygon with rings (like [[[lng,lat],...]])
-        if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
-            $ring = $coordinates[0];
-        }
-
-        // Calculate area using Shoelace formula
-        $areaSqMeters = $this->calculateShoelaceArea($ring);
-
-        // Convert square meters to square feet (1 sq meter = 10.7639 sq feet)
-        $areaSqFeet = $areaSqMeters * 10.7639;
-
-        // Round to 2 decimal places and return as float
-        return round($areaSqFeet, 2);
-    }
-
-    /**
-     * Calculate area using Shoelace formula
-     *
-     * @param array $coordinates Array of [lng, lat] points
-     * @return float Area in square meters
-     */
-    private function calculateShoelaceArea($coordinates)
-    {
-        $n = count($coordinates);
-        if ($n < 3) {
-            return 0;
-        }
-
-        $area = 0;
-
-        // Calculate area using Shoelace formula
-        for ($i = 0; $i < $n; $i++) {
-            $j = ($i + 1) % $n;
-
-            $lng1 = $coordinates[$i][0];
-            $lat1 = $coordinates[$i][1];
-            $lng2 = $coordinates[$j][0];
-            $lat2 = $coordinates[$j][1];
-
-            // Convert longitude and latitude to meters (approximate)
-            // Using equirectangular approximation for better performance
-            $x1 = $lng1 * 111319.9 * cos($lat1 * pi() / 180);
-            $y1 = $lat1 * 110574.3;
-            $x2 = $lng2 * 111319.9 * cos($lat2 * pi() / 180);
-            $y2 = $lat2 * 110574.3;
-
-            $area += ($x1 * $y2 - $x2 * $y1);
-        }
-
-        return abs($area) / 2;
     }
     public function addLineFeature(Request $request)
     {
