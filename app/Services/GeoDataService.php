@@ -149,7 +149,7 @@ class GeoDataService
                     $table->string('bill_usage')->nullable();
                     $table->string('aadhar_no')->nullable();
                     $table->string('ration_no')->nullable();
-                    $table->string('phone_number')->nullable();
+                     $table->string('phone_number')->nullable();
                     $table->string('shop_floor')->nullable();
                     $table->string('shop_name')->nullable();
                     $table->string('shop_owner_name')->nullable();
@@ -597,68 +597,7 @@ class GeoDataService
         }
     }
 
-    /**
-     * ✅ Flatten coordinates for different geometry types
-     */
-    private function flattenCoordinates($geometryType, $coordinates)
-    {
-        $flattened = [];
 
-        try {
-            if ($geometryType === 'Polygon') {
-                foreach ($coordinates as $ring) {
-                    $flattened[] = $ring;
-                }
-            } elseif ($geometryType === 'MultiPolygon') {
-                foreach ($coordinates as $polygon) {
-                    foreach ($polygon as $ring) {
-                        $flattened[] = $ring;
-                    }
-                }
-            }
-            // Add support for other geometry types if needed
-        } catch (\Exception $e) {
-            Log::error("❌ Failed to flatten coordinates: " . $e->getMessage());
-        }
-
-        return $flattened;
-    }
-
-    /**
-     * ✅ Calculate midpoint (optimized for performance)
-     */
-    private function calculateMidpoint($flattened)
-    {
-        if (empty($flattened) || !is_array($flattened[0])) {
-            return null;
-        }
-
-        try {
-            $points = $flattened[0]; // first ring
-            $count = count($points);
-
-            if ($count === 0) return null;
-
-            // For performance, sample points if there are too many
-            $samplePoints = $count > 1000 ? array_rand($points, 1000) : $points;
-
-            $totalX = $totalY = 0;
-            $validPoints = 0;
-
-            foreach ((array)$samplePoints as $point) {
-                if (is_array($point) && count($point) >= 2) {
-                    $totalX += $point[0];
-                    $totalY += $point[1];
-                    $validPoints++;
-                }
-            }
-
-            return $validPoints > 0 ? [$totalX / $validPoints, $totalY / $validPoints] : null;
-        } catch (\Exception $e) {
-            Log::error("❌ Failed to calculate midpoint: " . $e->getMessage());
-            return null;
-        }
-    }
 
     /**
      * ✅ Get polygon data by GIS_ID
@@ -730,11 +669,110 @@ class GeoDataService
     {
         return preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($string));
     }
-    public function storeSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
-    {
+    /**
+ * Calculate area of a polygon in square feet from coordinates
+ * Uses planar approximation for small areas (buildings/plots)
+ */
+private function calculateAreaInSqFt($geometryType, $coordinates)
+{
+    try {
+        // Only calculate for Polygon or MultiPolygon
+        if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
+            return 0;
+        }
+
+        $totalAreaSqMeters = 0;
+
+        // Handle MultiPolygon
+        if ($geometryType === 'MultiPolygon') {
+            foreach ($coordinates as $polygon) {
+                $totalAreaSqMeters += $this->calculatePolygonArea($polygon[0]);
+            }
+        }
+        // Handle single Polygon
+        else {
+            $totalAreaSqMeters = $this->calculatePolygonArea($coordinates[0]);
+        }
+
+        // Convert square meters to square feet (1 sq meter = 10.7639 sq ft)
+        $areaInSqFt = $totalAreaSqMeters * 10.7639;
+
+        // Round to 2 decimal places
+        return round($areaInSqFt, 2);
+
+    } catch (\Exception $e) {
+        Log::error("❌ Failed to calculate area: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Calculate area of a single polygon ring in square meters
+ * Using the Shoelace formula with degree to meter conversion
+ */
+private function calculatePolygonArea($ring)
+{
+    $numPoints = count($ring);
+    if ($numPoints < 3) {
+        return 0;
+    }
+
+    // Calculate the center point (centroid) for latitude conversion
+    $centerLat = 0;
+    foreach ($ring as $point) {
+        $centerLat += $point[1];
+    }
+    $centerLat = deg2rad($centerLat / $numPoints);
+
+    // Conversion factors: meters per degree at this latitude
+    $metersPerDegLat = 111132.92; // Constant for latitude
+    $metersPerDegLon = 111412.84 * cos($centerLat); // Varies with latitude
+
+    // Convert all points to meters (local Cartesian coordinate system)
+    $pointsInMeters = [];
+    $baseLon = $ring[0][0];
+    $baseLat = $ring[0][1];
+
+    foreach ($ring as $point) {
+        $x = ($point[0] - $baseLon) * $metersPerDegLon;
+        $y = ($point[1] - $baseLat) * $metersPerDegLat;
+        $pointsInMeters[] = [$x, $y];
+    }
+
+    // Calculate area using Shoelace formula
+    $area = 0;
+    for ($i = 0; $i < $numPoints - 1; $i++) {
+        $area += ($pointsInMeters[$i][0] * $pointsInMeters[$i + 1][1])
+               - ($pointsInMeters[$i + 1][0] * $pointsInMeters[$i][1]);
+    }
+
+    // Close the polygon (last point to first point)
+    $area += ($pointsInMeters[$numPoints - 1][0] * $pointsInMeters[0][1])
+           - ($pointsInMeters[0][0] * $pointsInMeters[$numPoints - 1][1]);
+
+    // Area is absolute value divided by 2
+    $areaInSqMeters = abs($area) / 2;
+
+    return $areaInSqMeters;
+}
+
+/**
+ * ✅ Store Single Polygon with automatic sqfeet calculation and point generation
+ */
+public function storeSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
+{
+    try {
         // Extract geometry
         $geometryType = $geoJsonContent['type'] ?? null;
         $coords = $geoJsonContent['coordinates'] ?? null;
+
+        // Validate geometry type
+        if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
+            return [
+                'success' => false,
+                'message' => 'Invalid geometry type. Expected Polygon or MultiPolygon, got: ' . $geometryType,
+            ];
+        }
 
         // Decode coordinates if string
         if (is_string($coords)) {
@@ -747,13 +785,18 @@ class GeoDataService
             }
         }
 
-        // -------------------------------
-        // Calculate square footage from polygon coordinates
-        // -------------------------------
-        $sqfeet = 0;
-        if ($geometryType === 'Polygon' || $geometryType === 'MultiPolygon') {
-            $sqfeet = $this->calculateAreaInSqFt($coords);
+        // Validate coordinates exist
+        if (empty($coords)) {
+            return [
+                'success' => false,
+                'message' => 'Coordinates are empty',
+            ];
         }
+
+        // -------------------------------
+        // Calculate square footage
+        // -------------------------------
+        $sqfeet = $this->calculateAreaInSqFt($geometryType, $coords);
 
         // -------------------------------
         // Determine new GIS_ID based on last numeric portion
@@ -765,24 +808,35 @@ class GeoDataService
         foreach ($allIds as $id) {
             if (preg_match_all('/\d+/', $id, $matches)) {
                 $numbers = $matches[0];
-                $lastNum = (int)end($numbers);
+                $lastNum = (int)end($numbers); // last numeric part
                 if ($lastNum > $maxNumber) {
                     $maxNumber = $lastNum;
+                    // Preserve prefix: everything before last numeric part
                     $prefix = substr($id, 0, strrpos($id, (string)$lastNum));
                 }
             }
         }
 
         $newGisNumber = $maxNumber + 1;
-        $gisid = $prefix . $newGisNumber;
+        $gisid = $prefix . $newGisNumber; // final GIS_ID to insert
 
         // -------------------------------
         // Check duplicate just in case
         // -------------------------------
         $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
 
-        if (!$exists) {
-            // Insert polygon with calculated sqfeet
+        if ($exists) {
+            return [
+                'success' => false,
+                'message' => 'GIS ID already exists: ' . $gisid,
+            ];
+        }
+
+        // Start transaction to ensure data consistency
+        DB::beginTransaction();
+
+        try {
+            // Insert polygon with sqfeet
             DB::table($polygonTable)->insert([
                 'gisid' => $gisid,
                 'type' => $geometryType,
@@ -792,11 +846,12 @@ class GeoDataService
                 'updated_at' => now(),
             ]);
 
-            // Flatten coordinates and calculate midpoint
+            // Flatten coordinates and calculate midpoint for point
             $flattened = $this->flattenCoordinates($geometryType, $coords);
             $midpoint = $this->calculateMidpoint($flattened);
 
-            if ($midpoint) {
+            if ($midpoint && is_array($midpoint) && count($midpoint) >= 2) {
+                // Insert corresponding point with same GIS_ID
                 DB::table($pointTable)->insert([
                     'gisid' => $gisid,
                     'type' => 'Point',
@@ -804,82 +859,247 @@ class GeoDataService
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+            } else {
+                // Rollback if midpoint calculation fails
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Failed to calculate midpoint for polygon',
+                ];
             }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Polygon inserted successfully with calculated area',
+                'gisid' => $gisid,
+                'sqfeet' => $sqfeet,
+                'midpoint' => $midpoint
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
 
+    } catch (\Exception $e) {
+        Log::error("❌ Failed to store polygon: " . $e->getMessage());
         return [
-            'success' => true,
-            'message' => 'Polygon inserted successfully',
-            'gisid' => $gisid,
-            'sqfeet' => $sqfeet // Return calculated area
+            'success' => false,
+            'message' => 'Failed to store polygon: ' . $e->getMessage()
         ];
     }
+}
 
-    public function updateSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
-    {
+/**
+ * ✅ Update Single Polygon with automatic sqfeet recalculation and point update
+ */
+public function updateSinglePolygon($polygonTable, $pointTable, $geoJsonContent)
+{
+    try {
+        // Extract GIS_ID from various possible locations
         $gisid = $geoJsonContent['properties']['GIS_ID']
             ?? $geoJsonContent['properties']['gisid']
             ?? $geoJsonContent['gisid']
+            ?? $geoJsonContent['id']
             ?? null;
 
         $geometryType = $geoJsonContent['type'] ?? null;
         $coords = $geoJsonContent['coordinates'] ?? null;
 
+        // Validate geometry type
+        if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
+            return [
+                'success' => false,
+                'message' => 'Invalid geometry type. Expected Polygon or MultiPolygon, got: ' . $geometryType,
+            ];
+        }
+
+        // Decode coordinates if string
         if (is_string($coords)) {
             $coords = json_decode($coords, true);
             if ($coords === null) {
-                return ['success' => false, 'message' => 'Invalid coordinates JSON'];
+                return [
+                    'success' => false,
+                    'message' => 'Invalid coordinates JSON'
+                ];
             }
         }
 
-        if (!$gisid) {
-            return ['success' => false, 'message' => 'GIS_ID missing in request'];
+        // Validate coordinates exist
+        if (empty($coords)) {
+            return [
+                'success' => false,
+                'message' => 'Coordinates are empty',
+            ];
         }
 
+        if (!$gisid) {
+            return [
+                'success' => false,
+                'message' => 'GIS_ID missing in request'
+            ];
+        }
+
+        // Check if polygon exists
         $exists = DB::table($polygonTable)->where('gisid', $gisid)->exists();
 
         if (!$exists) {
-            return ['success' => false, 'message' => 'Record not found for GIS_ID: ' . $gisid];
+            return [
+                'success' => false,
+                'message' => 'Record not found for GIS_ID: ' . $gisid
+            ];
         }
 
         // -------------------------------
         // Recalculate square footage from updated polygon coordinates
         // -------------------------------
-        $sqfeet = 0;
-        if ($geometryType === 'Polygon' || $geometryType === 'MultiPolygon') {
-            $sqfeet = $this->calculateAreaInSqFt($coords);
-        }
+        $sqfeet = $this->calculateAreaInSqFt($geometryType, $coords);
 
-        // Update polygon with recalculated sqfeet
-        DB::table($polygonTable)
-            ->where('gisid', $gisid)
-            ->update([
-                'type' => $geometryType,
-                'coordinates' => json_encode($coords, JSON_NUMERIC_CHECK),
-                'sqfeet' => $sqfeet, // Update with recalculated area
-                'updated_at' => now(),
-            ]);
+        // Start transaction
+        DB::beginTransaction();
 
-        $flattened = $this->flattenCoordinates($geometryType, $coords);
-        $midpoint = $this->calculateMidpoint($flattened);
-
-        if ($midpoint) {
-            DB::table($pointTable)
+        try {
+            // Update polygon with recalculated sqfeet
+            DB::table($polygonTable)
                 ->where('gisid', $gisid)
                 ->update([
-                    'type' => 'Point',
-                    'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
+                    'type' => $geometryType,
+                    'coordinates' => json_encode($coords, JSON_NUMERIC_CHECK),
+                    'sqfeet' => $sqfeet, // Update with recalculated area
                     'updated_at' => now(),
                 ]);
+
+            // Flatten coordinates and calculate midpoint
+            $flattened = $this->flattenCoordinates($geometryType, $coords);
+            $midpoint = $this->calculateMidpoint($flattened);
+
+            if ($midpoint && is_array($midpoint) && count($midpoint) >= 2) {
+                // Check if point exists
+                $pointExists = DB::table($pointTable)->where('gisid', $gisid)->exists();
+
+                if ($pointExists) {
+                    // Update existing point
+                    DB::table($pointTable)
+                        ->where('gisid', $gisid)
+                        ->update([
+                            'type' => 'Point',
+                            'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
+                            'updated_at' => now(),
+                        ]);
+                } else {
+                    // Create new point if doesn't exist
+                    DB::table($pointTable)->insert([
+                        'gisid' => $gisid,
+                        'type' => 'Point',
+                        'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            } else {
+                // Log warning but don't rollback - point is optional
+                Log::warning("⚠️ Could not calculate midpoint for GIS_ID: {$gisid}");
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Polygon updated successfully with recalculated area',
+                'gisid' => $gisid,
+                'sqfeet' => $sqfeet,
+                'midpoint' => $midpoint
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
         }
 
+    } catch (\Exception $e) {
+        Log::error("❌ Failed to update polygon: " . $e->getMessage());
         return [
-            'success' => true,
-            'message' => 'Polygon updated successfully',
-            'gisid' => $gisid,
-            'sqfeet' => $sqfeet // Return updated area
+            'success' => false,
+            'message' => 'Failed to update polygon: ' . $e->getMessage()
         ];
     }
+}
+
+/**
+ * ✅ Improved flattenCoordinates method
+ */
+private function flattenCoordinates($geometryType, $coordinates)
+{
+    $flattened = [];
+
+    try {
+        if ($geometryType === 'Polygon') {
+            // For polygon, coordinates is an array of rings
+            // First ring is outer boundary, subsequent rings are holes
+            foreach ($coordinates as $ring) {
+                if (is_array($ring) && count($ring) > 0) {
+                    $flattened[] = $ring;
+                }
+            }
+        } elseif ($geometryType === 'MultiPolygon') {
+            // For multipolygon, coordinates is array of polygons
+            // Each polygon is array of rings
+            foreach ($coordinates as $polygon) {
+                foreach ($polygon as $ring) {
+                    if (is_array($ring) && count($ring) > 0) {
+                        $flattened[] = $ring;
+                    }
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        Log::error("❌ Failed to flatten coordinates: " . $e->getMessage());
+    }
+
+    return $flattened;
+}
+
+/**
+ * ✅ Improved calculateMidpoint method
+ */
+private function calculateMidpoint($flattened)
+{
+    if (empty($flattened) || !is_array($flattened[0])) {
+        return null;
+    }
+
+    try {
+        // Use the first ring (outer boundary)
+        $points = $flattened[0];
+        $count = count($points);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        // Calculate centroid of all points in the ring
+        $totalX = 0;
+        $totalY = 0;
+
+        foreach ($points as $point) {
+            if (is_array($point) && count($point) >= 2) {
+                $totalX += floatval($point[0]);
+                $totalY += floatval($point[1]);
+            }
+        }
+
+        $centroidX = $totalX / $count;
+        $centroidY = $totalY / $count;
+
+        return [$centroidX, $centroidY];
+
+    } catch (\Exception $e) {
+        Log::error("❌ Failed to calculate midpoint: " . $e->getMessage());
+        return null;
+    }
+}
     public function deleteFeatureByGisId($polygonTable, $pointTable, $gisid)
     {
         try {
@@ -911,99 +1131,4 @@ class GeoDataService
             ];
         }
     }
-    /**
-     * Calculate area of a polygon in square feet
-     * Assumes coordinates are in WGS84 (latitude/longitude degrees)
-     * Uses the Haversine formula for accurate area calculation
-     */
-    private function calculateAreaInSqFt($coordinates)
-    {
-        // Check if it's a polygon with rings
-        // For simple polygon (no holes), coordinates[0] contains the outer ring
-        $ring = $coordinates[0] ?? $coordinates;
-
-        // If it's a MultiPolygon, sum areas of all polygons
-        if (isset($coordinates[0][0][0]) && is_array($coordinates[0][0][0])) {
-            $totalArea = 0;
-            foreach ($coordinates as $polygon) {
-                $totalArea += $this->calculatePolygonArea($polygon[0]);
-            }
-            return $totalArea;
-        }
-
-        // Single polygon
-        return $this->calculatePolygonArea($ring);
-    }
-
-   /**
- * Calculate area for small polygons using local planar approximation
- * More efficient and accurate for small areas (< 1 sq km)
- */
-private function calculateAreaInSqFtPlanar($coordinates)
-{
-    $ring = $coordinates[0] ?? $coordinates;
-
-    if (isset($coordinates[0][0][0]) && is_array($coordinates[0][0][0])) {
-        $totalArea = 0;
-        foreach ($coordinates as $polygon) {
-            $totalArea += $this->calculatePlanarAreaForRing($polygon[0]);
-        }
-        return $totalArea;
-    }
-
-    return $this->calculatePlanarAreaForRing($ring);
-}
-
-private function calculatePlanarAreaForRing($ring)
-{
-    $numPoints = count($ring);
-    if ($numPoints < 3) {
-        return 0;
-    }
-
-    // Calculate centroid latitude for conversion factor
-    $centroidLat = 0;
-    foreach ($ring as $point) {
-        $centroidLat += $point[1];
-    }
-    $centroidLat = deg2rad($centroidLat / $numPoints);
-
-    // Conversion factor: meters per degree at this latitude
-    $metersPerDegLat = 111132.92; // Approximate
-    $metersPerDegLon = 111412.84 * cos($centroidLat); // Adjust for latitude
-
-    // Convert all points to meters (local coordinate system)
-    $pointsInMeters = [];
-    $baseLon = $ring[0][0];
-    $baseLat = $ring[0][1];
-
-    foreach ($ring as $point) {
-        $x = ($point[0] - $baseLon) * $metersPerDegLon;
-        $y = ($point[1] - $baseLat) * $metersPerDegLat;
-        $pointsInMeters[] = [$x, $y];
-    }
-
-    // Calculate area using shoelace formula
-    $area = 0;
-    for ($i = 0; $i < $numPoints - 1; $i++) {
-        $x1 = $pointsInMeters[$i][0];
-        $y1 = $pointsInMeters[$i][1];
-        $x2 = $pointsInMeters[$i + 1][0];
-        $y2 = $pointsInMeters[$i + 1][1];
-
-        $area += ($x1 * $y2 - $x2 * $y1);
-    }
-
-    // Close the polygon
-    $x1 = $pointsInMeters[$numPoints - 1][0];
-    $y1 = $pointsInMeters[$numPoints - 1][1];
-    $x2 = $pointsInMeters[0][0];
-    $y2 = $pointsInMeters[0][1];
-    $area += ($x1 * $y2 - $x2 * $y1);
-
-    $areaInSqMeters = abs($area) / 2;
-    $areaInSqFt = $areaInSqMeters * 10.7639;
-
-    return round($areaInSqFt, 2);
-}
 }
