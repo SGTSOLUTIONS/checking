@@ -32,7 +32,7 @@
         position: absolute;
         top: 20px;
         left: 20px;
-        z-index: 1000;
+        z-index: 1001;
         background: rgba(255, 255, 255, 0.98);
         border-radius: 20px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -41,6 +41,7 @@
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
         transition: all 0.3s ease;
+        pointer-events: auto;
     }
 
     .search-container h4 {
@@ -101,6 +102,10 @@
         font-size: 14px;
         transition: all 0.3s;
         background: white;
+        pointer-events: auto;
+        cursor: text;
+        z-index: 1002;
+        position: relative;
     }
 
     .search-box input:focus {
@@ -118,6 +123,7 @@
         cursor: pointer;
         transition: all 0.3s;
         font-weight: 500;
+        pointer-events: auto;
     }
 
     .search-box button:hover {
@@ -133,6 +139,8 @@
         border-radius: 12px;
         display: none;
         background: white;
+        z-index: 1002;
+        position: relative;
     }
 
     .search-result-item {
@@ -155,10 +163,11 @@
         border-radius: 20px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         padding: 14px;
-        z-index: 1000;
+        z-index: 1001;
         width: 190px;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
+        pointer-events: auto;
     }
 
     .layer-switcher h4 {
@@ -221,12 +230,13 @@
         border-radius: 16px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         padding: 16px;
-        z-index: 1000;
+        z-index: 1001;
         max-width: 320px;
         min-width: 260px;
         display: none;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
+        pointer-events: auto;
     }
 
     .feature-info h4 {
@@ -282,13 +292,14 @@
         position: absolute;
         bottom: 20px;
         left: 20px;
-        z-index: 1000;
+        z-index: 1001;
         background: white;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        pointer-events: auto;
     }
 
     .zoom-btn {
@@ -316,7 +327,7 @@
         position: absolute;
         bottom: 20px;
         left: 80px;
-        z-index: 1000;
+        z-index: 1001;
         background: linear-gradient(135deg, #1A6B6E, #0B2B40);
         color: white;
         border: none;
@@ -328,6 +339,7 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         transition: all 0.3s;
         display: none;
+        pointer-events: auto;
     }
 
     .route-btn:hover {
@@ -339,8 +351,8 @@
     .live-location-btn {
         position: absolute;
         bottom: 20px;
-        left: 80px;
-        z-index: 1000;
+        left: 200px;
+        z-index: 1001;
         background: linear-gradient(135deg, #1A6B6E, #0B2B40);
         color: white;
         border: none;
@@ -351,6 +363,7 @@
         font-weight: 500;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         transition: all 0.3s;
+        pointer-events: auto;
     }
 
     .live-location-btn:hover {
@@ -371,12 +384,13 @@
         border-radius: 16px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         padding: 16px;
-        z-index: 1000;
+        z-index: 1001;
         max-width: 320px;
         min-width: 260px;
         display: none;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
+        pointer-events: auto;
     }
 
     .route-info h4 {
@@ -598,8 +612,13 @@
         }
     }
 
-    .ol-attribution {
-        display: none;
+    /* Ensure map canvas doesn't block interaction */
+    .ol-viewport {
+        pointer-events: auto;
+    }
+
+    .ol-viewport canvas {
+        pointer-events: auto;
     }
 
     /* Make sure map container is visible */
@@ -607,6 +626,24 @@
         width: 100%;
         height: 100%;
         display: block;
+    }
+
+    /* Fix for input fields being blocked */
+    input, button, .search-container, .layer-switcher, .zoom-controls, .live-location-btn, .route-btn, .feature-info, .route-info {
+        pointer-events: auto !important;
+    }
+
+    /* Ensure search inputs are clickable */
+    .search-box input {
+        pointer-events: auto !important;
+        cursor: text !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* Fix for any overlay that might block inputs */
+    .map-wrapper > *:not(#map) {
+        pointer-events: auto;
     }
 </style>
 @endpush
@@ -743,6 +780,20 @@
         if (!document.getElementById('map')) {
             console.error("Map element not found!");
             return;
+        }
+
+        // Test if inputs are accessible
+        var testInput = document.getElementById('gisidSearchInput');
+        if (testInput) {
+            console.log("GIS ID input found and accessible");
+            testInput.addEventListener('focus', function() {
+                console.log("GIS ID input focused");
+            });
+            testInput.addEventListener('click', function() {
+                console.log("GIS ID input clicked");
+            });
+        } else {
+            console.error("GIS ID input not found!");
         }
 
         // Data from server (passed as JSON strings to avoid parsing issues)
@@ -1265,8 +1316,23 @@
             $('#loadingSpinner').fadeOut();
         }
 
-        // Map Click Handler
+        // Map Click Handler - Prevent interference with input fields
         map.on('click', function(evt) {
+            // Get the original click target
+            const originalEvent = evt.originalEvent;
+            const target = originalEvent.target;
+
+            // Check if click target is an input, button, or inside search container
+            if (target.tagName === 'INPUT' ||
+                target.tagName === 'BUTTON' ||
+                target.closest('.search-container') ||
+                target.closest('.layer-switcher') ||
+                target.closest('.zoom-controls') ||
+                target.closest('.feature-info') ||
+                target.closest('.route-info')) {
+                return; // Don't process map click for UI elements
+            }
+
             const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
             if (feature && feature.get('gisid')) {
                 const gisid = feature.get('gisid');
