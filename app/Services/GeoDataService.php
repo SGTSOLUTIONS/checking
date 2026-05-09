@@ -673,37 +673,38 @@ class GeoDataService
  * Calculate area of a polygon in square feet from coordinates
  * Uses planar approximation for small areas (buildings/plots)
  */
-private function calculateAreaInSqFt($geometryType, $coordinates)
+private function calculateSqfeetFromCoordinates($coordinates)
 {
-    try {
-        // Only calculate for Polygon or MultiPolygon
-        if (!in_array($geometryType, ['Polygon', 'MultiPolygon'])) {
-            return 0;
-        }
-
-        $totalAreaSqMeters = 0;
-
-        // Handle MultiPolygon
-        if ($geometryType === 'MultiPolygon') {
-            foreach ($coordinates as $polygon) {
-                $totalAreaSqMeters += $this->calculatePolygonArea($polygon[0]);
-            }
-        }
-        // Handle single Polygon
-        else {
-            $totalAreaSqMeters = $this->calculatePolygonArea($coordinates[0]);
-        }
-
-        // Convert square meters to square feet (1 sq meter = 10.7639 sq ft)
-        $areaInSqFt = $totalAreaSqMeters * 10.7639;
-
-        // Round to 2 decimal places
-        return round($areaInSqFt, 2);
-
-    } catch (\Exception $e) {
-        Log::error("❌ Failed to calculate area: " . $e->getMessage());
-        return 0;
+    // Decode coordinates if it's a string
+    if (is_string($coordinates)) {
+        $coordinates = json_decode($coordinates, true);
     }
+
+    // Get the outer ring
+    $ring = $coordinates;
+    if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+        $ring = $coordinates[0];
+    }
+
+    $n = count($ring);
+    if ($n < 3) return 0;
+
+    // Calculate area using Shoelace formula
+    $area = 0;
+    for ($i = 0; $i < $n; $i++) {
+        $j = ($i + 1) % $n;
+        $area += ($ring[$i][0] * $ring[$j][1] - $ring[$j][0] * $ring[$i][1]);
+    }
+
+    // Use ABSOLUTE VALUE to ensure positive area
+    $area = abs($area) / 2;
+
+    // Convert degrees to square feet (approximate conversion)
+    // At equator, 1 degree ~ 111,319.9 meters
+    $areaSqMeters = $area * 111319.9 * 111319.9;
+    $areaSqFeet = $areaSqMeters * 10.7639;
+
+    return round($areaSqFeet, 2);
 }
 
 /**
