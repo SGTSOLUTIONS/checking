@@ -766,13 +766,67 @@ $(document).ready(function() {
     }
 
     function getPolygonStyle(feature) {
-        const gisid = feature.get("gisid");
-        const polygonData = polygonDatas.find(d => d.gisid == gisid);
-        const color = polygonData ? "#dc3545" : "#1679AB";
-        return new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: color, width: 2 }),
-            fill: new ol.style.Fill({ color: "rgba(22, 121, 171, 0.05)" })
-        });
+         const gisid = feature.get("gisid");
+                const sqft = feature.get("sqfeet") || "0";
+
+                const polygonData = polygonDatas.find(data => data.gisid == gisid);
+
+                const color = polygonData ? "red" : "blue";
+
+                // Get polygon center point
+                const geometry = feature.getGeometry();
+                const centerPoint = geometry.getInteriorPoint();
+
+                return [
+                    // Polygon Border Style
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 4,
+                            lineJoin: "round",
+                            lineCap: "round"
+                        })
+                    }),
+
+                    // Label Style
+                    new ol.style.Style({
+                        geometry: centerPoint,
+
+                        text: new ol.style.Text({
+                            text: sqft + " SQFT",
+
+                            font: "bold 14px Arial",
+
+                            fill: new ol.style.Fill({
+                                color: "#ffffff"
+                            }),
+
+                            stroke: new ol.style.Stroke({
+                                color: "#000000",
+                                width: 3
+                            }),
+
+                            overflow: true,
+
+                            textAlign: "center",
+
+                            offsetY: 0
+                        }),
+
+                        image: new ol.style.Circle({
+                            radius: 4,
+
+                            fill: new ol.style.Fill({
+                                color: "yellow"
+                            }),
+
+                            stroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            })
+                        })
+                    })
+                ];
     }
 
     function getLineStyle() {
@@ -860,7 +914,8 @@ $(document).ready(function() {
             polygonSource.addFeature(new ol.Feature({
                 geometry: new ol.geom.Polygon(coords),
                 gisid: poly.gisid,
-                type: "Polygon"
+                type: "Polygon",
+                 sqfeet: poly.sqfeet || "0"
             }));
         } catch(e) { console.error(e); }
     });

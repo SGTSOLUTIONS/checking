@@ -1854,111 +1854,71 @@
                 });
             }
 
-            function createPolygonStyle(feature) {
-    // Get properties using getProperties() for reliability
-    const properties = feature.getProperties();
-    const gisid = properties.gisid || feature.get("gisid");
+           function createPolygonStyle(feature) {
 
-    // Get sqfeet from multiple possible sources
-    let sqft = properties.sqfeet || feature.get("sqfeet") || "0";
+                const gisid = feature.get("gisid");
+                const sqft = feature.get("sqfeet") || "0";
 
-    // Format the number
-    let displayText = "0 SQFT";
-    if (sqft && sqft !== "0" && sqft !== 0) {
-        const sqftNumber = parseFloat(sqft);
-        if (!isNaN(sqftNumber) && sqftNumber > 0) {
-            // Format with commas for thousands
-            const formattedSqft = sqftNumber.toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
-            displayText = formattedSqft + " SQFT";
-        } else {
-            displayText = sqft + " SQFT";
-        }
-    } else if (sqft === "0" || sqft === 0) {
-        displayText = "0 SQFT";
-    }
+                const polygonData = polygonDatas.find(data => data.gisid == gisid);
 
-    // Find polygon data for color (red if has building data, blue if not)
-    const polygonData = polygonDatas.find(data => data.gisid == gisid);
-    const color = polygonData ? "red" : "blue";
-    const fillColor = polygonData ? "rgba(255, 0, 0, 0.1)" : "rgba(0, 0, 255, 0.1)";
+                const color = polygonData ? "red" : "blue";
 
-    // Get polygon center point
-    const geometry = feature.getGeometry();
-    let centerPoint = null;
+                // Get polygon center point
+                const geometry = feature.getGeometry();
+                const centerPoint = geometry.getInteriorPoint();
 
-    try {
-        // Try to get interior point
-        centerPoint = geometry.getInteriorPoint();
-        if (!centerPoint) {
-            // Fallback to extent center
-            const extent = geometry.getExtent();
-            const center = ol.extent.getCenter(extent);
-            centerPoint = new ol.geom.Point(center);
-        }
-    } catch(e) {
-        // Fallback to extent center
-        const extent = geometry.getExtent();
-        const center = ol.extent.getCenter(extent);
-        centerPoint = new ol.geom.Point(center);
-    }
-
-    const styles = [
-        // Polygon Border Style
-        new ol.style.Style({
-            stroke: new ol.style.Stroke({
-                color: color,
-                width: 4,
-                lineJoin: "round",
-                lineCap: "round"
-            }),
-            fill: new ol.style.Fill({
-                color: fillColor
-            })
-        })
-    ];
-
-    // Add Label Style only if we have center point and valid sqft
-    if (centerPoint && displayText !== "0 SQFT") {
-        styles.push(
-            new ol.style.Style({
-                geometry: centerPoint,
-                text: new ol.style.Text({
-                    text: displayText,
-                    font: "bold 14px Arial",
-                    fill: new ol.style.Fill({
-                        color: "#ffffff"
+                return [
+                    // Polygon Border Style
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 4,
+                            lineJoin: "round",
+                            lineCap: "round"
+                        })
                     }),
-                    stroke: new ol.style.Stroke({
-                        color: "#000000",
-                        width: 3
-                    }),
-                    overflow: true,
-                    textAlign: "center",
-                    offsetY: 0,
-                    backgroundFill: new ol.style.Fill({
-                        color: "rgba(0, 0, 0, 0.6)"
-                    }),
-                    padding: [4, 8, 4, 8]
-                }),
-                image: new ol.style.Circle({
-                    radius: 4,
-                    fill: new ol.style.Fill({
-                        color: "yellow"
-                    }),
-                    stroke: new ol.style.Stroke({
-                        color: "#000",
-                        width: 1
+
+                    // Label Style
+                    new ol.style.Style({
+                        geometry: centerPoint,
+
+                        text: new ol.style.Text({
+                            text: sqft + " SQFT",
+
+                            font: "bold 14px Arial",
+
+                            fill: new ol.style.Fill({
+                                color: "#ffffff"
+                            }),
+
+                            stroke: new ol.style.Stroke({
+                                color: "#000000",
+                                width: 3
+                            }),
+
+                            overflow: true,
+
+                            textAlign: "center",
+
+                            offsetY: 0
+                        }),
+
+                        image: new ol.style.Circle({
+                            radius: 4,
+
+                            fill: new ol.style.Fill({
+                                color: "yellow"
+                            }),
+
+                            stroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            })
+                        })
                     })
-                })
-            })
-        );
-    }
+                ];
+            }
 
-    return styles;
-}
             function createLineStyle(feature) {
                 const road_name = feature.get("road_name");
                 return new ol.style.Style({
@@ -2078,7 +2038,7 @@
                         geometry: new ol.geom.Polygon(coords),
                         gisid: poly.gisid,
                         type: "Polygon",
-                        sqfeet: poly.sqfeet || "0" // ← ADD THIS LINE
+                         sqfeet: poly.sqfeet || "0"
                     }));
                 } catch (e) {
                     console.error('Polygon parse error:', e);
@@ -3623,7 +3583,7 @@
                             geometry: new ol.geom.Polygon(coords),
                             gisid: poly.gisid,
                             type: "Polygon",
-                            sqfeet: poly.sqfeet || "0"  // ← ADD THIS LINE
+                             sqfeet: poly.sqfeet || "0"
                         }));
                     } catch (e) {}
                 });
