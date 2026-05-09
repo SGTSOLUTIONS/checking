@@ -935,85 +935,75 @@ class GeoDataService
         return $this->calculatePolygonArea($ring);
     }
 
-    /**
-     * Calculate area of a single polygon ring in square feet
-     * Using spherical law of cosines for accurate area on Earth's surface
-     */
-    private function calculatePolygonArea($ring)
-    {
-        $earthRadiusMeters = 6371000; // Earth radius in meters
-        $area = 0;
-        $numPoints = count($ring);
+   /**
+ * Calculate area for small polygons using local planar approximation
+ * More efficient and accurate for small areas (< 1 sq km)
+ */
+private function calculateAreaInSqFtPlanar($coordinates)
+{
+    $ring = $coordinates[0] ?? $coordinates;
 
-        if ($numPoints < 3) {
-            return 0;
+    if (isset($coordinates[0][0][0]) && is_array($coordinates[0][0][0])) {
+        $totalArea = 0;
+        foreach ($coordinates as $polygon) {
+            $totalArea += $this->calculatePlanarAreaForRing($polygon[0]);
         }
-
-        // Close the polygon if not already closed
-        if ($ring[0] != $ring[$numPoints - 1]) {
-            $ring[] = $ring[0];
-            $numPoints++;
-        }
-
-        for ($i = 0; $i < $numPoints - 1; $i++) {
-            $p1 = $ring[$i];
-            $p2 = $ring[$i + 1];
-
-            // Convert latitude/longitude from degrees to radians
-            $lat1 = deg2rad($p1[1]);
-            $lon1 = deg2rad($p1[0]);
-            $lat2 = deg2rad($p2[1]);
-            $lon2 = deg2rad($p2[0]);
-
-            // Using spherical law of cosines
-            $area += ($lon2 - $lon1) * (2 + sin($lat1) + sin($lat2));
-        }
-
-        $area = $area * $earthRadiusMeters * $earthRadiusMeters / 2;
-
-        // Convert from square meters to square feet (1 sq meter = 10.7639 sq ft)
-        $areaInSqFt = abs($area) * 10.7639;
-
-        return round($areaInSqFt, 2);
+        return $totalArea;
     }
 
-    /**
-     * Alternative simpler method for planar area calculation
-     * Use this if your coordinates are already in a projected coordinate system (e.g., UTM in meters)
-     */
-    private function calculatePlanarAreaInSqFt($coordinates)
-    {
-        $ring = $coordinates[0] ?? $coordinates;
-        $area = 0;
-        $numPoints = count($ring);
+    return $this->calculatePlanarAreaForRing($ring);
+}
 
-        if ($numPoints < 3) {
-            return 0;
-        }
+private function calculatePlanarAreaForRing($ring)
+{
+    $numPoints = count($ring);
+    if ($numPoints < 3) {
+        return 0;
+    }
 
-        // Shoelace formula
-        for ($i = 0; $i < $numPoints - 1; $i++) {
-            $x1 = $ring[$i][0];
-            $y1 = $ring[$i][1];
-            $x2 = $ring[$i + 1][0];
-            $y2 = $ring[$i + 1][1];
+    // Calculate centroid latitude for conversion factor
+    $centroidLat = 0;
+    foreach ($ring as $point) {
+        $centroidLat += $point[1];
+    }
+    $centroidLat = deg2rad($centroidLat / $numPoints);
 
-            $area += ($x1 * $y2 - $x2 * $y1);
-        }
+    // Conversion factor: meters per degree at this latitude
+    $metersPerDegLat = 111132.92; // Approximate
+    $metersPerDegLon = 111412.84 * cos($centroidLat); // Adjust for latitude
 
-        // Close the polygon
-        $x1 = $ring[$numPoints - 1][0];
-        $y1 = $ring[$numPoints - 1][1];
-        $x2 = $ring[0][0];
-        $y2 = $ring[0][1];
+    // Convert all points to meters (local coordinate system)
+    $pointsInMeters = [];
+    $baseLon = $ring[0][0];
+    $baseLat = $ring[0][1];
+
+    foreach ($ring as $point) {
+        $x = ($point[0] - $baseLon) * $metersPerDegLon;
+        $y = ($point[1] - $baseLat) * $metersPerDegLat;
+        $pointsInMeters[] = [$x, $y];
+    }
+
+    // Calculate area using shoelace formula
+    $area = 0;
+    for ($i = 0; $i < $numPoints - 1; $i++) {
+        $x1 = $pointsInMeters[$i][0];
+        $y1 = $pointsInMeters[$i][1];
+        $x2 = $pointsInMeters[$i + 1][0];
+        $y2 = $pointsInMeters[$i + 1][1];
+
         $area += ($x1 * $y2 - $x2 * $y1);
-
-        $area = abs($area) / 2;
-
-        // If coordinates are in meters, convert to square feet
-        // If coordinates are in degrees, you'll need a conversion factor
-        $areaInSqFt = $area * 10.7639;
-
-        return round($areaInSqFt, 2);
     }
+
+    // Close the polygon
+    $x1 = $pointsInMeters[$numPoints - 1][0];
+    $y1 = $pointsInMeters[$numPoints - 1][1];
+    $x2 = $pointsInMeters[0][0];
+    $y2 = $pointsInMeters[0][1];
+    $area += ($x1 * $y2 - $x2 * $y1);
+
+    $areaInSqMeters = abs($area) / 2;
+    $areaInSqFt = $areaInSqMeters * 10.7639;
+
+    return round($areaInSqFt, 2);
+}
 }
