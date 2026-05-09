@@ -730,7 +730,7 @@ class GeoDataService
     {
         return preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($string));
     }
-    public function storeSinglePolygon($polygonsTableName, $pointsTableName, $data)
+   public function storeSinglePolygon($polygonsTableName, $pointsTableName, $data)
 {
     try {
         // Extract data from request
@@ -746,14 +746,27 @@ class GeoDataService
 
         // Auto-generate GISID if not provided
         if (!$gisid) {
-            $count = DB::table($polygonsTableName)->count();
-            $newNumber = $count + 1;
-            $gisid = 'POLYGON_' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
+            $lastRecord = DB::table($polygonsTableName)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastRecord && $lastRecord->gisid) {
+                if (preg_match('/(\d+)$/', $lastRecord->gisid, $matches)) {
+                    $lastNumber = (int)$matches[1];
+                    $newNumber = $lastNumber + 1;
+                    $prefix = substr($lastRecord->gisid, 0, strrpos($lastRecord->gisid, $matches[1]));
+                    $gisid = $prefix . $newNumber;
+                } else {
+                    $gisid = 'GIS_' . (DB::table($polygonsTableName)->count() + 1);
+                }
+            } else {
+                $gisid = 'GIS_1';
+            }
         }
 
-        // Calculate sqfeet from coordinates
+        // Calculate sqfeet from coordinates (using absolute value to fix negative)
         $sqfeet = $this->calculateSqfeetFromCoordinates($coordinates);
-        $sqfeetString = (string)$sqfeet;
+        $sqfeetString = (string)abs($sqfeet); // Force absolute value (positive)
 
         // Prepare polygon data
         $polygonData = [
@@ -765,10 +778,32 @@ class GeoDataService
             'updated_at' => now(),
         ];
 
-        // Insert new polygon
-        DB::table($polygonsTableName)->insert($polygonData);
+        // Add other properties if they exist in the data
+        if (isset($data['properties'])) {
+            foreach ($data['properties'] as $key => $value) {
+                if (!in_array($key, ['GIS_ID', 'gisid', 'coordinates', 'type'])) {
+                    $polygonData[$key] = $value;
+                }
+            }
+        }
 
-        // Handle points (centroid/midpoint)
+        // Check if polygon already exists
+        $existing = DB::table($polygonsTableName)->where('gisid', $gisid)->first();
+
+        if ($existing) {
+            // Update existing polygon
+            DB::table($polygonsTableName)
+                ->where('gisid', $gisid)
+                ->update($polygonData);
+
+            $message = "Polygon updated successfully. Area: {$sqfeetString} sq ft";
+        } else {
+            // Insert new polygon
+            DB::table($polygonsTableName)->insert($polygonData);
+            $message = "Polygon added successfully. GISID: {$gisid}, Area: {$sqfeetString} sq ft";
+        }
+
+        // ***** FIXED: ALWAYS GENERATE/UPDATE POINT *****
         $flattened = $this->flattenCoordinates('Polygon', $coordinates);
         $midpoint = $this->calculateMidpoint($flattened);
 
@@ -777,15 +812,41 @@ class GeoDataService
                 'gisid' => $gisid,
                 'type' => 'Point',
                 'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
-                'created_at' => now(),
                 'updated_at' => now(),
             ];
-            DB::table($pointsTableName)->insert($pointData);
+
+            $existingPoint = DB::table($pointsTableName)->where('gisid', $gisid)->first();
+
+            if ($existingPoint) {
+                // Update existing point
+                DB::table($pointsTableName)->where('gisid', $gisid)->update($pointData);
+            } else {
+                // Create new point
+                $pointData['created_at'] = now();
+                DB::table($pointsTableName)->insert($pointData);
+            }
+        } else {
+            // If midpoint calculation fails, use first coordinate as point
+            $firstPoint = $this->getFirstCoordinate($coordinates);
+            if ($firstPoint) {
+                $pointData = [
+                    'gisid' => $gisid,
+                    'type' => 'Point',
+                    'coordinates' => json_encode($firstPoint, JSON_NUMERIC_CHECK),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                $existingPoint = DB::table($pointsTableName)->where('gisid', $gisid)->first();
+                if (!$existingPoint) {
+                    DB::table($pointsTableName)->insert($pointData);
+                }
+            }
         }
 
         return [
             'success' => true,
-            'message' => "Polygon added successfully. GISID: {$gisid}, Area: {$sqfeetString} sq ft",
+            'message' => $message,
             'sqfeet' => $sqfeetString,
             'gisid' => $gisid
         ];
@@ -797,7 +858,26 @@ class GeoDataService
         ];
     }
 }
-   public function updateSinglePolygon($polygonsTableName, $pointsTableName, $data)
+private function getFirstCoordinate($coordinates)
+{
+    if (is_string($coordinates)) {
+        $coordinates = json_decode($coordinates, true);
+    }
+
+    // Get the outer ring
+    if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+        // Polygon with rings
+        if (isset($coordinates[0][0]) && count($coordinates[0][0]) >= 2) {
+            return [$coordinates[0][0][0], $coordinates[0][0][1]];
+        }
+    } elseif (isset($coordinates[0]) && is_array($coordinates[0]) && count($coordinates[0]) >= 2) {
+        // Simple ring
+        return [$coordinates[0][0], $coordinates[0][1]];
+    }
+
+    return null;
+}
+  public function updateSinglePolygon($polygonsTableName, $pointsTableName, $data)
 {
     try {
         // GISID is REQUIRED for updates
@@ -830,9 +910,9 @@ class GeoDataService
             ];
         }
 
-        // Calculate new sqfeet from coordinates
+        // Calculate new sqfeet from coordinates (using absolute value)
         $sqfeet = $this->calculateSqfeetFromCoordinates($coordinates);
-        $sqfeetString = (string)$sqfeet;
+        $sqfeetString = (string)abs($sqfeet); // Force positive value
 
         // Prepare polygon data for update
         $polygonData = [
@@ -847,18 +927,27 @@ class GeoDataService
             ->where('gisid', $gisid)
             ->update($polygonData);
 
-        // Update point (centroid/midpoint)
+        // ***** FIXED: ALWAYS UPDATE POINT *****
         $flattened = $this->flattenCoordinates('Polygon', $coordinates);
         $midpoint = $this->calculateMidpoint($flattened);
 
         if ($midpoint) {
-            DB::table($pointsTableName)
-                ->where('gisid', $gisid)
-                ->update([
-                    'type' => 'Point',
-                    'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
-                    'updated_at' => now(),
-                ]);
+            // Update or create point
+            $existingPoint = DB::table($pointsTableName)->where('gisid', $gisid)->first();
+
+            $pointData = [
+                'type' => 'Point',
+                'coordinates' => json_encode($midpoint, JSON_NUMERIC_CHECK),
+                'updated_at' => now(),
+            ];
+
+            if ($existingPoint) {
+                DB::table($pointsTableName)->where('gisid', $gisid)->update($pointData);
+            } else {
+                $pointData['gisid'] = $gisid;
+                $pointData['created_at'] = now();
+                DB::table($pointsTableName)->insert($pointData);
+            }
         }
 
         return [
@@ -907,51 +996,43 @@ class GeoDataService
         }
     }
 
-    private function calculateSqfeetFromCoordinates($coordinates)
-    {
-        // Decode coordinates if it's a string
-        if (is_string($coordinates)) {
-            $coordinates = json_decode($coordinates, true);
-        }
-
-        // Get the outer ring (first ring of the polygon)
-        $ring = $coordinates;
-
-        // Handle different coordinate structures
-        if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
-            // This is a polygon with rings, take the first ring (outer boundary)
-            $ring = $coordinates[0];
-        } elseif (isset($coordinates[0]) && is_array($coordinates[0]) && !isset($coordinates[0][0][0])) {
-            // This is already a ring
-            $ring = $coordinates;
-        } elseif (isset($coordinates[0][0][0])) {
-            // Multi-polygon or nested structure
-            $ring = $coordinates[0][0];
-        }
-
-        $n = count($ring);
-        if ($n < 3) {
-            return 0;
-        }
-
-        // Calculate area using Shoelace formula with Earth curvature
-        $area = 0;
-        $radius = 6371000; // Earth's radius in meters
-
-        for ($i = 0; $i < $n; $i++) {
-            $j = ($i + 1) % $n;
-
-            $lat1 = $ring[$i][1] * pi() / 180;
-            $lat2 = $ring[$j][1] * pi() / 180;
-            $lng1 = $ring[$i][0] * pi() / 180;
-            $lng2 = $ring[$j][0] * pi() / 180;
-
-            $area += ($lng2 - $lng1) * (2 + sin($lat1) + sin($lat2));
-        }
-
-        $areaSqMeters = $area * $radius * $radius / 2;
-        $areaSqFeet = $areaSqMeters * 10.7639; // Convert to square feet
-
-        return round($areaSqFeet, 2);
+    /**
+ * Simple area calculation with absolute value (no negative values)
+ *
+ * @param array|string $coordinates
+ * @return float
+ */
+private function calculateSqfeetFromCoordinates($coordinates)
+{
+    // Decode coordinates if it's a string
+    if (is_string($coordinates)) {
+        $coordinates = json_decode($coordinates, true);
     }
+
+    // Get the outer ring
+    $ring = $coordinates;
+    if (isset($coordinates[0]) && isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+        $ring = $coordinates[0];
+    }
+
+    $n = count($ring);
+    if ($n < 3) return 0;
+
+    // Calculate area using Shoelace formula
+    $area = 0;
+    for ($i = 0; $i < $n; $i++) {
+        $j = ($i + 1) % $n;
+        $area += ($ring[$i][0] * $ring[$j][1] - $ring[$j][0] * $ring[$i][1]);
+    }
+
+    // Use ABSOLUTE VALUE to ensure positive area
+    $area = abs($area) / 2;
+
+    // Convert degrees to square feet (approximate conversion)
+    // At equator, 1 degree ~ 111,319.9 meters
+    $areaSqMeters = $area * 111319.9 * 111319.9;
+    $areaSqFeet = $areaSqMeters * 10.7639;
+
+    return round($areaSqFeet, 2);
+}
 }
