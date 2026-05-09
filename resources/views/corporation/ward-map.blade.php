@@ -601,6 +601,13 @@
     .ol-attribution {
         display: none;
     }
+
+    /* Make sure map container is visible */
+    #map {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
 </style>
 @endpush
 
@@ -720,561 +727,639 @@
 
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 <script>
-$(document).ready(function() {
-    console.log("Initializing Commissioner Ward Map...");
+// Wait for DOM and OpenLayers to be fully loaded
+(function() {
+    // Function to check if OpenLayers is loaded
+    function isOpenLayersLoaded() {
+        return typeof ol !== 'undefined' && typeof ol.Map !== 'undefined';
+    }
 
-    // Data from server
-    let polygons = @json($polygons ?? []);
-    let lines = @json($lines ?? []);
-    let points = @json($points ?? []);
-    let pointDatas = @json($pointDatas ?? []);
-    let polygonDatas = @json($polygonDatas ?? []);
-    let ward = @json($ward ?? []);
+    // Main initialization function
+    function initMap() {
+        console.log("Initializing Commissioner Ward Map...");
 
-    let currentLocationMarker = null;
-    let locationWatchId = null;
-    let isLiveLocationActive = false;
-    let selectedFeature = null;
-    let routeLayer = null;
-    let highlightSource = null;
-
-    // Style Functions
-    function getPointStyle(feature) {
-        const gisid = feature.get("gisid");
-        const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
-        const polygonData = polygonDatas.find(d => d.gisid == gisid);
-        let color = "#1679AB";
-        if (polygonData && pointCount > 0) {
-            color = (polygonData.number_bill == pointCount) ? "#28a745" : "#dc3545";
+        // Check if map element exists
+        if (!document.getElementById('map')) {
+            console.error("Map element not found!");
+            return;
         }
-        return new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 7,
-                fill: new ol.style.Fill({ color: color }),
-                stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
-            }),
-            text: new ol.style.Text({
-                text: gisid ? String(gisid) : "",
-                font: "10px Arial",
-                offsetY: -12,
-                fill: new ol.style.Fill({ color: "#333" }),
-                stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
-            })
-        });
-    }
 
-    function getPolygonStyle(feature) {
-         const gisid = feature.get("gisid");
-                const sqft = feature.get("sqfeet") || "0";
+        // Data from server (passed as JSON strings to avoid parsing issues)
+        let polygons = [];
+        let lines = [];
+        let points = [];
+        let pointDatas = [];
+        let polygonDatas = [];
+        let ward = {};
 
-                const polygonData = polygonDatas.find(data => data.gisid == gisid);
+        try {
+            polygons = @json($polygons ?? []);
+            lines = @json($lines ?? []);
+            points = @json($points ?? []);
+            pointDatas = @json($pointDatas ?? []);
+            polygonDatas = @json($polygonDatas ?? []);
+            ward = @json($ward ?? []);
+            console.log("Data loaded - Polygons:", polygons.length, "Points:", points.length);
+        } catch(e) {
+            console.error("Error parsing JSON data:", e);
+        }
 
-                const color = polygonData ? "red" : "blue";
+        let currentLocationMarker = null;
+        let locationWatchId = null;
+        let isLiveLocationActive = false;
+        let selectedFeature = null;
+        let routeLayer = null;
+        let highlightSource = null;
 
-                // Get polygon center point
-                const geometry = feature.getGeometry();
-                const centerPoint = geometry.getInteriorPoint();
-
-                return [
-                    // Polygon Border Style
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: color,
-                            width: 4,
-                            lineJoin: "round",
-                            lineCap: "round"
-                        })
-                    }),
-
-                    // Label Style
-                    new ol.style.Style({
-                        geometry: centerPoint,
-
-                        text: new ol.style.Text({
-                            text: sqft + " SQFT",
-
-                            font: "bold 14px Arial",
-
-                            fill: new ol.style.Fill({
-                                color: "#ffffff"
-                            }),
-
-                            stroke: new ol.style.Stroke({
-                                color: "#000000",
-                                width: 3
-                            }),
-
-                            overflow: true,
-
-                            textAlign: "center",
-
-                            offsetY: 0
-                        }),
-
-                        image: new ol.style.Circle({
-                            radius: 4,
-
-                            fill: new ol.style.Fill({
-                                color: "yellow"
-                            }),
-
-                            stroke: new ol.style.Stroke({
-                                color: "#000",
-                                width: 1
-                            })
-                        })
-                    })
-                ];
-    }
-
-    function getLineStyle() {
-        return new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: "#ffc107", width: 2 })
-        });
-    }
-
-    function getHighlightStyle() {
-        return new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: "#ff6600", width: 4 }),
-            fill: new ol.style.Fill({ color: "rgba(255, 102, 0, 0.15)" }),
-            image: new ol.style.Circle({
-                radius: 10,
-                fill: new ol.style.Fill({ color: "#ff6600" }),
-                stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
-            })
-        });
-    }
-
-    function getHumanLocationStyle() {
-        return new ol.style.Style({
-            image: new ol.style.Circle({
-                radius: 10,
-                fill: new ol.style.Fill({ color: "#0066cc" }),
-                stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
-            })
-        });
-    }
-
-    // Layer Definitions
-    const osmLayer = new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        visible: true
-    });
-
-    const satelliteLayer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-        }),
-        visible: false
-    });
-
-    const terrainLayer = new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png'
-        }),
-        visible: false
-    });
-
-    // Drone Image Layer
-    let droneLayer = null;
-    if (ward && ward.drone_image && ward.extent_left) {
-        const imageExtent = [
-            parseFloat(ward.extent_left),
-            parseFloat(ward.extent_bottom),
-            parseFloat(ward.extent_right),
-            parseFloat(ward.extent_top)
-        ];
-        const droneImageURL = "{{ asset($ward->drone_image ?? '') }}";
-        if (droneImageURL && imageExtent[0] !== 0) {
-            droneLayer = new ol.layer.Image({
-                source: new ol.source.ImageStatic({
-                    url: droneImageURL,
-                    imageExtent: imageExtent,
-                    imageSmoothing: false
+        // Style Functions
+        function getPointStyle(feature) {
+            const gisid = feature.get("gisid");
+            const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
+            const polygonData = polygonDatas.find(d => d.gisid == gisid);
+            let color = "#1679AB";
+            if (polygonData && pointCount > 0) {
+                color = (polygonData.number_bill == pointCount) ? "#28a745" : "#dc3545";
+            }
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 7,
+                    fill: new ol.style.Fill({ color: color }),
+                    stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
                 }),
-                opacity: 0.8,
-                visible: true
+                text: new ol.style.Text({
+                    text: gisid ? String(gisid) : "",
+                    font: "10px Arial",
+                    offsetY: -12,
+                    fill: new ol.style.Fill({ color: "#333" }),
+                    stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
+                })
             });
         }
-    }
-    if (!droneLayer) {
-        droneLayer = new ol.layer.Image({
-            source: new ol.source.ImageStatic({ url: "", imageExtent: [0, 0, 0, 0] }),
-            visible: false
-        });
-    }
 
-    // Vector Sources
-    const polygonSource = new ol.source.Vector();
-    polygons.forEach(poly => {
-        try {
-            let coords = JSON.parse(poly.coordinates);
-            polygonSource.addFeature(new ol.Feature({
-                geometry: new ol.geom.Polygon(coords),
-                gisid: poly.gisid,
-                type: "Polygon",
-                 sqfeet: poly.sqfeet || "0"
-            }));
-        } catch(e) { console.error(e); }
-    });
-    const polygonLayer = new ol.layer.Vector({
-        source: polygonSource,
-        style: getPolygonStyle,
-        visible: true
-    });
+        function getPolygonStyle(feature) {
+            const gisid = feature.get("gisid");
+            const sqft = feature.get("sqfeet") || "0";
+            const polygonData = polygonDatas.find(data => data.gisid == gisid);
+            const color = polygonData ? "red" : "blue";
 
-    const lineSource = new ol.source.Vector();
-    lines.forEach(l => {
-        try {
-            let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
-            if (coords && coords.length >= 2) {
-                if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                lineSource.addFeature(new ol.Feature({
-                    geometry: new ol.geom.LineString(coords),
-                    gisid: l.gisid,
-                    type: "Line"
-                }));
-            }
-        } catch(e) { console.error(e); }
-    });
-    const lineLayer = new ol.layer.Vector({
-        source: lineSource,
-        style: getLineStyle,
-        visible: true
-    });
+            // Get polygon center point
+            const geometry = feature.getGeometry();
+            const centerPoint = geometry.getInteriorPoint();
 
-    const pointSource = new ol.source.Vector();
-    points.forEach(p => {
-        try {
-            let coords = JSON.parse(p.coordinates);
-            pointSource.addFeature(new ol.Feature({
-                geometry: new ol.geom.Point(coords),
-                gisid: p.gisid,
-                type: "Point"
-            }));
-        } catch(e) { console.error(e); }
-    });
-    const pointLayer = new ol.layer.Vector({
-        source: pointSource,
-        style: getPointStyle,
-        visible: true
-    });
+            return [
+                // Polygon Border Style
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: color,
+                        width: 4,
+                        lineJoin: "round",
+                        lineCap: "round"
+                    }),
+                    fill: new ol.style.Fill({
+                        color: "rgba(0, 0, 0, 0.05)"
+                    })
+                }),
+                // Label Style
+                new ol.style.Style({
+                    geometry: centerPoint,
+                    text: new ol.style.Text({
+                        text: sqft + " SQFT",
+                        font: "bold 14px Arial",
+                        fill: new ol.style.Fill({ color: "#ffffff" }),
+                        stroke: new ol.style.Stroke({ color: "#000000", width: 3 }),
+                        overflow: true,
+                        textAlign: "center",
+                        offsetY: 0
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 4,
+                        fill: new ol.style.Fill({ color: "yellow" }),
+                        stroke: new ol.style.Stroke({ color: "#000", width: 1 })
+                    })
+                })
+            ];
+        }
 
-    // Boundary Layer
-    let boundaryLayer = null;
-    if (ward.boundary && ward.boundary[0] && ward.boundary[0].length > 0) {
-        const boundary = ward.boundary[0];
-        const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
-        boundaryLayer = new ol.layer.Vector({
-            source: new ol.source.Vector({
-                features: [new ol.Feature({
-                    geometry: new ol.geom.Polygon([transformedBoundary])
-                })]
-            }),
-            style: new ol.style.Style({
-                stroke: new ol.style.Stroke({ color: "#ff0000", width: 2 }),
-                fill: new ol.style.Fill({ color: "rgba(255, 0, 0, 0.03)" })
-            }),
+        function getLineStyle() {
+            return new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: "#ffc107", width: 2 })
+            });
+        }
+
+        function getHighlightStyle() {
+            return new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: "#ff6600", width: 4 }),
+                fill: new ol.style.Fill({ color: "rgba(255, 102, 0, 0.15)" }),
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: new ol.style.Fill({ color: "#ff6600" }),
+                    stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
+                })
+            });
+        }
+
+        function getHumanLocationStyle() {
+            return new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: new ol.style.Fill({ color: "#0066cc" }),
+                    stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
+                })
+            });
+        }
+
+        // Layer Definitions
+        const osmLayer = new ol.layer.Tile({
+            source: new ol.source.OSM(),
             visible: true
         });
-    } else {
-        boundaryLayer = new ol.layer.Vector({ source: new ol.source.Vector(), visible: true });
-    }
 
-    // Highlight Layer
-    highlightSource = new ol.source.Vector();
-    const highlightLayer = new ol.layer.Vector({
-        source: highlightSource,
-        style: getHighlightStyle
-    });
-
-    // Location Layer
-    const locationSource = new ol.source.Vector();
-    const locationLayer = new ol.layer.Vector({
-        source: locationSource,
-        style: getHumanLocationStyle
-    });
-
-    // Route Layer
-    const routeSource = new ol.source.Vector();
-    routeLayer = new ol.layer.Vector({
-        source: routeSource,
-        style: new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: "#0066cc", width: 4, lineDash: [8, 8] })
-        })
-    });
-
-    // Set default center
-    let defaultCenter = ol.proj.fromLonLat([80.2707, 13.0827]);
-    if (ward.boundary && ward.boundary[0] && ward.boundary[0].length > 0) {
-        const center = ol.extent.getCenter(ol.proj.transformExtent(
-            [ward.boundary[0][0][0], ward.boundary[0][0][1], ward.boundary[0][2][0], ward.boundary[0][2][1]],
-            'EPSG:4326', 'EPSG:3857'
-        ));
-        defaultCenter = center;
-    }
-
-    // Initialize Map
-    const map = new ol.Map({
-        target: 'map',
-        layers: [osmLayer, satelliteLayer, terrainLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
-        view: new ol.View({
-            projection: "EPSG:3857",
-            center: defaultCenter,
-            zoom: 16
-        }),
-        controls: []
-    });
-
-    // Layer Switchers
-    $('input[name="baseLayer"]').on('change', function() {
-        const val = $(this).val();
-        osmLayer.setVisible(val === 'osm');
-        satelliteLayer.setVisible(val === 'satellite');
-        terrainLayer.setVisible(val === 'terrain');
-    });
-
-    $('#showDroneImage').on('change', (e) => droneLayer.setVisible(e.target.checked));
-    $('#showBoundary').on('change', (e) => boundaryLayer.setVisible(e.target.checked));
-    $('#showPolygons').on('change', (e) => polygonLayer.setVisible(e.target.checked));
-    $('#showLines').on('change', (e) => lineLayer.setVisible(e.target.checked));
-    $('#showPoints').on('change', (e) => pointLayer.setVisible(e.target.checked));
-
-    // Zoom Controls
-    $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
-    $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
-
-    // Search Tabs
-    $('.search-tab').on('click', function() {
-        const tab = $(this).data('tab');
-        $('.search-tab').removeClass('active');
-        $(this).addClass('active');
-        $('.search-panel').removeClass('active');
-        $(`#${tab}Panel`).addClass('active');
-        $(`#${tab}Results`).hide();
-    });
-
-    // Search Functions
-    function searchByGISID(gisid) {
-        if (!gisid) { showFlashMessage('Please enter GIS ID', 'warning'); return; }
-
-        $('#loadingSpinner').fadeIn();
-        highlightSource.clear();
-
-        let foundFeature = null;
-        polygonSource.forEachFeature(f => {
-            if (f.get('gisid') && f.get('gisid').toString() === gisid) { foundFeature = f; return true; }
+        const satelliteLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            }),
+            visible: false
         });
-        if (!foundFeature) {
-            pointSource.forEachFeature(f => {
-                if (f.get('gisid') && f.get('gisid').toString() === gisid) { foundFeature = f; return true; }
+
+        const terrainLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'https://{a-c}.tile.opentopomap.org/{z}/{x}/{y}.png'
+            }),
+            visible: false
+        });
+
+        // Drone Image Layer
+        let droneLayer = null;
+        if (ward && ward.drone_image && ward.extent_left) {
+            const imageExtent = [
+                parseFloat(ward.extent_left),
+                parseFloat(ward.extent_bottom),
+                parseFloat(ward.extent_right),
+                parseFloat(ward.extent_top)
+            ];
+            const droneImageURL = "{{ asset($ward->drone_image ?? '') }}";
+            if (droneImageURL && imageExtent[0] !== 0 && !isNaN(imageExtent[0])) {
+                droneLayer = new ol.layer.Image({
+                    source: new ol.source.ImageStatic({
+                        url: droneImageURL,
+                        imageExtent: imageExtent,
+                        imageSmoothing: false
+                    }),
+                    opacity: 0.8,
+                    visible: true
+                });
+            }
+        }
+        if (!droneLayer) {
+            droneLayer = new ol.layer.Image({
+                source: new ol.source.ImageStatic({ url: "", imageExtent: [0, 0, 0, 0] }),
+                visible: false
             });
         }
 
-        if (foundFeature) {
-            highlightSource.addFeature(foundFeature.clone());
-            map.getView().fit(foundFeature.getGeometry().getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
-            showFeatureInfo(gisid);
-            selectedFeature = foundFeature;
-            $('#routeBtn').show();
-            $('#gisidResults').hide();
-            $('#gisidSearchInput').val('');
+        // Vector Sources
+        const polygonSource = new ol.source.Vector();
+        if (polygons && polygons.length) {
+            polygons.forEach(poly => {
+                try {
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    if (coords && coords.length) {
+                        polygonSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Polygon(coords),
+                            gisid: poly.gisid,
+                            type: "Polygon",
+                            sqfeet: poly.sqfeet || "0"
+                        }));
+                    }
+                } catch(e) { console.error("Error adding polygon:", e); }
+            });
+        }
+        const polygonLayer = new ol.layer.Vector({
+            source: polygonSource,
+            style: getPolygonStyle,
+            visible: true
+        });
+
+        const lineSource = new ol.source.Vector();
+        if (lines && lines.length) {
+            lines.forEach(l => {
+                try {
+                    let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
+                    if (coords && coords.length >= 2) {
+                        if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
+                        lineSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: l.gisid,
+                            type: "Line"
+                        }));
+                    }
+                } catch(e) { console.error("Error adding line:", e); }
+            });
+        }
+        const lineLayer = new ol.layer.Vector({
+            source: lineSource,
+            style: getLineStyle,
+            visible: true
+        });
+
+        const pointSource = new ol.source.Vector();
+        if (points && points.length) {
+            points.forEach(p => {
+                try {
+                    let coords = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
+                    if (coords && coords.length === 2) {
+                        pointSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Point(coords),
+                            gisid: p.gisid,
+                            type: "Point"
+                        }));
+                    }
+                } catch(e) { console.error("Error adding point:", e); }
+            });
+        }
+        const pointLayer = new ol.layer.Vector({
+            source: pointSource,
+            style: getPointStyle,
+            visible: true
+        });
+
+        // Boundary Layer
+        let boundaryLayer = null;
+        if (ward && ward.boundary && ward.boundary[0] && ward.boundary[0].length > 0) {
+            try {
+                const boundary = ward.boundary[0];
+                const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
+                boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Polygon([transformedBoundary])
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: "#ff0000", width: 2 }),
+                        fill: new ol.style.Fill({ color: "rgba(255, 0, 0, 0.03)" })
+                    }),
+                    visible: true
+                });
+            } catch(e) {
+                console.error("Error creating boundary layer:", e);
+                boundaryLayer = new ol.layer.Vector({ source: new ol.source.Vector(), visible: true });
+            }
         } else {
-            showFlashMessage(`GIS ID "${gisid}" not found`, "error");
-            $('#gisidResults').html('<div class="search-result-item text-danger">No results found</div>').show();
-            setTimeout(() => $('#gisidResults').fadeOut(), 2000);
+            boundaryLayer = new ol.layer.Vector({ source: new ol.source.Vector(), visible: true });
         }
-        $('#loadingSpinner').fadeOut();
-    }
 
-    function searchByAssessment(assessmentNo) {
-        if (!assessmentNo) { showFlashMessage('Please enter Assessment Number', 'warning'); return; }
+        // Highlight Layer
+        highlightSource = new ol.source.Vector();
+        const highlightLayer = new ol.layer.Vector({
+            source: highlightSource,
+            style: getHighlightStyle
+        });
 
-        $('#loadingSpinner').fadeIn();
-        highlightSource.clear();
+        // Location Layer
+        const locationSource = new ol.source.Vector();
+        const locationLayer = new ol.layer.Vector({
+            source: locationSource,
+            style: getHumanLocationStyle
+        });
 
-        const pointData = pointDatas.find(d => d.assessment == assessmentNo);
-        if (pointData && pointData.point_gisid) {
+        // Route Layer
+        const routeSource = new ol.source.Vector();
+        routeLayer = new ol.layer.Vector({
+            source: routeSource,
+            style: new ol.style.Style({
+                stroke: new ol.style.Stroke({ color: "#0066cc", width: 4, lineDash: [8, 8] })
+            })
+        });
+
+        // Set default center - Chennai coordinates as fallback
+        let defaultCenter = ol.proj.fromLonLat([80.2707, 13.0827]);
+        if (ward && ward.boundary && ward.boundary[0] && ward.boundary[0].length > 0) {
+            try {
+                const boundary = ward.boundary[0];
+                const lons = boundary.map(pt => pt[0]);
+                const lats = boundary.map(pt => pt[1]);
+                const centerLon = (Math.min(...lons) + Math.max(...lons)) / 2;
+                const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+                defaultCenter = ol.proj.fromLonLat([centerLon, centerLat]);
+            } catch(e) {
+                console.error("Error calculating center from boundary:", e);
+            }
+        }
+
+        // Initialize Map
+        const map = new ol.Map({
+            target: 'map',
+            layers: [osmLayer, satelliteLayer, terrainLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
+            view: new ol.View({
+                projection: "EPSG:3857",
+                center: defaultCenter,
+                zoom: 16
+            }),
+            controls: []
+        });
+
+        console.log("Map initialized successfully");
+
+        // Layer Switchers
+        $('input[name="baseLayer"]').on('change', function() {
+            const val = $(this).val();
+            osmLayer.setVisible(val === 'osm');
+            satelliteLayer.setVisible(val === 'satellite');
+            terrainLayer.setVisible(val === 'terrain');
+        });
+
+        $('#showDroneImage').on('change', (e) => droneLayer.setVisible(e.target.checked));
+        $('#showBoundary').on('change', (e) => boundaryLayer.setVisible(e.target.checked));
+        $('#showPolygons').on('change', (e) => polygonLayer.setVisible(e.target.checked));
+        $('#showLines').on('change', (e) => lineLayer.setVisible(e.target.checked));
+        $('#showPoints').on('change', (e) => pointLayer.setVisible(e.target.checked));
+
+        // Zoom Controls
+        $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
+        $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
+
+        // Search Tabs
+        $('.search-tab').on('click', function() {
+            const tab = $(this).data('tab');
+            $('.search-tab').removeClass('active');
+            $(this).addClass('active');
+            $('.search-panel').removeClass('active');
+            $(`#${tab}Panel`).addClass('active');
+            $(`#${tab}Results`).hide();
+        });
+
+        // Search Functions
+        function searchByGISID(gisid) {
+            if (!gisid) { showFlashMessage('Please enter GIS ID', 'warning'); return; }
+
+            $('#loadingSpinner').fadeIn();
+            highlightSource.clear();
+
             let foundFeature = null;
-            pointSource.forEachFeature(f => {
-                if (f.get('gisid') && f.get('gisid').toString() === pointData.point_gisid) {
-                    foundFeature = f;
-                    return true;
-                }
+            polygonSource.forEachFeature(f => {
+                if (f.get('gisid') && f.get('gisid').toString() === gisid.toString()) { foundFeature = f; return true; }
             });
+            if (!foundFeature) {
+                pointSource.forEachFeature(f => {
+                    if (f.get('gisid') && f.get('gisid').toString() === gisid.toString()) { foundFeature = f; return true; }
+                });
+            }
+
             if (foundFeature) {
                 highlightSource.addFeature(foundFeature.clone());
                 map.getView().fit(foundFeature.getGeometry().getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
-                showFeatureInfo(pointData.point_gisid);
+                showFeatureInfo(gisid);
                 selectedFeature = foundFeature;
                 $('#routeBtn').show();
-                $('#assessmentResults').hide();
-                $('#assessmentSearchInput').val('');
+                $('#gisidResults').hide();
+                $('#gisidSearchInput').val('');
             } else {
-                showFlashMessage(`Assessment "${assessmentNo}" not found on map`, "error");
+                showFlashMessage(`GIS ID "${gisid}" not found`, "error");
+                $('#gisidResults').html('<div class="search-result-item text-danger">No results found</div>').show();
+                setTimeout(() => $('#gisidResults').fadeOut(), 2000);
             }
-        } else {
-            showFlashMessage(`Assessment "${assessmentNo}" not found`, "error");
-        }
-        $('#loadingSpinner').fadeOut();
-    }
-
-    function showFeatureInfo(gisid) {
-        const polygonData = polygonDatas.find(d => d.gisid == gisid);
-        const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
-        const pointData = pointDatas.find(d => d.point_gisid == gisid);
-
-        let html = `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
-        if (polygonData) {
-            html += `
-                <div class="info-row"><span class="info-label">Building:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Shops:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Completed:</span><span class="info-value">${pointCount}</span></div>
-                <div class="info-row"><span class="info-label">Status:</span><span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}</span></div>
-            `;
-        }
-        if (pointData) {
-            html += `
-                <div class="info-row"><span class="info-label">Assessment:</span><span class="info-value">${pointData.assessment || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${pointData.owner_name || 'N/A'}</span></div>
-                <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${pointData.phone_number || 'N/A'}</span></div>
-            `;
-        }
-        $('#featureDetails').html(html);
-        $('#featureInfo').fadeIn();
-    }
-
-    // Live Location
-    function toggleLiveLocation() {
-        if (isLiveLocationActive) {
-            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
-            locationSource.clear();
-            currentLocationMarker = null;
-            isLiveLocationActive = false;
-            $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot me-2"></i>Live Location');
-            showFlashMessage('Location tracking stopped', 'info');
-        } else {
-            if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
-            isLiveLocationActive = true;
-            $('#liveLocationBtn').addClass('active').html('<i class="fas fa-stop me-2"></i>Stop Location');
-
-            locationWatchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]);
-                    locationSource.clear();
-                    currentLocationMarker = new ol.Feature({ geometry: new ol.geom.Point(coords) });
-                    locationSource.addFeature(currentLocationMarker);
-                },
-                (error) => { showFlashMessage('Location error: ' + error.message, 'error'); toggleLiveLocation(); },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        }
-    }
-
-    // Calculate Route - Only when user clicks the route button
-    async function calculateRoute() {
-        if (!selectedFeature) {
-            showFlashMessage('Please select a property first by searching or clicking on map', 'warning');
-            return;
-        }
-        if (!currentLocationMarker) {
-            showFlashMessage('Please enable Live Location first', 'warning');
-            return;
+            $('#loadingSpinner').fadeOut();
         }
 
-        $('#loadingSpinner').fadeIn();
-        routeSource.clear();
+        function searchByAssessment(assessmentNo) {
+            if (!assessmentNo) { showFlashMessage('Please enter Assessment Number', 'warning'); return; }
 
-        try {
-            const startCoord = ol.proj.toLonLat(currentLocationMarker.getGeometry().getCoordinates());
-            const targetGeom = selectedFeature.getGeometry();
-            const endCoord = targetGeom.getType() === 'Point' ?
-                ol.proj.toLonLat(targetGeom.getCoordinates()) :
-                ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
+            $('#loadingSpinner').fadeIn();
+            highlightSource.clear();
 
-            const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson&steps=true`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.code === 'Ok' && data.routes.length > 0) {
-                const route = data.routes[0];
-                const coords = route.geometry.coordinates.map(c => ol.proj.fromLonLat(c));
-                routeSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords) }));
-
-                const distance = route.distance < 1000 ? route.distance.toFixed(0) + ' meters' : (route.distance / 1000).toFixed(2) + ' km';
-                const duration = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
-
-                let stepsHtml = '';
-                route.legs[0].steps.forEach((step, i) => {
-                    if (step.maneuver.instruction) {
-                        stepsHtml += `<div class="direction-step"><div class="step-number">${i + 1}</div><div><div class="step-instruction">${step.maneuver.instruction}</div><div class="step-distance">${step.distance.toFixed(0)} m</div></div></div>`;
+            const pointData = pointDatas.find(d => d.assessment == assessmentNo);
+            if (pointData && pointData.point_gisid) {
+                let foundFeature = null;
+                pointSource.forEachFeature(f => {
+                    if (f.get('gisid') && f.get('gisid').toString() === pointData.point_gisid.toString()) {
+                        foundFeature = f;
+                        return true;
                     }
                 });
-
-                $('#routeSummary').html(`<strong>Distance:</strong> ${distance}<br><strong>Duration:</strong> ${duration}`);
-                $('#directionsList').html(stepsHtml);
-                $('#routeInfo').fadeIn();
-                map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
+                if (foundFeature) {
+                    highlightSource.addFeature(foundFeature.clone());
+                    map.getView().fit(foundFeature.getGeometry().getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
+                    showFeatureInfo(pointData.point_gisid);
+                    selectedFeature = foundFeature;
+                    $('#routeBtn').show();
+                    $('#assessmentResults').hide();
+                    $('#assessmentSearchInput').val('');
+                } else {
+                    showFlashMessage(`Assessment "${assessmentNo}" not found on map`, "error");
+                }
             } else {
-                showFlashMessage('No route found', 'error');
+                showFlashMessage(`Assessment "${assessmentNo}" not found`, "error");
             }
-        } catch (error) {
-            showFlashMessage('Error calculating route', 'error');
+            $('#loadingSpinner').fadeOut();
         }
-        $('#loadingSpinner').fadeOut();
+
+        function showFeatureInfo(gisid) {
+            const polygonData = polygonDatas.find(d => d.gisid == gisid);
+            const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
+            const pointData = pointDatas.find(d => d.point_gisid == gisid);
+
+            let html = `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+            if (polygonData) {
+                html += `
+                    <div class="info-row"><span class="info-label">Building:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Shops:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Completed:</span><span class="info-value">${pointCount}</span></div>
+                    <div class="info-row"><span class="info-label">Status:</span><span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}</span></div>
+                `;
+            }
+            if (pointData) {
+                html += `
+                    <div class="info-row"><span class="info-label">Assessment:</span><span class="info-value">${pointData.assessment || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${pointData.owner_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${pointData.phone_number || 'N/A'}</span></div>
+                `;
+            }
+            $('#featureDetails').html(html);
+            $('#featureInfo').fadeIn();
+        }
+
+        // Live Location
+        function toggleLiveLocation() {
+            if (isLiveLocationActive) {
+                if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+                locationSource.clear();
+                currentLocationMarker = null;
+                isLiveLocationActive = false;
+                $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot me-2"></i>Live Location');
+                showFlashMessage('Location tracking stopped', 'info');
+            } else {
+                if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+                isLiveLocationActive = true;
+                $('#liveLocationBtn').addClass('active').html('<i class="fas fa-stop me-2"></i>Stop Location');
+
+                locationWatchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]);
+                        locationSource.clear();
+                        currentLocationMarker = new ol.Feature({ geometry: new ol.geom.Point(coords) });
+                        locationSource.addFeature(currentLocationMarker);
+                    },
+                    (error) => { showFlashMessage('Location error: ' + error.message, 'error'); toggleLiveLocation(); },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            }
+        }
+
+        // Calculate Route
+        async function calculateRoute() {
+            if (!selectedFeature) {
+                showFlashMessage('Please select a property first by searching or clicking on map', 'warning');
+                return;
+            }
+            if (!currentLocationMarker) {
+                showFlashMessage('Please enable Live Location first', 'warning');
+                return;
+            }
+
+            $('#loadingSpinner').fadeIn();
+            routeSource.clear();
+
+            try {
+                const startCoord = ol.proj.toLonLat(currentLocationMarker.getGeometry().getCoordinates());
+                const targetGeom = selectedFeature.getGeometry();
+                const endCoord = targetGeom.getType() === 'Point' ?
+                    ol.proj.toLonLat(targetGeom.getCoordinates()) :
+                    ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
+
+                const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson&steps=true`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.code === 'Ok' && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates.map(c => ol.proj.fromLonLat(c));
+                    routeSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords) }));
+
+                    const distance = route.distance < 1000 ? route.distance.toFixed(0) + ' meters' : (route.distance / 1000).toFixed(2) + ' km';
+                    const duration = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
+
+                    let stepsHtml = '';
+                    if (route.legs && route.legs[0] && route.legs[0].steps) {
+                        route.legs[0].steps.forEach((step, i) => {
+                            if (step.maneuver && step.maneuver.instruction) {
+                                stepsHtml += `<div class="direction-step"><div class="step-number">${i + 1}</div><div><div class="step-instruction">${step.maneuver.instruction}</div><div class="step-distance">${step.distance.toFixed(0)} m</div></div></div>`;
+                            }
+                        });
+                    }
+
+                    $('#routeSummary').html(`<strong>Distance:</strong> ${distance}<br><strong>Duration:</strong> ${duration}`);
+                    $('#directionsList').html(stepsHtml || '<div class="text-muted">No step-by-step directions available</div>');
+                    $('#routeInfo').fadeIn();
+                    map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
+                } else {
+                    showFlashMessage('No route found', 'error');
+                }
+            } catch (error) {
+                console.error("Route error:", error);
+                showFlashMessage('Error calculating route', 'error');
+            }
+            $('#loadingSpinner').fadeOut();
+        }
+
+        // Map Click Handler
+        map.on('click', function(evt) {
+            const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+            if (feature && feature.get('gisid')) {
+                const gisid = feature.get('gisid');
+                highlightSource.clear();
+                highlightSource.addFeature(feature.clone());
+                showFeatureInfo(gisid);
+                selectedFeature = feature;
+                $('#routeBtn').show();
+            } else {
+                $('#featureInfo').fadeOut();
+                highlightSource.clear();
+                selectedFeature = null;
+                $('#routeBtn').hide();
+            }
+        });
+
+        // Button Events
+        $('#gisidSearchBtn').on('click', () => searchByGISID($('#gisidSearchInput').val().trim()));
+        $('#gisidSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByGISID($('#gisidSearchInput').val().trim()));
+        $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
+        $('#assessmentSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByAssessment($('#assessmentSearchInput').val().trim()));
+        $('#liveLocationBtn').on('click', toggleLiveLocation);
+        $('#routeBtn').on('click', calculateRoute);
+        $('#closeFeatureInfo').on('click', () => $('#featureInfo').fadeOut());
+        $('#closeRouteInfo').on('click', () => $('#routeInfo').fadeOut());
+
+        // Flash Message
+        function showFlashMessage(message, type = 'info') {
+            const alertClass = type === 'error' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info');
+            const flashHtml = `<div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 100px; right: 20px; z-index: 9999; min-width: 280px; max-width: 400px;">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+            $('body').append(flashHtml);
+            setTimeout(() => $('.alert').alert('close'), 4000);
+        }
+
+        // Auto-fit map to show all features
+        setTimeout(() => {
+            try {
+                const extent = ol.extent.createEmpty();
+                let hasExtent = false;
+
+                polygonSource.forEachFeature(f => {
+                    ol.extent.extend(extent, f.getGeometry().getExtent());
+                    hasExtent = true;
+                });
+                pointSource.forEachFeature(f => {
+                    ol.extent.extend(extent, f.getGeometry().getExtent());
+                    hasExtent = true;
+                });
+
+                if (hasExtent && extent[0] !== Infinity && extent[0] !== -Infinity) {
+                    map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
+                }
+            } catch(e) {
+                console.log("Could not auto-fit extent, using default view");
+            }
+        }, 800);
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            setTimeout(function() {
+                map.updateSize();
+            }, 200);
+        });
+
+        console.log("Commissioner Ward Map Loaded Successfully");
     }
 
-    // Map Click Handler - No auto route prompt
-    map.on('click', function(evt) {
-        const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-        if (feature && feature.get('gisid')) {
-            const gisid = feature.get('gisid');
-            highlightSource.clear();
-            highlightSource.addFeature(feature.clone());
-            showFeatureInfo(gisid);
-            selectedFeature = feature;
-            $('#routeBtn').show();
-        } else {
-            $('#featureInfo').fadeOut();
-            highlightSource.clear();
-            selectedFeature = null;
-            $('#routeBtn').hide();
-        }
-    });
-
-    // Button Events
-    $('#gisidSearchBtn').on('click', () => searchByGISID($('#gisidSearchInput').val().trim()));
-    $('#gisidSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByGISID($('#gisidSearchInput').val().trim()));
-    $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
-    $('#assessmentSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByAssessment($('#assessmentSearchInput').val().trim()));
-    $('#liveLocationBtn').on('click', toggleLiveLocation);
-    $('#routeBtn').on('click', calculateRoute);
-    $('#closeFeatureInfo').on('click', () => $('#featureInfo').fadeOut());
-    $('#closeRouteInfo').on('click', () => $('#routeInfo').fadeOut());
-
-    // Flash Message
-    function showFlashMessage(message, type = 'info') {
-        const alertClass = type === 'error' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info');
-        const flashHtml = `<div class="alert ${alertClass} alert-dismissible fade show position-fixed" style="top: 100px; right: 20px; z-index: 9999; min-width: 280px; max-width: 400px;">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
-        $('body').append(flashHtml);
-        setTimeout(() => $('.alert').alert('close'), 4000);
+    // Wait for OpenLayers to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure OpenLayers is fully loaded
+            setTimeout(function() {
+                if (isOpenLayersLoaded()) {
+                    initMap();
+                } else {
+                    console.error("OpenLayers not loaded after DOMContentLoaded");
+                    document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load. Please check your internet connection.</div>';
+                }
+            }, 500);
+        });
+    } else {
+        setTimeout(function() {
+            if (isOpenLayersLoaded()) {
+                initMap();
+            } else {
+                console.error("OpenLayers not loaded");
+                const mapEl = document.getElementById('map');
+                if (mapEl) {
+                    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load. Please check your internet connection.</div>';
+                }
+            }
+        }, 500);
     }
-
-    // Auto-fit map to show all features
-    setTimeout(() => {
-        const extent = ol.extent.createEmpty();
-        polygonSource.forEachFeature(f => ol.extent.extend(extent, f.getGeometry().getExtent()));
-        pointSource.forEachFeature(f => ol.extent.extend(extent, f.getGeometry().getExtent()));
-        if (!ol.extent.isEmpty(extent) && extent[0] !== Infinity) {
-            map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
-        }
-    }, 800);
-
-    console.log("Commissioner Ward Map Loaded Successfully");
-});
+})();
 </script>
 @endpush
