@@ -41,7 +41,6 @@
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
         transition: all 0.3s ease;
-        pointer-events: auto;
     }
 
     .search-container h4 {
@@ -102,8 +101,11 @@
         font-size: 14px;
         transition: all 0.3s;
         background: white;
-        pointer-events: auto;
-        cursor: text;
+        cursor: text !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        pointer-events: auto !important;
+        opacity: 1 !important;
         z-index: 1002;
         position: relative;
     }
@@ -123,7 +125,6 @@
         cursor: pointer;
         transition: all 0.3s;
         font-weight: 500;
-        pointer-events: auto;
     }
 
     .search-box button:hover {
@@ -167,7 +168,6 @@
         width: 190px;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
-        pointer-events: auto;
     }
 
     .layer-switcher h4 {
@@ -221,7 +221,7 @@
         color: #333;
     }
 
-    /* Feature Info Panel */
+    /* Feature Info Panel - Now with tabs for Polygon and Shops */
     .feature-info {
         position: absolute;
         bottom: 20px;
@@ -231,12 +231,13 @@
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         padding: 16px;
         z-index: 1001;
-        max-width: 320px;
-        min-width: 260px;
+        max-width: 400px;
+        min-width: 320px;
         display: none;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
-        pointer-events: auto;
+        max-height: 80vh;
+        overflow-y: auto;
     }
 
     .feature-info h4 {
@@ -267,6 +268,38 @@
         color: white;
     }
 
+    .info-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 8px;
+    }
+
+    .info-tab {
+        padding: 6px 12px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-weight: 500;
+        color: #666;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .info-tab.active {
+        background: linear-gradient(135deg, #D4A13E, #E86A5F);
+        color: white;
+    }
+
+    .info-tab-content {
+        display: none;
+    }
+
+    .info-tab-content.active {
+        display: block;
+    }
+
     .info-row {
         margin-bottom: 8px;
         font-size: 12px;
@@ -277,7 +310,7 @@
     .info-label {
         font-weight: 600;
         color: #0B2B40;
-        width: 100px;
+        width: 120px;
         font-size: 11px;
     }
 
@@ -285,6 +318,52 @@
         color: #555;
         flex: 1;
         word-break: break-word;
+    }
+
+    /* Shops list styles */
+    .shop-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .shop-item {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 3px solid #D4A13E;
+    }
+
+    .shop-item h6 {
+        margin: 0 0 8px 0;
+        color: #0B2B40;
+        font-weight: 600;
+    }
+
+    .shop-detail-row {
+        font-size: 11px;
+        margin-bottom: 4px;
+        display: flex;
+    }
+
+    .shop-detail-label {
+        width: 100px;
+        font-weight: 500;
+        color: #666;
+    }
+
+    .shop-detail-value {
+        color: #333;
+        flex: 1;
+    }
+
+    .badge-shop {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10px;
+        background: #1A6B6E;
+        color: white;
     }
 
     /* Zoom Controls */
@@ -299,7 +378,6 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        pointer-events: auto;
     }
 
     .zoom-btn {
@@ -339,7 +417,6 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         transition: all 0.3s;
         display: none;
-        pointer-events: auto;
     }
 
     .route-btn:hover {
@@ -351,7 +428,7 @@
     .live-location-btn {
         position: absolute;
         bottom: 20px;
-        left: 200px;
+        left: 80px;
         z-index: 1001;
         background: linear-gradient(135deg, #1A6B6E, #0B2B40);
         color: white;
@@ -363,7 +440,6 @@
         font-weight: 500;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
         transition: all 0.3s;
-        pointer-events: auto;
     }
 
     .live-location-btn:hover {
@@ -390,7 +466,6 @@
         display: none;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(212, 161, 62, 0.3);
-        pointer-events: auto;
     }
 
     .route-info h4 {
@@ -539,6 +614,7 @@
             right: 10px;
             left: 10px;
             max-width: none;
+            max-height: 60vh;
         }
 
         .zoom-controls {
@@ -577,73 +653,43 @@
         }
     }
 
-    /* Projector / Large Display */
-    @media (min-width: 1600px) {
-        .map-wrapper {
-            height: calc(100vh - 80px);
-        }
-
-        .search-container {
-            width: 400px;
-            padding: 20px;
-        }
-
-        .search-container h4 {
-            font-size: 18px;
-        }
-
-        .search-tab {
-            font-size: 14px;
-            padding: 10px 15px;
-        }
-
-        .search-box input {
-            font-size: 15px;
-            padding: 12px 16px;
-        }
-
-        .layer-switcher {
-            width: 220px;
-            padding: 18px;
-        }
-
-        .feature-info {
-            max-width: 380px;
-        }
+    /* Fix for input fields - CRITICAL */
+    input,
+    textarea,
+    button,
+    .search-container,
+    .search-box input,
+    .search-box button,
+    .layer-switcher,
+    .zoom-controls button,
+    .live-location-btn,
+    .route-btn {
+        pointer-events: auto !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        user-select: auto !important;
     }
 
     /* Ensure map canvas doesn't block interaction */
-    .ol-viewport {
-        pointer-events: auto;
-    }
-
     .ol-viewport canvas {
         pointer-events: auto;
     }
 
-    /* Make sure map container is visible */
+    /* Make sure the map wrapper allows interaction with UI elements */
+    .map-wrapper {
+        pointer-events: auto;
+    }
+
+    /* Fix for any transform that might affect input */
+    .search-box input {
+        transform: none !important;
+        -webkit-transform: none !important;
+    }
+
     #map {
         width: 100%;
         height: 100%;
         display: block;
-    }
-
-    /* Fix for input fields being blocked */
-    input, button, .search-container, .layer-switcher, .zoom-controls, .live-location-btn, .route-btn, .feature-info, .route-info {
-        pointer-events: auto !important;
-    }
-
-    /* Ensure search inputs are clickable */
-    .search-box input {
-        pointer-events: auto !important;
-        cursor: text !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-
-    /* Fix for any overlay that might block inputs */
-    .map-wrapper > *:not(#map) {
-        pointer-events: auto;
     }
 </style>
 @endpush
@@ -742,7 +788,28 @@
                 <div class="feature-info" id="featureInfo">
                     <button class="close-btn" id="closeFeatureInfo">&times;</button>
                     <h4><i class="fas fa-info-circle me-2"></i>Property Details</h4>
-                    <div id="featureDetails"></div>
+
+                    <!-- Tabs -->
+                    <div class="info-tabs">
+                        <button class="info-tab active" data-tab="buildingDetails">Building Details</button>
+                        <button class="info-tab" data-tab="shopsList">Shops List</button>
+                        <button class="info-tab" data-tab="assessmentsList">Assessments</button>
+                    </div>
+
+                    <!-- Building Details Tab -->
+                    <div class="info-tab-content active" id="buildingDetails">
+                        <div id="featureDetails"></div>
+                    </div>
+
+                    <!-- Shops List Tab -->
+                    <div class="info-tab-content" id="shopsList">
+                        <div id="shopsDetails"></div>
+                    </div>
+
+                    <!-- Assessments List Tab -->
+                    <div class="info-tab-content" id="assessmentsList">
+                        <div id="assessmentsDetails"></div>
+                    </div>
                 </div>
 
                 <div class="route-info" id="routeInfo">
@@ -765,43 +832,48 @@
 @push('scripts')
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-// Wait for DOM and OpenLayers to be fully loaded
+// Fix for input typing issue - ensure inputs can receive keyboard events
+document.addEventListener('DOMContentLoaded', function() {
+    // Force remove any potential event listeners that might block typing
+    var gisidInput = document.getElementById('gisidSearchInput');
+    var assessmentInput = document.getElementById('assessmentSearchInput');
+
+    if (gisidInput) {
+        // Remove any existing event listeners that might interfere
+        var newGisidInput = gisidInput.cloneNode(true);
+        gisidInput.parentNode.replaceChild(newGisidInput, gisidInput);
+        document.getElementById('gisidSearchInput');
+    }
+
+    if (assessmentInput) {
+        var newAssessmentInput = assessmentInput.cloneNode(true);
+        assessmentInput.parentNode.replaceChild(newAssessmentInput, assessmentInput);
+    }
+
+    console.log("Input fields reset for typing");
+});
+
+// Main initialization
 (function() {
-    // Function to check if OpenLayers is loaded
     function isOpenLayersLoaded() {
         return typeof ol !== 'undefined' && typeof ol.Map !== 'undefined';
     }
 
-    // Main initialization function
     function initMap() {
         console.log("Initializing Commissioner Ward Map...");
 
-        // Check if map element exists
         if (!document.getElementById('map')) {
             console.error("Map element not found!");
             return;
         }
 
-        // Test if inputs are accessible
-        var testInput = document.getElementById('gisidSearchInput');
-        if (testInput) {
-            console.log("GIS ID input found and accessible");
-            testInput.addEventListener('focus', function() {
-                console.log("GIS ID input focused");
-            });
-            testInput.addEventListener('click', function() {
-                console.log("GIS ID input clicked");
-            });
-        } else {
-            console.error("GIS ID input not found!");
-        }
-
-        // Data from server (passed as JSON strings to avoid parsing issues)
+        // Data from server
         let polygons = [];
         let lines = [];
         let points = [];
         let pointDatas = [];
         let polygonDatas = [];
+        let shopDatas = [];
         let ward = {};
 
         try {
@@ -810,8 +882,9 @@
             points = @json($points ?? []);
             pointDatas = @json($pointDatas ?? []);
             polygonDatas = @json($polygonDatas ?? []);
+            shopDatas = @json($shopDatas ?? []);
             ward = @json($ward ?? []);
-            console.log("Data loaded - Polygons:", polygons.length, "Points:", points.length);
+            console.log("Data loaded - Polygons:", polygons.length, "Points:", points.length, "Shops:", shopDatas.length);
         } catch(e) {
             console.error("Error parsing JSON data:", e);
         }
@@ -820,8 +893,31 @@
         let locationWatchId = null;
         let isLiveLocationActive = false;
         let selectedFeature = null;
-        let routeLayer = null;
+        let currentGisid = null;
         let highlightSource = null;
+
+        // Helper function to get shops by point_data_id or gisid
+        function getShopsByPointGisid(pointGisid) {
+            // First find point_data entries with this point_gisid
+            const relatedPoints = pointDatas.filter(pd => pd.point_gisid == pointGisid);
+            const pointDataIds = relatedPoints.map(pd => pd.id);
+
+            // Then find shops that match these point_data_ids
+            return shopDatas.filter(shop => pointDataIds.includes(shop.point_data_id));
+        }
+
+        function getShopsByBuildingGisid(gisid) {
+            // Find all point_data entries with this building GIS ID
+            const buildingPoints = pointDatas.filter(pd => pd.point_gisid == gisid);
+            const pointDataIds = buildingPoints.map(pd => pd.id);
+
+            // Get all shops for these point_data entries
+            return shopDatas.filter(shop => pointDataIds.includes(shop.point_data_id));
+        }
+
+        function getAssessmentsByGisid(gisid) {
+            return pointDatas.filter(pd => pd.point_gisid == gisid);
+        }
 
         // Style Functions
         function getPointStyle(feature) {
@@ -854,12 +950,10 @@
             const polygonData = polygonDatas.find(data => data.gisid == gisid);
             const color = polygonData ? "red" : "blue";
 
-            // Get polygon center point
             const geometry = feature.getGeometry();
             const centerPoint = geometry.getInteriorPoint();
 
             return [
-                // Polygon Border Style
                 new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: color,
@@ -871,7 +965,6 @@
                         color: "rgba(0, 0, 0, 0.05)"
                     })
                 }),
-                // Label Style
                 new ol.style.Style({
                     geometry: centerPoint,
                     text: new ol.style.Text({
@@ -1077,14 +1170,14 @@
 
         // Route Layer
         const routeSource = new ol.source.Vector();
-        routeLayer = new ol.layer.Vector({
+        const routeLayer = new ol.layer.Vector({
             source: routeSource,
             style: new ol.style.Style({
                 stroke: new ol.style.Stroke({ color: "#0066cc", width: 4, lineDash: [8, 8] })
             })
         });
 
-        // Set default center - Chennai coordinates as fallback
+        // Set default center
         let defaultCenter = ol.proj.fromLonLat([80.2707, 13.0827]);
         if (ward && ward.boundary && ward.boundary[0] && ward.boundary[0].length > 0) {
             try {
@@ -1141,6 +1234,141 @@
             $(`#${tab}Results`).hide();
         });
 
+        // Function to display full property info including shops
+        function displayFullPropertyInfo(gisid) {
+            currentGisid = gisid;
+
+            const polygonData = polygonDatas.find(d => d.gisid == gisid);
+            const assessments = getAssessmentsByGisid(gisid);
+            const shops = getShopsByBuildingGisid(gisid);
+            const pointCount = assessments.length;
+
+            // Building Details HTML
+            let buildingHtml = `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+            if (polygonData) {
+                buildingHtml += `
+                    <div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value">${polygonData.building_usage || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Construction Type:</span><span class="info-value">${polygonData.construction_type || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Road Name:</span><span class="info-value">${polygonData.road_name || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Shops/Units:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Assessments Done:</span><span class="info-value">${pointCount}</span></div>
+                    <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>
+                    <div class="info-row"><span class="info-label">Zone:</span><span class="info-value">${polygonData.zone || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">UGD:</span><span class="info-value">${polygonData.ugd || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Rainwater Harvesting:</span><span class="info-value">${polygonData.rainwater_harvesting || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">CCTV:</span><span class="info-value">${polygonData.cctv || 'N/A'}</span></div>
+                    <div class="info-row"><span class="info-label">Status:</span><span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}</span></div>
+                `;
+            } else {
+                buildingHtml += `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data available for this GIS ID</span></div>`;
+            }
+            $('#featureDetails').html(buildingHtml);
+
+            // Shops List HTML
+            let shopsHtml = '';
+            if (shops && shops.length > 0) {
+                shopsHtml = `<div class="shop-list">`;
+                shops.forEach((shop, index) => {
+                    shopsHtml += `
+                        <div class="shop-item">
+                            <h6><span class="badge-shop">Shop ${index + 1}</span> ${shop.shop_name || 'Unnamed Shop'}</h6>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Floor:</span>
+                                <span class="shop-detail-value">${shop.shop_floor || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Owner Name:</span>
+                                <span class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Category:</span>
+                                <span class="shop-detail-value">${shop.shop_category || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Mobile:</span>
+                                <span class="shop-detail-value">${shop.shop_mobile || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">License No:</span>
+                                <span class="shop-detail-value">${shop.license || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Employees:</span>
+                                <span class="shop-detail-value">${shop.number_of_employee || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                shopsHtml += `</div>`;
+            } else {
+                shopsHtml = `<div class="text-muted text-center p-3">No shops found for this building</div>`;
+            }
+            $('#shopsDetails').html(shopsHtml);
+
+            // Assessments List HTML
+            let assessmentsHtml = '';
+            if (assessments && assessments.length > 0) {
+                assessmentsHtml = `<div class="shop-list">`;
+                assessments.forEach((assessment, index) => {
+                    assessmentsHtml += `
+                        <div class="shop-item">
+                            <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Owner Name:</span>
+                                <span class="shop-detail-value">${assessment.owner_name || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Present Owner:</span>
+                                <span class="shop-detail-value">${assessment.present_owner_name || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Phone:</span>
+                                <span class="shop-detail-value">${assessment.phone_number || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Floor:</span>
+                                <span class="shop-detail-value">${assessment.floor || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Bill Usage:</span>
+                                <span class="shop-detail-value">${assessment.bill_usage || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Door No:</span>
+                                <span class="shop-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Water Tax:</span>
+                                <span class="shop-detail-value">${assessment.water_tax || 'N/A'}</span>
+                            </div>
+                            <div class="shop-detail-row">
+                                <span class="shop-detail-label">Half Year Tax:</span>
+                                <span class="shop-detail-value">${assessment.halfyeartax || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                assessmentsHtml += `</div>`;
+            } else {
+                assessmentsHtml = `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
+            }
+            $('#assessmentsDetails').html(assessmentsHtml);
+
+            $('#featureInfo').fadeIn();
+        }
+
+        // Tab switching
+        $('.info-tab').on('click', function() {
+            const tabId = $(this).data('tab');
+            $('.info-tab').removeClass('active');
+            $(this).addClass('active');
+            $('.info-tab-content').removeClass('active');
+            $(`#${tabId}`).addClass('active');
+        });
+
         // Search Functions
         function searchByGISID(gisid) {
             if (!gisid) { showFlashMessage('Please enter GIS ID', 'warning'); return; }
@@ -1161,7 +1389,7 @@
             if (foundFeature) {
                 highlightSource.addFeature(foundFeature.clone());
                 map.getView().fit(foundFeature.getGeometry().getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
-                showFeatureInfo(gisid);
+                displayFullPropertyInfo(gisid);
                 selectedFeature = foundFeature;
                 $('#routeBtn').show();
                 $('#gisidResults').hide();
@@ -1192,7 +1420,7 @@
                 if (foundFeature) {
                     highlightSource.addFeature(foundFeature.clone());
                     map.getView().fit(foundFeature.getGeometry().getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
-                    showFeatureInfo(pointData.point_gisid);
+                    displayFullPropertyInfo(pointData.point_gisid);
                     selectedFeature = foundFeature;
                     $('#routeBtn').show();
                     $('#assessmentResults').hide();
@@ -1204,33 +1432,6 @@
                 showFlashMessage(`Assessment "${assessmentNo}" not found`, "error");
             }
             $('#loadingSpinner').fadeOut();
-        }
-
-        function showFeatureInfo(gisid) {
-            const polygonData = polygonDatas.find(d => d.gisid == gisid);
-            const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
-            const pointData = pointDatas.find(d => d.point_gisid == gisid);
-
-            let html = `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
-            if (polygonData) {
-                html += `
-                    <div class="info-row"><span class="info-label">Building:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Shops:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Completed:</span><span class="info-value">${pointCount}</span></div>
-                    <div class="info-row"><span class="info-label">Status:</span><span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}</span></div>
-                `;
-            }
-            if (pointData) {
-                html += `
-                    <div class="info-row"><span class="info-label">Assessment:</span><span class="info-value">${pointData.assessment || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${pointData.owner_name || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${pointData.phone_number || 'N/A'}</span></div>
-                `;
-            }
-            $('#featureDetails').html(html);
-            $('#featureInfo').fadeIn();
         }
 
         // Live Location
@@ -1316,13 +1517,12 @@
             $('#loadingSpinner').fadeOut();
         }
 
-        // Map Click Handler - Prevent interference with input fields
+        // Map Click Handler
         map.on('click', function(evt) {
-            // Get the original click target
             const originalEvent = evt.originalEvent;
             const target = originalEvent.target;
 
-            // Check if click target is an input, button, or inside search container
+            // Don't process map click for UI elements
             if (target.tagName === 'INPUT' ||
                 target.tagName === 'BUTTON' ||
                 target.closest('.search-container') ||
@@ -1330,7 +1530,7 @@
                 target.closest('.zoom-controls') ||
                 target.closest('.feature-info') ||
                 target.closest('.route-info')) {
-                return; // Don't process map click for UI elements
+                return;
             }
 
             const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
@@ -1338,7 +1538,7 @@
                 const gisid = feature.get('gisid');
                 highlightSource.clear();
                 highlightSource.addFeature(feature.clone());
-                showFeatureInfo(gisid);
+                displayFullPropertyInfo(gisid);
                 selectedFeature = feature;
                 $('#routeBtn').show();
             } else {
@@ -1349,11 +1549,27 @@
             }
         });
 
-        // Button Events
-        $('#gisidSearchBtn').on('click', () => searchByGISID($('#gisidSearchInput').val().trim()));
-        $('#gisidSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByGISID($('#gisidSearchInput').val().trim()));
-        $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
-        $('#assessmentSearchInput').on('keypress', (e) => e.key === 'Enter' && searchByAssessment($('#assessmentSearchInput').val().trim()));
+        // Button Events - Using event delegation to ensure they work
+        $(document).on('click', '#gisidSearchBtn', function() {
+            searchByGISID($('#gisidSearchInput').val().trim());
+        });
+
+        $(document).on('keypress', '#gisidSearchInput', function(e) {
+            if (e.key === 'Enter') {
+                searchByGISID($('#gisidSearchInput').val().trim());
+            }
+        });
+
+        $(document).on('click', '#assessmentSearchBtn', function() {
+            searchByAssessment($('#assessmentSearchInput').val().trim());
+        });
+
+        $(document).on('keypress', '#assessmentSearchInput', function(e) {
+            if (e.key === 'Enter') {
+                searchByAssessment($('#assessmentSearchInput').val().trim());
+            }
+        });
+
         $('#liveLocationBtn').on('click', toggleLiveLocation);
         $('#routeBtn').on('click', calculateRoute);
         $('#closeFeatureInfo').on('click', () => $('#featureInfo').fadeOut());
@@ -1367,7 +1583,7 @@
             setTimeout(() => $('.alert').alert('close'), 4000);
         }
 
-        // Auto-fit map to show all features
+        // Auto-fit map
         setTimeout(() => {
             try {
                 const extent = ol.extent.createEmpty();
@@ -1390,7 +1606,6 @@
             }
         }, 800);
 
-        // Handle window resize
         window.addEventListener('resize', function() {
             setTimeout(function() {
                 map.updateSize();
@@ -1400,16 +1615,18 @@
         console.log("Commissioner Ward Map Loaded Successfully");
     }
 
-    // Wait for OpenLayers to be ready
+    // Wait for DOM and OpenLayers
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            // Small delay to ensure OpenLayers is fully loaded
             setTimeout(function() {
                 if (isOpenLayersLoaded()) {
                     initMap();
                 } else {
-                    console.error("OpenLayers not loaded after DOMContentLoaded");
-                    document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load. Please check your internet connection.</div>';
+                    console.error("OpenLayers not loaded");
+                    const mapEl = document.getElementById('map');
+                    if (mapEl) {
+                        mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
+                    }
                 }
             }, 500);
         });
@@ -1421,7 +1638,7 @@
                 console.error("OpenLayers not loaded");
                 const mapEl = document.getElementById('map');
                 if (mapEl) {
-                    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load. Please check your internet connection.</div>';
+                    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
                 }
             }
         }, 500);
