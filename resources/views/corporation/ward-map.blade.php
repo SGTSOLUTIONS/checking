@@ -2141,55 +2141,55 @@
                         }
                     });
                 });
-// Function to update map with filtered data
-function updateMapWithFilteredData(response) {
-    // Update the global data arrays
-    polygons = response.polygons || [];
-    lines = response.lines || [];
-    points = response.points || [];
-    pointDatas = response.pointDatas || [];
-    polygonDatas = response.polygonDatas || [];
-    shopDatas = response.shopDatas || [];
+                // Function to update map with filtered data
+                function updateMapWithFilteredData(response) {
+                    // Update the global data arrays
+                    polygons = response.polygons || [];
+                    lines = response.lines || [];
+                    points = response.points || [];
+                    pointDatas = response.pointDatas || [];
+                    polygonDatas = response.polygonDatas || [];
+                    shopDatas = response.shopDatas || [];
 
-    // Remove old layers
-    if (polygonLayer) map.removeLayer(polygonLayer);
-    if (lineLayer) map.removeLayer(lineLayer);
-    if (pointLayer) map.removeLayer(pointLayer);
+                    // Remove old layers
+                    if (polygonLayer) map.removeLayer(polygonLayer);
+                    if (lineLayer) map.removeLayer(lineLayer);
+                    if (pointLayer) map.removeLayer(pointLayer);
 
-    // Create new layers with filtered data
-    polygonLayer = createPolygonLayer(polygons);
-    lineLayer = createLineLayer(lines);
-    pointLayer = createPointLayer(points);
+                    // Create new layers with filtered data
+                    polygonLayer = createPolygonLayer(polygons);
+                    lineLayer = createLineLayer(lines);
+                    pointLayer = createPointLayer(points);
 
-    // Add layers back to map (preserve order)
-    const layers = map.getLayers();
-    const highlightIndex = layers.getArray().findIndex(l => l === highlightLayer);
+                    // Add layers back to map (preserve order)
+                    const layers = map.getLayers();
+                    const highlightIndex = layers.getArray().findIndex(l => l === highlightLayer);
 
-    map.addLayer(polygonLayer);
-    map.addLayer(lineLayer);
-    map.addLayer(pointLayer);
+                    map.addLayer(polygonLayer);
+                    map.addLayer(lineLayer);
+                    map.addLayer(pointLayer);
 
-    // Make sure highlight layer stays on top
-    if (highlightLayer) {
-        map.addLayer(highlightLayer);
-    }
+                    // Make sure highlight layer stays on top
+                    if (highlightLayer) {
+                        map.addLayer(highlightLayer);
+                    }
 
-    // Clear any existing highlights
-    if (highlightSource) {
-        highlightSource.clear();
-    }
+                    // Clear any existing highlights
+                    if (highlightSource) {
+                        highlightSource.clear();
+                    }
 
-    // Fit map to show all filtered buildings if any exist
-    if (polygons.length > 0) {
-        const extent = polygonLayer.getSource().getExtent();
-        if (extent && !isNaN(extent[0]) && !isNaN(extent[1])) {
-            map.getView().fit(extent, {
-                padding: [50, 50, 50, 50],
-                duration: 800
-            });
-        }
-    }
-}
+                    // Fit map to show all filtered buildings if any exist
+                    if (polygons.length > 0) {
+                        const extent = polygonLayer.getSource().getExtent();
+                        if (extent && !isNaN(extent[0]) && !isNaN(extent[1])) {
+                            map.getView().fit(extent, {
+                                padding: [50, 50, 50, 50],
+                                duration: 800
+                            });
+                        }
+                    }
+                }
 
                 // Reset filters button
                 $('#resetFiltersBtn').on('click', function() {
@@ -2513,7 +2513,7 @@ function updateMapWithFilteredData(response) {
                     try {
                         const res = await fetch(
                             `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`
-                            );
+                        );
                         const data = await res.json();
                         if (data.code === 'Ok') {
                             const route = data.routes[0];
@@ -2580,7 +2580,7 @@ function updateMapWithFilteredData(response) {
                     if (e.key === 'Enter') searchByGISID($('#gisidSearchInput').val().trim());
                 });
                 $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val()
-                .trim()));
+                    .trim()));
                 $('#assessmentSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
