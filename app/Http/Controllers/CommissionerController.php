@@ -586,9 +586,9 @@ class CommissionerController extends Controller
                 $buildingUsageValue = $polygonData->building_usage ?? null;
 
                 // Calculate total building area
-                $sqfeet = floatval($polygonData->sqfeet ?? 0);
-                $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 1);
-                $floorPercentage = floatval($polygonData->floor_percentage ?? 100);
+                $sqfeet = floatval($polygon->sqfeet ?? 0);
+                $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 0);
+                $floorPercentage = floatval($polygonData->percentage ?? 100);
                 $basement = floatval($polygonData->basement ?? 0);
                 $totalSqFeet = $sqfeet * ($totalFloor + ($floorPercentage / 100) + $basement);
             } else {
