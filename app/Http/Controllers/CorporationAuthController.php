@@ -16,11 +16,19 @@ class CorporationAuthController extends Controller
 {
     public function showLogin()
     {
+
+      // Check regular users (default 'web' guard)
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // Check corporation guard
         if (Auth::guard('corporation')->check()) {
             return redirect()->route('corporation.dashboard');
         }
 
-        return view('corporation-auth.login');
+    return view('corporation-auth.login');
+
     }
 
     public function login(Request $request)
