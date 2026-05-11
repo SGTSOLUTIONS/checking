@@ -16,14 +16,20 @@ use Illuminate\Auth\Events\PasswordReset;
 class AuthController extends Controller
 {
     /** Show Login Page */
-    public function showLogin()
-    {
-        if (Auth::check()) {
-            return redirect()->route('admin.dashboard'); // or route('dashboards')
-        }
-
-        return view('auth.login');
+public function showLogin()
+{
+    // Check user guard (admin)
+    if (Auth::guard('user')->check()) {
+        return redirect()->route('admin.dashboard');
     }
+
+    // Check corporation_user guard
+    if (Auth::guard('corporation_user')->check()) {
+        return redirect()->route('corporation.dashboard');
+    }
+
+    return view('auth.login');
+}
 
     public function showRegister()
     {
