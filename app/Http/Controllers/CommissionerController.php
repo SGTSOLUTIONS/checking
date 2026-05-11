@@ -498,4 +498,187 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
+    public function filterWardData(Request $request)
+{
+    try {
+        $wardId = $request->ward_id;
+        $areaFilter = $request->area_filter;
+        $areaMin = $request->area_min;
+        $areaMax = $request->area_max;
+        $usageFilter = $request->usage_filter;
+        $buildingUsage = $request->building_usage;
+
+        // Get ward data
+        $ward = Ward::find($wardId);
+
+        // Get all polygons for this ward
+        $query = WardPolygon::where('ward_id', $wardId);
+
+        // Apply filters
+        $polygonGisids = [];
+
+        if ($areaFilter !== 'all' || $usageFilter !== 'all') {
+            // Get all polygons with their data
+            $polygons = $query->get();
+
+            foreach ($polygons as $polygon) {
+                $include = true;
+
+                // Area variation calculation
+                if ($areaFilter !== 'all') {
+                    $buildingArea = $this->calculateTotalBuildingArea($polygon);
+                    $assessmentArea = $this->calculateSumAssessmentAreas($polygon->gisid);
+                    $variation = abs($buildingArea - $assessmentArea);
+
+                    if ($areaFilter === 'variation') {
+                        $include = $include && $variation > 0.01;
+                    } elseif ($areaFilter === 'range' && $areaMin && $areaMax) {
+                        $include = $include && $variation >= $areaMin && $variation <= $areaMax;
+                    }
+                }
+
+                // Usage variation filter
+                if ($include && $usageFilter !== 'all') {
+                    if ($usageFilter === 'variation') {
+                        $include = $include && $this->hasUsageVariation($polygon);
+                    } elseif ($usageFilter === 'specific' && $buildingUsage) {
+                        $include = $include && strtoupper($polygon->building_usage ?? '') === strtoupper($buildingUsage);
+                    }
+                }
+
+                if ($include) {
+                    $polygonGisids[] = $polygon->gisid;
+                }
+            }
+
+            // Filter query by included Gisids
+            if (!empty($polygonGisids)) {
+                $query->whereIn('gisid', $polygonGisids);
+            } else {
+                $query->whereRaw('1 = 0'); // No results
+            }
+        }
+
+        // Get filtered data
+        $polygons = $query->get();
+        $polygonGisidList = $polygons->pluck('gisid')->toArray();
+
+        // Get lines for these polygons
+        $lines = WardLine::whereIn('gisid', $polygonGisidList)->get();
+
+        // Get points
+        $points = WardPoint::whereIn('gisid', $polygonGisidList)->get();
+
+        // Get point data (assessments)
+        $pointDatas = PointData::whereIn('point_gisid', $polygonGisidList)->get();
+
+        // Get polygon data
+        $polygonDatas = $polygons;
+
+        // Get shop data
+        $pointDataIds = $pointDatas->pluck('id')->toArray();
+        $shopDatas = Shop::whereIn('point_data_id', $pointDataIds)->get();
+
+        return response()->json([
+            'success' => true,
+            'polygons' => $polygons,
+            'lines' => $lines,
+            'points' => $points,
+            'pointDatas' => $pointDatas,
+            'polygonDatas' => $polygonDatas,
+            'shopDatas' => $shopDatas,
+            'count' => count($polygons)
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function resetWardData(Request $request)
+{
+    try {
+        $wardId = $request->ward_id;
+
+        // Get all data for this ward
+        $polygons = WardPolygon::where('ward_id', $wardId)->get();
+        $polygonGisidList = $polygons->pluck('gisid')->toArray();
+
+        $lines = WardLine::whereIn('gisid', $polygonGisidList)->get();
+        $points = WardPoint::whereIn('gisid', $polygonGisidList)->get();
+        $pointDatas = PointData::whereIn('point_gisid', $polygonGisidList)->get();
+        $polygonDatas = $polygons;
+        $pointDataIds = $pointDatas->pluck('id')->toArray();
+        $shopDatas = Shop::whereIn('point_data_id', $pointDataIds)->get();
+
+        return response()->json([
+            'success' => true,
+            'polygons' => $polygons,
+            'lines' => $lines,
+            'points' => $points,
+            'pointDatas' => $pointDatas,
+            'polygonDatas' => $polygonDatas,
+            'shopDatas' => $shopDatas,
+            'count' => count($polygons)
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+private function calculateTotalBuildingArea($polygonData)
+{
+    $sqfeet = floatval($polygonData->sqfeet ?? 0);
+    $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 1);
+    $floorPercentage = floatval($polygonData->floor_percentage ?? 100);
+    $basement = floatval($polygonData->basement ?? 0);
+
+    return $sqfeet * ($totalFloor + ($floorPercentage / 100) + $basement);
+}
+
+private function calculateSumAssessmentAreas($gisid)
+{
+    $assessments = PointData::where('point_gisid', $gisid)->get();
+    $total = 0;
+
+    foreach ($assessments as $assessment) {
+        $sqfeet = floatval($assessment->sqfeet ?? 0);
+        $plotArea = floatval($assessment->plot_area ?? $sqfeet);
+        $total += $plotArea;
+    }
+
+    return $total;
+}
+
+private function hasUsageVariation($polygonData)
+{
+    $buildingUsage = strtoupper($polygonData->building_usage ?? '');
+
+    if ($buildingUsage === 'MIXED') return false;
+
+    $assessments = PointData::where('point_gisid', $polygonData->gisid)->get();
+
+    foreach ($assessments as $assessment) {
+        $assessmentUsage = strtoupper($assessment->usage ?? '');
+
+        if ($buildingUsage === 'RESIDENTIAL' && $assessmentUsage === 'COMMERCIAL') {
+            return true;
+        }
+        if ($buildingUsage === 'COMMERCIAL' && $assessmentUsage === 'RESIDENTIAL') {
+            return true;
+        }
+        if ($assessmentUsage && $buildingUsage !== $assessmentUsage && $buildingUsage !== 'MIXED') {
+            return true;
+        }
+    }
+
+    return false;
+}
 }

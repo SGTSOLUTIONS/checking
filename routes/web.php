@@ -38,6 +38,8 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::post('/commissioner/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
         Route::get('/commissioner/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
         Route::post('/commissioner/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
+        Route::post('/ward/filter', [CorporationController::class, 'filterWardData'])->name('ward.filter');
+Route::post('/ward/reset', [CorporationController::class, 'resetWardData'])->name('ward.reset');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });

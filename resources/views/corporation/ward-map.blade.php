@@ -4,6 +4,7 @@
 
 @push('styles')
     <style>
+        /* ... (keep all existing CSS styles from your code above - they remain the same) ... */
         * {
             margin: 0;
             padding: 0;
@@ -127,7 +128,6 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -195,7 +195,6 @@
                 transform: translateY(120%);
                 transition: transform 0.3s ease;
             }
-
             .filter-container.open {
                 transform: translateY(0);
             }
@@ -467,7 +466,6 @@
                 transform: translateX(120%);
                 transition: transform 0.3s ease;
             }
-
             .layer-switcher.open {
                 transform: translateX(0);
             }
@@ -604,7 +602,6 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -1272,15 +1269,14 @@
 
                     <!-- Combined Filter Actions -->
                     <div class="filter-actions">
-                        <button id="applyFiltersBtn" class="btn-filter-apply"><i class="fas fa-search"></i> Apply
-                            Filters</button>
+                        <button id="applyFiltersBtn" class="btn-filter-apply"><i class="fas fa-search"></i> Apply Filters</button>
                         <button id="resetFiltersBtn" class="btn-filter-reset"><i class="fas fa-undo"></i> Reset</button>
                     </div>
 
                     <!-- Filter Results Summary -->
                     <div id="filterSummary" class="filter-summary" style="display: none;">
                         <span id="filterCount"></span>
-                        <button id="clearHighlightBtn">Clear Highlight</button>
+                        <button id="clearHighlightBtn">Reset Map</button>
                     </div>
                 </div>
             </div>
@@ -1417,10 +1413,8 @@
                                 <option value="INSTITUTIONAL">Institutional</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn-update" id="updateAssessmentBtn"><i class="fas fa-save"></i>
-                            Update QC Values</button>
-                        <div id="updateStatus" class="update-status"
-                            style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+                        <button type="submit" class="btn-update" id="updateAssessmentBtn"><i class="fas fa-save"></i> Update QC Values</button>
+                        <div id="updateStatus" class="update-status" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
                     </form>
                 </div>
             </div>
@@ -1484,175 +1478,6 @@
             $('#imageModal').fadeIn();
         };
 
-        // Calculate total building area
-        function calculateTotalBuildingArea(polygonData) {
-            if (!polygonData) return 0;
-
-            const sqfeet = parseFloat(polygonData.sqfeet) || 0;
-            const totalFloor = parseFloat(polygonData.total_floor) || parseFloat(polygonData.number_floor) || 1;
-            const floorPercentage = parseFloat(polygonData.floor_percentage) || 100;
-            const basement = parseFloat(polygonData.basement) || 0;
-
-            // Formula: sqfeet * (totalFloor + (floorPercentage/100) + basement)
-            const totalArea = sqfeet * (totalFloor + (floorPercentage / 100) + basement);
-            return totalArea;
-        }
-
-        // Calculate sum of assessment plot areas for a building
-        function calculateSumAssessmentAreas(gisid, pointDatas) {
-            const buildingAssessments = pointDatas.filter(pd => pd.point_gisid == gisid);
-            let totalAssessmentArea = 0;
-
-            buildingAssessments.forEach(assessment => {
-                const sqfeet = parseFloat(assessment.sqfeet) || 0;
-                const plotArea = parseFloat(assessment.plot_area) || sqfeet;
-                totalAssessmentArea += plotArea;
-            });
-
-            return totalAssessmentArea;
-        }
-
-        // Calculate area variation
-        function calculateAreaVariation(polygonData, pointDatas) {
-            if (!polygonData) return {
-                variation: 0,
-                percentage: 0,
-                buildingArea: 0,
-                assessmentArea: 0
-            };
-
-            const buildingArea = calculateTotalBuildingArea(polygonData);
-            const assessmentArea = calculateSumAssessmentAreas(polygonData.gisid, pointDatas);
-            const variation = buildingArea - assessmentArea;
-            const percentage = assessmentArea > 0 ? (variation / assessmentArea) * 100 : 0;
-
-            return {
-                variation,
-                percentage,
-                buildingArea,
-                assessmentArea
-            };
-        }
-
-        // Check if building has usage variation
-        function hasUsageVariation(polygonData, pointDatas) {
-            if (!polygonData) return false;
-
-            const buildingUsage = (polygonData.building_usage || '').toUpperCase();
-
-            // If building usage is MIXED, no problem - return false
-            if (buildingUsage === 'MIXED') return false;
-
-            const buildingAssessments = pointDatas.filter(pd => pd.point_gisid == polygonData.gisid);
-
-            for (const assessment of buildingAssessments) {
-                const assessmentUsage = (assessment.usage || '').toUpperCase();
-
-                // Check if assessment usage is different from building usage
-                if (buildingUsage === 'RESIDENTIAL' && assessmentUsage === 'COMMERCIAL') {
-                    return true;
-                }
-                if (buildingUsage === 'COMMERCIAL' && assessmentUsage === 'RESIDENTIAL') {
-                    return true;
-                }
-
-                // Also check if assessment usage exists but doesn't match building usage for other types
-                if (assessmentUsage && buildingUsage !== assessmentUsage && buildingUsage !== 'MIXED') {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        // Get filtered features based on criteria
-        function getFilteredFeatures(polygonSource, polygonDatas, pointDatas, filters) {
-            const features = [];
-            const filteredGisids = new Set();
-
-            polygonSource.forEachFeature(feature => {
-                const gisid = feature.get('gisid');
-                const polygonData = polygonDatas.find(d => d.gisid == gisid);
-
-                if (!polygonData) return;
-
-                let include = true;
-
-                // Area variation filter
-                if (filters.areaFilter !== 'all') {
-                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
-
-                    if (filters.areaFilter === 'variation') {
-                        // Show only buildings with variation (difference not zero)
-                        include = include && Math.abs(areaVar.variation) > 0.01;
-                    } else if (filters.areaFilter === 'range' && filters.areaRange) {
-                        // Show buildings within area range
-                        const variationAbs = Math.abs(areaVar.variation);
-                        include = include && variationAbs >= filters.areaRange.min &&
-                            variationAbs <= filters.areaRange.max;
-                    }
-                }
-
-                // Usage variation filter
-                if (include && filters.usageFilter !== 'all') {
-                    if (filters.usageFilter === 'variation') {
-                        include = include && hasUsageVariation(polygonData, pointDatas);
-                    } else if (filters.usageFilter === 'specific' && filters.buildingUsage) {
-                        const buildingUsage = (polygonData.building_usage || '').toUpperCase();
-                        include = include && buildingUsage === filters.buildingUsage.toUpperCase();
-                    }
-                }
-
-                if (include) {
-                    filteredGisids.add(gisid);
-                    features.push(feature);
-                }
-            });
-
-            return {
-                features,
-                filteredGisids
-            };
-        }
-
-        // Highlight filtered features on map
-        function highlightFilteredFeatures(map, highlightSource, features, polygonDatas, pointDatas) {
-            highlightSource.clear();
-
-            features.forEach(feature => {
-                const clonedFeature = feature.clone();
-                const gisid = feature.get('gisid');
-                const polygonData = polygonDatas.find(d => d.gisid == gisid);
-
-                // Store additional info for display
-                if (polygonData) {
-                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
-                    const hasUsageVar = hasUsageVariation(polygonData, pointDatas);
-
-                    clonedFeature.set('areaVariation', areaVar.variation);
-                    clonedFeature.set('areaVariationPercentage', areaVar.percentage);
-                    clonedFeature.set('hasUsageVariation', hasUsageVar);
-                    clonedFeature.set('buildingArea', areaVar.buildingArea);
-                    clonedFeature.set('assessmentArea', areaVar.assessmentArea);
-                }
-
-                highlightSource.addFeature(clonedFeature);
-            });
-
-            // Fit view to show all highlighted features
-            if (features.length > 0) {
-                const extent = highlightSource.getExtent();
-                if (extent && !isNaN(extent[0])) {
-                    map.getView().fit(extent, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
-                }
-            }
-
-            return features.length;
-        }
-
         $(document).ready(function() {
             // Mobile menu toggle
             $('#mobileMenuBtn').on('click', function() {
@@ -1674,12 +1499,10 @@
             // Close layer switcher when clicking outside on mobile
             $(document).on('click', function(e) {
                 if ($(window).width() <= 768) {
-                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest(
-                            '#mobileMenuBtn').length) {
+                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest('#mobileMenuBtn').length) {
                         $('#layerSwitcher').removeClass('open');
                     }
-                    if (!$(e.target).closest('#filterContainer').length && !$(e.target).closest(
-                            '#mobileFilterBtn').length) {
+                    if (!$(e.target).closest('#filterContainer').length && !$(e.target).closest('#mobileFilterBtn').length) {
                         $('#filterContainer').removeClass('open');
                     }
                 }
@@ -1710,6 +1533,19 @@
 
         // Main map initialization
         (function() {
+            let map = null;
+            let polygonLayer = null;
+            let lineLayer = null;
+            let pointLayer = null;
+            let highlightSource = null;
+            let currentFilters = {
+                areaFilter: 'all',
+                usageFilter: 'all',
+                areaMin: null,
+                areaMax: null,
+                buildingUsage: null
+            };
+
             function initMap() {
                 if (typeof ol === 'undefined') {
                     console.error('OpenLayers not loaded');
@@ -1719,7 +1555,7 @@
 
                 console.log("Initializing Ward Map...");
 
-                // Data from server
+                // Initial data from server
                 let polygons = [],
                     lines = [],
                     points = [],
@@ -1743,8 +1579,7 @@
                     locationWatchId = null,
                     isLiveLocationActive = false;
                 let selectedFeature = null,
-                    currentGisid = null,
-                    highlightSource = null;
+                    currentGisid = null;
 
                 // Helper functions
                 function getAssessmentsByGisid(gisid) {
@@ -1871,7 +1706,7 @@
                     });
                 }
 
-                // Create layers
+                // Create base layers
                 const osmLayer = new ol.layer.Tile({
                     source: new ol.source.OSM(),
                     visible: true
@@ -1892,8 +1727,7 @@
                     visible: false
                 });
                 if (ward?.drone_image && ward?.extent_left) {
-                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward
-                        .extent_right), parseFloat(ward.extent_top)];
+                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward.extent_right), parseFloat(ward.extent_top)];
                     const url = "{{ asset($ward->drone_image ?? '') }}";
                     if (url && extent[0]) {
                         droneLayer = new ol.layer.Image({
@@ -1907,65 +1741,68 @@
                     }
                 }
 
-                // Vector sources
-                const polygonSource = new ol.source.Vector();
-                polygons.forEach(poly => {
-                    try {
-                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                            .coordinates;
-                        if (coords?.length) {
-                            polygonSource.addFeature(new ol.Feature({
-                                geometry: new ol.geom.Polygon(coords),
-                                gisid: poly.gisid,
-                                sqfeet: poly.sqfeet || '0'
-                            }));
-                        }
-                    } catch (e) {}
-                });
-                const polygonLayer = new ol.layer.Vector({
-                    source: polygonSource,
-                    style: getPolygonStyle,
-                    visible: true
-                });
+                // Create vector sources and layers
+                function createPolygonLayer(data) {
+                    const source = new ol.source.Vector();
+                    data.forEach(poly => {
+                        try {
+                            let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                            if (coords?.length) {
+                                source.addFeature(new ol.Feature({
+                                    geometry: new ol.geom.Polygon(coords),
+                                    gisid: poly.gisid,
+                                    sqfeet: poly.sqfeet || '0'
+                                }));
+                            }
+                        } catch (e) {}
+                    });
+                    return new ol.layer.Vector({
+                        source: source,
+                        style: getPolygonStyle,
+                        visible: true
+                    });
+                }
 
-                const lineSource = new ol.source.Vector();
-                lines.forEach(line => {
-                    try {
-                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                            .coordinates;
-                        if (coords?.length >= 2) {
-                            if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                            lineSource.addFeature(new ol.Feature({
-                                geometry: new ol.geom.LineString(coords),
-                                gisid: line.gisid
-                            }));
-                        }
-                    } catch (e) {}
-                });
-                const lineLayer = new ol.layer.Vector({
-                    source: lineSource,
-                    style: getLineStyle,
-                    visible: true
-                });
+                function createLineLayer(data) {
+                    const source = new ol.source.Vector();
+                    data.forEach(line => {
+                        try {
+                            let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                            if (coords?.length >= 2) {
+                                if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
+                                source.addFeature(new ol.Feature({
+                                    geometry: new ol.geom.LineString(coords),
+                                    gisid: line.gisid
+                                }));
+                            }
+                        } catch (e) {}
+                    });
+                    return new ol.layer.Vector({
+                        source: source,
+                        style: getLineStyle,
+                        visible: true
+                    });
+                }
 
-                const pointSource = new ol.source.Vector();
-                points.forEach(point => {
-                    try {
-                        let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) :
-                            point.coordinates;
-                        if (coords?.length === 2) {
-                            pointSource.addFeature(new ol.Feature({
-                                geometry: new ol.geom.Point(coords),
-                                gisid: point.gisid
-                            }));
-                        }
-                    } catch (e) {}
-                });
-                const pointLayer = new ol.layer.Vector({
-                    source: pointSource,
-                    style: getPointStyle,
-                    visible: true
-                });
+                function createPointLayer(data) {
+                    const source = new ol.source.Vector();
+                    data.forEach(point => {
+                        try {
+                            let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) : point.coordinates;
+                            if (coords?.length === 2) {
+                                source.addFeature(new ol.Feature({
+                                    geometry: new ol.geom.Point(coords),
+                                    gisid: point.gisid
+                                }));
+                            }
+                        } catch (e) {}
+                    });
+                    return new ol.layer.Vector({
+                        source: source,
+                        style: getPointStyle,
+                        visible: true
+                    });
+                }
 
                 // Boundary layer
                 let boundaryLayer = new ol.layer.Vector({
@@ -1995,11 +1832,17 @@
                     } catch (e) {}
                 }
 
+                // Create initial layers
+                polygonLayer = createPolygonLayer(polygons);
+                lineLayer = createLineLayer(lines);
+                pointLayer = createPointLayer(points);
+
                 highlightSource = new ol.source.Vector();
                 const highlightLayer = new ol.layer.Vector({
                     source: highlightSource,
                     style: getHighlightStyle
                 });
+
                 const locationSource = new ol.source.Vector();
                 const locationLayer = new ol.layer.Vector({
                     source: locationSource,
@@ -2016,6 +1859,7 @@
                         })
                     })
                 });
+
                 const routeSource = new ol.source.Vector();
                 const routeLayer = new ol.layer.Vector({
                     source: routeSource,
@@ -2034,22 +1878,169 @@
                     try {
                         const lons = ward.boundary[0].map(p => p[0]);
                         const lats = ward.boundary[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) +
-                            Math.max(...lats)) / 2]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
                     } catch (e) {}
                 }
 
-                const map = new ol.Map({
+                map = new ol.Map({
                     target: 'map',
-                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
-                        pointLayer, highlightLayer, locationLayer, routeLayer
-                    ],
+                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
                     view: new ol.View({
                         center: center,
                         zoom: 16
                     }),
                     controls: []
                 });
+
+                // Function to refresh map data from server
+                window.refreshMapData = function(filters) {
+                    $('#loadingSpinner').fadeIn();
+
+                    $.ajax({
+                        url: '{{ route("corporation.ward.filter") }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            ward_id: '{{ $ward->id ?? '' }}',
+                            area_filter: filters.areaFilter,
+                            area_min: filters.areaMin,
+                            area_max: filters.areaMax,
+                            usage_filter: filters.usageFilter,
+                            building_usage: filters.buildingUsage
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Update data arrays
+                                polygons = response.polygons || [];
+                                lines = response.lines || [];
+                                points = response.points || [];
+                                pointDatas = response.pointDatas || [];
+                                polygonDatas = response.polygonDatas || [];
+                                shopDatas = response.shopDatas || [];
+
+                                // Remove old layers
+                                map.removeLayer(polygonLayer);
+                                map.removeLayer(lineLayer);
+                                map.removeLayer(pointLayer);
+
+                                // Create new layers with filtered data
+                                polygonLayer = createPolygonLayer(polygons);
+                                lineLayer = createLineLayer(lines);
+                                pointLayer = createPointLayer(points);
+
+                                // Add layers back to map (add at correct index)
+                                const layers = map.getLayers();
+                                const highlightIndex = layers.getArray().findIndex(l => l === highlightLayer);
+                                map.addLayer(polygonLayer);
+                                map.addLayer(lineLayer);
+                                map.addLayer(pointLayer);
+
+                                // Move highlight layer to top
+                                map.addLayer(highlightLayer);
+
+                                // Clear highlights
+                                highlightSource.clear();
+
+                                // Update filter summary
+                                const totalBuildings = polygons.length;
+                                if (totalBuildings > 0) {
+                                    let message = `Found ${totalBuildings} building(s) matching criteria`;
+                                    if (filters.areaFilter === 'variation') message += ' with area variation';
+                                    if (filters.areaFilter === 'range') message += ` with area variation in range`;
+                                    if (filters.usageFilter === 'variation') message += ' with usage variation';
+                                    if (filters.usageFilter === 'specific') message += ` with ${filters.buildingUsage} usage`;
+
+                                    $('#filterCount').html(`${totalBuildings} building(s) found`);
+                                    $('#filterSummary').show();
+                                    showToast(message, 'success');
+
+                                    // Fit map to show all buildings
+                                    if (polygons.length > 0) {
+                                        const extent = polygonLayer.getSource().getExtent();
+                                        if (extent && !isNaN(extent[0])) {
+                                            map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 1000 });
+                                        }
+                                    }
+                                } else {
+                                    showToast('No buildings match the selected filters', 'warning');
+                                    $('#filterSummary').hide();
+                                }
+                            } else {
+                                showToast(response.message || 'Error applying filters', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Filter error:', xhr);
+                            showToast('Error applying filters', 'error');
+                        },
+                        complete: function() {
+                            $('#loadingSpinner').fadeOut();
+                        }
+                    });
+                };
+
+                // Reset map to show all data
+                window.resetMapData = function() {
+                    $('#loadingSpinner').fadeIn();
+
+                    $.ajax({
+                        url: '{{ route("corporation.ward.reset") }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            ward_id: '{{ $ward->id ?? '' }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Update data arrays with full data
+                                polygons = response.polygons || [];
+                                lines = response.lines || [];
+                                points = response.points || [];
+                                pointDatas = response.pointDatas || [];
+                                polygonDatas = response.polygonDatas || [];
+                                shopDatas = response.shopDatas || [];
+
+                                // Remove old layers
+                                map.removeLayer(polygonLayer);
+                                map.removeLayer(lineLayer);
+                                map.removeLayer(pointLayer);
+
+                                // Create new layers with full data
+                                polygonLayer = createPolygonLayer(polygons);
+                                lineLayer = createLineLayer(lines);
+                                pointLayer = createPointLayer(points);
+
+                                // Add layers back
+                                map.addLayer(polygonLayer);
+                                map.addLayer(lineLayer);
+                                map.addLayer(pointLayer);
+                                map.addLayer(highlightLayer);
+
+                                // Clear highlights
+                                highlightSource.clear();
+                                $('#filterSummary').hide();
+
+                                showToast('Map reset to show all buildings', 'success');
+
+                                // Fit map to show all buildings
+                                if (polygons.length > 0) {
+                                    const extent = polygonLayer.getSource().getExtent();
+                                    if (extent && !isNaN(extent[0])) {
+                                        map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
+                                    }
+                                }
+                            } else {
+                                showToast(response.message || 'Error resetting map', 'error');
+                            }
+                        },
+                        error: function() {
+                            showToast('Error resetting map', 'error');
+                        },
+                        complete: function() {
+                            $('#loadingSpinner').fadeOut();
+                        }
+                    });
+                };
 
                 // Layer controls
                 $('input[name="baseLayer"]').on('change', function() {
@@ -2067,10 +2058,11 @@
                 $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
 
                 // Filter functionality
-                let currentFilters = {
+                let filters = {
                     areaFilter: 'all',
                     usageFilter: 'all',
-                    areaRange: null,
+                    areaMin: null,
+                    areaMax: null,
                     buildingUsage: null
                 };
 
@@ -2081,7 +2073,8 @@
                         $('#areaRangeDiv').show();
                     } else {
                         $('#areaRangeDiv').hide();
-                        currentFilters.areaRange = null;
+                        filters.areaMin = null;
+                        filters.areaMax = null;
                     }
                 });
 
@@ -2091,11 +2084,9 @@
                     const max = parseFloat($('#areaMax').val());
 
                     if (!isNaN(min) && !isNaN(max) && min <= max) {
-                        currentFilters.areaRange = {
-                            min,
-                            max
-                        };
-                        currentFilters.areaFilter = 'range';
+                        filters.areaMin = min;
+                        filters.areaMax = max;
+                        filters.areaFilter = 'range';
                         $('input[name="areaFilter"][value="range"]').prop('checked', true);
                         $('#areaRangeDiv').show();
                         showToast(`Area range set: ${min} - ${max} sq.ft`, 'success');
@@ -2111,56 +2102,37 @@
                         $('#buildingUsageSelect').show();
                     } else {
                         $('#buildingUsageSelect').hide();
-                        currentFilters.buildingUsage = null;
+                        filters.buildingUsage = null;
                     }
                 });
 
                 $('#buildingUsageSelect').on('change', function() {
-                    currentFilters.buildingUsage = $(this).val();
+                    filters.buildingUsage = $(this).val();
                 });
 
-                // Apply filters button
+                // Apply filters button - calls server
                 $('#applyFiltersBtn').on('click', function() {
                     const areaFilterValue = $('input[name="areaFilter"]:checked').val();
                     const usageFilterValue = $('input[name="usageFilter"]:checked').val();
 
-                    currentFilters.areaFilter = areaFilterValue;
-                    currentFilters.usageFilter = usageFilterValue;
+                    filters.areaFilter = areaFilterValue;
+                    filters.usageFilter = usageFilterValue;
 
                     if (usageFilterValue === 'specific') {
-                        currentFilters.buildingUsage = $('#buildingUsageSelect').val();
-                        if (!currentFilters.buildingUsage) {
+                        filters.buildingUsage = $('#buildingUsageSelect').val();
+                        if (!filters.buildingUsage) {
                             showToast('Please select a building usage type', 'warning');
                             return;
                         }
                     }
 
-                    $('#loadingSpinner').fadeIn();
-
-                    const {
-                        features,
-                        filteredGisids
-                    } = getFilteredFeatures(polygonSource, polygonDatas, pointDatas, currentFilters);
-                    const count = highlightFilteredFeatures(map, highlightSource, features, polygonDatas,
-                        pointDatas);
-
-                    if (count > 0) {
-                        let message = `Found ${count} building(s) matching criteria`;
-                        if (currentFilters.areaFilter === 'variation') message += ' with area variation';
-                        if (currentFilters.areaFilter === 'range') message += ` with area variation in range`;
-                        if (currentFilters.usageFilter === 'variation') message += ' with usage variation';
-                        if (currentFilters.usageFilter === 'specific') message +=
-                            ` with ${currentFilters.buildingUsage} usage`;
-
-                        $('#filterCount').html(`${count} building(s) found`);
-                        $('#filterSummary').show();
-                        showToast(message, 'success');
-                    } else {
-                        showToast('No buildings match the selected filters', 'warning');
-                        $('#filterSummary').hide();
+                    if (areaFilterValue === 'range' && (filters.areaMin === null || filters.areaMax === null)) {
+                        showToast('Please set area range values first', 'warning');
+                        return;
                     }
 
-                    $('#loadingSpinner').fadeOut();
+                    // Call server to get filtered data
+                    window.refreshMapData(filters);
                 });
 
                 // Reset filters button
@@ -2171,23 +2143,21 @@
                     $('#areaRangeDiv').hide();
                     $('#buildingUsageSelect').val('').hide();
 
-                    currentFilters = {
+                    filters = {
                         areaFilter: 'all',
                         usageFilter: 'all',
-                        areaRange: null,
+                        areaMin: null,
+                        areaMax: null,
                         buildingUsage: null
                     };
 
-                    highlightSource.clear();
-                    $('#filterSummary').hide();
-                    showToast('All filters reset', 'info');
+                    // Reset map to show all data
+                    window.resetMapData();
                 });
 
-                // Clear highlights button
+                // Clear highlights / reset button
                 $('#clearHighlightBtn').on('click', function() {
-                    highlightSource.clear();
-                    $('#filterSummary').hide();
-                    showToast('Highlights cleared', 'info');
+                    window.resetMapData();
                 });
 
                 // Mobile filter toggle
@@ -2204,66 +2174,32 @@
                     const assessments = getAssessmentsByGisid(gisid);
                     const shops = getShopsByBuildingGisid(gisid);
 
-                    // Calculate variation info for display
-                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
-                    const hasUsageVar = hasUsageVariation(polygonData, pointDatas);
-
-                    // Building details with variation info
-                    let html = '';
-
-                    // Add variation info if exists
-                    if (Math.abs(areaVar.variation) > 0.01 || hasUsageVar) {
-                        html +=
-                            `<div class="variation-info"><h6><i class="fas fa-chart-line"></i> Filter Match Info:</h6>`;
-                        if (Math.abs(areaVar.variation) > 0.01) {
-                            const variationClass = areaVar.variation > 0 ? 'text-warning' : 'text-success';
-                            html +=
-                                `<div class="info-row"><span class="info-label">Area Variation:</span><span class="info-value ${variationClass}">${areaVar.variation.toFixed(2)} sq.ft (${areaVar.percentage.toFixed(2)}%)</span></div>`;
-                            html +=
-                                `<div class="info-row"><span class="info-label">Building Total:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sq.ft</span></div>`;
-                            html +=
-                                `<div class="info-row"><span class="info-label">Assessments Sum:</span><span class="info-value">${areaVar.assessmentArea.toFixed(2)} sq.ft</span></div>`;
-                        }
-                        if (hasUsageVar) {
-                            html +=
-                                `<div class="info-row"><span class="info-label">Usage Variation:</span><span class="info-value text-warning">Yes - Building usage differs from assessment usage</span></div>`;
-                        }
-                        html += `</div>`;
-                    }
-
-                    html +=
-                        `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+                    // Building details
+                    let html = `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
 
                     if (polygonData) {
                         if (polygonData.image || polygonData.image1) {
                             html += `<div class="building-images-section"><div class="image-grid">`;
                             if (polygonData.image) {
-                                const url = polygonData.image.startsWith('http') ? polygonData.image :
-                                    '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
-                                html +=
-                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
+                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             if (polygonData.image1) {
-                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 :
-                                    '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
-                                html +=
-                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
+                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             html += `</div></div>`;
                         }
-                        html +=
-                            `
+                        html += `
                             <div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value" style="color:${getBuildingColor(polygonData.building_usage)};font-weight:bold">${polygonData.building_usage || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Shops/Units:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Assessments:</span><span class="info-value">${assessments.length}</span></div>
-                            <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>
-                            <div class="info-row"><span class="info-label">Total Building Area:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sqft</span></div>`;
+                            <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>`;
                     } else {
-                        html +=
-                            `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
+                        html += `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
                     }
                     $('#featureDetails').html(html);
 
@@ -2287,8 +2223,7 @@
                     // Assessments
                     let assessmentsHtml = '';
                     if (assessments.length) {
-                        assessmentsHtml =
-                            `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
+                        assessmentsHtml = `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
                         assessments.forEach((a, i) => {
                             const qcSq = a.qcsqfeet || a.sqfeet || 'N/A';
                             const qcUse = a.qcusage || a.usage || 'N/A';
@@ -2322,8 +2257,7 @@
                             });
                         });
                     } else {
-                        $('#assessmentsDetails').html(
-                            '<div class="text-muted text-center p-3">No assessments found</div>');
+                        $('#assessmentsDetails').html('<div class="text-muted text-center p-3">No assessments found</div>');
                     }
                     $('#featureInfo').fadeIn();
                 }
@@ -2384,8 +2318,7 @@
                         success: function(res) {
                             if (res.success) {
                                 showToast(res.message, 'success');
-                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (
-                                    assessmentNo && p.assessment == assessmentNo));
+                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (assessmentNo && p.assessment == assessmentNo));
                                 if (idx !== -1) {
                                     pointDatas[idx].qcsqfeet = res.data.qcsqfeet;
                                     pointDatas[idx].qcusage = res.data.qcusage;
@@ -2411,13 +2344,13 @@
                     $('#loadingSpinner').fadeIn();
                     highlightSource.clear();
                     let found = null;
-                    polygonSource.forEachFeature(f => {
+                    polygonLayer.getSource().forEachFeature(f => {
                         if (f.get('gisid') == gisid) {
                             found = f;
                             return true;
                         }
                     });
-                    if (!found) pointSource.forEachFeature(f => {
+                    if (!found) pointLayer.getSource().forEachFeature(f => {
                         if (f.get('gisid') == gisid) {
                             found = f;
                             return true;
@@ -2446,7 +2379,7 @@
                     const pointData = pointDatas.find(d => d.assessment == assessmentNo);
                     if (pointData?.point_gisid) {
                         let found = null;
-                        pointSource.forEachFeature(f => {
+                        pointLayer.getSource().forEachFeature(f => {
                             if (f.get('gisid') == pointData.point_gisid) {
                                 found = f;
                                 return true;
@@ -2477,8 +2410,7 @@
                         if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
                         locationSource.clear();
                         isLiveLocationActive = false;
-                        $('#liveLocationBtn').removeClass('active').html(
-                            '<i class="fas fa-location-dot"></i> Live Location');
+                        $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot"></i> Live Location');
                         showToast('Location tracking stopped', 'info');
                     } else {
                         if (!navigator.geolocation) return showToast('Geolocation not supported', 'error');
@@ -2503,18 +2435,14 @@
                 // Calculate route
                 async function calculateRoute() {
                     if (!selectedFeature) return showToast('Select a property first', 'warning');
-                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first',
-                        'warning');
+                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first', 'warning');
                     $('#loadingSpinner').fadeIn();
                     routeSource.clear();
                     const start = ol.proj.toLonLat(locationSource.getFeatures()[0].getGeometry().getCoordinates());
                     const targetGeom = selectedFeature.getGeometry();
-                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) :
-                        ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
+                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) : ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
                     try {
-                        const res = await fetch(
-                            `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`
-                            );
+                        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`);
                         const data = await res.json();
                         if (data.code === 'Ok') {
                             const route = data.routes[0];
@@ -2522,27 +2450,20 @@
                             routeSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.LineString(coords)
                             }));
-                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route
-                                .distance / 1000).toFixed(2) + ' km';
-                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration %
-                                60) + ' sec';
-                            $('#routeSummary').html(
-                                `<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
+                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route.distance / 1000).toFixed(2) + ' km';
+                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
+                            $('#routeSummary').html(`<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
                             let stepsHtml = '';
                             if (route.legs?.[0]?.steps) {
                                 route.legs[0].steps.forEach((step, i) => {
                                     if (step.maneuver?.instruction) {
-                                        stepsHtml +=
-                                            `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
+                                        stepsHtml += `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
                                     }
                                 });
                             }
-                            $('#directionsList').html(stepsHtml ||
-                                '<div class="text-muted">No step-by-step directions</div>');
+                            $('#directionsList').html(stepsHtml || '<div class="text-muted">No step-by-step directions</div>');
                             $('#routeInfo').show();
-                            map.getView().fit(routeSource.getExtent(), {
-                                padding: [50, 50, 50, 50]
-                            });
+                            map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50] });
                             showToast('Route calculated', 'success');
                         } else {
                             showToast('No route found', 'error');
@@ -2580,32 +2501,12 @@
                 $('#gisidSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByGISID($('#gisidSearchInput').val().trim());
                 });
-                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val()
-                .trim()));
+                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
                 $('#assessmentSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
                 $('#liveLocationBtn').on('click', toggleLiveLocation);
                 $('#routeBtn').on('click', calculateRoute);
-
-                // Auto-fit
-                setTimeout(() => {
-                    try {
-                        const extent = ol.extent.createEmpty();
-                        let has = false;
-                        polygonSource.forEachFeature(f => {
-                            ol.extent.extend(extent, f.getGeometry().getExtent());
-                            has = true;
-                        });
-                        pointSource.forEachFeature(f => {
-                            ol.extent.extend(extent, f.getGeometry().getExtent());
-                            has = true;
-                        });
-                        if (has) map.getView().fit(extent, {
-                            padding: [30, 30, 30, 30]
-                        });
-                    } catch (e) {}
-                }, 800);
             }
 
             initMap();
