@@ -1123,7 +1123,7 @@ $(document).ready(function() {
             // Initialize the map application
             window.wardMapApp = new WardMapApp({
                 wardId: {{ $ward->id ?? 'null' }},
-                apiUrl: '{{ route("api.ward-map-data") }}' // Define this route in your routes file
+                apiUrl: '{{ route("corporation.ward.map") }}' // Define this route in your routes file
             });
         }
     }, 100);
