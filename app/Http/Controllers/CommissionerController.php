@@ -528,7 +528,7 @@ class CommissionerController extends Controller
             $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
             $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
             $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
-            $shopsTableName = "shops_corporation_{$corporationId}";
+            $shopsTableName = "shopdata_{$corporationId}_{$zone}_{$wardNo}";
 
             // Get all data first
             $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
