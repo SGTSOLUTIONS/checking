@@ -532,22 +532,22 @@ class CommissionerController extends Controller
 
             // Get all data first
             $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
-            // $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
-            // $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
-            // $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
+            $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
+            $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
+            $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
             $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
-            // $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
+            $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
 
             if ($areaFilter === 'all' && $usageFilter === 'all') {
                 return response()->json([
                     'success' => true,
                     'polygons' => $allPolygons,
                     'lines' => $allLines,
-                    // 'points' => $allPoints,
-                    // 'pointDatas' => $allPointDatas,
-                    // 'polygonDatas' => $allPolygonDatas,
-                    // 'shopDatas' => $allShops,
-                    // 'count' => $allPolygons->count()
+                    'points' => $allPoints,
+                    'pointDatas' => $allPointDatas,
+                    'polygonDatas' => $allPolygonDatas,
+                    'shopDatas' => $allShops,
+                    'count' => $allPolygons->count()
                 ]);
             }
             return response()->json("data");
