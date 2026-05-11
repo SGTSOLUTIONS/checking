@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="csrf-token" content="sris-demo-token">
-    <title>SRIS | Spatial Revenue Intelligent System - Surveyor Dashboard</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'TN Municipal | Property Tax Portal')</title>
 
     <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,6 +13,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet">
+
+    @stack('styles')
 
     <style>
         * {
@@ -24,10 +26,13 @@
         body {
             font-family: 'Inter', 'Poppins', sans-serif;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
             background-color: #f4f2ef2d;
             position: relative;
             overflow-x: hidden;
-            padding: 0;
         }
 
         /* Heritage Background */
@@ -45,6 +50,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* brightness: 20%; */
             transform: scale(1.02);
             animation: slowZoom 22s ease infinite alternate;
         }
@@ -65,7 +71,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.2);
+            /* background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%); */
             z-index: -1;
         }
 
@@ -113,11 +119,22 @@
             position: fixed;
             bottom: 1.5rem;
             right: 1rem;
+            left: 1rem;
             z-index: 9999;
             display: flex;
             flex-direction: column;
             gap: 0.7rem;
             max-width: 380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (min-width: 576px) {
+            .toast-container {
+                left: auto;
+                right: 1.5rem;
+                margin-left: 0;
+            }
         }
 
         .toast {
@@ -133,11 +150,18 @@
             transform: translateX(120%);
             opacity: 0;
             transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
+            color: #1e2f3e;
+            font-size: 0.9rem;
         }
 
         .toast.show {
             transform: translateX(0);
             opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(120%);
+            opacity: 0;
         }
 
         .toast-success {
@@ -146,6 +170,10 @@
 
         .toast-error {
             border-left-color: #e74c3c;
+        }
+
+        .toast-warning {
+            border-left-color: #f39c12;
         }
 
         .toast-info {
@@ -164,11 +192,13 @@
         .toast-title {
             font-weight: 800;
             font-size: 0.85rem;
+            margin-bottom: 0.2rem;
         }
 
         .toast-message {
             font-size: 0.75rem;
             opacity: 0.8;
+            margin: 0;
         }
 
         .toast-close {
@@ -176,6 +206,8 @@
             border: none;
             color: #7e8b9e;
             cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 4px;
         }
 
         .toast-progress {
@@ -198,50 +230,94 @@
             }
         }
 
-        /* DASHBOARD LAYOUT */
-        .dashboard-wrapper {
-            max-width: 1600px;
-            margin: 1rem auto;
-            padding: 0 1rem;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* Top Navbar */
-        .sris-navbar {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(12px);
+        /* Main Card - Responsive */
+        .auth-card {
+            width: 100%;
+            max-width: 1280px;
+            background: rgba(255, 255, 255, 0.98);
             border-radius: 2rem;
-            padding: 0.75rem 1.8rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.2);
             display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+            position: relative;
+            animation: fadeSlideUp 0.5s ease-out;
         }
 
-        .sris-brand {
+        @media (min-width: 992px) {
+            .auth-card {
+                flex-direction: row;
+            }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Left Side Branding - Hidden on mobile, visible on desktop */
+        .login-hero {
+            flex: 1.2;
+            background: linear-gradient(135deg, #fbf7ef 0%, #fffaf2 100%);
+            padding: 2rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #2c3e4e;
+            display: none;
+            /* Hidden by default on mobile */
+        }
+
+        @media (min-width: 992px) {
+            .login-hero {
+                display: flex;
+                /* Show on desktop */
+                min-width: 260px;
+            }
+        }
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .brand-icon {
             background: #e67e22;
-            width: 42px;
-            height: 42px;
-            border-radius: 16px;
+            width: 45px;
+            height: 45px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: white;
+            box-shadow: 0 8px 16px rgba(230, 126, 34, 0.2);
+        }
+
+        @media (min-width: 768px) {
+            .brand-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
         }
 
         .brand-text {
+            font-size: 1.1rem;
             font-weight: 800;
-            font-size: 1.2rem;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
             color: #1e3a5f;
         }
 
@@ -251,167 +327,369 @@
             color: #e67e22;
         }
 
-        .surveyor-badge {
-            background: #fef5e8;
-            padding: 6px 15px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
+        @media (min-width: 768px) {
+            .brand-text {
+                font-size: 1.3rem;
+            }
 
-        /* Main grid */
-        .dashboard-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        @media (min-width: 992px) {
-            .dashboard-grid {
-                flex-direction: row;
+            .brand-sub {
+                font-size: 0.7rem;
             }
         }
 
-        /* Sidebar info card */
-        .info-card {
-            flex: 1.2;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(4px);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Main content area */
-        .main-content {
-            flex: 2.5;
-            background: rgba(255, 255, 255, 0.97);
-            backdrop-filter: blur(4px);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-title {
+        .hero-content h1 {
+            font-size: 1.5rem;
             font-weight: 800;
-            font-size: 1.3rem;
-            color: #1e3a5f;
-            border-left: 5px solid #e67e22;
-            padding-left: 14px;
-            margin-bottom: 1.2rem;
-        }
-
-        .highlight {
-            color: #e67e22;
-            font-weight: 700;
-        }
-
-        .sris-bullet-list {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .sris-bullet-list li {
             margin-bottom: 0.8rem;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .hero-highlight {
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            display: inline-block;
+        }
+
+        .hero-description {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: #4a627a;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero-description {
+                font-size: 0.85rem;
+            }
+        }
+
+        .trust-badge {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+
+        .trust-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-        }
-
-        .sris-bullet-list li i {
-            color: #e67e22;
-            width: 22px;
-        }
-
-        .stat-badge {
+            gap: 6px;
+            font-size: 0.7rem;
             background: #fef5e8;
-            border-radius: 1rem;
-            padding: 0.5rem 1rem;
-            margin-bottom: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #b45f1b;
             font-weight: 500;
         }
 
-        /* Map placeholder */
-        .map-placeholder {
-            background: #eef2f5;
-            border-radius: 1.2rem;
-            height: 280px;
+        .quote-area {
+            margin-top: 1.5rem;
+        }
+
+        .quote {
+            font-weight: 500;
+            font-size: 0.7rem;
+            border-left: 3px solid #e67e22;
+            padding-left: 0.9rem;
+            color: #5d6f83;
+            line-height: 1.35;
+        }
+
+        @media (min-width: 768px) {
+            .quote {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Right Side Form - Full width on mobile */
+        .login-form-section {
+            flex: 1;
+            background: white;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 576px) {
+            .login-form-section {
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .login-form-section {
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .login-form-section {
+                padding: 2.5rem;
+            }
+        }
+
+        /* Mobile Header - Only visible on mobile */
+        .mobile-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #fef5e8;
+        }
+
+        @media (max-width: 991px) {
+            .mobile-header {
+                display: block;
+            }
+
+            .mobile-header .brand-icon {
+                margin: 0 auto 10px;
+                width: 55px;
+                height: 55px;
+                font-size: 1.8rem;
+            }
+
+            .mobile-header .brand-text {
+                font-size: 1.2rem;
+            }
+
+            .mobile-header .brand-sub {
+                font-size: 0.7rem;
+            }
+        }
+
+        .form-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .form-header h2 {
+                font-size: 1.6rem;
+            }
+        }
+
+        .form-header p {
+            color: #5e7a93;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c4c6e;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .input-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 14px;
+            color: #e67e22;
+            font-size: 1rem;
+            z-index: 2;
+        }
+
+        .input-field input,
+        .input-field select {
+            width: 100%;
+            padding: 10px 14px 10px 44px;
+            font-size: 0.9rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            background: #ffffff;
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', 'Poppins', sans-serif;
+        }
+
+        @media (min-width: 768px) {
+
+            .input-field input,
+            .input-field select {
+                padding: 11px 14px 11px 44px;
+            }
+        }
+
+        .input-field input:focus,
+        .input-field select:focus {
+            border-color: #e67e22;
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+        }
+
+        .input-field input.is-invalid,
+        .input-field select.is-invalid {
+            border-color: #e74c3c;
+        }
+
+        .invalid-feedback {
+            font-size: 0.75rem;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #2c4c6e;
+        }
+
+        .checkbox input {
+            accent-color: #e67e22;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        .forgot-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #e67e22;
+            text-decoration: none;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: #c0392b;
+        }
+
+        .login-btn {
+            background: linear-gradient(95deg, #e67e22, #f39c12);
+            color: white;
+            width: 100%;
+            padding: 11px 0;
+            border: none;
+            border-radius: 44px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            background-image: radial-gradient(circle at 10% 30%, rgba(230, 126, 34, 0.05) 2%, transparent 2.5%);
-            background-size: 28px 28px;
-            border: 1px solid rgba(230, 126, 34, 0.2);
-            position: relative;
-            overflow: hidden;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
         }
 
-        .map-mock {
-            text-align: center;
+        @media (min-width: 768px) {
+            .login-btn {
+                padding: 12px 0;
+                font-size: 0.95rem;
+            }
         }
 
-        .map-mock i {
-            font-size: 3.5rem;
-            color: #e67e22;
-            margin-bottom: 0.5rem;
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4);
         }
 
-        /* property table */
-        .property-table-wrapper {
-            overflow-x: auto;
-            margin-top: 1rem;
+        .login-btn:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
         }
 
-        .property-table {
-            width: 100%;
-            font-size: 0.8rem;
-        }
-
-        .property-table th {
-            background: #fef5e8;
-            padding: 0.7rem;
-        }
-
-        .property-table td {
-            padding: 0.6rem;
-            border-bottom: 1px solid #eee;
-        }
-
-        .btn-sm-sris {
-            background: #e67e22;
-            border: none;
-            color: white;
-            border-radius: 30px;
-            padding: 0.2rem 0.7rem;
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0 1rem;
+            color: #a0b8d0;
             font-size: 0.7rem;
         }
 
-        /* action buttons */
-        .action-buttons {
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        .divider span {
+            margin: 0 12px;
+        }
+
+        .sso-buttons {
             display: flex;
-            gap: 0.8rem;
+            gap: 0.7rem;
+            justify-content: center;
             flex-wrap: wrap;
-            margin: 1.2rem 0 1rem;
         }
 
-        .btn-sris {
-            background: linear-gradient(95deg, #e67e22, #f39c12);
-            border: none;
-            border-radius: 40px;
-            padding: 8px 20px;
+        .sso-btn {
+            flex: 1;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 44px;
+            padding: 8px 6px;
             font-weight: 600;
-            color: white;
+            font-size: 0.7rem;
+            color: #1e3a5f;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .btn-sris-outline {
-            background: transparent;
-            border: 1.5px solid #e67e22;
+        @media (min-width: 768px) {
+            .sso-btn {
+                padding: 9px 6px;
+            }
+        }
+
+        .sso-btn:hover {
+            background: #fff4e6;
+            border-color: #e67e22;
+        }
+
+        .register-prompt {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #5e7a93;
+        }
+
+        .register-prompt a {
             color: #e67e22;
-            border-radius: 40px;
-            padding: 8px 20px;
-            font-weight: 600;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-prompt a:hover {
+            text-decoration: underline;
         }
 
         .ripple-effect {
@@ -430,201 +708,187 @@
             }
         }
 
-        @media (max-width: 576px) {
-            .dashboard-wrapper {
-                padding: 0 0.8rem;
+        /* File Upload Styles */
+        .file-upload-container {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-upload-area {
+            cursor: pointer;
+            border: 2px dashed #e2e8f0;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fef9f0;
+        }
+
+        .file-upload-area:hover {
+            border-color: #e67e22;
+            background: #fff6ea;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #e67e22;
+            background: #fef0e0;
+            transform: scale(1.01);
+        }
+
+        .file-upload-icon {
+            margin-bottom: 12px;
+            color: #e67e22;
+        }
+
+        .file-upload-text .primary {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c4c6e;
+            font-size: 0.9rem;
+        }
+
+        .file-upload-text .secondary {
+            color: #7e8b9e;
+            font-size: 11px;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .file-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #e67e22;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .file-remove {
+            border: none;
+            background: transparent;
+            color: #dc3545;
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .file-remove:hover {
+            color: #c82333;
+            text-decoration: underline;
+        }
+
+        .btn-outline-success {
+            border: 1px solid #e67e22;
+            color: #e67e22;
+            background: white;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-success:hover {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
             }
 
-            .info-card,
-            .main-content {
-                padding: 1rem;
+            .auth-card {
+                border-radius: 1.2rem;
             }
 
-            .sris-navbar {
+            .login-form-section {
+                padding: 1.2rem;
+            }
+
+            .file-upload-area {
+                padding: 15px;
+            }
+
+            .sso-buttons {
                 flex-direction: column;
-                gap: 10px;
-                align-items: stretch;
-                text-align: center;
+            }
+
+            .sso-btn {
+                width: 100%;
             }
         }
     </style>
+
+    @stack('additional-styles')
 </head>
 
 <body>
+
     <div class="heritage-bg">
-        <img src="https://placehold.co/1600x900/f5f0e6/d9b48b?text=Tamil+Nadu+Heritage"
-            alt="Tamil Nadu Government Heritage">
+        <img src="{{asset('banner.jpeg')}}"
+            alt="Tamil Nadu Government Heritage Building">
     </div>
     <div class="bg-overlay"></div>
     <div class="particles" id="particles-container"></div>
     <div id="toast-container" class="toast-container"></div>
 
-    <div class="dashboard-wrapper">
-        <!-- Navbar -->
-        <div class="sris-navbar">
-            <div class="sris-brand">
-                <div class="brand-icon"><i class="fas fa-map-marked-alt"></i></div>
-                <div>
-                    <div class="brand-text">Spatial Revenue Intelligent System (SRIS)</div>
-                    <div class="brand-sub">Tamil Nadu Municipal · GIS Property Governance</div>
-                </div>
-            </div>
-            <div class="surveyor-badge">
-                <i class="fas fa-user-hard-hat"></i> Surveyor Dashboard · Active Session
-            </div>
-        </div>
+    @yield('content')
 
-        <div class="dashboard-grid">
-            <!-- LEFT INFO PANEL (SRIS Description & Stats) -->
-            <div class="info-card">
-                <div class="section-title">SRIS · The GIS Revolution</div>
-                <p style="font-size:0.85rem; line-height:1.5; color:#2c4c6e;">
-                    <strong>Spatial Revenue Intelligent System (SRIS)</strong> is a smart digital Web GIS platform
-                    developed for efficient mapping and management of municipal properties.
-                    It enables real-time visualization, monitoring, and spatial analysis of assets such as buildings,
-                    roads, water connections, and tax properties through an interactive map-based system.
-                </p>
-                <div class="stat-badge mt-2">
-                    <i class="fas fa-chart-line"></i> <strong>Supports local bodies in:</strong>
-                </div>
-                <ul class="sris-bullet-list">
-                    <li><i class="fas fa-check-circle"></i> Improving property administration</li>
-                    <li><i class="fas fa-coins"></i> Revenue generation</li>
-                    <li><i class="fas fa-city"></i> Urban planning</li>
-                    <li><i class="fas fa-chalkboard-user"></i> Decision-making through accurate GIS-enabled spatial data
-                    </li>
-                </ul>
-                <hr>
-                <div class="d-flex justify-content-between flex-wrap">
-                    <div><i class="fas fa-building"></i> <strong>1,284</strong> Properties Mapped</div>
-                    <div><i class="fas fa-road"></i> <strong>342</strong> Road Assets</div>
-                    <div><i class="fas fa-tint"></i> <strong>561</strong> Water Connections</div>
-                </div>
-                <div class="mt-3 text-center small text-muted">
-                    <i class="fas fa-sync-alt"></i> Live GIS Sync · Today
-                </div>
-            </div>
-
-            <!-- RIGHT MAIN DASHBOARD (Surveyor Actions + Property List + Map Preview) -->
-            <div class="main-content">
-                <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-                    <h4 class="mb-0" style="font-weight:800;"><i class="fas fa-clipboard-list text-warning"></i>
-                        Surveyor Dashboard</h4>
-                    <span class="badge bg-light text-dark mt-2 mt-sm-0"><i class="fas fa-map-pin"></i> Zone: Central
-                        Municipal Corporation</span>
-                </div>
-
-                <!-- Action Buttons for Surveyor -->
-                <div class="action-buttons">
-                    <button class="btn-sris" id="syncMapBtn"><i class="fas fa-draw-polygon"></i> Refresh GIS
-                        Layer</button>
-                    <button class="btn-sris-outline" id="addPropertyBtn"><i class="fas fa-plus-circle"></i> Log New
-                        Property</button>
-                    <button class="btn-sris-outline" id="genReportBtn"><i class="fas fa-file-alt"></i> Revenue
-                        Snapshot</button>
-                </div>
-
-                <!-- Map Mock / GIS Visualization -->
-                <div class="map-placeholder" id="gisMapMock">
-                    <div class="map-mock">
-                        <i class="fas fa-map"></i>
-                        <p class="mt-2"><strong>Interactive GIS Map</strong><br>Real-time property boundaries, tax
-                            zones, water network</p>
-                        <button class="btn btn-sm btn-outline-secondary" id="mockMapInteract"
-                            style="border-radius:30px;"><i class="fas fa-location-dot"></i> Simulate Spatial
-                            View</button>
-                    </div>
-                </div>
-
-                <!-- Recent Properties & Asset Table -->
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between">
-                        <h6 class="fw-bold"><i class="fas fa-table-list"></i> Recently Mapped Assets / Properties</h6>
-                        <span class="small text-muted">GIS accuracy ±0.5m</span>
-                    </div>
-                    <div class="property-table-wrapper">
-                        <table class="property-table">
-                            <thead>
-                                <tr>
-                                    <th>Property ID</th>
-                                    <th>Type</th>
-                                    <th>Tax Status</th>
-                                    <th>Water Conn.</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="propertyTableBody">
-                                <tr>
-                                    <td>TN-MC-1024</td>
-                                    <td>Residential</td>
-                                    <td>Paid</td>
-                                    <td>Active</td>
-                                    <td><button class="btn-sm-sris viewDetailsBtn" data-id="1024">View GIS</button></td>
-                                </tr>
-                                <tr>
-                                    <td>TN-MC-1089</td>
-                                    <td>Commercial</td>
-                                    <td>Pending</td>
-                                    <td>Active</td>
-                                    <td><button class="btn-sm-sris viewDetailsBtn" data-id="1089">View GIS</button></td>
-                                </tr>
-                                <tr>
-                                    <td>TN-MC-2056</td>
-                                    <td>Industrial</td>
-                                    <td>Overdue</td>
-                                    <td>Inactive</td>
-                                    <td><button class="btn-sm-sris viewDetailsBtn" data-id="2056">View GIS</button></td>
-                                </tr>
-                                <tr>
-                                    <td>TN-MC-3120</td>
-                                    <td>Mixed Use</td>
-                                    <td>Paid</td>
-                                    <td>Active</td>
-                                    <td><button class="btn-sm-sris viewDetailsBtn" data-id="3120">View GIS</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-center mt-2">
-                        <small class="text-muted"><i class="fas fa-chart-simple"></i> Revenue projection this quarter:
-                            <strong class="text-success">+12.4%</strong> via GIS analytics</small>
-                    </div>
-                </div>
-
-                <!-- Spatial insight card -->
-                <div class="alert alert-warning mt-3 bg-light border-0 shadow-sm" style="border-radius: 20px;">
-                    <i class="fas fa-lightbulb text-warning"></i> <strong>Spatial Insight:</strong> High-density zone
-                    'Anna Nagar' shows 23% tax potential increase. SRIS recommends field surveyor revisit.
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         // Toast system
-        function showToast(type, title, message, duration = 4000) {
+        function showToast(type, title, message, duration = 4500) {
             const container = document.getElementById('toast-container');
             if (!container) return;
+
             const icons = {
                 success: 'fa-circle-check',
                 error: 'fa-circle-xmark',
                 warning: 'fa-triangle-exclamation',
                 info: 'fa-circle-info'
             };
+
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             toast.innerHTML = `
                 <i class="fas ${icons[type] || 'fa-circle-info'} toast-icon"></i>
-                <div class="toast-content"><div class="toast-title">${escapeHtml(title)}</div><p class="toast-message">${escapeHtml(message)}</p></div>
+                <div class="toast-content">
+                    <div class="toast-title">${escapeHtml(title)}</div>
+                    <p class="toast-message">${escapeHtml(message)}</p>
+                </div>
                 <button class="toast-close"><i class="fas fa-times"></i></button>
                 <div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>
             `;
             container.appendChild(toast);
             setTimeout(() => toast.classList.add('show'), 20);
+
             const closeBtn = toast.querySelector('.toast-close');
             closeBtn.addEventListener('click', () => removeToast(toast));
-            setTimeout(() => removeToast(toast), duration);
+
+            if (duration > 0) {
+                setTimeout(() => removeToast(toast), duration);
+            }
+            return toast;
         }
 
         function removeToast(toast) {
@@ -645,7 +909,7 @@
 
         // Ripple effect
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.btn-sris, .btn-sris-outline, .btn-sm-sris, #mockMapInteract');
+            const btn = e.target.closest('.login-btn, .sso-btn, .btn-primary, .btn-success, .btn-outline-success');
             if (btn && !btn.disabled) {
                 const ripple = document.createElement('span');
                 ripple.classList.add('ripple-effect');
@@ -669,7 +933,7 @@
             }
         });
 
-        // Particles generator
+        // Particles
         function createParticles() {
             const container = document.querySelector('.particles');
             if (!container) return;
@@ -688,108 +952,14 @@
         }
         createParticles();
 
-        // ---------- SRIS SURVEYOR DASHBOARD INTERACTIONS ----------
-        $(document).ready(function() {
-            // 1. Sync GIS Layer Button
-            $('#syncMapBtn').on('click', function() {
-                showToast('success', 'GIS Layer Refreshed',
-                    'Real-time property boundaries and asset layers synchronized with SRIS server.');
-                // Simulate updating map mock
-                $('#gisMapMock .map-mock i').addClass('fa-spin').removeClass('fa-map').addClass(
-                    'fa-sync-alt');
-                setTimeout(() => {
-                    $('#gisMapMock .map-mock i').removeClass('fa-spin fa-sync-alt').addClass(
-                        'fa-map');
-                    $('#gisMapMock .map-mock p').html(
-                        '<strong>Live GIS Map</strong><br>Updated: new water connections & tax zones visible'
-                        );
-                }, 1200);
-            });
-
-            // 2. Add Property (mock surveyor log)
-            $('#addPropertyBtn').on('click', function() {
-                let newId = 'TN-MC-' + Math.floor(Math.random() * 9000 + 1000);
-                let types = ['Residential', 'Commercial', 'Institutional', 'Vacant Land'];
-                let randomType = types[Math.floor(Math.random() * types.length)];
-                let taxStatus = ['Paid', 'Pending', 'Overdue'][Math.floor(Math.random() * 3)];
-                let waterStat = ['Active', 'Inactive', 'Proposed'][Math.floor(Math.random() * 3)];
-                $('#propertyTableBody').prepend(`
-                    <tr>
-                        <td>${newId}</td>
-                        <td>${randomType}</td>
-                        <td>${taxStatus}</td>
-                        <td>${waterStat}</td>
-                        <td><button class="btn-sm-sris viewDetailsBtn" data-id="${newId.split('-')[2]}">View GIS</button></td>
-                    </tr>
-                `);
-                showToast('info', 'Property Logged',
-                    `New property ${newId} added to SRIS GIS registry. Revenue mapping updated.`);
-                // trigger spatial notification
-                $('.alert-warning').html(
-                    `<i class="fas fa-lightbulb text-warning"></i> <strong>Spatial Alert:</strong> New property added at ${newId}. SRIS recommends surveyor field verification for tax assessment.`
-                    );
-                bindViewButtons();
-            });
-
-            // 3. Revenue Snapshot
-            $('#genReportBtn').on('click', function() {
-                showToast('success', 'Revenue Snapshot',
-                    'GIS-based revenue projection: ₹2.84Cr this quarter. Improvement +8% YoY due to property revaluation.'
-                    );
-                $('.alert-warning').html(
-                    `<i class="fas fa-chart-line text-success"></i> <strong>Revenue Insight:</strong> Digital property indexing improved collection efficiency by 15.3% in last 2 months.`
-                    );
-            });
-
-            // 4. Mock Map Interact - simulate real GIS spatial analysis
-            $('#mockMapInteract').on('click', function() {
-                showToast('info', 'SRIS Spatial Intelligence',
-                    'Displaying asset heatmap: buildings, roads, water connections. Tax delinquent zones highlighted in orange.'
-                    );
-                $('#gisMapMock').css({
-                    background: 'linear-gradient(145deg, #f8e3cb, #fdebd0)',
-                    transition: '0.3s'
-                });
-                setTimeout(() => $('#gisMapMock').css('background', ''), 800);
-                // extra demo: update table with sample GIS coordinates
-                let randomProp = $('#propertyTableBody tr:first td:first').text();
-                if (randomProp) showToast('warning', 'GIS Coordinates',
-                    `Property ${randomProp} located at Lat 13.0827, Lon 80.2707 · Tax zone evaluation ready`,
-                    3000);
-            });
-
-            // View Details for each property - simulate GIS deep dive
-            function bindViewButtons() {
-                $('.viewDetailsBtn').off('click').on('click', function() {
-                    let propId = $(this).data('id');
-                    showToast('success', `GIS Property Details - ID ${propId}`,
-                        `Spatial data: Building footprint, annual tax value, water connection status, road proximity. Surveyor geo-tag verified.`
-                        );
-                    // update map mock to reflect
-                    $('#gisMapMock .map-mock p').html(
-                        `<strong>Viewing Property #${propId}</strong><br>GIS polygon: 245 sqm · Zoning: Mixed Use · Revenue: High priority`
-                        );
-                    $('#gisMapMock .map-mock i').removeClass('fa-map').addClass('fa-location-dot').css(
-                        'color', '#e67e22');
-                });
+        // Global AJAX setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
-            bindViewButtons();
-
-            // Additional spatial message: Display Quote from original description (custom)
-            $('.info-card').append(`
-                <div class="mt-3 pt-2 border-top">
-                    <i class="fas fa-microchip"></i> <span style="font-size:0.7rem;">SRIS integrates real-time monitoring and spatial analytics for smart urban planning and revenue decision-making.</span>
-                </div>
-            `);
-
-            // Demo auto toast for surveyor welcome (optional)
-            setTimeout(() => {
-                showToast('info', 'SRIS Surveyor Dashboard',
-                    'Welcome! Use GIS tools to manage properties and boost revenue. Real-time data sync active.',
-                    5000);
-            }, 800);
         });
     </script>
+    @yield('scripts')
 </body>
 
 </html>
