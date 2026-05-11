@@ -133,51 +133,118 @@ class CommissionerController extends Controller
         ]);
     }
 
-     public function mapView($ward_no)
-    {
+    public function mapView($ward_no)
+{
+    try {
+        // Get authenticated user
         $userId = Auth::user();
-        // return response()->json($userId);
-        $warddetail = Ward::where('corporation_id', $userId->corporation_id)->where('ward_no',$ward_no)->first();
 
+        if (!$userId) {
+            return redirect()->route('login')->with('error', 'Please login to access this page.');
+        }
+
+        // Get ward details
+        $warddetail = Ward::where('corporation_id', $userId->corporation_id)
+            ->where('ward_no', $ward_no)
+            ->first();
+
+        if (!$warddetail) {
+            return redirect()->back()->with('error', 'Ward not found.');
+        }
+
+        // Prepare table names
         $zone = strtolower(trim($warddetail->zone));
         $wardNo = (int)$warddetail->ward_no;
         $corp = (int)$warddetail->corporation_id;
 
-        // Table names
-        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
-        $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
-        $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
-        $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
-        $misTableName = "mis_corporation_{$corp}";
-        $wateTaxTableName = "watertax_corporation_{$corp}";
+        $tableNames = [
+            'polygons' => "polygon_{$corp}_{$zone}_{$wardNo}",
+            'polygonData' => "polygondata_{$corp}_{$zone}_{$wardNo}",
+            'points' => "point_{$corp}_{$zone}_{$wardNo}",
+            'pointData' => "pointdata_{$corp}_{$zone}_{$wardNo}",
+            'lines' => "line_{$corp}_{$zone}_{$wardNo}",
+            'mis' => "mis_corporation_{$corp}",
+            'waterTax' => "watertax_corporation_{$corp}"
+        ];
 
-        // Get data
-        $polygons = DB::table($polygonsTableName)->get();
-        $lines = DB::table($linesTableName)->get();
-        $points = DB::table($pointsTableName)->get();
-        $polygonDatas = DB::table($polygonDataTableName)->get();
-        $pointDatas = DB::table($pointDataTableName)->get();
-        $misData = DB::table($misTableName . ' as mis')
-            ->join($wateTaxTableName . ' as wt', 'mis.assessment', '=', 'wt.assessment')
-            ->select(
-                'mis.*',
-                'wt.watertax_no',
-                'wt.old_watertax_no'
-            )
-            ->get();
+        // Initialize data arrays with default values
+        $polygons = collect();
+        $lines = collect();
+        $points = collect();
+        $polygonDatas = collect();
+        $pointDatas = collect();
+        $misData = collect();
+        $uniqueRoadNames = collect();
 
-        // Get unique road names from misData
-        $uniqueRoadNames = DB::table($misTableName)
-            ->select('road_name')
-            ->whereNotNull('road_name')
-            ->where('road_name', '!=', '')
-            ->distinct()
-            ->orderBy('road_name')
-            ->pluck('road_name');
+        // Check if tables exist and fetch data
+        $schema = DB::connection()->getSchemaBuilder();
+
+        // Fetch polygons
+        if ($schema->hasTable($tableNames['polygons'])) {
+            $polygons = DB::table($tableNames['polygons'])->get();
+        } else {
+            \Log::warning("Table not found: {$tableNames['polygons']}");
+        }
+
+        // Fetch lines
+        if ($schema->hasTable($tableNames['lines'])) {
+            $lines = DB::table($tableNames['lines'])->get();
+        } else {
+            \Log::warning("Table not found: {$tableNames['lines']}");
+        }
+
+        // Fetch points
+        if ($schema->hasTable($tableNames['points'])) {
+            $points = DB::table($tableNames['points'])->get();
+        } else {
+            \Log::warning("Table not found: {$tableNames['points']}");
+        }
+
+        // Fetch polygon data
+        if ($schema->hasTable($tableNames['polygonData'])) {
+            $polygonDatas = DB::table($tableNames['polygonData'])->get();
+        } else {
+            \Log::warning("Table not found: {$tableNames['polygonData']}");
+        }
+
+        // Fetch point data
+        if ($schema->hasTable($tableNames['pointData'])) {
+            $pointDatas = DB::table($tableNames['pointData'])->get();
+        } else {
+            \Log::warning("Table not found: {$tableNames['pointData']}");
+        }
+
+        // Fetch MIS and Water Tax data with proper join
+        if ($schema->hasTable($tableNames['mis']) && $schema->hasTable($tableNames['waterTax'])) {
+            $misData = DB::table($tableNames['mis'] . ' as mis')
+                ->leftJoin($tableNames['waterTax'] . ' as wt', 'mis.assessment', '=', 'wt.assessment')
+                ->select(
+                    'mis.*',
+                    'wt.watertax_no',
+                    'wt.old_watertax_no'
+                )
+                ->get();
+
+            // Get unique road names
+            $uniqueRoadNames = DB::table($tableNames['mis'])
+                ->select('road_name')
+                ->whereNotNull('road_name')
+                ->where('road_name', '!=', '')
+                ->distinct()
+                ->orderBy('road_name')
+                ->pluck('road_name');
+        } else {
+            \Log::warning("MIS or WaterTax table not found: {$tableNames['mis']} or {$tableNames['waterTax']}");
+        }
+
+        // Transform coordinates from JSON strings to arrays
+        $polygons = $this->transformCoordinates($polygons, 'coordinates');
+        $lines = $this->transformCoordinates($lines, 'coordinates');
+        $points = $this->transformCoordinates($points, 'coordinates');
+
         $ward = $warddetail;
-        return view('corporation.ward-map', compact(
 
+        return view('corporation.ward-map', compact(
             'ward',
             'polygons',
             'points',
@@ -185,9 +252,38 @@ class CommissionerController extends Controller
             'polygonDatas',
             'pointDatas',
             'misData',
-            'uniqueRoadNames' // Add this to the compact array
+            'uniqueRoadNames'
         ));
+
+    } catch (\Exception $e) {
+        \Log::error("Error in mapView: " . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+
+        return redirect()->back()->with('error', 'An error occurred while loading the map data. Please try again later.');
     }
+}
+
+/**
+ * Transform coordinate strings to arrays for JSON encoding
+ */
+private function transformCoordinates($collection, $field)
+{
+    return $collection->map(function ($item) use ($field) {
+        if (isset($item->$field) && is_string($item->$field)) {
+            try {
+                $item->$field = json_decode($item->$field, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    \Log::warning("Failed to decode JSON for field: {$field}", ['error' => json_last_error_msg()]);
+                    $item->$field = null;
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error decoding coordinates: " . $e->getMessage());
+                $item->$field = null;
+            }
+        }
+        return $item;
+    });
+}
 
     private function getPointDataTable($corporationId, $wardNo, $zone)
     {
