@@ -527,7 +527,8 @@ class CommissionerController extends Controller
         $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
         $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
-        $shopsTableName = "shops_corporation_{$corporationId}";
+        $shopsTableName = "shopdata_{$corporationId}_{$zone}_{$wardNo}";
+        $misTableName = "mis_corporation_{$corporationId}";
 
         // Get all data first
         $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
@@ -598,7 +599,8 @@ class CommissionerController extends Controller
             // Calculate assessment total area
             if (isset($pointDataByGisid[$gisid])) {
                 foreach ($pointDataByGisid[$gisid] as $assessment) {
-                    $sqft = floatval($assessment->sqfeet ?? 0);
+                    $assessemntsqfeer = DB::table($misTableName)->select('plot_area')->where('assessment',$assessment->assessment)->get();
+                    $sqft = floatval($assessemntsqfeer ?? 0);
                     $plotArea = floatval($assessment->plot_area ?? $sqft);
                     // Use QC values if available
                     $qcSqft = floatval($assessment->qcsqfeet ?? 0);
