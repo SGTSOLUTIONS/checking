@@ -216,7 +216,7 @@ class CommissionerController extends Controller
 
         $ward = $warddetail;
 
-        // Add table names to point data for reference
+        // Add table names and ids to point data for reference
         foreach ($pointDatas as $pointData) {
             $pointData->table_name = $pointDataTableName;
         }
@@ -235,13 +235,12 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Update assessment data
+     * Update assessment data by ID
      */
     public function updateAssessment(Request $request)
     {
-
-    return response()->json($request->all());
         try {
+            $assessmentId = $request->id;
             $assessmentNo = $request->assessment_no;
             $squareFeet = $request->square_feet;
             $usage = $request->usage;
@@ -279,9 +278,16 @@ class CommissionerController extends Controller
                 ]);
             }
 
-            $updated = DB::table($pointDataTable)
-                ->where('assessment', $assessmentNo)
-                ->update($updateData);
+            // Update by ID if provided, otherwise by assessment number
+            if ($assessmentId) {
+                $updated = DB::table($pointDataTable)
+                    ->where('id', $assessmentId)
+                    ->update($updateData);
+            } else {
+                $updated = DB::table($pointDataTable)
+                    ->where('assessment', $assessmentNo)
+                    ->update($updateData);
+            }
 
             if ($updated) {
                 return response()->json([
@@ -294,7 +300,6 @@ class CommissionerController extends Controller
                     'message' => 'Assessment not found or no changes made'
                 ]);
             }
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -304,12 +309,13 @@ class CommissionerController extends Controller
     }
 
     /**
-     * Get assessment details by assessment number
+     * Get assessment details by assessment number or ID
      */
     public function getAssessmentDetails(Request $request)
     {
         try {
             $assessmentNo = $request->assessment_no;
+            $assessmentId = $request->assessment_id;
             $user = Auth::user();
             $corpId = $user->corporation_id;
 
@@ -322,9 +328,15 @@ class CommissionerController extends Controller
                 ]);
             }
 
-            $data = DB::table($pointDataTable)
-                ->where('assessment', $assessmentNo)
-                ->first();
+            // Query by ID if provided, otherwise by assessment number
+            $query = DB::table($pointDataTable);
+            if ($assessmentId) {
+                $query->where('id', $assessmentId);
+            } else {
+                $query->where('assessment', $assessmentNo);
+            }
+
+            $data = $query->first();
 
             if ($data) {
                 return response()->json([
@@ -337,7 +349,6 @@ class CommissionerController extends Controller
                     'message' => 'Assessment not found'
                 ]);
             }
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -366,14 +377,14 @@ class CommissionerController extends Controller
 
             if (!in_array('sqfeet', $columns)) {
                 Schema::table($tableName, function ($table) {
-                    $table->decimal('sqfeet', 10, 2)->nullable()->after('assessment');
+                    $table->decimal('sqfeet', 10, 2)->nullable();
                 });
                 $addedColumns[] = 'sqfeet';
             }
 
             if (!in_array('usage', $columns)) {
                 Schema::table($tableName, function ($table) {
-                    $table->string('usage', 50)->nullable()->after('sqfeet');
+                    $table->string('usage', 50)->nullable();
                 });
                 $addedColumns[] = 'usage';
             }
@@ -396,7 +407,6 @@ class CommissionerController extends Controller
                     'message' => 'All required columns already exist'
                 ]);
             }
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

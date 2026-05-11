@@ -1534,42 +1534,42 @@
                         assessmentsHtml = `<div class="assessment-list">`;
                         assessments.forEach((assessment, index) => {
                             assessmentsHtml += `
-                        <div class="assessment-item" data-assessment="${assessment.assessment}" ata-assessment="${assessment.id}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
-                            <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Owner Name:</span>
-                                <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Present Owner:</span>
-                                <span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Phone:</span>
-                                <span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Floor:</span>
-                                <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Bill Usage:</span>
-                                <span class="assessment-detail-value">${assessment.bill_usage || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Door No:</span>
-                                <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Square Feet:</span>
-                                <span class="assessment-detail-value">${assessment.sqfeet || 'N/A'} sqft</span>
-                            </div>
-                            <div class="assessment-detail-row">
-                                <span class="assessment-detail-label">Usage:</span>
-                                <span class="assessment-detail-value">${assessment.usage || 'N/A'}</span>
-                            </div>
-                        </div>
-                    `;
+            <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
+                <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Owner Name:</span>
+                    <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Present Owner:</span>
+                    <span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Phone:</span>
+                    <span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Floor:</span>
+                    <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Bill Usage:</span>
+                    <span class="assessment-detail-value">${assessment.bill_usage || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Door No:</span>
+                    <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Square Feet:</span>
+                    <span class="assessment-detail-value">${assessment.sqfeet || 'N/A'} sqft</span>
+                </div>
+                <div class="assessment-detail-row">
+                    <span class="assessment-detail-label">Usage:</span>
+                    <span class="assessment-detail-value">${assessment.usage || 'N/A'}</span>
+                </div>
+            </div>
+        `;
                         });
                         assessmentsHtml += `</div>`;
                     } else {
@@ -1583,14 +1583,13 @@
                         const assessmentNo = $(this).data('assessment');
                         const assessmentId = $(this).data('id');
                         const pointDataTable = $(this).data('point-data-table');
-                        loadAssessmentForEdit(assessmentNo, pointDataTable,assessmentId);
+                        loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
                     });
-
                     $('#featureInfo').fadeIn();
                 }
 
                 // Load assessment data into edit form
-                function loadAssessmentForEdit(assessmentNo, pointDataTable,assessmentId) {
+                function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
                     $('#loadingSpinner').fadeIn();
                     $('#updateStatus').html('');
 
@@ -1601,22 +1600,23 @@
                         data: {
                             assessment_no: assessmentNo,
                             point_data_table: pointDataTable,
-                            assessment_id : assessmentId
+                            assessment_id: assessmentId
                         },
                         success: function(response) {
                             if (response.success && response.data) {
                                 $('#currentAssessmentNo').val(assessmentNo);
+                                $('#currentid').val(assessmentId || response.data.id || '');
                                 $('#pointDataTableName').val(pointDataTable);
                                 $('#squareFeet').val(response.data.sqfeet || '');
                                 $('#usage').val(response.data.usage || '');
-                                 $('#currentid').val(assessmentId || '');
                                 $('#assessmentForm').slideDown();
                                 showToast('Assessment loaded for editing', 'info');
                             } else {
                                 showToast(response.message || 'Error loading assessment', 'error');
                             }
                         },
-                        error: function() {
+                        error: function(xhr) {
+                            console.error('AJAX Error:', xhr);
                             showToast('Error loading assessment details', 'error');
                         },
                         complete: function() {
@@ -1626,7 +1626,7 @@
                 }
 
                 // Update assessment via AJAX
-                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable ,id) {
+                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                     $('#updateAssessmentBtn').prop('disabled', true);
                     $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating...').removeClass(
                         'success error');
@@ -1640,14 +1640,21 @@
                             square_feet: squareFeet,
                             usage: usage,
                             point_data_table: pointDataTable,
-                            id: id;
+                            id: id
                         },
                         success: function(response) {
                             if (response.success) {
                                 $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response
                                     .message).addClass('success');
                                 showToast(response.message, 'success');
-                                setTimeout(() => $('#assessmentForm').slideUp(), 2000);
+                                // Reload the assessment data to show updated values
+                                setTimeout(() => {
+                                    $('#assessmentForm').slideUp();
+                                    // Refresh the displayed property info
+                                    if (currentGisid) {
+                                        displayFullPropertyInfo(currentGisid, pointDataTable);
+                                    }
+                                }, 2000);
                             } else {
                                 $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' +
                                     response.message).addClass('error');
@@ -1666,7 +1673,6 @@
                         }
                     });
                 }
-
                 // Tab switching
                 $('.info-tab').on('click', function() {
                     const tabId = $(this).data('tab');
@@ -1738,7 +1744,7 @@
                         let foundFeature = null;
                         pointSource.forEachFeature(f => {
                             if (f.get('gisid') && f.get('gisid').toString() === pointData.point_gisid
-                            .toString()) {
+                                .toString()) {
                                 foundFeature = f;
                                 return true;
                             }
@@ -1855,7 +1861,7 @@
 
                             $('#routeSummary').html(
                                 `<strong>Distance:</strong> ${distance}<br><strong>Duration:</strong> ${duration}`
-                                );
+                            );
                             $('#directionsList').html(stepsHtml ||
                                 '<div class="text-muted">No step-by-step directions available</div>');
                             $('#routeInfo').fadeIn();
@@ -1910,12 +1916,12 @@
                 $('#updateAssessmentForm').on('submit', function(e) {
                     e.preventDefault();
                     const assessmentNo = $('#currentAssessmentNo').val();
-                      const id = $('#currentid').val();
+                    const id = $('#currentid').val();
                     const squareFeet = $('#squareFeet').val();
                     const usage = $('#usage').val();
                     const pointDataTable = $('#pointDataTableName').val();
 
-                    if (!assessmentNo) {
+                    if (!assessmentNo && !id) {
                         showToast('No assessment selected', 'warning');
                         return;
                     }
@@ -1928,7 +1934,7 @@
                         return;
                     }
 
-                    updateAssessment(assessmentNo, squareFeet, usage, pointDataTable,id);
+                    updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id);
                 });
 
                 // Button Events
