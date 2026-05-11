@@ -946,7 +946,8 @@
                         <div class="assessment-form" id="assessmentForm" style="display: none;">
                             <h5><i class="fas fa-edit me-2"></i>Update Assessment</h5>
                             <form id="updateAssessmentForm">
-                                <input type="hidden" id="currentAssessmentNo">
+                                <input type="text" id="currentAssessmentNo" readonly>
+                                <input type="hidden" id="currentid">
                                 <input type="hidden" id="pointDataTableName">
                                 <div class="form-group">
                                     <label for="squareFeet">Square Feet (sq.ft)</label>
@@ -1608,6 +1609,7 @@
                                 $('#pointDataTableName').val(pointDataTable);
                                 $('#squareFeet').val(response.data.sqfeet || '');
                                 $('#usage').val(response.data.usage || '');
+                                 $('#currentid').val(assessmentId || '');
                                 $('#assessmentForm').slideDown();
                                 showToast('Assessment loaded for editing', 'info');
                             } else {
@@ -1624,7 +1626,7 @@
                 }
 
                 // Update assessment via AJAX
-                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable) {
+                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable ,id) {
                     $('#updateAssessmentBtn').prop('disabled', true);
                     $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating...').removeClass(
                         'success error');
@@ -1637,7 +1639,8 @@
                             assessment_no: assessmentNo,
                             square_feet: squareFeet,
                             usage: usage,
-                            point_data_table: pointDataTable
+                            point_data_table: pointDataTable,
+                            id: id;
                         },
                         success: function(response) {
                             if (response.success) {
@@ -1907,6 +1910,7 @@
                 $('#updateAssessmentForm').on('submit', function(e) {
                     e.preventDefault();
                     const assessmentNo = $('#currentAssessmentNo').val();
+                      const id = $('#currentid').val();
                     const squareFeet = $('#squareFeet').val();
                     const usage = $('#usage').val();
                     const pointDataTable = $('#pointDataTableName').val();
@@ -1924,7 +1928,7 @@
                         return;
                     }
 
-                    updateAssessment(assessmentNo, squareFeet, usage, pointDataTable);
+                    updateAssessment(assessmentNo, squareFeet, usage, pointDataTable,id);
                 });
 
                 // Button Events
