@@ -1854,7 +1854,7 @@
                 });
             }
 
-           function createPolygonStyle(feature) {
+            function createPolygonStyle(feature) {
 
                 const gisid = feature.get("gisid");
                 const sqft = feature.get("sqfeet") || "0";
@@ -1879,6 +1879,7 @@
                     }),
 
                     // Label Style
+                    // Label Style
                     new ol.style.Style({
                         geometry: centerPoint,
 
@@ -1888,13 +1889,19 @@
                             font: "bold 14px Arial",
 
                             fill: new ol.style.Fill({
+                                color: "#000000"
+                            }),
+
+                            backgroundFill: new ol.style.Fill({
                                 color: "#ffffff"
                             }),
 
-                            stroke: new ol.style.Stroke({
+                            backgroundStroke: new ol.style.Stroke({
                                 color: "#000000",
-                                width: 3
+                                width: 1
                             }),
+
+                            padding: [4, 6, 4, 6],
 
                             overflow: true,
 
@@ -2038,7 +2045,7 @@
                         geometry: new ol.geom.Polygon(coords),
                         gisid: poly.gisid,
                         type: "Polygon",
-                         sqfeet: poly.sqfeet || "0"
+                        sqfeet: poly.sqfeet || "0"
                     }));
                 } catch (e) {
                     console.error('Polygon parse error:', e);
@@ -3583,7 +3590,7 @@
                             geometry: new ol.geom.Polygon(coords),
                             gisid: poly.gisid,
                             type: "Polygon",
-                             sqfeet: poly.sqfeet || "0"
+                            sqfeet: poly.sqfeet || "0"
                         }));
                     } catch (e) {}
                 });
