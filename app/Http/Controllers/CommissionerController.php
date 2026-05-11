@@ -597,26 +597,35 @@ class CommissionerController extends Controller
             }
 
             // Calculate assessment total area
-            if (isset($pointDataByGisid[$gisid])) {
-                foreach ($pointDataByGisid[$gisid] as $assessment) {
-                    $assessemntsqfeer = DB::table($misTableName)->select('plot_area')->where('assessment',$assessment->assessment)->get();
-                    $sqft = floatval($assessemntsqfeer ?? 0);
-                    $plotArea = floatval($assessment->plot_area ?? $sqft);
-                    // Use QC values if available
-                    $qcSqft = floatval($assessment->qcsqfeet ?? 0);
-                    if ($qcSqft > 0) {
-                        $assessmentTotal += $qcSqft;
-                    } else {
-                        $assessmentTotal += $plotArea;
-                    }
+           // Calculate assessment total area
+if (isset($pointDataByGisid[$gisid])) {
+    foreach ($pointDataByGisid[$gisid] as $assessment) {
+        // FIX: Get the actual value from the query result
+        $assessmentRecord = DB::table($misTableName)
+            ->select('plot_area')
+            ->where('assessment', $assessment->assessment)
+            ->first(); // Use first() instead of get()
 
-                    // Check for usage variation
-                    $assessmentUsage = $assessment->qcusage ?? $assessment->usage ?? null;
-                    if ($buildingUsageValue && $assessmentUsage && strtoupper($buildingUsageValue) != strtoupper($assessmentUsage)) {
-                        $usageVariation = true;
-                    }
-                }
-            }
+        // Get the plot_area value, default to 0 if not found
+        $sqft = $assessmentRecord ? floatval($assessmentRecord->plot_area) : 0;
+
+        $plotArea = floatval($assessment->plot_area ?? $sqft);
+
+        // Use QC values if available
+        $qcSqft = floatval($assessment->qcsqfeet ?? 0);
+        if ($qcSqft > 0) {
+            $assessmentTotal += $qcSqft;
+        } else {
+            $assessmentTotal += $plotArea;
+        }
+
+        // Check for usage variation
+        $assessmentUsage = $assessment->qcusage ?? $assessment->usage ?? null;
+        if ($buildingUsageValue && $assessmentUsage && strtoupper($buildingUsageValue) != strtoupper($assessmentUsage)) {
+            $usageVariation = true;
+        }
+    }
+}
 
             // Calculate area variation (absolute difference)
             $areaVariationValue = abs($totalSqFeet - $assessmentTotal);

@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>SRIS | Surveyor Dashboard - Property Tax Intelligence</title>
+    <title>@yield('title', 'TN Municipal | Property Tax Portal')</title>
 
-    <!-- Bootstrap 5 + Icons + Fonts -->
+    <!-- Bootstrap 5 CSS + Icons + Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
-    <!-- Leaflet CSS for GIS Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    @stack('styles')
 
     <style>
         * {
@@ -24,491 +25,941 @@
 
         body {
             font-family: 'Inter', 'Poppins', sans-serif;
-            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: #f4f2ef2d;
+            position: relative;
             overflow-x: hidden;
         }
 
-        /* Navbar surveyor style */
-        .sris-navbar {
-            background: linear-gradient(98deg, #0b2b3b 0%, #1a4a5f 100%);
-            padding: 0.8rem 1.5rem;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        /* Heritage Background */
+        .heritage-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            overflow: hidden;
         }
 
-        .brand-logo {
+        .heritage-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* brightness: 20%; */
+            transform: scale(1.02);
+            animation: slowZoom 22s ease infinite alternate;
+        }
+
+        @keyframes slowZoom {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.06);
+            }
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* background: linear-gradient(135deg, rgba(230, 228, 227, 0.4) 0%, rgba(245, 244, 243, 0.3) 100%); */
+            z-index: -1;
+        }
+
+        /* Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(230, 126, 34, 0.25);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: floatParticle linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.25;
+            }
+
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1rem;
+            left: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem;
+            max-width: 380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @media (min-width: 576px) {
+            .toast-container {
+                left: auto;
+                right: 1.5rem;
+                margin-left: 0;
+            }
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border-left: 4px solid;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+            padding: 0.8rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.3s ease;
+            color: #1e2f3e;
+            font-size: 0.9rem;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .toast-success {
+            border-left-color: #27ae60;
+        }
+
+        .toast-error {
+            border-left-color: #e74c3c;
+        }
+
+        .toast-warning {
+            border-left-color: #f39c12;
+        }
+
+        .toast-info {
+            border-left-color: #2980b9;
+        }
+
+        .toast-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .toast-message {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #7e8b9e;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0 4px;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e67e22, #f39c12);
+            width: 0%;
+            animation: progressShrink linear forwards;
+        }
+
+        @keyframes progressShrink {
+            from {
+                width: 100%;
+            }
+
+            to {
+                width: 0%;
+            }
+        }
+
+        /* Main Card - Responsive */
+        .auth-card {
+            width: 100%;
+            max-width: 1280px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 2rem;
+            box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 215, 120, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+            position: relative;
+            animation: fadeSlideUp 0.5s ease-out;
+        }
+
+        @media (min-width: 992px) {
+            .auth-card {
+                flex-direction: row;
+            }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Left Side Branding - Hidden on mobile, visible on desktop */
+        .login-hero {
+            flex: 1.2;
+            background: linear-gradient(135deg, #fbf7ef 0%, #fffaf2 100%);
+            padding: 2rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #2c3e4e;
+            display: none;
+            /* Hidden by default on mobile */
+        }
+
+        @media (min-width: 992px) {
+            .login-hero {
+                display: flex;
+                /* Show on desktop */
+                min-width: 260px;
+            }
+        }
+
+        .brand {
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .brand-icon {
             background: #e67e22;
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+            width: 45px;
+            height: 45px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 16px rgba(230, 126, 34, 0.2);
+        }
+
+        @media (min-width: 768px) {
+            .brand-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
         }
 
         .brand-text {
+            font-size: 1.1rem;
             font-weight: 800;
-            font-size: 1.2rem;
-            color: white;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.2px;
+            line-height: 1.2;
+            color: #1e3a5f;
         }
 
         .brand-sub {
-            font-size: 0.7rem;
-            color: #ffdfb3;
-        }
-
-        .surveyor-badge {
-            background: rgba(230, 126, 34, 0.2);
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 0.8rem;
+            font-size: 0.65rem;
             font-weight: 600;
-            color: #f39c12;
-            border: 1px solid rgba(243, 156, 18, 0.4);
-        }
-
-        /* Stats Cards */
-        .stat-card {
-            background: white;
-            border-radius: 24px;
-            padding: 1rem 1.2rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-            border-left: 5px solid #e67e22;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #5e7a93;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #1e3a5f;
-            line-height: 1.2;
-        }
-
-        /* Map Container */
-        .map-card {
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-            background: white;
-            height: 100%;
-            min-height: 380px;
-        }
-
-        #gisMap {
-            height: 380px;
-            width: 100%;
-            z-index: 1;
-        }
-
-        /* Property table */
-        .table-responsive-custom {
-            border-radius: 20px;
-            background: white;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.03);
-        }
-
-        .table thead th {
-            background: #f8fafd;
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: #1e3a5f;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .table td {
-            font-size: 0.8rem;
-            vertical-align: middle;
-        }
-
-        .badge-tax-paid {
-            background: #d1fae5;
-            color: #0b5e42;
-            font-weight: 600;
-            padding: 5px 12px;
-            border-radius: 40px;
-            font-size: 0.7rem;
-        }
-
-        .badge-tax-pending {
-            background: #fee2e2;
-            color: #b91c1c;
-            font-weight: 600;
-        }
-
-        .btn-survey-action {
-            background: white;
-            border: 1px solid #e67e22;
             color: #e67e22;
-            border-radius: 30px;
-            padding: 4px 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            transition: 0.2s;
         }
 
-        .btn-survey-action:hover {
-            background: #e67e22;
-            color: white;
-        }
-
-        .section-title {
-            font-weight: 700;
-            color: #1e3a5f;
-            border-left: 5px solid #e67e22;
-            padding-left: 14px;
-            margin-bottom: 1.2rem;
-        }
-
-        footer {
-            background: #0a2a38;
-            color: #b6cddf;
-            font-size: 0.75rem;
-            padding: 1rem;
-            text-align: center;
-            margin-top: 2rem;
-        }
-
-        /* Toast custom */
-        .toast-container-bottom {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            z-index: 9999;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
+        @media (min-width: 768px) {
             .brand-text {
-                font-size: 1rem;
+                font-size: 1.3rem;
             }
 
-            .stat-value {
-                font-size: 1.4rem;
+            .brand-sub {
+                font-size: 0.7rem;
+            }
+        }
+
+        .hero-content h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .hero-highlight {
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            display: inline-block;
+        }
+
+        .hero-description {
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: #4a627a;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero-description {
+                font-size: 0.85rem;
+            }
+        }
+
+        .trust-badge {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.2rem;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            background: #fef5e8;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #b45f1b;
+            font-weight: 500;
+        }
+
+        .quote-area {
+            margin-top: 1.5rem;
+        }
+
+        .quote {
+            font-weight: 500;
+            font-size: 0.7rem;
+            border-left: 3px solid #e67e22;
+            padding-left: 0.9rem;
+            color: #5d6f83;
+            line-height: 1.35;
+        }
+
+        @media (min-width: 768px) {
+            .quote {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Right Side Form - Full width on mobile */
+        .login-form-section {
+            flex: 1;
+            background: white;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        @media (min-width: 576px) {
+            .login-form-section {
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .login-form-section {
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .login-form-section {
+                padding: 2.5rem;
+            }
+        }
+
+        /* Mobile Header - Only visible on mobile */
+        .mobile-header {
+            display: none;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #fef5e8;
+        }
+
+        @media (max-width: 991px) {
+            .mobile-header {
+                display: block;
+            }
+
+            .mobile-header .brand-icon {
+                margin: 0 auto 10px;
+                width: 55px;
+                height: 55px;
+                font-size: 1.8rem;
+            }
+
+            .mobile-header .brand-text {
+                font-size: 1.2rem;
+            }
+
+            .mobile-header .brand-sub {
+                font-size: 0.7rem;
+            }
+        }
+
+        .form-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+
+        @media (min-width: 768px) {
+            .form-header h2 {
+                font-size: 1.6rem;
+            }
+        }
+
+        .form-header p {
+            color: #5e7a93;
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        .input-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #2c4c6e;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .input-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 14px;
+            color: #e67e22;
+            font-size: 1rem;
+            z-index: 2;
+        }
+
+        .input-field input,
+        .input-field select {
+            width: 100%;
+            padding: 10px 14px 10px 44px;
+            font-size: 0.9rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            background: #ffffff;
+            transition: all 0.2s;
+            outline: none;
+            font-family: 'Inter', 'Poppins', sans-serif;
+        }
+
+        @media (min-width: 768px) {
+
+            .input-field input,
+            .input-field select {
+                padding: 11px 14px 11px 44px;
+            }
+        }
+
+        .input-field input:focus,
+        .input-field select:focus {
+            border-color: #e67e22;
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.15);
+        }
+
+        .input-field input.is-invalid,
+        .input-field select.is-invalid {
+            border-color: #e74c3c;
+        }
+
+        .invalid-feedback {
+            font-size: 0.75rem;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #2c4c6e;
+        }
+
+        .checkbox input {
+            accent-color: #e67e22;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        .forgot-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #e67e22;
+            text-decoration: none;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: #c0392b;
+        }
+
+        .login-btn {
+            background: linear-gradient(95deg, #e67e22, #f39c12);
+            color: white;
+            width: 100%;
+            padding: 11px 0;
+            border: none;
+            border-radius: 44px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+        }
+
+        @media (min-width: 768px) {
+            .login-btn {
+                padding: 12px 0;
+                font-size: 0.95rem;
+            }
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(230, 126, 34, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0 1rem;
+            color: #a0b8d0;
+            font-size: 0.7rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #e9edf2;
+        }
+
+        .divider span {
+            margin: 0 12px;
+        }
+
+        .sso-buttons {
+            display: flex;
+            gap: 0.7rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sso-btn {
+            flex: 1;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 44px;
+            padding: 8px 6px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            color: #1e3a5f;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        @media (min-width: 768px) {
+            .sso-btn {
+                padding: 9px 6px;
+            }
+        }
+
+        .sso-btn:hover {
+            background: #fff4e6;
+            border-color: #e67e22;
+        }
+
+        .register-prompt {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.8rem;
+            color: #5e7a93;
+        }
+
+        .register-prompt a {
+            color: #e67e22;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+            transform: scale(0);
+            animation: rippleAnim 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes rippleAnim {
+            to {
+                transform: scale(6);
+                opacity: 0;
+            }
+        }
+
+        /* File Upload Styles */
+        .file-upload-container {
+            position: relative;
+        }
+
+        .file-input {
+            position: absolute;
+            width: 0;
+            height: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .file-upload-area {
+            cursor: pointer;
+            border: 2px dashed #e2e8f0;
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fef9f0;
+        }
+
+        .file-upload-area:hover {
+            border-color: #e67e22;
+            background: #fff6ea;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #e67e22;
+            background: #fef0e0;
+            transform: scale(1.01);
+        }
+
+        .file-upload-icon {
+            margin-bottom: 12px;
+            color: #e67e22;
+        }
+
+        .file-upload-text .primary {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c4c6e;
+            font-size: 0.9rem;
+        }
+
+        .file-upload-text .secondary {
+            color: #7e8b9e;
+            font-size: 11px;
+        }
+
+        .file-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .file-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #e67e22;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .file-remove {
+            border: none;
+            background: transparent;
+            color: #dc3545;
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: color 0.3s ease;
+        }
+
+        .file-remove:hover {
+            color: #c82333;
+            text-decoration: underline;
+        }
+
+        .btn-outline-success {
+            border: 1px solid #e67e22;
+            color: #e67e22;
+            background: white;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-success:hover {
+            background: #e67e22;
+            color: white;
+            border-color: #e67e22;
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .auth-card {
+                border-radius: 1.2rem;
+            }
+
+            .login-form-section {
+                padding: 1.2rem;
+            }
+
+            .file-upload-area {
+                padding: 15px;
+            }
+
+            .sso-buttons {
+                flex-direction: column;
+            }
+
+            .sso-btn {
+                width: 100%;
             }
         }
     </style>
+
+    @stack('additional-styles')
 </head>
+
 <body>
 
-    <!-- Surveyor Navbar -->
-    <nav class="sris-navbar">
-        <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between">
-            <div class="brand-logo">
-                <div class="brand-icon"><i class="fas fa-map-marked-alt"></i></div>
-                <div>
-                    <div class="brand-text">SRIS <span style="font-weight:600">Spatial Revenue Intelligent System</span></div>
-                    <div class="brand-sub">Tamil Nadu · GIS Property Survey</div>
-                </div>
-            </div>
-            <div class="d-flex gap-3 align-items-center mt-2 mt-sm-0">
-                <div class="surveyor-badge"><i class="fas fa-hard-hat me-1"></i> Surveyor Access · SRIS Field Ops</div>
-                <button id="logoutSimulateBtn" class="btn btn-sm btn-outline-light rounded-pill px-3"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container py-4">
-        <!-- Welcome Row -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
-            <div>
-                <h4 class="fw-bold text-dark"><i class="fas fa-tachometer-alt me-2" style="color:#e67e22"></i> Surveyor Dashboard</h4>
-                <p class="text-muted small">Welcome back, Senior Surveyor Kumaravel · Real-time property intelligence & tax assessment</p>
-            </div>
-            <div class="mt-2 mt-md-0">
-                <button class="btn btn-dark rounded-pill px-4" id="refreshDataBtn"><i class="fas fa-sync-alt me-1"></i> Sync GIS Data</button>
-            </div>
-        </div>
-
-        <!-- Stats Cards: Tax & Revenue summary -->
-        <div class="row g-3 mb-4">
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card">
-                    <div class="stat-title"><i class="fas fa-building me-1"></i> Total Properties</div>
-                    <div class="stat-value" id="totalProperties">2,486</div>
-                    <small class="text-success"><i class="fas fa-arrow-up"></i> +11.4% this year</small>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card">
-                    <div class="stat-title"><i class="fas fa-rupee-sign me-1"></i> Annual Tax Collection</div>
-                    <div class="stat-value" id="totalTaxCollected">₹4.28 Cr</div>
-                    <small class="text-muted">FY 2025-26 target: ₹5.2 Cr</small>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card">
-                    <div class="stat-title"><i class="fas fa-clock me-1"></i> Pending Assessments</div>
-                    <div class="stat-value" id="pendingAssessments">142</div>
-                    <small class="text-warning">Needs site survey</small>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card">
-                    <div class="stat-title"><i class="fas fa-water me-1"></i> Water Tax Arrears</div>
-                    <div class="stat-value" id="waterArrears">₹36.2 L</div>
-                    <small class="text-danger">+ overdue notices sent</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- GIS Map + Quick Actions row -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-7">
-                <div class="map-card">
-                    <div id="gisMap"></div>
-                    <div class="p-2 bg-light border-top small text-secondary text-center">
-                        <i class="fas fa-map-marker-alt text-warning"></i> Interactive GIS Layer | Property boundaries & tax zones (Tamil Nadu Urban)
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-5">
-                <div class="bg-white rounded-4 p-3 h-100 shadow-sm">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-clipboard-list me-2" style="color:#e67e22"></i> Surveyor Quick Tasks</h6>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-secondary rounded-pill text-start ps-3" id="newPropertySurveyBtn"><i class="fas fa-draw-polygon me-2"></i> New Property Mapping (GIS)</button>
-                        <button class="btn btn-outline-secondary rounded-pill text-start ps-3" id="taxAuditBtn"><i class="fas fa-file-invoice-dollar me-2"></i> Tax Audit & Revenue Inspection</button>
-                        <button class="btn btn-outline-secondary rounded-pill text-start ps-3" id="pendingArrearsBtn"><i class="fas fa-exclamation-triangle me-2"></i> View High Pending Tax List</button>
-                        <hr class="my-2">
-                        <div class="alert alert-warning py-2 small mb-0">
-                            <i class="fas fa-lightbulb"></i> <strong>SRIS Insight:</strong> 23 properties have unassessed built-up area. Click <a href="#" id="suggestSurveyLink" class="alert-link">suggest field visit</a>.
-                        </div>
-                    </div>
-                    <div class="mt-3 p-2 bg-light rounded-3">
-                        <div class="fw-semibold small"><i class="fas fa-chart-line me-1"></i> Revenue trend (last 6 months)</div>
-                        <div class="progress mt-1" style="height: 8px;">
-                            <div class="progress-bar bg-warning" style="width: 72%" role="progressbar">72%</div>
-                        </div>
-                        <div class="d-flex justify-content-between small mt-1">
-                            <span>Tax collection target achieved</span>
-                            <span>₹3.08 Cr / ₹4.28 Cr</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Property Tax Table (All tax related content) -->
-        <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
-            <h5 class="section-title"><i class="fas fa-table-list me-2"></i> Property Tax Register · Surveyor Assessment View</h5>
-            <span class="badge bg-secondary px-3 py-2 rounded-pill"><i class="fas fa-database"></i> Live from SRIS GIS Hub</span>
-        </div>
-
-        <div class="table-responsive-custom rounded-4 overflow-hidden">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Property ID</th><th>Owner Name</th><th>Zone/Ward</th><th>Property Type</th><th>Built-up Area (sqft)</th><th>Annual Property Tax</th><th>Water Tax</th><th>Status</th><th>Survey Action</th>
-                    </tr>
-                </thead>
-                <tbody id="propertyTaxTableBody">
-                    <!-- dynamic rows via JS -->
-                </tbody>
-            </table>
-        </div>
-        <div class="mt-3 text-end">
-            <button class="btn btn-link text-decoration-none small" id="viewAllPropertiesBtn"><i class="fas fa-arrow-right"></i> View all 2,486 properties on GIS map</button>
-        </div>
+    <div class="heritage-bg">
+        <img src="{{asset('banner.jpeg')}}"
+            alt="Tamil Nadu Government Heritage Building">
     </div>
+    <div class="bg-overlay"></div>
+    <div class="particles" id="particles-container"></div>
+    <div id="toast-container" class="toast-container"></div>
 
-    <footer>
-        <i class="fas fa-copyright"></i> Spatial Revenue Intelligent System (SRIS) - TN Municipal | GIS enabled property tax management | Surveyor dashboard realtime
-    </footer>
+    @yield('content')
 
-    <div id="toastContainer" class="toast-container-bottom"></div>
-
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ---------- MOCK TAX DATA (full surveyor context) ----------
-        // Extended properties dataset matching tax & revenue content
-        let propertiesData = [
-            { id: "TN-MC-1024", owner: "Sundararajan M", ward: "Ward 12 - Anna Nagar", type: "Residential", area: 1450, propTax: 12450, waterTax: 2400, status: "paid", lat: 13.0827, lng: 80.2707 },
-            { id: "TN-MC-1089", owner: "Meena Kumari", ward: "Ward 08 - Periyar Nagar", type: "Commercial", area: 2870, propTax: 45800, waterTax: 5800, status: "pending", lat: 13.0912, lng: 80.2789 },
-            { id: "TN-MC-1156", owner: "Ganesh P", ward: "Ward 03 - Gandhi Nagar", type: "Mixed Use", area: 3200, propTax: 67200, waterTax: 7200, status: "overdue", lat: 13.0765, lng: 80.2854 },
-            { id: "TN-MC-1202", owner: "Lakshmi Constructions", ward: "Ward 15 - Thiruvalluvar Nagar", type: "Institutional", area: 5400, propTax: 112000, waterTax: 12500, status: "paid", lat: 13.1023, lng: 80.2598 },
-            { id: "TN-MC-1321", owner: "Arumugam Textiles", ward: "Ward 22 - New Market", type: "Commercial", area: 4100, propTax: 84500, waterTax: 9400, status: "pending", lat: 13.0685, lng: 80.2921 },
-            { id: "TN-MC-1450", owner: "Thangam Hospital", ward: "Ward 05 - Health District", type: "Healthcare", area: 7200, propTax: 156000, waterTax: 18000, status: "paid", lat: 13.0956, lng: 80.2633 },
-            { id: "TN-MC-1509", owner: "Ravi Colony Apartments", ward: "Ward 18 - Lake Area", type: "Residential", area: 3850, propTax: 31200, waterTax: 3900, status: "pending", lat: 13.1117, lng: 80.2755 },
-            { id: "TN-MC-1678", owner: "Senthil Enterprises", ward: "Ward 30 - Industrial Estate", type: "Industrial", area: 8900, propTax: 204700, waterTax: 22600, status: "overdue", lat: 13.0502, lng: 80.2888 }
-        ];
+        // Toast system
+        function showToast(type, title, message, duration = 4500) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
 
-        // Tax totals calculations
-        function computeTotals() {
-            let totalTaxSum = propertiesData.reduce((acc, p) => acc + p.propTax, 0);
-            let pendingCount = propertiesData.filter(p => p.status === 'pending' || p.status === 'overdue').length;
-            let waterArrearsSum = propertiesData.filter(p => p.status !== 'paid').reduce((acc, p) => acc + p.waterTax, 0);
-            document.getElementById('totalProperties').innerText = propertiesData.length + 2478; // mock total real count
-            document.getElementById('totalTaxCollected').innerText = '₹' + (totalTaxSum / 10000000).toFixed(2) + ' Cr';
-            document.getElementById('pendingAssessments').innerText = pendingCount + 118;
-            document.getElementById('waterArrears').innerText = '₹' + ((waterArrearsSum + 286000) / 100000).toFixed(1) + ' L';
-        }
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
 
-        // Render property table with tax fields
-        function renderPropertyTable() {
-            const tbody = document.getElementById('propertyTaxTableBody');
-            tbody.innerHTML = '';
-            propertiesData.forEach(prop => {
-                let statusBadge = '';
-                if (prop.status === 'paid') statusBadge = '<span class="badge-tax-paid rounded-pill"><i class="fas fa-check-circle"></i> Paid</span>';
-                else if (prop.status === 'pending') statusBadge = '<span class="badge bg-warning text-dark rounded-pill"><i class="fas fa-clock"></i> Pending</span>';
-                else statusBadge = '<span class="badge-tax-pending rounded-pill"><i class="fas fa-exclamation-circle"></i> Overdue</span>';
-
-                const row = `<tr>
-                    <td class="fw-semibold">${prop.id}</td>
-                    <td>${prop.owner}</td>
-                    <td>${prop.ward}</td>
-                    <td>${prop.type}</td>
-                    <td>${prop.area.toLocaleString()}</td>
-                    <td>₹${prop.propTax.toLocaleString()}</td>
-                    <td>₹${prop.waterTax.toLocaleString()}</td>
-                    <td>${statusBadge}</td>
-                    <td><button class="btn-survey-action surveyDetailBtn" data-id="${prop.id}"><i class="fas fa-clipboard"></i> Survey</button></td>
-                </tr>`;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-            // attach survey detail events
-            document.querySelectorAll('.surveyDetailBtn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const propId = btn.getAttribute('data-id');
-                    showToast('info', 'Surveyor Field Action', `Open SRIS assessment form for Property ${propId}. Update tax evaluation, built-up area and GIS geometry.`, 3500);
-                });
-            });
-        }
-
-        // Toast reusable
-        function showToast(type, title, message, duration = 4000) {
-            const container = document.getElementById('toastContainer');
-            const toastDiv = document.createElement('div');
-            toastDiv.className = `toast align-items-center text-bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'warning')} border-0 mb-2`;
-            toastDiv.setAttribute('role', 'alert');
-            toastDiv.setAttribute('aria-live', 'assertive');
-            toastDiv.setAttribute('aria-atomic', 'true');
-            const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-bell');
-            toastDiv.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body"><i class="fas ${icon} me-2"></i><strong>${title}</strong> - ${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || 'fa-circle-info'} toast-icon"></i>
+                <div class="toast-content">
+                    <div class="toast-title">${escapeHtml(title)}</div>
+                    <p class="toast-message">${escapeHtml(message)}</p>
                 </div>
+                <button class="toast-close"><i class="fas fa-times"></i></button>
+                <div class="toast-progress" style="animation-duration: ${duration/1000}s;"></div>
             `;
-            container.appendChild(toastDiv);
-            const bsToast = new bootstrap.Toast(toastDiv, { delay: duration, autohide: true });
-            bsToast.show();
-            toastDiv.addEventListener('hidden.bs.toast', () => toastDiv.remove());
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 20);
+
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => removeToast(toast));
+
+            if (duration > 0) {
+                setTimeout(() => removeToast(toast), duration);
+            }
+            return toast;
         }
 
-        // Initialize Leaflet Map with property markers (tax GIS demo)
-        let mapInstance;
-        function initGISMap() {
-            mapInstance = L.map('gisMap').setView([13.0827, 80.277], 13);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(mapInstance);
-
-            // Add property markers (taxable assets)
-            propertiesData.forEach(prop => {
-                const markerColor = prop.status === 'paid' ? 'green' : (prop.status === 'pending' ? 'orange' : 'red');
-                const customIcon = L.divIcon({
-                    html: `<i class="fas fa-building" style="color:${markerColor}; font-size:22px; text-shadow:0 0 3px white"></i>`,
-                    iconSize: [24, 24],
-                    className: 'custom-marker-icon'
-                });
-                const marker = L.marker([prop.lat, prop.lng], { icon: customIcon }).addTo(mapInstance);
-                marker.bindPopup(`
-                    <b>${prop.id}</b><br>Owner: ${prop.owner}<br>Tax: ₹${prop.propTax.toLocaleString()} (${prop.status})<br>
-                    <i class="fas fa-map"></i> Ward: ${prop.ward}<br>
-                    <button class="btn btn-sm btn-warning mt-1 surveyPopBtn" data-id="${prop.id}">Survey & Tax Assessment</button>
-                `);
-                marker.on('popupopen', () => {
-                    document.querySelectorAll('.surveyPopBtn').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const pid = btn.getAttribute('data-id');
-                            showToast('success', 'SRIS GIS Action', `Surveyor scheduled field inspection for PID ${pid}. Update floor area, tax revision.`, 4000);
-                        });
-                    });
-                });
-            });
-            // additional zone polygon representation
-            const zonePoly = L.polygon([[13.065, 80.260], [13.100, 80.255], [13.112, 80.285], [13.076, 80.300]], { color: "#e67e22", weight: 2, fillOpacity: 0.1 }).addTo(mapInstance);
-            zonePoly.bindPopup("Revenue Zone A - High Priority Tax Region");
+        function removeToast(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 350);
         }
 
-        // Simulate refresh / GIS sync
-        document.getElementById('refreshDataBtn')?.addEventListener('click', () => {
-            showToast('success', 'SRIS Sync Completed', 'Live property tax & GIS layers updated. Pending assessments: 142', 3000);
-            computeTotals();
-        });
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>]/g, (m) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;'
+            } [m]));
+        }
 
-        // Quick task handlers
-        document.getElementById('newPropertySurveyBtn')?.addEventListener('click', () => {
-            showToast('info', 'New Property Mapping', 'Launch GIS digitization tool to add unassessed land/building records & calculate tax liability.', 3800);
-        });
-        document.getElementById('taxAuditBtn')?.addEventListener('click', () => {
-            showToast('warning', 'Tax Audit Module', 'Revenue inspection checklist: 34 properties selected for variance between GIS area and tax records.', 4000);
-        });
-        document.getElementById('pendingArrearsBtn')?.addEventListener('click', () => {
-            showToast('error', 'High Priority Arrears', 'Top 12 defaulters: Total overdue property tax + water tax = ₹18.7 Lakhs. Initiate notice.', 4500);
-        });
-        document.getElementById('suggestSurveyLink')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            showToast('warning', 'SRIS Field Visit Suggestion', '23 unassessed built-up + 7 underreported commercial units → schedule site survey.', 4000);
-        });
-        document.getElementById('viewAllPropertiesBtn')?.addEventListener('click', () => {
-            if (mapInstance) {
-                mapInstance.setView([13.0827, 80.277], 12);
-                showToast('success', 'GIS Focus', 'Zoom to master property layer showing 2.4k+ tax units', 3000);
+        // Ripple effect
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('.login-btn, .sso-btn, .btn-primary, .btn-success, .btn-outline-success');
+            if (btn && !btn.disabled) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple-effect');
+                const rect = btn.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = e.clientX - rect.left - size / 2 + 'px';
+                ripple.style.top = e.clientY - rect.top - size / 2 + 'px';
+                ripple.style.position = 'absolute';
+                ripple.style.background = 'radial-gradient(circle, rgba(255,255,255,0.5), rgba(255,255,255,0))';
+                ripple.style.borderRadius = '50%';
+                ripple.style.pointerEvents = 'none';
+                btn.style.position = 'relative';
+                btn.style.overflow = 'hidden';
+                btn.appendChild(ripple);
+                setTimeout(() => {
+                    ripple.style.transform = 'scale(5)';
+                    ripple.style.opacity = '0';
+                }, 10);
+                setTimeout(() => ripple.remove(), 500);
             }
         });
-        document.getElementById('logoutSimulateBtn')?.addEventListener('click', () => {
-            showToast('info', 'Logout', 'Surveyor session ended. Redirect to login portal.', 2000);
-            setTimeout(() => { window.location.href = '#'; alert('Demo logout - SRIS Surveyor Portal'); }, 1500);
-        });
 
-        // additional dynamic simulation for tax dashboard
-        function simulateTaxUpdates() {
-            setInterval(() => {
-                // just for dynamic feel: update stat value mini changing revenue
-                let newCollected = (Math.random() * 0.15 + 4.2).toFixed(2);
-                if (document.getElementById('totalTaxCollected')) {
-                    // optional subtle update to show live financial monitoring
-                }
-            }, 30000);
+        // Particles
+        function createParticles() {
+            const container = document.querySelector('.particles');
+            if (!container) return;
+            for (let i = 0; i < 35; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                const size = Math.random() * 4 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = Math.random() * 14 + 8 + 's';
+                p.style.animationDelay = Math.random() * 12 + 's';
+                p.style.background = `rgba(230, 126, 34, ${Math.random() * 0.35 + 0.1})`;
+                container.appendChild(p);
+            }
         }
+        createParticles();
 
-        // final initializers
-        window.addEventListener('load', () => {
-            renderPropertyTable();
-            computeTotals();
-            initGISMap();
-            simulateTaxUpdates();
-
-            // optional: open default welcome toast for surveyor
-            setTimeout(() => {
-                showToast('success', 'SRIS Surveyor Dashboard', 'Welcome Kumaravel! Today’s tasks: 12 pending assessments, 5 overdue tax audits. GIS mapping active.', 5000);
-            }, 800);
+        // Global AJAX setup
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
         });
     </script>
+    @yield('scripts')
 </body>
+
 </html>
