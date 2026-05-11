@@ -6,7 +6,7 @@
 <div id="registerFormContainer">
     <div class="mb-4">
         <h4 class="fw-bold" style="color: #32012F;">Create Corporation Account</h4>
-        <p class="text-secondary small">Register to access municipal e-services and corporation dashboard</p>
+        <p class="text-secondary small">Register to access SRIS dashboard</p>
     </div>
 
     <form id="registerForm" method="POST" action="{{ route('corporation.register.submit') }}" enctype="multipart/form-data">
