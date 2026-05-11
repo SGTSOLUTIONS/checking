@@ -2120,7 +2120,7 @@
                                     $('#filterSummary').show();
                                     showToast(message, 'success');
                                 } else {
-                                    showToast('No buildings match the selected filters', 'warning');
+                                    // showToast('No buildings match the selected filters', 'warning');
                                     $('#filterSummary').hide();
                                 }
                             } else {
