@@ -127,6 +127,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -194,6 +195,7 @@
                 transform: translateY(120%);
                 transition: transform 0.3s ease;
             }
+
             .filter-container.open {
                 transform: translateY(0);
             }
@@ -323,7 +325,8 @@
             margin-bottom: 15px;
         }
 
-        .btn-filter-apply, .btn-filter-reset {
+        .btn-filter-apply,
+        .btn-filter-reset {
             flex: 1;
             padding: 10px;
             border: none;
@@ -404,7 +407,8 @@
         }
 
         /* Mobile Menu Buttons */
-        .mobile-menu-btn, .mobile-filter-btn {
+        .mobile-menu-btn,
+        .mobile-filter-btn {
             position: absolute;
             bottom: 20px;
             right: 20px;
@@ -429,9 +433,12 @@
         }
 
         @media (max-width: 768px) {
-            .mobile-menu-btn, .mobile-filter-btn {
+
+            .mobile-menu-btn,
+            .mobile-filter-btn {
                 display: flex;
             }
+
             .mobile-filter-btn {
                 bottom: 80px;
             }
@@ -460,6 +467,7 @@
                 transform: translateX(120%);
                 transition: transform 0.3s ease;
             }
+
             .layer-switcher.open {
                 transform: translateX(0);
             }
@@ -596,6 +604,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -796,7 +805,8 @@
             border-bottom: 1px solid var(--gray-200);
         }
 
-        .live-location-btn, .route-btn {
+        .live-location-btn,
+        .route-btn {
             background: var(--dark);
             color: white;
             border: none;
@@ -1081,7 +1091,8 @@
             flex: 1;
         }
 
-        .original-values, .qc-values {
+        .original-values,
+        .qc-values {
             padding: 8px;
             border-radius: var(--radius-sm);
             margin: 8px 0;
@@ -1261,7 +1272,8 @@
 
                     <!-- Combined Filter Actions -->
                     <div class="filter-actions">
-                        <button id="applyFiltersBtn" class="btn-filter-apply"><i class="fas fa-search"></i> Apply Filters</button>
+                        <button id="applyFiltersBtn" class="btn-filter-apply"><i class="fas fa-search"></i> Apply
+                            Filters</button>
                         <button id="resetFiltersBtn" class="btn-filter-reset"><i class="fas fa-undo"></i> Reset</button>
                     </div>
 
@@ -1405,8 +1417,10 @@
                                 <option value="INSTITUTIONAL">Institutional</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn-update" id="updateAssessmentBtn"><i class="fas fa-save"></i> Update QC Values</button>
-                        <div id="updateStatus" class="update-status" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+                        <button type="submit" class="btn-update" id="updateAssessmentBtn"><i class="fas fa-save"></i>
+                            Update QC Values</button>
+                        <div id="updateStatus" class="update-status"
+                            style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
                     </form>
                 </div>
             </div>
@@ -1500,14 +1514,24 @@
 
         // Calculate area variation
         function calculateAreaVariation(polygonData, pointDatas) {
-            if (!polygonData) return { variation: 0, percentage: 0, buildingArea: 0, assessmentArea: 0 };
+            if (!polygonData) return {
+                variation: 0,
+                percentage: 0,
+                buildingArea: 0,
+                assessmentArea: 0
+            };
 
             const buildingArea = calculateTotalBuildingArea(polygonData);
             const assessmentArea = calculateSumAssessmentAreas(polygonData.gisid, pointDatas);
             const variation = buildingArea - assessmentArea;
             const percentage = assessmentArea > 0 ? (variation / assessmentArea) * 100 : 0;
 
-            return { variation, percentage, buildingArea, assessmentArea };
+            return {
+                variation,
+                percentage,
+                buildingArea,
+                assessmentArea
+            };
         }
 
         // Check if building has usage variation
@@ -1565,7 +1589,7 @@
                         // Show buildings within area range
                         const variationAbs = Math.abs(areaVar.variation);
                         include = include && variationAbs >= filters.areaRange.min &&
-                                 variationAbs <= filters.areaRange.max;
+                            variationAbs <= filters.areaRange.max;
                     }
                 }
 
@@ -1585,7 +1609,10 @@
                 }
             });
 
-            return { features, filteredGisids };
+            return {
+                features,
+                filteredGisids
+            };
         }
 
         // Highlight filtered features on map
@@ -1647,10 +1674,12 @@
             // Close layer switcher when clicking outside on mobile
             $(document).on('click', function(e) {
                 if ($(window).width() <= 768) {
-                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest('#mobileMenuBtn').length) {
+                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest(
+                            '#mobileMenuBtn').length) {
                         $('#layerSwitcher').removeClass('open');
                     }
-                    if (!$(e.target).closest('#filterContainer').length && !$(e.target).closest('#mobileFilterBtn').length) {
+                    if (!$(e.target).closest('#filterContainer').length && !$(e.target).closest(
+                            '#mobileFilterBtn').length) {
                         $('#filterContainer').removeClass('open');
                     }
                 }
@@ -1863,7 +1892,8 @@
                     visible: false
                 });
                 if (ward?.drone_image && ward?.extent_left) {
-                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward.extent_right), parseFloat(ward.extent_top)];
+                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward
+                        .extent_right), parseFloat(ward.extent_top)];
                     const url = "{{ asset($ward->drone_image ?? '') }}";
                     if (url && extent[0]) {
                         droneLayer = new ol.layer.Image({
@@ -1881,7 +1911,8 @@
                 const polygonSource = new ol.source.Vector();
                 polygons.forEach(poly => {
                     try {
-                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
+                            .coordinates;
                         if (coords?.length) {
                             polygonSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Polygon(coords),
@@ -1900,7 +1931,8 @@
                 const lineSource = new ol.source.Vector();
                 lines.forEach(line => {
                     try {
-                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
+                            .coordinates;
                         if (coords?.length >= 2) {
                             if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
                             lineSource.addFeature(new ol.Feature({
@@ -1919,7 +1951,8 @@
                 const pointSource = new ol.source.Vector();
                 points.forEach(point => {
                     try {
-                        let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) : point.coordinates;
+                        let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) :
+                            point.coordinates;
                         if (coords?.length === 2) {
                             pointSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Point(coords),
@@ -2001,13 +2034,16 @@
                     try {
                         const lons = ward.boundary[0].map(p => p[0]);
                         const lats = ward.boundary[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) +
+                            Math.max(...lats)) / 2]);
                     } catch (e) {}
                 }
 
                 const map = new ol.Map({
                     target: 'map',
-                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
+                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
+                        pointLayer, highlightLayer, locationLayer, routeLayer
+                    ],
                     view: new ol.View({
                         center: center,
                         zoom: 16
@@ -2055,7 +2091,10 @@
                     const max = parseFloat($('#areaMax').val());
 
                     if (!isNaN(min) && !isNaN(max) && min <= max) {
-                        currentFilters.areaRange = { min, max };
+                        currentFilters.areaRange = {
+                            min,
+                            max
+                        };
                         currentFilters.areaFilter = 'range';
                         $('input[name="areaFilter"][value="range"]').prop('checked', true);
                         $('#areaRangeDiv').show();
@@ -2098,15 +2137,20 @@
 
                     $('#loadingSpinner').fadeIn();
 
-                    const { features, filteredGisids } = getFilteredFeatures(polygonSource, polygonDatas, pointDatas, currentFilters);
-                    const count = highlightFilteredFeatures(map, highlightSource, features, polygonDatas, pointDatas);
+                    const {
+                        features,
+                        filteredGisids
+                    } = getFilteredFeatures(polygonSource, polygonDatas, pointDatas, currentFilters);
+                    const count = highlightFilteredFeatures(map, highlightSource, features, polygonDatas,
+                        pointDatas);
 
                     if (count > 0) {
                         let message = `Found ${count} building(s) matching criteria`;
                         if (currentFilters.areaFilter === 'variation') message += ' with area variation';
                         if (currentFilters.areaFilter === 'range') message += ` with area variation in range`;
                         if (currentFilters.usageFilter === 'variation') message += ' with usage variation';
-                        if (currentFilters.usageFilter === 'specific') message += ` with ${currentFilters.buildingUsage} usage`;
+                        if (currentFilters.usageFilter === 'specific') message +=
+                            ` with ${currentFilters.buildingUsage} usage`;
 
                         $('#filterCount').html(`${count} building(s) found`);
                         $('#filterSummary').show();
@@ -2169,35 +2213,46 @@
 
                     // Add variation info if exists
                     if (Math.abs(areaVar.variation) > 0.01 || hasUsageVar) {
-                        html += `<div class="variation-info"><h6><i class="fas fa-chart-line"></i> Filter Match Info:</h6>`;
+                        html +=
+                            `<div class="variation-info"><h6><i class="fas fa-chart-line"></i> Filter Match Info:</h6>`;
                         if (Math.abs(areaVar.variation) > 0.01) {
                             const variationClass = areaVar.variation > 0 ? 'text-warning' : 'text-success';
-                            html += `<div class="info-row"><span class="info-label">Area Variation:</span><span class="info-value ${variationClass}">${areaVar.variation.toFixed(2)} sq.ft (${areaVar.percentage.toFixed(2)}%)</span></div>`;
-                            html += `<div class="info-row"><span class="info-label">Building Total:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sq.ft</span></div>`;
-                            html += `<div class="info-row"><span class="info-label">Assessments Sum:</span><span class="info-value">${areaVar.assessmentArea.toFixed(2)} sq.ft</span></div>`;
+                            html +=
+                                `<div class="info-row"><span class="info-label">Area Variation:</span><span class="info-value ${variationClass}">${areaVar.variation.toFixed(2)} sq.ft (${areaVar.percentage.toFixed(2)}%)</span></div>`;
+                            html +=
+                                `<div class="info-row"><span class="info-label">Building Total:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sq.ft</span></div>`;
+                            html +=
+                                `<div class="info-row"><span class="info-label">Assessments Sum:</span><span class="info-value">${areaVar.assessmentArea.toFixed(2)} sq.ft</span></div>`;
                         }
                         if (hasUsageVar) {
-                            html += `<div class="info-row"><span class="info-label">Usage Variation:</span><span class="info-value text-warning">Yes - Building usage differs from assessment usage</span></div>`;
+                            html +=
+                                `<div class="info-row"><span class="info-label">Usage Variation:</span><span class="info-value text-warning">Yes - Building usage differs from assessment usage</span></div>`;
                         }
                         html += `</div>`;
                     }
 
-                    html += `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+                    html +=
+                        `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
 
                     if (polygonData) {
                         if (polygonData.image || polygonData.image1) {
                             html += `<div class="building-images-section"><div class="image-grid">`;
                             if (polygonData.image) {
-                                const url = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
-                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image.startsWith('http') ? polygonData.image :
+                                    '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
+                                html +=
+                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             if (polygonData.image1) {
-                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
-                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 :
+                                    '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
+                                html +=
+                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             html += `</div></div>`;
                         }
-                        html += `
+                        html +=
+                            `
                             <div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value" style="color:${getBuildingColor(polygonData.building_usage)};font-weight:bold">${polygonData.building_usage || 'N/A'}</span></div>
                             <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
@@ -2207,7 +2262,8 @@
                             <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>
                             <div class="info-row"><span class="info-label">Total Building Area:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sqft</span></div>`;
                     } else {
-                        html += `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
+                        html +=
+                            `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
                     }
                     $('#featureDetails').html(html);
 
@@ -2231,7 +2287,8 @@
                     // Assessments
                     let assessmentsHtml = '';
                     if (assessments.length) {
-                        assessmentsHtml = `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
+                        assessmentsHtml =
+                            `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
                         assessments.forEach((a, i) => {
                             const qcSq = a.qcsqfeet || a.sqfeet || 'N/A';
                             const qcUse = a.qcusage || a.usage || 'N/A';
@@ -2265,7 +2322,8 @@
                             });
                         });
                     } else {
-                        $('#assessmentsDetails').html('<div class="text-muted text-center p-3">No assessments found</div>');
+                        $('#assessmentsDetails').html(
+                            '<div class="text-muted text-center p-3">No assessments found</div>');
                     }
                     $('#featureInfo').fadeIn();
                 }
@@ -2326,7 +2384,8 @@
                         success: function(res) {
                             if (res.success) {
                                 showToast(res.message, 'success');
-                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (assessmentNo && p.assessment == assessmentNo));
+                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (
+                                    assessmentNo && p.assessment == assessmentNo));
                                 if (idx !== -1) {
                                     pointDatas[idx].qcsqfeet = res.data.qcsqfeet;
                                     pointDatas[idx].qcusage = res.data.qcusage;
@@ -2418,7 +2477,8 @@
                         if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
                         locationSource.clear();
                         isLiveLocationActive = false;
-                        $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot"></i> Live Location');
+                        $('#liveLocationBtn').removeClass('active').html(
+                            '<i class="fas fa-location-dot"></i> Live Location');
                         showToast('Location tracking stopped', 'info');
                     } else {
                         if (!navigator.geolocation) return showToast('Geolocation not supported', 'error');
@@ -2443,14 +2503,18 @@
                 // Calculate route
                 async function calculateRoute() {
                     if (!selectedFeature) return showToast('Select a property first', 'warning');
-                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first', 'warning');
+                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first',
+                        'warning');
                     $('#loadingSpinner').fadeIn();
                     routeSource.clear();
                     const start = ol.proj.toLonLat(locationSource.getFeatures()[0].getGeometry().getCoordinates());
                     const targetGeom = selectedFeature.getGeometry();
-                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) : ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
+                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) :
+                        ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
                     try {
-                        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`);
+                        const res = await fetch(
+                            `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`
+                            );
                         const data = await res.json();
                         if (data.code === 'Ok') {
                             const route = data.routes[0];
@@ -2458,20 +2522,27 @@
                             routeSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.LineString(coords)
                             }));
-                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route.distance / 1000).toFixed(2) + ' km';
-                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
-                            $('#routeSummary').html(`<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
+                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route
+                                .distance / 1000).toFixed(2) + ' km';
+                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration %
+                                60) + ' sec';
+                            $('#routeSummary').html(
+                                `<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
                             let stepsHtml = '';
                             if (route.legs?.[0]?.steps) {
                                 route.legs[0].steps.forEach((step, i) => {
                                     if (step.maneuver?.instruction) {
-                                        stepsHtml += `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
+                                        stepsHtml +=
+                                            `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
                                     }
                                 });
                             }
-                            $('#directionsList').html(stepsHtml || '<div class="text-muted">No step-by-step directions</div>');
+                            $('#directionsList').html(stepsHtml ||
+                                '<div class="text-muted">No step-by-step directions</div>');
                             $('#routeInfo').show();
-                            map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50] });
+                            map.getView().fit(routeSource.getExtent(), {
+                                padding: [50, 50, 50, 50]
+                            });
                             showToast('Route calculated', 'success');
                         } else {
                             showToast('No route found', 'error');
@@ -2509,7 +2580,8 @@
                 $('#gisidSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByGISID($('#gisidSearchInput').val().trim());
                 });
-                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
+                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val()
+                .trim()));
                 $('#assessmentSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
@@ -2529,7 +2601,9 @@
                             ol.extent.extend(extent, f.getGeometry().getExtent());
                             has = true;
                         });
-                        if (has) map.getView().fit(extent, { padding: [30, 30, 30, 30] });
+                        if (has) map.getView().fit(extent, {
+                            padding: [30, 30, 30, 30]
+                        });
                     } catch (e) {}
                 }, 800);
             }
