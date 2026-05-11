@@ -498,161 +498,69 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
-public function filterWardData(Request $request)
-{
-    try {
-        $wardId = $request->ward_id;
-        $areaFilter = $request->area_filter ?? 'all';
-        $areaMin = $request->filled('area_min') ? (float) $request->area_min : null;
-        $areaMax = $request->filled('area_max') ? (float) $request->area_max : null;
-        $usageFilter = $request->usage_filter ?? 'all';
-        $buildingUsage = $request->building_usage;
+    public function filterWardData(Request $request)
+    {
+        // return response()->json($request->all());
+        try {
+            $wardId = $request->ward_id;
+            $areaFilter = $request->area_filter;
+            $areaMin = (float)$request->area_min;
+            $areaMax = (float)$request->area_max;
+            $usageFilter = $request->usage_filter;
+            $buildingUsage = $request->building_usage;
 
-        $ward = Ward::find($wardId);
-        if (!$ward) {
+            // Get ward data
+            $ward = Ward::find($wardId);
+            if (!$ward) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ward not found'
+                ], 404);
+            }
+
+            $corporationId = $ward->corporation_id;
+            $zone = strtolower(trim($ward->zone));
+            $wardNo = (int)$ward->ward_no;
+
+            // Table names
+            $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+            $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
+            $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
+            $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+            $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+            $shopsTableName = "shops_corporation_{$corporationId}";
+
+            // Get all data first
+            $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
+            $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
+            $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
+            $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
+            $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
+            $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
+
+            // If no filters are active, return all data
+            // if ($areaFilter === 'all' && $usageFilter === 'all') {
+            //     return response()->json([
+            //         'success' => true,
+            //         'polygons' => $allPolygons,
+            //         'lines' => $allLines,
+            //         'points' => $allPoints,
+            //         'pointDatas' => $allPointDatas,
+            //         'polygonDatas' => $allPolygonDatas,
+            //         'shopDatas' => $allShops,
+            //         'count' => $allPolygons->count()
+            //     ]);
+            // }
+            return response()->json("data");
+
+        } catch (\Exception $e) {
+            \Log::error('Filter error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Ward not found'
-            ], 404);
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        $corporationId = $ward->corporation_id;
-        $zone = strtolower(trim($ward->zone));
-        $wardNo = (int) $ward->ward_no;
-
-        $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
-        $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
-        $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
-        $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
-        $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
-        $shopsTableName = "shops_corporation_{$corporationId}";
-
-        $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
-        $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
-        $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
-        $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
-        $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
-        $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
-
-        $allPointDatas = collect($allPointDatas)->map(function ($pointData) use ($pointDataTableName) {
-            $pointData->table_name = $pointDataTableName;
-            return $pointData;
-        });
-
-        if ($areaFilter === 'all' && $usageFilter === 'all') {
-            return response()->json([
-                'success' => true,
-                'polygons' => $allPolygons->values(),
-                'lines' => $allLines->values(),
-                'points' => $allPoints->values(),
-                'pointDatas' => $allPointDatas->values(),
-                'polygonDatas' => $allPolygonDatas->values(),
-                'shopDatas' => $allShops->values(),
-                'count' => $allPolygons->count()
-            ]);
-        }
-
-        $filteredPolygonDatas = collect($allPolygonDatas);
-
-        if ($areaFilter === 'variation') {
-            $filteredPolygonDatas = $filteredPolygonDatas->filter(function ($item) {
-                $sqfeet = (float) ($item->sqfeet ?? 0);
-                $plotarea = (float) ($item->plotarea ?? 0);
-                return $sqfeet > 0 && $plotarea > 0 && $sqfeet != $plotarea;
-            });
-        }
-
-        if ($areaFilter === 'range') {
-            $filteredPolygonDatas = $filteredPolygonDatas->filter(function ($item) use ($areaMin, $areaMax) {
-                $sqfeet = (float) ($item->sqfeet ?? 0);
-                $plotarea = (float) ($item->plotarea ?? 0);
-                $difference = abs($sqfeet - $plotarea);
-
-                if (!is_null($areaMin) && $difference < $areaMin) {
-                    return false;
-                }
-
-                if (!is_null($areaMax) && $difference > $areaMax) {
-                    return false;
-                }
-
-                return true;
-            });
-        }
-
-        if ($usageFilter === 'variation') {
-            $filteredPolygonDatas = $filteredPolygonDatas->filter(function ($item) use ($allPointDatas) {
-                $gisid = $item->gisid ?? null;
-                if (!$gisid) {
-                    return false;
-                }
-
-                $relatedAssessments = $allPointDatas->where('pointgisid', $gisid);
-
-                foreach ($relatedAssessments as $assessment) {
-                    $usage1 = strtoupper(trim($item->buildingusage ?? ''));
-                    $usage2 = strtoupper(trim($assessment->usage ?? $assessment->qcusage ?? ''));
-
-                    if ($usage1 && $usage2 && $usage1 !== $usage2) {
-                        return true;
-                    }
-                }
-
-                return false;
-            });
-        }
-
-        if ($usageFilter === 'specific' && !empty($buildingUsage)) {
-            $filteredPolygonDatas = $filteredPolygonDatas->filter(function ($item) use ($buildingUsage) {
-                return strtoupper(trim($item->buildingusage ?? '')) === strtoupper(trim($buildingUsage));
-            });
-        }
-
-        $gisIds = $filteredPolygonDatas->pluck('gisid')->filter()->unique()->values();
-
-        $filteredPolygons = collect($allPolygons)->filter(function ($item) use ($gisIds) {
-            return in_array($item->gisid ?? null, $gisIds->toArray());
-        })->values();
-
-        $filteredPoints = collect($allPoints)->filter(function ($item) use ($gisIds) {
-            return in_array($item->gisid ?? null, $gisIds->toArray());
-        })->values();
-
-        $filteredPointDatas = collect($allPointDatas)->filter(function ($item) use ($gisIds) {
-            return in_array($item->pointgisid ?? null, $gisIds->toArray());
-        })->values();
-
-        $filteredLines = collect($allLines)->filter(function ($item) use ($gisIds) {
-            return in_array($item->gisid ?? null, $gisIds->toArray());
-        })->values();
-
-        $pointDataIds = $filteredPointDatas->pluck('id')->filter()->unique()->values();
-
-        $filteredShops = collect($allShops)->filter(function ($shop) use ($pointDataIds) {
-            return in_array($shop->pointdataid ?? null, $pointDataIds->toArray());
-        })->values();
-
-        return response()->json([
-            'success' => true,
-            'polygons' => $filteredPolygons,
-            'lines' => $filteredLines,
-            'points' => $filteredPoints,
-            'pointDatas' => $filteredPointDatas,
-            'polygonDatas' => $filteredPolygonDatas->values(),
-            'shopDatas' => $filteredShops,
-            'count' => $filteredPolygons->count()
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Filter error: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
 
     public function resetWardData(Request $request)
     {
