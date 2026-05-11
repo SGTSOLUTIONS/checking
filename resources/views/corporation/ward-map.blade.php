@@ -2081,8 +2081,7 @@
                         filters.areaMax = null;
                     }
 
-                    // Show loading spinner
-                    $('#loadingSpinner').fadeIn();
+
 
                     // Make AJAX call to server
                     $.ajax({
@@ -2136,9 +2135,7 @@
                             }
                             showToast(errorMsg, 'error');
                         },
-                        complete: function() {
-                            $('#loadingSpinner').fadeOut();
-                        }
+
                     });
                 });
                 // Function to update map with filtered data
