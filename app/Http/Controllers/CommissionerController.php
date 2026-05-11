@@ -498,187 +498,255 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
-    public function filterWardData(Request $request)
-{
-    try {
-        $wardId = $request->ward_id;
-        $areaFilter = $request->area_filter;
-        $areaMin = $request->area_min;
-        $areaMax = $request->area_max;
-        $usageFilter = $request->usage_filter;
-        $buildingUsage = $request->building_usage;
+ public function filterWardData(Request $request)
+    {
+        try {
+            $wardId = $request->ward_id;
+            $areaFilter = $request->area_filter;
+            $areaMin = (float)$request->area_min;
+            $areaMax = (float)$request->area_max;
+            $usageFilter = $request->usage_filter;
+            $buildingUsage = $request->building_usage;
 
-        // Get ward data
-        $ward = Ward::find($wardId);
+            // Get ward data
+            $ward = Ward::find($wardId);
+            if (!$ward) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ward not found'
+                ], 404);
+            }
 
-        // Get all polygons for this ward
-        $query = WardPolygon::where('ward_id', $wardId);
+            $corporationId = $ward->corporation_id;
+            $zone = strtolower(trim($ward->zone));
+            $wardNo = (int)$ward->ward_no;
 
-        // Apply filters
-        $polygonGisids = [];
+            // Table names
+            $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+            $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
+            $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
+            $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+            $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+            $shopsTableName = "shops_corporation_{$corporationId}";
 
-        if ($areaFilter !== 'all' || $usageFilter !== 'all') {
-            // Get all polygons with their data
-            $polygons = $query->get();
+            // Get all data first
+            $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
+            $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
+            $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
+            $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
+            $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
+            $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
 
-            foreach ($polygons as $polygon) {
+            // If no filters are active, return all data
+            if ($areaFilter === 'all' && $usageFilter === 'all') {
+                return response()->json([
+                    'success' => true,
+                    'polygons' => $allPolygons,
+                    'lines' => $allLines,
+                    'points' => $allPoints,
+                    'pointDatas' => $allPointDatas,
+                    'polygonDatas' => $allPolygonDatas,
+                    'shopDatas' => $allShops,
+                    'count' => $allPolygons->count()
+                ]);
+            }
+
+            // Filter polygons based on criteria
+            $filteredPolygons = [];
+            $filteredGisIds = [];
+
+            foreach ($allPolygons as $polygon) {
+                $gisid = $polygon->gisid;
                 $include = true;
 
-                // Area variation calculation
-                if ($areaFilter !== 'all') {
-                    $buildingArea = $this->calculateTotalBuildingArea($polygon);
-                    $assessmentArea = $this->calculateSumAssessmentAreas($polygon->gisid);
+                // Get polygon data
+                $polygonData = $allPolygonDatas->firstWhere('gisid', $gisid);
+
+                // Area Variation Filter
+                if ($areaFilter !== 'all' && $polygonData) {
+                    $buildingArea = $this->calculateTotalBuildingAreaFromData($polygonData);
+                    $assessmentArea = $this->calculateSumAssessmentAreasFromData($gisid, $allPointDatas);
                     $variation = abs($buildingArea - $assessmentArea);
 
                     if ($areaFilter === 'variation') {
-                        $include = $include && $variation > 0.01;
+                        // Include only if variation > 0.01 sqft
+                        $include = $include && ($variation > 0.01);
                     } elseif ($areaFilter === 'range' && $areaMin && $areaMax) {
-                        $include = $include && $variation >= $areaMin && $variation <= $areaMax;
+                        $include = $include && ($variation >= $areaMin && $variation <= $areaMax);
                     }
                 }
 
-                // Usage variation filter
-                if ($include && $usageFilter !== 'all') {
+                // Usage Variation Filter
+                if ($include && $usageFilter !== 'all' && $polygonData) {
+                    $buildingUsageType = strtoupper($polygonData->building_usage ?? '');
+
                     if ($usageFilter === 'variation') {
-                        $include = $include && $this->hasUsageVariation($polygon);
+                        $include = $include && $this->hasUsageVariationFromData($gisid, $buildingUsageType, $allPointDatas);
                     } elseif ($usageFilter === 'specific' && $buildingUsage) {
-                        $include = $include && strtoupper($polygon->building_usage ?? '') === strtoupper($buildingUsage);
+                        $include = $include && ($buildingUsageType === strtoupper($buildingUsage));
                     }
                 }
 
                 if ($include) {
-                    $polygonGisids[] = $polygon->gisid;
+                    $filteredPolygons[] = $polygon;
+                    $filteredGisIds[] = $gisid;
                 }
             }
 
-            // Filter query by included Gisids
-            if (!empty($polygonGisids)) {
-                $query->whereIn('gisid', $polygonGisids);
-            } else {
-                $query->whereRaw('1 = 0'); // No results
+            // Filter points based on filtered GIS IDs
+            $filteredPoints = $allPoints->filter(function($point) use ($filteredGisIds) {
+                return in_array($point->gisid, $filteredGisIds);
+            })->values();
+
+            // Filter point datas based on filtered GIS IDs
+            $filteredPointDatas = $allPointDatas->filter(function($pointData) use ($filteredGisIds) {
+                return in_array($pointData->point_gisid, $filteredGisIds);
+            })->values();
+
+            // Filter polygon datas based on filtered GIS IDs
+            $filteredPolygonDatas = $allPolygonDatas->filter(function($polygonData) use ($filteredGisIds) {
+                return in_array($polygonData->gisid, $filteredGisIds);
+            })->values();
+
+            // Filter lines based on filtered GIS IDs
+            $filteredLines = $allLines->filter(function($line) use ($filteredGisIds) {
+                return in_array($line->gisid, $filteredGisIds);
+            })->values();
+
+            // Filter shops based on filtered point data IDs
+            $pointDataIds = $filteredPointDatas->pluck('id')->toArray();
+            $filteredShops = $allShops->filter(function($shop) use ($pointDataIds) {
+                return in_array($shop->point_data_id, $pointDataIds);
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'polygons' => $filteredPolygons,
+                'lines' => $filteredLines,
+                'points' => $filteredPoints,
+                'pointDatas' => $filteredPointDatas,
+                'polygonDatas' => $filteredPolygonDatas,
+                'shopDatas' => $filteredShops,
+                'count' => count($filteredPolygons)
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Filter error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function resetWardData(Request $request)
+    {
+        try {
+            $wardId = $request->ward_id;
+
+            $ward = Ward::find($wardId);
+            if (!$ward) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ward not found'
+                ], 404);
+            }
+
+            $corporationId = $ward->corporation_id;
+            $zone = strtolower(trim($ward->zone));
+            $wardNo = (int)$ward->ward_no;
+
+            // Table names
+            $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+            $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
+            $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
+            $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+            $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+            $shopsTableName = "shops_corporation_{$corporationId}";
+
+            // Get all data for this ward
+            $polygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : [];
+            $lines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : [];
+            $points = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : [];
+            $pointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : [];
+            $polygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : [];
+            $shops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : [];
+
+            // Add table name to point datas for reference
+            foreach ($pointDatas as $pointData) {
+                $pointData->table_name = $pointDataTableName;
+            }
+
+            return response()->json([
+                'success' => true,
+                'polygons' => $polygons,
+                'lines' => $lines,
+                'points' => $points,
+                'pointDatas' => $pointDatas,
+                'polygonDatas' => $polygonDatas,
+                'shopDatas' => $shops,
+                'count' => count($polygons)
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Reset error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function calculateTotalBuildingAreaFromData($polygonData)
+    {
+        $sqfeet = floatval($polygonData->sqfeet ?? 0);
+        $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 1);
+        $floorPercentage = floatval($polygonData->floor_percentage ?? 100);
+        $basement = floatval($polygonData->basement ?? 0);
+
+        return $sqfeet * ($totalFloor + ($floorPercentage / 100) + $basement);
+    }
+
+    private function calculateSumAssessmentAreasFromData($gisid, $pointDatas)
+    {
+        $total = 0;
+        foreach ($pointDatas as $assessment) {
+            if ($assessment->point_gisid == $gisid) {
+                $sqfeet = floatval($assessment->sqfeet ?? 0);
+                $plotArea = floatval($assessment->plot_area ?? $sqfeet);
+                $total += $plotArea;
+            }
+        }
+        return $total;
+    }
+
+    private function hasUsageVariationFromData($gisid, $buildingUsage, $pointDatas)
+    {
+        $buildingUsageUpper = strtoupper($buildingUsage);
+
+        // If building usage is MIXED, no variation needed as it's already mixed
+        if ($buildingUsageUpper === 'MIXED') return false;
+
+        foreach ($pointDatas as $assessment) {
+            if ($assessment->point_gisid == $gisid) {
+                $assessmentUsage = strtoupper($assessment->usage ?? $assessment->qcusage ?? '');
+
+                if ($assessmentUsage) {
+                    // Check for residential/commercial mismatches
+                    if ($buildingUsageUpper === 'RESIDENTIAL' && $assessmentUsage === 'COMMERCIAL') {
+                        return true;
+                    }
+                    if ($buildingUsageUpper === 'COMMERCIAL' && $assessmentUsage === 'RESIDENTIAL') {
+                        return true;
+                    }
+                    // Check for any other usage mismatch (excluding MIXED)
+                    if ($assessmentUsage !== $buildingUsageUpper && $assessmentUsage !== 'MIXED') {
+                        return true;
+                    }
+                }
             }
         }
 
-        // Get filtered data
-        $polygons = $query->get();
-        $polygonGisidList = $polygons->pluck('gisid')->toArray();
-
-        // Get lines for these polygons
-        $lines = WardLine::whereIn('gisid', $polygonGisidList)->get();
-
-        // Get points
-        $points = WardPoint::whereIn('gisid', $polygonGisidList)->get();
-
-        // Get point data (assessments)
-        $pointDatas = PointData::whereIn('point_gisid', $polygonGisidList)->get();
-
-        // Get polygon data
-        $polygonDatas = $polygons;
-
-        // Get shop data
-        $pointDataIds = $pointDatas->pluck('id')->toArray();
-        $shopDatas = Shop::whereIn('point_data_id', $pointDataIds)->get();
-
-        return response()->json([
-            'success' => true,
-            'polygons' => $polygons,
-            'lines' => $lines,
-            'points' => $points,
-            'pointDatas' => $pointDatas,
-            'polygonDatas' => $polygonDatas,
-            'shopDatas' => $shopDatas,
-            'count' => count($polygons)
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
+        return false;
     }
-}
-
-public function resetWardData(Request $request)
-{
-    try {
-        $wardId = $request->ward_id;
-
-        // Get all data for this ward
-        $polygons = WardPolygon::where('ward_id', $wardId)->get();
-        $polygonGisidList = $polygons->pluck('gisid')->toArray();
-
-        $lines = WardLine::whereIn('gisid', $polygonGisidList)->get();
-        $points = WardPoint::whereIn('gisid', $polygonGisidList)->get();
-        $pointDatas = PointData::whereIn('point_gisid', $polygonGisidList)->get();
-        $polygonDatas = $polygons;
-        $pointDataIds = $pointDatas->pluck('id')->toArray();
-        $shopDatas = Shop::whereIn('point_data_id', $pointDataIds)->get();
-
-        return response()->json([
-            'success' => true,
-            'polygons' => $polygons,
-            'lines' => $lines,
-            'points' => $points,
-            'pointDatas' => $pointDatas,
-            'polygonDatas' => $polygonDatas,
-            'shopDatas' => $shopDatas,
-            'count' => count($polygons)
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
-    }
-}
-
-private function calculateTotalBuildingArea($polygonData)
-{
-    $sqfeet = floatval($polygonData->sqfeet ?? 0);
-    $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 1);
-    $floorPercentage = floatval($polygonData->floor_percentage ?? 100);
-    $basement = floatval($polygonData->basement ?? 0);
-
-    return $sqfeet * ($totalFloor + ($floorPercentage / 100) + $basement);
-}
-
-private function calculateSumAssessmentAreas($gisid)
-{
-    $assessments = PointData::where('point_gisid', $gisid)->get();
-    $total = 0;
-
-    foreach ($assessments as $assessment) {
-        $sqfeet = floatval($assessment->sqfeet ?? 0);
-        $plotArea = floatval($assessment->plot_area ?? $sqfeet);
-        $total += $plotArea;
-    }
-
-    return $total;
-}
-
-private function hasUsageVariation($polygonData)
-{
-    $buildingUsage = strtoupper($polygonData->building_usage ?? '');
-
-    if ($buildingUsage === 'MIXED') return false;
-
-    $assessments = PointData::where('point_gisid', $polygonData->gisid)->get();
-
-    foreach ($assessments as $assessment) {
-        $assessmentUsage = strtoupper($assessment->usage ?? '');
-
-        if ($buildingUsage === 'RESIDENTIAL' && $assessmentUsage === 'COMMERCIAL') {
-            return true;
-        }
-        if ($buildingUsage === 'COMMERCIAL' && $assessmentUsage === 'RESIDENTIAL') {
-            return true;
-        }
-        if ($assessmentUsage && $buildingUsage !== $assessmentUsage && $buildingUsage !== 'MIXED') {
-            return true;
-        }
-    }
-
-    return false;
-}
 }

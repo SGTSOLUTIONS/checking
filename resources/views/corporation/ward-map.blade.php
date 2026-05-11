@@ -2141,7 +2141,55 @@
                         }
                     });
                 });
+// Function to update map with filtered data
+function updateMapWithFilteredData(response) {
+    // Update the global data arrays
+    polygons = response.polygons || [];
+    lines = response.lines || [];
+    points = response.points || [];
+    pointDatas = response.pointDatas || [];
+    polygonDatas = response.polygonDatas || [];
+    shopDatas = response.shopDatas || [];
 
+    // Remove old layers
+    if (polygonLayer) map.removeLayer(polygonLayer);
+    if (lineLayer) map.removeLayer(lineLayer);
+    if (pointLayer) map.removeLayer(pointLayer);
+
+    // Create new layers with filtered data
+    polygonLayer = createPolygonLayer(polygons);
+    lineLayer = createLineLayer(lines);
+    pointLayer = createPointLayer(points);
+
+    // Add layers back to map (preserve order)
+    const layers = map.getLayers();
+    const highlightIndex = layers.getArray().findIndex(l => l === highlightLayer);
+
+    map.addLayer(polygonLayer);
+    map.addLayer(lineLayer);
+    map.addLayer(pointLayer);
+
+    // Make sure highlight layer stays on top
+    if (highlightLayer) {
+        map.addLayer(highlightLayer);
+    }
+
+    // Clear any existing highlights
+    if (highlightSource) {
+        highlightSource.clear();
+    }
+
+    // Fit map to show all filtered buildings if any exist
+    if (polygons.length > 0) {
+        const extent = polygonLayer.getSource().getExtent();
+        if (extent && !isNaN(extent[0]) && !isNaN(extent[1])) {
+            map.getView().fit(extent, {
+                padding: [50, 50, 50, 50],
+                duration: 800
+            });
+        }
+    }
+}
 
                 // Reset filters button
                 $('#resetFiltersBtn').on('click', function() {
