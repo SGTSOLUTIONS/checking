@@ -500,7 +500,7 @@ class CommissionerController extends Controller
     }
     public function filterWardData(Request $request)
     {
-        return response()->json($request->all());
+        // return response()->json($request->all());
         try {
             $wardId = $request->ward_id;
             $areaFilter = $request->area_filter;
