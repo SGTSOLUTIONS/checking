@@ -262,10 +262,10 @@ class CommissionerController extends Controller
             $updateData = [];
 
             if (in_array('sqfeet', $columns)) {
-                $updateData['sqfeet'] = $squareFeet;
+                $updateData['qcsqfeet'] = $squareFeet;
             }
             if (in_array('usage', $columns)) {
-                $updateData['usage'] = $usage;
+                $updateData['qcusage'] = $usage;
             }
             if (in_array('updated_at', $columns)) {
                 $updateData['updated_at'] = now();
