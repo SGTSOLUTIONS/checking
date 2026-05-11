@@ -5,7 +5,7 @@
 @section('content')
 <div class="auth-card">
 
-    <!-- LEFT: Branding & Surveyor Info -->
+    <!-- LEFT SIDE -->
     <div class="login-hero">
 
         <div class="brand">
@@ -32,21 +32,21 @@
             </h1>
 
             <p class="hero-description">
-                Register as an authorized GIS surveyor to manage spatial property data,
-                building inspections, geo-tagging, and municipal survey operations
-                within the SRIS platform.
+                Register as an authorized GIS surveyor to manage property inspections,
+                geo-tagging, building mapping, spatial data collection, and municipal
+                survey operations across the SRIS platform.
             </p>
 
             <div class="trust-badge">
 
                 <div class="trust-item">
                     <i class="fas fa-map-marked-alt"></i>
-                    <span>GIS Enabled</span>
+                    <span>GIS Mapping</span>
                 </div>
 
                 <div class="trust-item">
                     <i class="fas fa-building"></i>
-                    <span>Property Mapping</span>
+                    <span>Property Survey</span>
                 </div>
 
                 <div class="trust-item">
@@ -59,19 +59,21 @@
 
         <div class="quote-area">
             <div class="quote">
-                “Digital surveying improves transparency, taxation accuracy, and smart city planning.”
+                “Digital surveying improves urban governance and tax transparency.”
             </div>
         </div>
 
     </div>
 
-    <!-- RIGHT: Registration Form -->
+    <!-- RIGHT SIDE -->
     <div class="login-form-section">
 
         <div class="form-header">
             <h2>Create Surveyor Account</h2>
+
             <p>
-                Fill your details to access GIS survey tools and field operations
+                Register to access GIS layers, property inspections &
+                field survey management tools
             </p>
         </div>
 
@@ -84,12 +86,12 @@
 
             @csrf
 
-            <!-- Profile Picture -->
+            <!-- Profile Upload -->
             <div class="mb-3">
 
                 <label class="input-label">
                     <i class="fas fa-id-card me-2"></i>
-                    Surveyor Photo ID
+                    Surveyor Profile Photo
                 </label>
 
                 <div class="file-upload-container">
@@ -125,6 +127,7 @@
                             name="profile_picture"
                             accept=".png,.jpg,.jpeg"
                         >
+
                     </div>
 
                     <div class="file-preview" id="filePreview"></div>
@@ -192,7 +195,7 @@
 
                 <label class="input-label" for="password">
                     <i class="fas fa-lock me-2"></i>
-                    Secure Password
+                    Password
                 </label>
 
                 <div class="input-field">
@@ -295,7 +298,7 @@
 
             </div>
 
-            <!-- DOB -->
+            <!-- Date Of Birth -->
             <div class="mb-3">
 
                 <label class="input-label" for="date_of_birth">
@@ -353,10 +356,10 @@
                 id="registerBtn"
             >
 
-                <i class="fas fa-map-marked-alt"></i>
+                <i class="fas fa-user-plus"></i>
 
                 <span id="btnText">
-                    Register Surveyor Account
+                    Register Surveyor
                 </span>
 
                 <span
@@ -368,10 +371,10 @@
 
             <div class="register-prompt mt-3">
 
-                Already registered?
+                Already have an account?
 
                 <a href="{{ route('login') }}">
-                    Login to Dashboard
+                    Login Dashboard
                 </a>
 
             </div>
@@ -380,7 +383,7 @@
 
                 <small class="text-muted">
                     <i class="fas fa-shield-alt me-1"></i>
-                    Secured GIS Survey Management System
+                    Protected by SRIS Security System
                 </small>
 
             </div>
@@ -388,5 +391,502 @@
         </form>
 
     </div>
+
 </div>
+
+<style>
+
+.file-upload-container{
+    position:relative;
+}
+
+.file-input{
+    position:absolute;
+    width:0;
+    height:0;
+    opacity:0;
+    pointer-events:none;
+}
+
+.file-upload-area{
+    cursor:pointer;
+    border:2px dashed #dbe4f0;
+    padding:20px;
+    border-radius:20px;
+    text-align:center;
+    transition:0.3s ease;
+    background:#f8fbff;
+}
+
+.file-upload-area:hover{
+    border-color:#2563eb;
+    background:#eff6ff;
+}
+
+.file-upload-area.dragover{
+    border-color:#2563eb;
+    background:#dbeafe;
+    transform:scale(1.01);
+}
+
+.file-upload-icon{
+    margin-bottom:12px;
+    color:#2563eb;
+}
+
+.file-upload-text .primary{
+    font-weight:600;
+    margin-bottom:5px;
+    color:#1e3a5f;
+    font-size:0.9rem;
+}
+
+.file-upload-text .secondary{
+    color:#7b8794;
+    font-size:11px;
+}
+
+.file-preview{
+    margin-top:15px;
+    text-align:center;
+}
+
+.file-preview img{
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:50%;
+    border:3px solid #2563eb;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+
+.file-info{
+    margin-top:10px;
+    font-size:12px;
+}
+
+.file-remove{
+    border:none;
+    background:transparent;
+    color:#dc3545;
+    margin-top:6px;
+    cursor:pointer;
+    font-size:12px;
+}
+
+.btn-outline-success{
+    border:1px solid #2563eb;
+    color:#2563eb;
+    background:white;
+    border-radius:40px;
+    padding:6px 16px;
+    font-size:0.75rem;
+    font-weight:600;
+}
+
+.btn-outline-success:hover{
+    background:#2563eb;
+    color:white;
+}
+
+.form-select-custom{
+    width:100%;
+    padding:11px 14px 11px 44px;
+    font-size:0.9rem;
+    border:1.5px solid #e2e8f0;
+    border-radius:16px;
+    background:#ffffff;
+    outline:none;
+}
+
+.form-select-custom:focus{
+    border-color:#2563eb;
+    box-shadow:0 0 0 3px rgba(37,99,235,0.15);
+}
+
+.form-select-custom.is-invalid{
+    border-color:#dc3545;
+}
+
+</style>
+@endsection
+
+@section('scripts')
+
+<script>
+
+$(document).ready(function(){
+
+    let isSubmitting = false;
+
+    const fileInput = $('#profile_picture');
+    const fileUploadArea = $('#fileUploadArea');
+    const filePreview = $('#filePreview');
+    const fileUploadBtn = $('.file-upload-btn');
+
+    // File Button
+    fileUploadBtn.on('click', function(e){
+        e.stopPropagation();
+        fileInput[0].click();
+    });
+
+    // Upload Area Click
+    fileUploadArea.on('click', function(e){
+
+        if(!$(e.target).closest('.file-remove, .file-upload-btn').length){
+            fileInput[0].click();
+        }
+
+    });
+
+    // Drag Over
+    fileUploadArea.on('dragover', function(e){
+
+        e.preventDefault();
+        fileUploadArea.addClass('dragover');
+
+    });
+
+    // Drag Leave
+    fileUploadArea.on('dragleave', function(e){
+
+        e.preventDefault();
+        fileUploadArea.removeClass('dragover');
+
+    });
+
+    // Drop
+    fileUploadArea.on('drop', function(e){
+
+        e.preventDefault();
+        fileUploadArea.removeClass('dragover');
+
+        const files = e.originalEvent.dataTransfer.files;
+
+        if(files.length > 0){
+            handleFileSelection(files[0]);
+        }
+
+    });
+
+    // Change
+    fileInput.on('change', function(){
+
+        if(this.files && this.files[0]){
+            handleFileSelection(this.files[0]);
+        }
+
+    });
+
+    // File Preview
+    function handleFileSelection(file){
+
+        const validTypes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png'
+        ];
+
+        if(!validTypes.includes(file.type)){
+
+            showToast(
+                'error',
+                'Invalid File',
+                'Only PNG, JPG, JPEG allowed',
+                3000
+            );
+
+            return;
+        }
+
+        if(file.size > 2 * 1024 * 1024){
+
+            showToast(
+                'error',
+                'Large File',
+                'Image must be below 2MB',
+                3000
+            );
+
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = function(e){
+
+            filePreview.html(`
+                <div class="d-flex align-items-center justify-content-center gap-3 p-2">
+                    <img src="${e.target.result}" alt="Preview">
+
+                    <div class="text-start">
+
+                        <div class="file-info">
+                            <div class="fw-bold text-dark">${file.name}</div>
+                            <div class="text-muted">
+                                ${(file.size / 1024).toFixed(2)} KB
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="file-remove"
+                            id="removeFile"
+                        >
+                            <i class="fas fa-times me-1"></i>
+                            Remove
+                        </button>
+
+                    </div>
+                </div>
+            `);
+
+            $('#removeFile').on('click', function(){
+
+                fileInput.val('');
+                filePreview.html('');
+
+            });
+
+        };
+
+        reader.readAsDataURL(file);
+
+    }
+
+    // Submit
+    $('#registerForm').on('submit', function(e){
+
+        e.preventDefault();
+
+        if(isSubmitting){
+            return false;
+        }
+
+        $('.invalid-feedback').text('');
+        $('.input-field input, .form-select-custom')
+            .removeClass('is-invalid');
+
+        let hasError = false;
+
+        const name = $('#name').val().trim();
+        const email = $('#email').val().trim();
+        const password = $('#password').val();
+        const confirmPassword = $('#password_confirmation').val();
+        const phone = $('#phone').val().trim();
+        const city = $('#city').val().trim();
+
+        // Name
+        if(!name){
+
+            $('#name').addClass('is-invalid');
+            $('#name_error').text('Full name required');
+
+            hasError = true;
+        }
+
+        // Email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if(!email){
+
+            $('#email').addClass('is-invalid');
+            $('#email_error').text('Email required');
+
+            hasError = true;
+
+        }else if(!emailRegex.test(email)){
+
+            $('#email').addClass('is-invalid');
+            $('#email_error').text('Invalid email');
+
+            hasError = true;
+        }
+
+        // Password
+        if(password.length < 6){
+
+            $('#password').addClass('is-invalid');
+            $('#password_error')
+                .text('Minimum 6 characters required');
+
+            hasError = true;
+        }
+
+        // Confirm Password
+        if(password !== confirmPassword){
+
+            $('#password_confirmation')
+                .addClass('is-invalid');
+
+            $('#password_confirmation_error')
+                .text('Passwords do not match');
+
+            hasError = true;
+        }
+
+        // Phone
+        const phoneRegex = /^[0-9]{10}$/;
+
+        if(!phoneRegex.test(phone)){
+
+            $('#phone').addClass('is-invalid');
+            $('#phone_error')
+                .text('Enter valid 10 digit mobile');
+
+            hasError = true;
+        }
+
+        // City
+        if(!city){
+
+            $('#city').addClass('is-invalid');
+            $('#city_error')
+                .text('Survey zone required');
+
+            hasError = true;
+        }
+
+        if(hasError){
+
+            showToast(
+                'error',
+                'Validation Error',
+                'Please check all fields',
+                3000
+            );
+
+            return false;
+        }
+
+        isSubmitting = true;
+
+        $('#btnText').text('Registering...');
+        $('#btnSpinner').removeClass('d-none');
+
+        $('#registerBtn').prop('disabled', true);
+
+        const formData = new FormData(this);
+
+        $.ajax({
+
+            url: "{{ route('register.post') }}",
+            method: "POST",
+            data: formData,
+            dataType: "json",
+            processData: false,
+            contentType: false,
+
+            success: function(response){
+
+                isSubmitting = false;
+
+                $('#registerBtn').prop('disabled', false);
+
+                $('#btnText').text('Register Surveyor');
+                $('#btnSpinner').addClass('d-none');
+
+                if(response.status === 'success'){
+
+                    showToast(
+                        'success',
+                        'Registration Successful',
+                        response.message,
+                        2000
+                    );
+
+                    setTimeout(function(){
+
+                        window.location.href =
+                            response.redirect;
+
+                    }, 2000);
+
+                }else{
+
+                    showToast(
+                        'error',
+                        'Registration Failed',
+                        response.message,
+                        4000
+                    );
+                }
+
+            },
+
+            error: function(xhr){
+
+                isSubmitting = false;
+
+                $('#registerBtn').prop('disabled', false);
+
+                $('#btnText').text('Register Surveyor');
+                $('#btnSpinner').addClass('d-none');
+
+                if(xhr.status === 422 &&
+                    xhr.responseJSON.errors){
+
+                    const errors =
+                        xhr.responseJSON.errors;
+
+                    for(let key in errors){
+
+                        $(`#${key}`)
+                            .addClass('is-invalid');
+
+                        $(`#${key}_error`)
+                            .text(errors[key][0]);
+                    }
+
+                    showToast(
+                        'error',
+                        'Validation Error',
+                        'Please check form errors',
+                        4000
+                    );
+
+                }else{
+
+                    showToast(
+                        'error',
+                        'Error',
+                        'Something went wrong',
+                        4000
+                    );
+                }
+
+            }
+
+        });
+
+    });
+
+    // Clear Validation
+    $('#registerForm input, #registerForm select')
+        .on('input change', function(){
+
+        $(this).removeClass('is-invalid');
+
+        $(this)
+            .siblings('.invalid-feedback')
+            .text('');
+
+    });
+
+    // Welcome Message
+    setTimeout(() => {
+
+        showToast(
+            'info',
+            '🗺️ SRIS Survey Portal',
+            'Register your surveyor account',
+            4000
+        );
+
+    }, 500);
+
+});
+
+</script>
+
 @endsection

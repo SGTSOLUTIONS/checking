@@ -127,22 +127,6 @@
             <span>OR CONTINUE WITH</span>
         </div>
 
-        <div class="sso-buttons">
-            <button type="button" class="sso-btn" id="ssoGoogleBtn">
-                <i class="fas fa-globe"></i>
-                GIS SSO
-            </button>
-
-            <button type="button" class="sso-btn" id="ssoOktaBtn">
-                <i class="fas fa-map-pin"></i>
-                Field Access
-            </button>
-
-            <button type="button" class="sso-btn" id="ssoMsftBtn">
-                <i class="fas fa-layer-group"></i>
-                Spatial Login
-            </button>
-        </div>
 
         <div class="register-prompt">
             Need access permission?
