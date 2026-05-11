@@ -824,6 +824,150 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #E86A5F;
         }
+        /* Building Images Gallery Styles */
+.building-images-section {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.image-gallery {
+    width: 100%;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.image-item {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.building-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.image-caption {
+    text-align: center;
+    padding: 6px;
+    font-size: 11px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-item:hover .image-caption {
+    opacity: 1;
+}
+
+.building-info-section {
+    margin-top: 10px;
+}
+
+/* Image Modal Styles */
+.image-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    position: relative;
+    width: 90%;
+    max-width: 1200px;
+    margin: 50px auto;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 100px);
+}
+
+.modal-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 40px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10001;
+}
+
+.close-modal:hover {
+    color: #D4A13E;
+    transform: scale(1.1);
+}
+
+.modal-caption {
+    color: white;
+    margin-top: 15px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Responsive adjustments for images */
+@media (max-width: 768px) {
+    .image-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .building-image {
+        height: 200px;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+    }
+
+    .close-modal {
+        top: 10px;
+        right: 20px;
+        font-size: 30px;
+    }
+}
     </style>
 @endpush
 
@@ -1447,147 +1591,296 @@
                     $(`#${tab}Panel`).addClass('active');
                     $(`#${tab}Results`).hide();
                 });
+// Function to display full property info including shops, assessment form, and images
+function displayFullPropertyInfo(gisid, pointDataTable = null) {
+    currentGisid = gisid;
+    if (pointDataTable) {
+        currentPointDataTable = pointDataTable;
+        $('#pointDataTableName').val(pointDataTable);
+    }
 
-                // Function to display full property info including shops and assessment form
-                function displayFullPropertyInfo(gisid, pointDataTable = null) {
-                    currentGisid = gisid;
-                    if (pointDataTable) {
-                        currentPointDataTable = pointDataTable;
-                        $('#pointDataTableName').val(pointDataTable);
-                    }
+    const polygonData = polygonDatas.find(d => d.gisid == gisid);
+    const assessments = getAssessmentsByGisid(gisid);
+    const shops = getShopsByBuildingGisid(gisid);
+    const pointCount = assessments.length;
 
-                    const polygonData = polygonDatas.find(d => d.gisid == gisid);
-                    const assessments = getAssessmentsByGisid(gisid);
-                    const shops = getShopsByBuildingGisid(gisid);
-                    const pointCount = assessments.length;
+    // Building Details HTML with Images
+    let buildingHtml = `
+        <div class="info-row">
+            <span class="info-label">GIS ID:</span>
+            <span class="info-value"><strong>${gisid}</strong></span>
+        </div>
+    `;
 
-                    // Building Details HTML
-                    let buildingHtml =
-                        `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
-                    if (polygonData) {
-                        buildingHtml += `
-                    <div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value">${polygonData.building_usage || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Construction Type:</span><span class="info-value">${polygonData.construction_type || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Road Name:</span><span class="info-value">${polygonData.road_name || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Shops/Units:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Assessments Done:</span><span class="info-value">${pointCount}</span></div>
-                    <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>
-                    <div class="info-row"><span class="info-label">Zone:</span><span class="info-value">${polygonData.zone || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">UGD:</span><span class="info-value">${polygonData.ugd || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Rainwater Harvesting:</span><span class="info-value">${polygonData.rainwater_harvesting || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">CCTV:</span><span class="info-value">${polygonData.cctv || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Status:</span><span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}</span></div>
+    if (polygonData) {
+        // Building Images Section
+        if (polygonData.image || polygonData.image1) {
+            buildingHtml += `
+                <div class="building-images-section">
+                    <div class="info-label" style="width: 100%; margin-bottom: 10px;">Building Images:</div>
+                    <div class="image-gallery">
+                        <div class="image-grid">
+            `;
+
+            // Add first image if exists
+            if (polygonData.image) {
+                buildingHtml += `
+                    <div class="image-item">
+                        <img src="${polygonData.image}" alt="Building Image 1" class="building-image" onclick="openImageModal('${polygonData.image}')">
+                        <div class="image-caption">Front View</div>
+                    </div>
                 `;
-                    } else {
-                        buildingHtml +=
-                            `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data available for this GIS ID</span></div>`;
-                    }
-                    $('#featureDetails').html(buildingHtml);
+            }
 
-                    // Shops List HTML
-                    let shopsHtml = '';
-                    if (shops && shops.length > 0) {
-                        shopsHtml = `<div class="shop-list">`;
-                        shops.forEach((shop, index) => {
-                            shopsHtml += `
-                        <div class="shop-item">
-                            <h6><span class="badge-shop">Shop ${index + 1}</span> ${shop.shop_name || 'Unnamed Shop'}</h6>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">Floor:</span>
-                                <span class="shop-detail-value">${shop.shop_floor || 'N/A'}</span>
-                            </div>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">Owner Name:</span>
-                                <span class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</span>
-                            </div>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">Category:</span>
-                                <span class="shop-detail-value">${shop.shop_category || 'N/A'}</span>
-                            </div>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">Mobile:</span>
-                                <span class="shop-detail-value">${shop.shop_mobile || 'N/A'}</span>
-                            </div>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">License No:</span>
-                                <span class="shop-detail-value">${shop.license || 'N/A'}</span>
-                            </div>
-                            <div class="shop-detail-row">
-                                <span class="shop-detail-label">Employees:</span>
-                                <span class="shop-detail-value">${shop.number_of_employee || 'N/A'}</span>
-                            </div>
+            // Add second image if exists
+            if (polygonData.image1) {
+                buildingHtml += `
+                    <div class="image-item">
+                        <img src="${polygonData.image1}" alt="Building Image 2" class="building-image" onclick="openImageModal('${polygonData.image1}')">
+                        <div class="image-caption">Side/Back View</div>
+                    </div>
+                `;
+            }
+
+            buildingHtml += `
                         </div>
-                    `;
-                        });
-                        shopsHtml += `</div>`;
-                    } else {
-                        shopsHtml = `<div class="text-muted text-center p-3">No shops found for this building</div>`;
-                    }
-                    $('#shopsDetails').html(shopsHtml);
+                    </div>
+                </div>
+            `;
+        }
 
-                    // Assessments List HTML with clickable assessments to populate form
-                    let assessmentsHtml = '';
-                    if (assessments && assessments.length > 0) {
-                        assessmentsHtml = `<div class="assessment-list">`;
-                        assessments.forEach((assessment, index) => {
-                            assessmentsHtml += `
-            <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
-                <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Owner Name:</span>
-                    <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
+        // Building Information
+        buildingHtml += `
+            <div class="building-info-section">
+                <div class="info-row">
+                    <span class="info-label">Building Name:</span>
+                    <span class="info-value">${polygonData.building_name || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Present Owner:</span>
-                    <span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Building Usage:</span>
+                    <span class="info-value">${polygonData.building_usage || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Phone:</span>
-                    <span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Construction Type:</span>
+                    <span class="info-value">${polygonData.construction_type || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Floor:</span>
-                    <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Road Name:</span>
+                    <span class="info-value">${polygonData.road_name || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Bill Usage:</span>
-                    <span class="assessment-detail-value">${assessment.bill_usage || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Floors:</span>
+                    <span class="info-value">${polygonData.number_floor || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Door No:</span>
-                    <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Shops/Units:</span>
+                    <span class="info-value">${polygonData.number_shop || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Square Feet:</span>
-                    <span class="assessment-detail-value">${assessment.sqfeet || 'N/A'} sqft</span>
+                <div class="info-row">
+                    <span class="info-label">Total Bills:</span>
+                    <span class="info-value">${polygonData.number_bill || 'N/A'}</span>
                 </div>
-                <div class="assessment-detail-row">
-                    <span class="assessment-detail-label">Usage:</span>
-                    <span class="assessment-detail-value">${assessment.usage || 'N/A'}</span>
+                <div class="info-row">
+                    <span class="info-label">Assessments Done:</span>
+                    <span class="info-value">${pointCount}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Square Feet:</span>
+                    <span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Zone:</span>
+                    <span class="info-value">${polygonData.zone || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">UGD:</span>
+                    <span class="info-value">${polygonData.ugd || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Rainwater Harvesting:</span>
+                    <span class="info-value">${polygonData.rainwater_harvesting || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">CCTV:</span>
+                    <span class="info-value">${polygonData.cctv || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">
+                        ${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}
+                    </span>
                 </div>
             </div>
         `;
-                        });
-                        assessmentsHtml += `</div>`;
-                    } else {
-                        assessmentsHtml =
-                            `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
-                    }
-                    $('#assessmentsDetails').html(assessmentsHtml);
+    } else {
+        buildingHtml += `
+            <div class="info-row">
+                <span class="info-label">Note:</span>
+                <span class="info-value">No building data available for this GIS ID</span>
+            </div>
+        `;
+    }
+    $('#featureDetails').html(buildingHtml);
 
-                    // Add click handler for assessment items to populate form
-                    $('.assessment-item').on('click', function() {
-                        const assessmentNo = $(this).data('assessment');
-                        const assessmentId = $(this).data('id');
-                        const pointDataTable = $(this).data('point-data-table');
-                        loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
-                    });
-                    $('#featureInfo').fadeIn();
-                }
+    // Rest of your existing code for shops and assessments...
+    // Shops List HTML
+    let shopsHtml = '';
+    if (shops && shops.length > 0) {
+        shopsHtml = `<div class="shop-list">`;
+        shops.forEach((shop, index) => {
+            shopsHtml += `
+                <div class="shop-item">
+                    <h6><span class="badge-shop">Shop ${index + 1}</span> ${shop.shop_name || 'Unnamed Shop'}</h6>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">Floor:</span>
+                        <span class="shop-detail-value">${shop.shop_floor || 'N/A'}</span>
+                    </div>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">Owner Name:</span>
+                        <span class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</span>
+                    </div>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">Category:</span>
+                        <span class="shop-detail-value">${shop.shop_category || 'N/A'}</span>
+                    </div>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">Mobile:</span>
+                        <span class="shop-detail-value">${shop.shop_mobile || 'N/A'}</span>
+                    </div>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">License No:</span>
+                        <span class="shop-detail-value">${shop.license || 'N/A'}</span>
+                    </div>
+                    <div class="shop-detail-row">
+                        <span class="shop-detail-label">Employees:</span>
+                        <span class="shop-detail-value">${shop.number_of_employee || 'N/A'}</span>
+                    </div>
+                </div>
+            `;
+        });
+        shopsHtml += `</div>`;
+    } else {
+        shopsHtml = `<div class="text-muted text-center p-3">No shops found for this building</div>`;
+    }
+    $('#shopsDetails').html(shopsHtml);
 
+    // Assessments List HTML with clickable assessments to populate form
+    let assessmentsHtml = '';
+    if (assessments && assessments.length > 0) {
+        assessmentsHtml = `<div class="assessment-list">`;
+        assessments.forEach((assessment, index) => {
+            assessmentsHtml += `
+                <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
+                    <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Owner Name:</span>
+                        <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Present Owner:</span>
+                        <span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Phone:</span>
+                        <span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Floor:</span>
+                        <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Bill Usage:</span>
+                        <span class="assessment-detail-value">${assessment.bill_usage || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Door No:</span>
+                        <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Square Feet:</span>
+                        <span class="assessment-detail-value">${assessment.sqfeet || 'N/A'} sqft</span>
+                    </div>
+                    <div class="assessment-detail-row">
+                        <span class="assessment-detail-label">Usage:</span>
+                        <span class="assessment-detail-value">${assessment.usage || 'N/A'}</span>
+                    </div>
+                </div>
+            `;
+        });
+        assessmentsHtml += `</div>`;
+    } else {
+        assessmentsHtml = `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
+    }
+    $('#assessmentsDetails').html(assessmentsHtml);
+
+    // Add click handler for assessment items to populate form
+    $('.assessment-item').on('click', function() {
+        const assessmentNo = $(this).data('assessment');
+        const assessmentId = $(this).data('id');
+        const pointDataTable = $(this).data('point-data-table');
+        loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
+    });
+
+    $('#featureInfo').fadeIn();
+}
+// Open image modal
+function openImageModal(imageUrl) {
+    // Create modal if it doesn't exist
+    if (!$('#imageModal').length) {
+        const modalHtml = `
+            <div id="imageModal" class="image-modal">
+                <span class="close-modal">&times;</span>
+                <div class="modal-content">
+                    <img id="modalImage" src="" alt="Building Image">
+                    <div class="modal-caption" id="modalCaption"></div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+
+        // Close modal when clicking on close button or outside the image
+        $('#imageModal').on('click', function(e) {
+            if (e.target === this || $(e.target).hasClass('close-modal')) {
+                $('#imageModal').fadeOut();
+            }
+        });
+
+        // Close on ESC key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#imageModal').is(':visible')) {
+                $('#imageModal').fadeOut();
+            }
+        });
+    }
+
+    // Set image source and show modal
+    $('#modalImage').attr('src', imageUrl);
+    $('#modalCaption').text(getImageCaption(imageUrl));
+    $('#imageModal').fadeIn();
+}
+
+// Helper function to get image caption based on URL or filename
+function getImageCaption(imageUrl) {
+    if (!imageUrl) return 'Building Image';
+
+    // Extract filename from URL
+    const filename = imageUrl.split('/').pop();
+
+    // Try to determine if it's image or image1 based on filename or URL pattern
+    if (filename.includes('image1') || imageUrl.includes('image1')) {
+        return 'Side / Back View';
+    } else if (filename.includes('image') || imageUrl.includes('image')) {
+        return 'Front View';
+    }
+
+    return 'Building Image';
+}
+
+// Optional: Add image error handling
+function handleImageError(imgElement) {
+    $(imgElement).attr('src', '/images/no-image.png');
+    $(imgElement).attr('alt', 'No image available');
+}
                 // Load assessment data into edit form
                 function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
                     $('#loadingSpinner').fadeIn();
