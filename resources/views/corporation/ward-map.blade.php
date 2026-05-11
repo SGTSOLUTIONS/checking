@@ -115,7 +115,6 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -190,7 +189,7 @@
             box-shadow: var(--shadow-lg);
             padding: 14px;
             z-index: 1001;
-            width: 200px;
+            width: 240px;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(212, 161, 62, 0.3);
         }
@@ -200,7 +199,7 @@
                 top: auto;
                 bottom: 80px;
                 right: 10px;
-                width: 180px;
+                width: 200px;
             }
         }
 
@@ -222,6 +221,11 @@
             color: #D4A13E;
             margin-bottom: 6px;
             font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .layer-group:first-child h5 {
+            margin-top: 0;
         }
 
         .layer-option {
@@ -255,7 +259,22 @@
             color: #333;
         }
 
-        /* Feature Info Panel - Enhanced with Assessment Form */
+        /* Color Legend */
+        .color-legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 10px;
+        }
+
+        .color-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+
+        /* Feature Info Panel */
         .feature-info {
             position: absolute;
             bottom: 20px;
@@ -265,7 +284,7 @@
             box-shadow: var(--shadow-lg);
             padding: 16px;
             z-index: 1001;
-            width: 420px;
+            width: 450px;
             max-width: calc(100% - 40px);
             display: none;
             backdrop-filter: blur(10px);
@@ -462,7 +481,7 @@
             word-break: break-word;
         }
 
-        /* Shop List Styles */
+        /* Shop & Assessment List Styles */
         .shop-list,
         .assessment-list {
             max-height: 400px;
@@ -579,7 +598,6 @@
                 bottom: 80px;
                 left: 10px;
             }
-
             .zoom-btn {
                 width: 36px;
                 height: 36px;
@@ -656,7 +674,7 @@
         .route-info {
             position: absolute;
             bottom: 20px;
-            left: 320px;
+            left: 340px;
             background: rgba(255, 255, 255, 0.98);
             border-radius: 20px;
             box-shadow: var(--shadow-lg);
@@ -805,6 +823,165 @@
             color: #666;
         }
 
+        /* Building Images Gallery Styles */
+        .building-images-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .image-gallery {
+            width: 100%;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .image-item {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .building-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-caption {
+            text-align: center;
+            padding: 6px;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-item:hover .image-caption {
+            opacity: 1;
+        }
+
+        /* Image Modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            cursor: pointer;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 1200px;
+            margin: 50px auto;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100vh - 100px);
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10001;
+        }
+
+        .close-modal:hover {
+            color: #D4A13E;
+            transform: scale(1.1);
+        }
+
+        .modal-caption {
+            color: white;
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Assessment Search Filter */
+        .assessment-search-filter {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .assessment-search-filter input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .assessment-search-filter input:focus {
+            outline: none;
+            border-color: #D4A13E;
+            box-shadow: 0 0 0 2px rgba(212, 161, 62, 0.1);
+        }
+
+        .btn-edit-assessment {
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit-assessment:hover {
+            background: #E86A5F !important;
+            transform: translateY(-1px);
+        }
+
+        .assessment-item.hide {
+            display: none;
+        }
+
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 6px;
@@ -824,195 +1001,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #E86A5F;
         }
-        /* Building Images Gallery Styles */
-.building-images-section {
-    margin-bottom: 15px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 12px;
-}
-
-.image-gallery {
-    width: 100%;
-}
-
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.image-item {
-    position: relative;
-    cursor: pointer;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.image-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.building-image {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    display: block;
-}
-
-.image-caption {
-    text-align: center;
-    padding: 6px;
-    font-size: 11px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.image-item:hover .image-caption {
-    opacity: 1;
-}
-
-.building-info-section {
-    margin-top: 10px;
-}
-
-/* Image Modal Styles */
-.image-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 10000;
-    cursor: pointer;
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    position: relative;
-    width: 90%;
-    max-width: 1200px;
-    margin: 50px auto;
-    background: transparent;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: calc(100vh - 100px);
-}
-
-.modal-content img {
-    max-width: 100%;
-    max-height: 80vh;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 40px;
-    color: white;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 10001;
-}
-
-.close-modal:hover {
-    color: #D4A13E;
-    transform: scale(1.1);
-}
-
-.modal-caption {
-    color: white;
-    margin-top: 15px;
-    font-size: 14px;
-    text-align: center;
-}
-
-/* Responsive adjustments for images */
-@media (max-width: 768px) {
-    .image-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .building-image {
-        height: 200px;
-    }
-
-    .modal-content {
-        width: 95%;
-        margin: 20px auto;
-    }
-
-    .close-modal {
-        top: 10px;
-        right: 20px;
-        font-size: 30px;
-    }
-}
-/* Assessment Search Filter */
-.assessment-search-filter {
-    position: sticky;
-    top: 0;
-    background: white;
-    z-index: 10;
-    margin-bottom: 12px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 1px solid #e0e0e0;
-}
-
-.assessment-search-filter input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 12px;
-    transition: all 0.3s ease;
-}
-
-.assessment-search-filter input:focus {
-    outline: none;
-    border-color: #D4A13E;
-    box-shadow: 0 0 0 2px rgba(212, 161, 62, 0.1);
-}
-
-.btn-edit-assessment {
-    transition: all 0.3s ease;
-}
-
-.btn-edit-assessment:hover {
-    background: #E86A5F !important;
-    transform: translateY(-1px);
-}
-
-/* Animation for filtered items */
-.assessment-item {
-    transition: all 0.3s ease;
-}
-
-.assessment-item.hide {
-    display: none;
-}
     </style>
 @endpush
 
@@ -1034,8 +1022,7 @@
 
                         <div class="search-panel active" id="gisidPanel">
                             <div class="search-box">
-                                <input type="text" id="gisidSearchInput" placeholder="Enter GIS ID..."
-                                    autocomplete="off">
+                                <input type="text" id="gisidSearchInput" placeholder="Enter GIS ID..." autocomplete="off">
                                 <button id="gisidSearchBtn"><i class="fas fa-search"></i></button>
                             </div>
                             <div class="search-results" id="gisidResults"></div>
@@ -1043,15 +1030,14 @@
 
                         <div class="search-panel" id="assessmentPanel">
                             <div class="search-box">
-                                <input type="text" id="assessmentSearchInput" placeholder="Enter Assessment Number..."
-                                    autocomplete="off">
+                                <input type="text" id="assessmentSearchInput" placeholder="Enter Assessment Number..." autocomplete="off">
                                 <button id="assessmentSearchBtn"><i class="fas fa-search"></i></button>
                             </div>
                             <div class="search-results" id="assessmentResults"></div>
                         </div>
                     </div>
 
-                    <!-- Layer Switcher -->
+                    <!-- Layer Switcher with Color Legend -->
                     <div class="layer-switcher">
                         <h4><i class="fas fa-layer-group me-2"></i>Layers</h4>
                         <div class="layer-group">
@@ -1090,6 +1076,45 @@
                             <div class="layer-option">
                                 <input type="checkbox" id="showPoints" checked>
                                 <label><i class="fas fa-map-marker-alt"></i> Points</label>
+                            </div>
+                        </div>
+                        <div class="layer-group">
+                            <h5>Building Usage Colors</h5>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #4CAF50;"></div>
+                                <span>Residential</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #2196F3;"></div>
+                                <span>Commercial</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #FF9800;"></div>
+                                <span>Industrial</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #9C27B0;"></div>
+                                <span>Mixed Use</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #00BCD4;"></div>
+                                <span>Institutional</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #F44336;"></div>
+                                <span>Government</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #8BC34A;"></div>
+                                <span>Educational</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #E91E63;"></div>
+                                <span>Healthcare</span>
+                            </div>
+                            <div class="color-legend-item">
+                                <div class="color-box" style="background: #D4A13E;"></div>
+                                <span>Other/Unknown</span>
                             </div>
                         </div>
                     </div>
@@ -1133,18 +1158,18 @@
 
                         <!-- Assessment Update Form -->
                         <div class="assessment-form" id="assessmentForm" style="display: none;">
-                            <h5><i class="fas fa-edit me-2"></i>Update Assessment</h5>
+                            <h5><i class="fas fa-edit me-2"></i>Update QC Values</h5>
                             <form id="updateAssessmentForm">
-                                <input type="text" id="currentAssessmentNo" readonly>
+                                <input type="hidden" id="currentAssessmentNo">
                                 <input type="hidden" id="currentid">
                                 <input type="hidden" id="pointDataTableName">
                                 <div class="form-group">
-                                    <label for="squareFeet">Square Feet (sq.ft)</label>
+                                    <label for="squareFeet">Square Feet (sq.ft) <small style="color: #666;">(QC Value)</small></label>
                                     <input type="number" id="squareFeet" class="form-control"
                                         placeholder="Enter square feet" step="0.01">
                                 </div>
                                 <div class="form-group">
-                                    <label for="usage">Usage Type</label>
+                                    <label for="usage">Usage Type <small style="color: #666;">(QC Value)</small></label>
                                     <select id="usage" class="form-control">
                                         <option value="">Select Usage</option>
                                         <option value="residential">Residential</option>
@@ -1156,7 +1181,7 @@
                                     </select>
                                 </div>
                                 <button type="submit" class="btn-update" id="updateAssessmentBtn">
-                                    <i class="fas fa-save me-2"></i>Update Assessment
+                                    <i class="fas fa-save me-2"></i>Update QC Values
                                 </button>
                                 <div id="updateStatus" class="update-status"></div>
                             </form>
@@ -1187,11 +1212,11 @@
         // Toast notification function
         function showToast(message, type = 'info') {
             const toastHtml = `
-        <div class="toast-notification ${type}">
-            <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-            <div class="toast-message">${message}</div>
-        </div>
-    `;
+                <div class="toast-notification ${type}">
+                    <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+            `;
             $('body').append(toastHtml);
             const $toast = $('.toast-notification').last();
             setTimeout(() => $toast.addClass('show'), 10);
@@ -1234,8 +1259,7 @@
                     shopDatas = @json($shopDatas ?? []);
                     misData = @json($misData ?? []);
                     ward = @json($ward ?? []);
-                    console.log("Data loaded - Polygons:", polygons.length, "Points:", points.length, "Shops:",
-                        shopDatas.length, "Assessments:", pointDatas.length);
+                    console.log("Data loaded - Polygons:", polygons.length, "Points:", points.length, "Shops:", shopDatas.length, "Assessments:", pointDatas.length);
                 } catch (e) {
                     console.error("Error parsing JSON data:", e);
                 }
@@ -1265,6 +1289,38 @@
                     return pointDatas.filter(pd => pd.point_gisid == gisid);
                 }
 
+                // Get building usage color
+                function getBuildingUsageColor(gisid) {
+                    const polygonData = polygonDatas.find(data => data.gisid == gisid);
+                    if (!polygonData || !polygonData.building_usage) {
+                        return "#D4A13E";
+                    }
+
+                    const usage = polygonData.building_usage.toLowerCase();
+
+                    const usageColors = {
+                        'residential': '#4CAF50',
+                        'commercial': '#2196F3',
+                        'industrial': '#FF9800',
+                        'mixed': '#9C27B0',
+                        'institutional': '#00BCD4',
+                        'government': '#F44336',
+                        'educational': '#8BC34A',
+                        'healthcare': '#E91E63',
+                        'religious': '#FFC107',
+                        'agricultural': '#8D6E63',
+                        'vacant': '#9E9E9E'
+                    };
+
+                    for (const [key, color] of Object.entries(usageColors)) {
+                        if (usage.includes(key)) {
+                            return color;
+                        }
+                    }
+
+                    return "#D4A13E";
+                }
+
                 // Style Functions
                 function getPointStyle(feature) {
                     const gisid = feature.get("gisid");
@@ -1277,25 +1333,15 @@
                     return new ol.style.Style({
                         image: new ol.style.Circle({
                             radius: 7,
-                            fill: new ol.style.Fill({
-                                color: color
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: "#fff",
-                                width: 2
-                            })
+                            fill: new ol.style.Fill({ color: color }),
+                            stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
                         }),
                         text: new ol.style.Text({
                             text: gisid ? String(gisid) : "",
                             font: "10px Arial",
                             offsetY: -12,
-                            fill: new ol.style.Fill({
-                                color: "#333"
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: "#fff",
-                                width: 2
-                            })
+                            fill: new ol.style.Fill({ color: "#333" }),
+                            stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
                         })
                     });
                 }
@@ -1303,36 +1349,36 @@
                 function getPolygonStyle(feature) {
                     const gisid = feature.get("gisid");
                     const sqft = feature.get("sqfeet") || "0";
+                    const fillColor = getBuildingUsageColor(gisid);
+
                     const polygonData = polygonDatas.find(data => data.gisid == gisid);
-                    const color = polygonData ? "#E86A5F" : "#D4A13E";
+                    const buildingUsage = polygonData ? (polygonData.building_usage || 'N/A') : 'N/A';
 
                     const geometry = feature.getGeometry();
                     const centerPoint = geometry.getInteriorPoint();
 
+                    // Truncate usage text if too long
+                    const displayUsage = buildingUsage.length > 15 ? buildingUsage.substring(0, 12) + '...' : buildingUsage;
+
                     return [
                         new ol.style.Style({
                             stroke: new ol.style.Stroke({
-                                color: color,
+                                color: fillColor,
                                 width: 3,
                                 lineJoin: "round",
                                 lineCap: "round"
                             }),
                             fill: new ol.style.Fill({
-                                color: "rgba(212, 161, 62, 0.1)"
+                                color: fillColor + "33"
                             })
                         }),
                         new ol.style.Style({
                             geometry: centerPoint,
                             text: new ol.style.Text({
-                                text: sqft + " SQFT",
-                                font: "bold 12px Arial",
-                                fill: new ol.style.Fill({
-                                    color: "#ffffff"
-                                }),
-                                stroke: new ol.style.Stroke({
-                                    color: "#000000",
-                                    width: 3
-                                }),
+                                text: `${sqft} SQFT\n${displayUsage}`,
+                                font: "bold 11px Arial",
+                                fill: new ol.style.Fill({ color: "#ffffff" }),
+                                stroke: new ol.style.Stroke({ color: "#000000", width: 3 }),
                                 overflow: true,
                                 textAlign: "center",
                                 offsetY: 0
@@ -1343,31 +1389,18 @@
 
                 function getLineStyle() {
                     return new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: "#ffc107",
-                            width: 2
-                        })
+                        stroke: new ol.style.Stroke({ color: "#ffc107", width: 2 })
                     });
                 }
 
                 function getHighlightStyle() {
                     return new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: "#ff6600",
-                            width: 4
-                        }),
-                        fill: new ol.style.Fill({
-                            color: "rgba(255, 102, 0, 0.2)"
-                        }),
+                        stroke: new ol.style.Stroke({ color: "#ff6600", width: 4 }),
+                        fill: new ol.style.Fill({ color: "rgba(255, 102, 0, 0.2)" }),
                         image: new ol.style.Circle({
                             radius: 10,
-                            fill: new ol.style.Fill({
-                                color: "#ff6600"
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: "#fff",
-                                width: 2
-                            })
+                            fill: new ol.style.Fill({ color: "#ff6600" }),
+                            stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
                         })
                     });
                 }
@@ -1376,13 +1409,8 @@
                     return new ol.style.Style({
                         image: new ol.style.Circle({
                             radius: 10,
-                            fill: new ol.style.Fill({
-                                color: "#0066cc"
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: "#fff",
-                                width: 2
-                            })
+                            fill: new ol.style.Fill({ color: "#0066cc" }),
+                            stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
                         })
                     });
                 }
@@ -1431,10 +1459,7 @@
                 }
                 if (!droneLayer) {
                     droneLayer = new ol.layer.Image({
-                        source: new ol.source.ImageStatic({
-                            url: "",
-                            imageExtent: [0, 0, 0, 0]
-                        }),
+                        source: new ol.source.ImageStatic({ url: "", imageExtent: [0, 0, 0, 0] }),
                         visible: false
                     });
                 }
@@ -1444,8 +1469,7 @@
                 if (polygons && polygons.length) {
                     polygons.forEach(poly => {
                         try {
-                            let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) :
-                                poly.coordinates;
+                            let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                             if (coords && coords.length) {
                                 polygonSource.addFeature(new ol.Feature({
                                     geometry: new ol.geom.Polygon(coords),
@@ -1469,8 +1493,7 @@
                 if (lines && lines.length) {
                     lines.forEach(l => {
                         try {
-                            let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
-                                .coordinates;
+                            let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
                             if (coords && coords.length >= 2) {
                                 if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
                                 lineSource.addFeature(new ol.Feature({
@@ -1494,8 +1517,7 @@
                 if (points && points.length) {
                     points.forEach(p => {
                         try {
-                            let coords = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
-                                .coordinates;
+                            let coords = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
                             if (coords && coords.length === 2) {
                                 pointSource.addFeature(new ol.Feature({
                                     geometry: new ol.geom.Point(coords),
@@ -1527,28 +1549,17 @@
                                 })]
                             }),
                             style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({
-                                    color: "#ff0000",
-                                    width: 2
-                                }),
-                                fill: new ol.style.Fill({
-                                    color: "rgba(255, 0, 0, 0.03)"
-                                })
+                                stroke: new ol.style.Stroke({ color: "#ff0000", width: 2 }),
+                                fill: new ol.style.Fill({ color: "rgba(255, 0, 0, 0.03)" })
                             }),
                             visible: true
                         });
                     } catch (e) {
                         console.error("Error creating boundary layer:", e);
-                        boundaryLayer = new ol.layer.Vector({
-                            source: new ol.source.Vector(),
-                            visible: true
-                        });
+                        boundaryLayer = new ol.layer.Vector({ source: new ol.source.Vector(), visible: true });
                     }
                 } else {
-                    boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector(),
-                        visible: true
-                    });
+                    boundaryLayer = new ol.layer.Vector({ source: new ol.source.Vector(), visible: true });
                 }
 
                 // Highlight Layer
@@ -1570,11 +1581,7 @@
                 const routeLayer = new ol.layer.Vector({
                     source: routeSource,
                     style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: "#0066cc",
-                            width: 4,
-                            lineDash: [8, 8]
-                        })
+                        stroke: new ol.style.Stroke({ color: "#0066cc", width: 4, lineDash: [8, 8] })
                     })
                 });
 
@@ -1597,8 +1604,7 @@
                 const map = new ol.Map({
                     target: 'map',
                     layers: [osmLayer, satelliteLayer, terrainLayer, droneLayer, boundaryLayer, polygonLayer,
-                        lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer
-                    ],
+                        lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
                     view: new ol.View({
                         projection: "EPSG:3857",
                         center: defaultCenter,
@@ -1636,483 +1642,397 @@
                     $(`#${tab}Panel`).addClass('active');
                     $(`#${tab}Results`).hide();
                 });
-// Function to display full property info including shops, assessment form, and images
-function displayFullPropertyInfo(gisid, pointDataTable = null) {
-    currentGisid = gisid;
-    if (pointDataTable) {
-        currentPointDataTable = pointDataTable;
-        $('#pointDataTableName').val(pointDataTable);
-    }
 
-    const polygonData = polygonDatas.find(d => d.gisid == gisid);
-    const assessments = getAssessmentsByGisid(gisid);
-    const shops = getShopsByBuildingGisid(gisid);
-    const pointCount = assessments.length;
-
-    // Building Details HTML with Images
-    let buildingHtml = `
-        <div class="info-row">
-            <span class="info-label">GIS ID:</span>
-            <span class="info-value"><strong>${gisid}</strong></span>
-        </div>
-    `;
-
-    if (polygonData) {
-        // Building Images Section - Using asset() helper
-        if (polygonData.image || polygonData.image1) {
-            buildingHtml += `
-                <div class="building-images-section">
-                    <div class="info-label" style="width: 100%; margin-bottom: 10px;">Building Images:</div>
-                    <div class="image-gallery">
-                        <div class="image-grid">
-            `;
-
-            // Add first image if exists - using asset() for proper URL
-            if (polygonData.image) {
-                const imageUrl = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
-                buildingHtml += `
-                    <div class="image-item">
-                        <img src="${imageUrl}" alt="Building Image 1" class="building-image" onclick="openImageModal('${imageUrl}')" onerror="this.src='/images/no-image.png'">
-                        <div class="image-caption">Front View</div>
-                    </div>
-                `;
-            }
-
-            // Add second image if exists - using asset() for proper URL
-            if (polygonData.image1) {
-                const imageUrl1 = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
-                buildingHtml += `
-                    <div class="image-item">
-                        <img src="${imageUrl1}" alt="Building Image 2" class="building-image" onclick="openImageModal('${imageUrl1}')" onerror="this.src='/images/no-image.png'">
-                        <div class="image-caption">Side/Back View</div>
-                    </div>
-                `;
-            }
-
-            buildingHtml += `
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Building Information
-        buildingHtml += `
-            <div class="building-info-section">
-                <div class="info-row">
-                    <span class="info-label">Building Name:</span>
-                    <span class="info-value">${polygonData.building_name || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Building Usage:</span>
-                    <span class="info-value">${polygonData.building_usage || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Construction Type:</span>
-                    <span class="info-value">${polygonData.construction_type || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Road Name:</span>
-                    <span class="info-value">${polygonData.road_name || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Floors:</span>
-                    <span class="info-value">${polygonData.number_floor || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Shops/Units:</span>
-                    <span class="info-value">${polygonData.number_shop || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Total Bills:</span>
-                    <span class="info-value">${polygonData.number_bill || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Assessments Done:</span>
-                    <span class="info-value">${pointCount}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Square Feet:</span>
-                    <span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Zone:</span>
-                    <span class="info-value">${polygonData.zone || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">UGD:</span>
-                    <span class="info-value">${polygonData.ugd || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Rainwater Harvesting:</span>
-                    <span class="info-value">${polygonData.rainwater_harvesting || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">CCTV:</span>
-                    <span class="info-value">${polygonData.cctv || 'N/A'}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Status:</span>
-                    <span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">
-                        ${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}
-                    </span>
-                </div>
-            </div>
-        `;
-    } else {
-        buildingHtml += `
-            <div class="info-row">
-                <span class="info-label">Note:</span>
-                <span class="info-value">No building data available for this GIS ID</span>
-            </div>
-        `;
-    }
-    $('#featureDetails').html(buildingHtml);
-
-    // Shops List HTML
-    let shopsHtml = '';
-    if (shops && shops.length > 0) {
-        shopsHtml = `<div class="shop-list">`;
-        shops.forEach((shop, index) => {
-            shopsHtml += `
-                <div class="shop-item">
-                    <h6><span class="badge-shop">Shop ${index + 1}</span> ${shop.shop_name || 'Unnamed Shop'}</h6>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">Floor:</span>
-                        <span class="shop-detail-value">${shop.shop_floor || 'N/A'}</span>
-                    </div>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">Owner Name:</span>
-                        <span class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</span>
-                    </div>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">Category:</span>
-                        <span class="shop-detail-value">${shop.shop_category || 'N/A'}</span>
-                    </div>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">Mobile:</span>
-                        <span class="shop-detail-value">${shop.shop_mobile || 'N/A'}</span>
-                    </div>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">License No:</span>
-                        <span class="shop-detail-value">${shop.license || 'N/A'}</span>
-                    </div>
-                    <div class="shop-detail-row">
-                        <span class="shop-detail-label">Employees:</span>
-                        <span class="shop-detail-value">${shop.number_of_employee || 'N/A'}</span>
-                    </div>
-                </div>
-            `;
-        });
-        shopsHtml += `</div>`;
-    } else {
-        shopsHtml = `<div class="text-muted text-center p-3">No shops found for this building</div>`;
-    }
-    $('#shopsDetails').html(shopsHtml);
-
-    // Assessments List HTML with QC values displayed
-    let assessmentsHtml = '';
-    if (assessments && assessments.length > 0) {
-        assessmentsHtml = `<div class="assessment-list">`;
-
-        // Add search filter for assessments
-        assessmentsHtml += `
-            <div class="assessment-search-filter" style="margin-bottom: 12px; padding: 8px; background: #f5f5f5; border-radius: 8px;">
-                <input type="text" id="assessmentSearchFilter" placeholder="🔍 Search by Assessment No, Owner Name, or Phone..."
-                       style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
-                <div style="margin-top: 6px; font-size: 11px; color: #666;">
-                    <i class="fas fa-info-circle"></i> Total Assessments: ${assessments.length}
-                </div>
-            </div>
-            <div id="assessmentsListContainer">
-        `;
-
-        assessments.forEach((assessment, index) => {
-            // Get QC values
-            const qcSqfeet = assessment.qcsqfeet || assessment.sqfeet || 'N/A';
-            const qcUsage = assessment.qcusage || assessment.usage || assessment.bill_usage || 'N/A';
-            const originalSqfeet = assessment.sqfeet || 'N/A';
-            const originalUsage = assessment.bill_usage || assessment.usage || 'N/A';
-            const hasQC = (assessment.qcsqfeet || assessment.qcusage);
-
-            assessmentsHtml += `
-                <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}"
-                     data-search="${assessment.assessment || ''} ${assessment.owner_name || ''} ${assessment.phone_number || ''}" style="cursor: pointer; margin-bottom: 12px;">
-                    <h6>
-                        <span class="badge-shop">Assessment ${index + 1}</span>
-                        ${assessment.assessment || 'N/A'}
-                        ${hasQC ? '<span class="badge-shop" style="background: #28a745;">QC Verified</span>' : '<span class="badge-shop" style="background: #ffc107;">QC Pending</span>'}
-                    </h6>
-
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Owner Name:</span>
-                        <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
-                    </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Present Owner:</span>
-                        <span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span>
-                    </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Phone:</span>
-                        <span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span>
-                    </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Floor:</span>
-                        <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
-                    </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Door No:</span>
-                        <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
-                    </div>
-
-                    <!-- Original Values -->
-                    <div style="margin-top: 8px; padding: 6px; background: #e8f4f8; border-radius: 6px;">
-                        <div style="font-size: 10px; color: #1A6B6E; margin-bottom: 4px;"><i class="fas fa-database"></i> Original Values:</div>
-                        <div class="assessment-detail-row">
-                            <span class="assessment-detail-label">Original Sq.Feet:</span>
-                            <span class="assessment-detail-value"><strong>${originalSqfeet}</strong> sqft</span>
-                        </div>
-                        <div class="assessment-detail-row">
-                            <span class="assessment-detail-label">Original Usage:</span>
-                            <span class="assessment-detail-value"><strong>${originalUsage}</strong></span>
-                        </div>
-                    </div>
-
-                    <!-- QC Values -->
-                    <div style="margin-top: 8px; padding: 6px; background: #fff8e7; border-radius: 6px;">
-                        <div style="font-size: 10px; color: #D4A13E; margin-bottom: 4px;"><i class="fas fa-check-circle"></i> QC Values:</div>
-                        <div class="assessment-detail-row">
-                            <span class="assessment-detail-label">QC Sq.Feet:</span>
-                            <span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcSqfeet}</strong> sqft</span>
-                        </div>
-                        <div class="assessment-detail-row">
-                            <span class="assessment-detail-label">QC Usage:</span>
-                            <span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcUsage}</strong></span>
-                        </div>
-                    </div>
-
-                    <!-- Edit Button -->
-                    <button class="btn-edit-assessment" data-id="${assessment.id}" data-assessment="${assessment.assessment}" style="margin-top: 8px; padding: 4px 12px; background: #D4A13E; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; width: 100%;">
-                        <i class="fas fa-edit"></i> Edit QC Values
-                    </button>
-                </div>
-            `;
-        });
-        assessmentsHtml += `</div></div>`;
-    } else {
-        assessmentsHtml = `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
-    }
-    $('#assessmentsDetails').html(assessmentsHtml);
-
-    // Add search filter functionality
-    $('#assessmentSearchFilter').on('keyup', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        $('.assessment-item').each(function() {
-            const searchText = $(this).data('search').toLowerCase();
-            if (searchText.includes(searchTerm)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-        const visibleCount = $('.assessment-item:visible').length;
-        if (visibleCount === 0) {
-            if (!$('#noResultsMsg').length) {
-                $('#assessmentsListContainer').append('<div id="noResultsMsg" class="text-muted text-center p-3">No matching assessments found</div>');
-            }
-        } else {
-            $('#noResultsMsg').remove();
-        }
-    });
-
-    // Add click handler for edit buttons
-    $('.btn-edit-assessment').on('click', function(e) {
-        e.stopPropagation();
-        const assessmentId = $(this).data('id');
-        const assessmentNo = $(this).data('assessment');
-        const pointDataTable = $(this).closest('.assessment-item').data('point-data-table');
-        loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
-    });
-
-    // Keep the existing click handler for the assessment item
-    $('.assessment-item').on('click', function(e) {
-        // Don't trigger if clicking on the edit button
-        if (!$(e.target).closest('.btn-edit-assessment').length) {
-            const assessmentNo = $(this).data('assessment');
-            const assessmentId = $(this).data('id');
-            const pointDataTable = $(this).data('point-data-table');
-            loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
-        }
-    });
-
-    $('#featureInfo').fadeIn();
-}
-// Open image modal
-function openImageModal(imageUrl) {
-    // Create modal if it doesn't exist
-    if (!$('#imageModal').length) {
-        const modalHtml = `
-            <div id="imageModal" class="image-modal">
-                <span class="close-modal">&times;</span>
-                <div class="modal-content">
-                    <img id="modalImage" src="" alt="Building Image">
-                    <div class="modal-caption" id="modalCaption"></div>
-                </div>
-            </div>
-        `;
-        $('body').append(modalHtml);
-
-        // Close modal when clicking on close button or outside the image
-        $('#imageModal').on('click', function(e) {
-            if (e.target === this || $(e.target).hasClass('close-modal')) {
-                $('#imageModal').fadeOut();
-            }
-        });
-
-        // Close on ESC key
-        $(document).on('keydown', function(e) {
-            if (e.key === 'Escape' && $('#imageModal').is(':visible')) {
-                $('#imageModal').fadeOut();
-            }
-        });
-    }
-
-    // Set image source and show modal
-    $('#modalImage').attr('src', imageUrl);
-    $('#modalCaption').text(getImageCaption(imageUrl));
-    $('#imageModal').fadeIn();
-}
-
-// Helper function to get image caption based on URL or filename
-function getImageCaption(imageUrl) {
-    if (!imageUrl) return 'Building Image';
-
-    // Extract filename from URL
-    const filename = imageUrl.split('/').pop();
-
-    // Try to determine if it's image or image1 based on filename or URL pattern
-    if (filename.includes('image1') || imageUrl.includes('image1')) {
-        return 'Side / Back View';
-    } else if (filename.includes('image') || imageUrl.includes('image')) {
-        return 'Front View';
-    }
-
-    return 'Building Image';
-}
-
-// Optional: Add image error handling
-function handleImageError(imgElement) {
-    $(imgElement).attr('src', '/images/no-image.png');
-    $(imgElement).attr('alt', 'No image available');
-}
-                // Load assessment data into edit form
-                // Load assessment data into edit form
-function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
-    $('#loadingSpinner').fadeIn();
-    $('#updateStatus').html('');
-
-    // Get assessment details from server
-    $.ajax({
-        url: '{{ route('corporation.get.assessment.details') }}',
-        method: 'GET',
-        data: {
-            assessment_no: assessmentNo,
-            point_data_table: pointDataTable,
-            assessment_id: assessmentId
-        },
-        success: function(response) {
-            if (response.success && response.data) {
-                $('#currentAssessmentNo').val(assessmentNo);
-                $('#currentid').val(assessmentId || response.data.id || '');
-                $('#pointDataTableName').val(pointDataTable);
-                // Use QC values for editing (qcsqfeet and qcusage)
-                $('#squareFeet').val(response.data.qcsqfeet || response.data.sqfeet || '');
-                $('#usage').val(response.data.qcusage || response.data.usage || response.data.bill_usage || '');
-
-                // Show original values in form title for reference
-                const originalSqfeet = response.data.sqfeet || 'N/A';
-                const originalUsage = response.data.bill_usage || response.data.usage || 'N/A';
-                $('#assessmentForm h5').html(`<i class="fas fa-edit me-2"></i>Update QC Values<br><small style="font-size: 11px; color: #666;">Original: ${originalSqfeet} sqft | ${originalUsage}</small>`);
-
-                $('#assessmentForm').slideDown();
-                showToast('Assessment loaded for QC editing', 'info');
-            } else {
-                showToast(response.message || 'Error loading assessment', 'error');
-            }
-        },
-        error: function(xhr) {
-            console.error('AJAX Error:', xhr);
-            showToast('Error loading assessment details', 'error');
-        },
-        complete: function() {
-            $('#loadingSpinner').fadeOut();
-        }
-    });
-}
-
-           // Update assessment via AJAX (updates QC values)
-function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
-    $('#updateAssessmentBtn').prop('disabled', true);
-    $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating QC values...').removeClass('success error');
-
-    console.log('Updating QC values for assessment:', {
-        id: id,
-        assessment_no: assessmentNo,
-        qcsqfeet: squareFeet,
-        qcusage: usage,
-        point_data_table: pointDataTable
-    });
-
-    $.ajax({
-        url: '{{ route('corporation.update.assessment') }}',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            assessment_no: assessmentNo,
-            square_feet: squareFeet,
-            usage: usage,
-            point_data_table: pointDataTable,
-            id: id
-        },
-        success: function(response) {
-            console.log('Update response:', response);
-            if (response.success) {
-                $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response.message).addClass('success');
-                showToast(response.message, 'success');
-
-                // Reload the assessment data to show updated values
-                setTimeout(() => {
-                    $('#assessmentForm').slideUp();
-                    // Refresh the displayed property info
-                    if (currentGisid) {
-                        displayFullPropertyInfo(currentGisid, pointDataTable);
+                // Function to refresh map polygon colors
+                function refreshMapPolygonColors() {
+                    if (polygonLayer) {
+                        polygonLayer.setStyle(getPolygonStyle);
+                        polygonLayer.changed();
                     }
-                    // Reset form
-                    $('#currentAssessmentNo').val('');
-                    $('#currentid').val('');
-                    $('#squareFeet').val('');
-                    $('#usage').val('');
-                }, 2000);
-            } else {
-                $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + response.message).addClass('error');
-                showToast(response.message, 'error');
-            }
-        },
-        error: function(xhr) {
-            console.error('AJAX Error:', xhr);
-            let errorMessage = 'Error updating QC values';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
-            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + errorMessage).addClass('error');
-            showToast(errorMessage, 'error');
-        },
-        complete: function() {
-            $('#updateAssessmentBtn').prop('disabled', false);
-            setTimeout(() => $('#updateStatus').html(''), 3000);
-        }
-    });
-}
+                    if (pointLayer) {
+                        pointLayer.setStyle(getPointStyle);
+                        pointLayer.changed();
+                    }
+                }
+
+                // Function to refresh assessments data from server
+                function refreshAssessmentsData(gisid, callback) {
+                    // Fetch updated point data from server
+                    $.ajax({
+                        url: '{{ route('corporation.get.assessment.details') }}',
+                        method: 'GET',
+                        data: {
+                            gisid: gisid,
+                            refresh: true
+                        },
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                // Update local pointDatas array
+                                const index = pointDatas.findIndex(pd => pd.point_gisid == gisid);
+                                if (index !== -1) {
+                                    pointDatas[index] = { ...pointDatas[index], ...response.data };
+                                }
+                                if (callback) callback();
+                            }
+                        },
+                        error: function() {
+                            if (callback) callback();
+                        }
+                    });
+                }
+
+                // Display full property info including shops, assessment form, and images
+                function displayFullPropertyInfo(gisid, pointDataTable = null) {
+                    currentGisid = gisid;
+                    if (pointDataTable) {
+                        currentPointDataTable = pointDataTable;
+                        $('#pointDataTableName').val(pointDataTable);
+                    }
+
+                    const polygonData = polygonDatas.find(d => d.gisid == gisid);
+                    const assessments = getAssessmentsByGisid(gisid);
+                    const shops = getShopsByBuildingGisid(gisid);
+                    const pointCount = assessments.length;
+
+                    // Building Details HTML with Images
+                    let buildingHtml = `
+                        <div class="info-row">
+                            <span class="info-label">GIS ID:</span>
+                            <span class="info-value"><strong>${gisid}</strong></span>
+                        </div>
+                    `;
+
+                    if (polygonData) {
+                        // Building Images Section
+                        if (polygonData.image || polygonData.image1) {
+                            buildingHtml += `
+                                <div class="building-images-section">
+                                    <div class="info-label" style="width: 100%; margin-bottom: 10px;">Building Images:</div>
+                                    <div class="image-gallery">
+                                        <div class="image-grid">
+                            `;
+                            if (polygonData.image) {
+                                const imageUrl = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
+                                buildingHtml += `
+                                    <div class="image-item">
+                                        <img src="${imageUrl}" alt="Building Image 1" class="building-image" onclick="openImageModal('${imageUrl}')" onerror="this.src='/images/no-image.png'">
+                                        <div class="image-caption">Front View</div>
+                                    </div>
+                                `;
+                            }
+                            if (polygonData.image1) {
+                                const imageUrl1 = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
+                                buildingHtml += `
+                                    <div class="image-item">
+                                        <img src="${imageUrl1}" alt="Building Image 2" class="building-image" onclick="openImageModal('${imageUrl1}')" onerror="this.src='/images/no-image.png'">
+                                        <div class="image-caption">Side/Back View</div>
+                                    </div>
+                                `;
+                            }
+                            buildingHtml += `</div></div></div>`;
+                        }
+
+                        // Building Information
+                        buildingHtml += `
+                            <div class="building-info-section">
+                                <div class="info-row">
+                                    <span class="info-label">Building Name:</span>
+                                    <span class="info-value">${polygonData.building_name || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Building Usage:</span>
+                                    <span class="info-value" style="color: ${getBuildingUsageColor(gisid)}; font-weight: bold;">${polygonData.building_usage || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Construction Type:</span>
+                                    <span class="info-value">${polygonData.construction_type || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Road Name:</span>
+                                    <span class="info-value">${polygonData.road_name || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Floors:</span>
+                                    <span class="info-value">${polygonData.number_floor || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Shops/Units:</span>
+                                    <span class="info-value">${polygonData.number_shop || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Total Bills:</span>
+                                    <span class="info-value">${polygonData.number_bill || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Assessments Done:</span>
+                                    <span class="info-value">${pointCount}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Square Feet:</span>
+                                    <span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Zone:</span>
+                                    <span class="info-value">${polygonData.zone || 'N/A'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Status:</span>
+                                    <span class="badge-status ${polygonData.number_bill == pointCount ? 'badge-completed' : 'badge-pending'}">
+                                        ${polygonData.number_bill == pointCount ? 'Completed' : (pointCount > 0 ? 'Partial' : 'Not Started')}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        buildingHtml += `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data available</span></div>`;
+                    }
+                    $('#featureDetails').html(buildingHtml);
+
+                    // Shops List HTML
+                    let shopsHtml = '';
+                    if (shops && shops.length > 0) {
+                        shopsHtml = `<div class="shop-list">`;
+                        shops.forEach((shop, index) => {
+                            shopsHtml += `
+                                <div class="shop-item">
+                                    <h6><span class="badge-shop">Shop ${index + 1}</span> ${shop.shop_name || 'Unnamed Shop'}</h6>
+                                    <div class="shop-detail-row"><span class="shop-detail-label">Floor:</span><span class="shop-detail-value">${shop.shop_floor || 'N/A'}</span></div>
+                                    <div class="shop-detail-row"><span class="shop-detail-label">Owner Name:</span><span class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</span></div>
+                                    <div class="shop-detail-row"><span class="shop-detail-label">Category:</span><span class="shop-detail-value">${shop.shop_category || 'N/A'}</span></div>
+                                    <div class="shop-detail-row"><span class="shop-detail-label">Mobile:</span><span class="shop-detail-value">${shop.shop_mobile || 'N/A'}</span></div>
+                                    <div class="shop-detail-row"><span class="shop-detail-label">License No:</span><span class="shop-detail-value">${shop.license || 'N/A'}</span></div>
+                                </div>
+                            `;
+                        });
+                        shopsHtml += `</div>`;
+                    } else {
+                        shopsHtml = `<div class="text-muted text-center p-3">No shops found for this building</div>`;
+                    }
+                    $('#shopsDetails').html(shopsHtml);
+
+                    // Assessments List HTML with QC values displayed
+                    let assessmentsHtml = '';
+                    if (assessments && assessments.length > 0) {
+                        assessmentsHtml = `<div class="assessment-list">
+                            <div class="assessment-search-filter">
+                                <input type="text" id="assessmentSearchFilter" placeholder="🔍 Search by Assessment No, Owner Name, or Phone..."
+                                       style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
+                                <div style="margin-top: 6px; font-size: 11px; color: #666;">
+                                    <i class="fas fa-info-circle"></i> Total Assessments: ${assessments.length}
+                                </div>
+                            </div>
+                            <div id="assessmentsListContainer">
+                        `;
+
+                        assessments.forEach((assessment, index) => {
+                            const qcSqfeet = assessment.qcsqfeet || assessment.sqfeet || 'N/A';
+                            const qcUsage = assessment.qcusage || assessment.usage || assessment.bill_usage || 'N/A';
+                            const originalSqfeet = assessment.sqfeet || 'N/A';
+                            const originalUsage = assessment.bill_usage || assessment.usage || 'N/A';
+                            const hasQC = (assessment.qcsqfeet || assessment.qcusage);
+
+                            assessmentsHtml += `
+                                <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}"
+                                     data-point-data-table="${assessment.table_name || pointDataTable || ''}"
+                                     data-search="${assessment.assessment || ''} ${assessment.owner_name || ''} ${assessment.phone_number || ''}">
+                                    <h6>
+                                        <span class="badge-shop">Assessment ${index + 1}</span>
+                                        ${assessment.assessment || 'N/A'}
+                                        ${hasQC ? '<span class="badge-shop" style="background: #28a745;">QC Verified</span>' : '<span class="badge-shop" style="background: #ffc107;">QC Pending</span>'}
+                                    </h6>
+                                    <div class="assessment-detail-row"><span class="assessment-detail-label">Owner Name:</span><span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span></div>
+                                    <div class="assessment-detail-row"><span class="assessment-detail-label">Present Owner:</span><span class="assessment-detail-value">${assessment.present_owner_name || 'N/A'}</span></div>
+                                    <div class="assessment-detail-row"><span class="assessment-detail-label">Phone:</span><span class="assessment-detail-value">${assessment.phone_number || 'N/A'}</span></div>
+                                    <div class="assessment-detail-row"><span class="assessment-detail-label">Floor:</span><span class="assessment-detail-value">${assessment.floor || 'N/A'}</span></div>
+                                    <div class="assessment-detail-row"><span class="assessment-detail-label">Door No:</span><span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span></div>
+
+                                    <div style="margin-top: 8px; padding: 6px; background: #e8f4f8; border-radius: 6px;">
+                                        <div style="font-size: 10px; color: #1A6B6E; margin-bottom: 4px;"><i class="fas fa-database"></i> Original Values:</div>
+                                        <div class="assessment-detail-row"><span class="assessment-detail-label">Original Sq.Feet:</span><span class="assessment-detail-value"><strong>${originalSqfeet}</strong> sqft</span></div>
+                                        <div class="assessment-detail-row"><span class="assessment-detail-label">Original Usage:</span><span class="assessment-detail-value"><strong>${originalUsage}</strong></span></div>
+                                    </div>
+
+                                    <div style="margin-top: 8px; padding: 6px; background: #fff8e7; border-radius: 6px;">
+                                        <div style="font-size: 10px; color: #D4A13E; margin-bottom: 4px;"><i class="fas fa-check-circle"></i> QC Values:</div>
+                                        <div class="assessment-detail-row"><span class="assessment-detail-label">QC Sq.Feet:</span><span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcSqfeet}</strong> sqft</span></div>
+                                        <div class="assessment-detail-row"><span class="assessment-detail-label">QC Usage:</span><span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcUsage}</strong></span></div>
+                                    </div>
+
+                                    <button class="btn-edit-assessment" data-id="${assessment.id}" data-assessment="${assessment.assessment}"
+                                            style="margin-top: 8px; padding: 4px 12px; background: #D4A13E; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; width: 100%;">
+                                        <i class="fas fa-edit"></i> Edit QC Values
+                                    </button>
+                                </div>
+                            `;
+                        });
+                        assessmentsHtml += `</div></div>`;
+                    } else {
+                        assessmentsHtml = `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
+                    }
+                    $('#assessmentsDetails').html(assessmentsHtml);
+
+                    // Add search filter functionality
+                    $('#assessmentSearchFilter').on('keyup', function() {
+                        const searchTerm = $(this).val().toLowerCase();
+                        $('.assessment-item').each(function() {
+                            const searchText = $(this).data('search').toLowerCase();
+                            if (searchText.includes(searchTerm)) {
+                                $(this).show();
+                            } else {
+                                $(this).hide();
+                            }
+                        });
+                    });
+
+                    // Add click handler for edit buttons
+                    $('.btn-edit-assessment').on('click', function(e) {
+                        e.stopPropagation();
+                        const assessmentId = $(this).data('id');
+                        const assessmentNo = $(this).data('assessment');
+                        const pointDataTableName = $(this).closest('.assessment-item').data('point-data-table');
+                        loadAssessmentForEdit(assessmentNo, pointDataTableName, assessmentId);
+                    });
+
+                    $('#featureInfo').fadeIn();
+                }
+
+                // Open image modal function
+                window.openImageModal = function(imageUrl) {
+                    if (!$('#imageModal').length) {
+                        const modalHtml = `
+                            <div id="imageModal" class="image-modal">
+                                <span class="close-modal">&times;</span>
+                                <div class="modal-content">
+                                    <img id="modalImage" src="" alt="Building Image">
+                                    <div class="modal-caption" id="modalCaption"></div>
+                                </div>
+                            </div>
+                        `;
+                        $('body').append(modalHtml);
+                        $('#imageModal').on('click', function(e) {
+                            if (e.target === this || $(e.target).hasClass('close-modal')) {
+                                $('#imageModal').fadeOut();
+                            }
+                        });
+                        $(document).on('keydown', function(e) {
+                            if (e.key === 'Escape' && $('#imageModal').is(':visible')) {
+                                $('#imageModal').fadeOut();
+                            }
+                        });
+                    }
+                    $('#modalImage').attr('src', imageUrl);
+                    $('#imageModal').fadeIn();
+                };
+
+                // Load assessment data into edit form
+                function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
+                    $('#loadingSpinner').fadeIn();
+                    $('#updateStatus').html('');
+
+                    $.ajax({
+                        url: '{{ route('corporation.get.assessment.details') }}',
+                        method: 'GET',
+                        data: {
+                            assessment_no: assessmentNo,
+                            point_data_table: pointDataTable,
+                            assessment_id: assessmentId
+                        },
+                        success: function(response) {
+                            if (response.success && response.data) {
+                                $('#currentAssessmentNo').val(assessmentNo);
+                                $('#currentid').val(assessmentId || response.data.id || '');
+                                $('#pointDataTableName').val(pointDataTable);
+                                $('#squareFeet').val(response.data.qcsqfeet || response.data.sqfeet || '');
+                                $('#usage').val(response.data.qcusage || response.data.usage || response.data.bill_usage || '');
+
+                                const originalSqfeet = response.data.sqfeet || 'N/A';
+                                const originalUsage = response.data.bill_usage || response.data.usage || 'N/A';
+                                $('#assessmentForm h5').html(`<i class="fas fa-edit me-2"></i>Update QC Values<br><small style="font-size: 11px; color: #666;">Original: ${originalSqfeet} sqft | ${originalUsage}</small>`);
+
+                                $('#assessmentForm').slideDown();
+                                showToast('Assessment loaded for QC editing', 'info');
+                            } else {
+                                showToast(response.message || 'Error loading assessment', 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('AJAX Error:', xhr);
+                            showToast('Error loading assessment details', 'error');
+                        },
+                        complete: function() {
+                            $('#loadingSpinner').fadeOut();
+                        }
+                    });
+                }
+
+                // Update assessment via AJAX (updates QC values)
+                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
+                    $('#updateAssessmentBtn').prop('disabled', true);
+                    $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating QC values...').removeClass('success error');
+
+                    $.ajax({
+                        url: '{{ route('corporation.update.assessment') }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            assessment_no: assessmentNo,
+                            square_feet: squareFeet,
+                            usage: usage,
+                            point_data_table: pointDataTable,
+                            id: id
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response.message).addClass('success');
+                                showToast(response.message, 'success');
+
+                                // Update local pointDatas array with new QC values
+                                const updatedData = response.data;
+                                const assessmentIndex = pointDatas.findIndex(pd =>
+                                    (id && pd.id == id) || (assessmentNo && pd.assessment == assessmentNo)
+                                );
+
+                                if (assessmentIndex !== -1) {
+                                    pointDatas[assessmentIndex].qcsqfeet = updatedData.qcsqfeet;
+                                    pointDatas[assessmentIndex].qcusage = updatedData.qcusage;
+                                }
+
+                                // Refresh the displayed property info
+                                if (currentGisid) {
+                                    displayFullPropertyInfo(currentGisid, pointDataTable);
+                                }
+
+                                // Reset form
+                                $('#currentAssessmentNo').val('');
+                                $('#currentid').val('');
+                                $('#squareFeet').val('');
+                                $('#usage').val('');
+                                $('#assessmentForm').slideUp();
+
+                                // Refresh map colors
+                                refreshMapPolygonColors();
+
+                            } else {
+                                $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + response.message).addClass('error');
+                                showToast(response.message, 'error');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('AJAX Error:', xhr);
+                            let errorMessage = 'Error updating QC values';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + errorMessage).addClass('error');
+                            showToast(errorMessage, 'error');
+                        },
+                        complete: function() {
+                            $('#updateAssessmentBtn').prop('disabled', false);
+                            setTimeout(() => $('#updateStatus').html(''), 3000);
+                        }
+                    });
+                }
+
                 // Tab switching
                 $('.info-tab').on('click', function() {
                     const tabId = $(this).data('tab');
@@ -2163,8 +2083,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                         showToast(`GIS ID "${gisid}" found`, 'success');
                     } else {
                         showToast(`GIS ID "${gisid}" not found`, 'error');
-                        $('#gisidResults').html('<div class="search-result-item text-danger">No results found</div>')
-                            .show();
+                        $('#gisidResults').html('<div class="search-result-item text-danger">No results found</div>').show();
                         setTimeout(() => $('#gisidResults').fadeOut(), 2000);
                     }
                     $('#loadingSpinner').fadeOut();
@@ -2183,8 +2102,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                     if (pointData && pointData.point_gisid) {
                         let foundFeature = null;
                         pointSource.forEachFeature(f => {
-                            if (f.get('gisid') && f.get('gisid').toString() === pointData.point_gisid
-                                .toString()) {
+                            if (f.get('gisid') && f.get('gisid').toString() === pointData.point_gisid.toString()) {
                                 foundFeature = f;
                                 return true;
                             }
@@ -2217,8 +2135,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                         locationSource.clear();
                         currentLocationMarker = null;
                         isLiveLocationActive = false;
-                        $('#liveLocationBtn').removeClass('active').html(
-                            '<i class="fas fa-location-dot me-2"></i>Live Location');
+                        $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot me-2"></i>Live Location');
                         showToast('Location tracking stopped', 'info');
                     } else {
                         if (!navigator.geolocation) {
@@ -2230,13 +2147,9 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
 
                         locationWatchId = navigator.geolocation.watchPosition(
                             (position) => {
-                                const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords
-                                    .latitude
-                                ]);
+                                const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords.latitude]);
                                 locationSource.clear();
-                                currentLocationMarker = new ol.Feature({
-                                    geometry: new ol.geom.Point(coords)
-                                });
+                                currentLocationMarker = new ol.Feature({ geometry: new ol.geom.Point(coords) });
                                 locationSource.addFeature(currentLocationMarker);
                             },
                             (error) => {
@@ -2272,43 +2185,31 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                             ol.proj.toLonLat(targetGeom.getCoordinates()) :
                             ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
 
-                        const url =
-                            `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson&steps=true`;
+                        const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson&steps=true`;
                         const response = await fetch(url);
                         const data = await response.json();
 
                         if (data.code === 'Ok' && data.routes.length > 0) {
                             const route = data.routes[0];
                             const coords = route.geometry.coordinates.map(c => ol.proj.fromLonLat(c));
-                            routeSource.addFeature(new ol.Feature({
-                                geometry: new ol.geom.LineString(coords)
-                            }));
+                            routeSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords) }));
 
-                            const distance = route.distance < 1000 ? route.distance.toFixed(0) + ' meters' : (route
-                                .distance / 1000).toFixed(2) + ' km';
-                            const duration = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration %
-                                60) + ' sec';
+                            const distance = route.distance < 1000 ? route.distance.toFixed(0) + ' meters' : (route.distance / 1000).toFixed(2) + ' km';
+                            const duration = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
 
                             let stepsHtml = '';
                             if (route.legs && route.legs[0] && route.legs[0].steps) {
                                 route.legs[0].steps.forEach((step, i) => {
                                     if (step.maneuver && step.maneuver.instruction) {
-                                        stepsHtml +=
-                                            `<div class="direction-step"><div class="step-number">${i + 1}</div><div><div class="step-instruction">${step.maneuver.instruction}</div><div class="step-distance">${step.distance.toFixed(0)} m</div></div></div>`;
+                                        stepsHtml += `<div class="direction-step"><div class="step-number">${i + 1}</div><div><div class="step-instruction">${step.maneuver.instruction}</div><div class="step-distance">${step.distance.toFixed(0)} m</div></div></div>`;
                                     }
                                 });
                             }
 
-                            $('#routeSummary').html(
-                                `<strong>Distance:</strong> ${distance}<br><strong>Duration:</strong> ${duration}`
-                            );
-                            $('#directionsList').html(stepsHtml ||
-                                '<div class="text-muted">No step-by-step directions available</div>');
+                            $('#routeSummary').html(`<strong>Distance:</strong> ${distance}<br><strong>Duration:</strong> ${duration}`);
+                            $('#directionsList').html(stepsHtml || '<div class="text-muted">No step-by-step directions available</div>');
                             $('#routeInfo').fadeIn();
-                            map.getView().fit(routeSource.getExtent(), {
-                                padding: [50, 50, 50, 50],
-                                duration: 1000
-                            });
+                            map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50], duration: 1000 });
                             showToast('Route calculated successfully', 'success');
                         } else {
                             showToast('No route found', 'error');
@@ -2381,21 +2282,14 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                 $(document).on('click', '#gisidSearchBtn', function() {
                     searchByGISID($('#gisidSearchInput').val().trim());
                 });
-
                 $(document).on('keypress', '#gisidSearchInput', function(e) {
-                    if (e.key === 'Enter') {
-                        searchByGISID($('#gisidSearchInput').val().trim());
-                    }
+                    if (e.key === 'Enter') searchByGISID($('#gisidSearchInput').val().trim());
                 });
-
                 $(document).on('click', '#assessmentSearchBtn', function() {
                     searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
-
                 $(document).on('keypress', '#assessmentSearchInput', function(e) {
-                    if (e.key === 'Enter') {
-                        searchByAssessment($('#assessmentSearchInput').val().trim());
-                    }
+                    if (e.key === 'Enter') searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
 
                 $('#liveLocationBtn').on('click', toggleLiveLocation);
@@ -2411,7 +2305,6 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                     try {
                         const extent = ol.extent.createEmpty();
                         let hasExtent = false;
-
                         polygonSource.forEachFeature(f => {
                             ol.extent.extend(extent, f.getGeometry().getExtent());
                             hasExtent = true;
@@ -2420,12 +2313,8 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                             ol.extent.extend(extent, f.getGeometry().getExtent());
                             hasExtent = true;
                         });
-
                         if (hasExtent && extent[0] !== Infinity && extent[0] !== -Infinity) {
-                            map.getView().fit(extent, {
-                                padding: [30, 30, 30, 30],
-                                duration: 1000
-                            });
+                            map.getView().fit(extent, { padding: [30, 30, 30, 30], duration: 1000 });
                         }
                     } catch (e) {
                         console.log("Could not auto-fit extent, using default view");
@@ -2433,9 +2322,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                 }, 800);
 
                 window.addEventListener('resize', function() {
-                    setTimeout(function() {
-                        map.updateSize();
-                    }, 200);
+                    setTimeout(() => map.updateSize(), 200);
                 });
 
                 console.log("Commissioner Ward Map Loaded Successfully");
@@ -2451,8 +2338,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                             console.error("OpenLayers not loaded");
                             const mapEl = document.getElementById('map');
                             if (mapEl) {
-                                mapEl.innerHTML =
-                                    '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
+                                mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
                             }
                         }
                     }, 500);
@@ -2465,8 +2351,7 @@ function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
                         console.error("OpenLayers not loaded");
                         const mapEl = document.getElementById('map');
                         if (mapEl) {
-                            mapEl.innerHTML =
-                                '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
+                            mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#f8f9fa;color:#dc3545;">Error: OpenLayers library failed to load.</div>';
                         }
                     }
                 }, 500);
