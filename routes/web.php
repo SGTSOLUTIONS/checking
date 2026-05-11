@@ -37,6 +37,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::get('/commissioner/ward/{ward_no}/map', [CommissionerController::class, 'mapView'])->name('ward.map');
         Route::post('/commissioner/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
         Route::get('/commissioner/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+        Route::post('/commissioner/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
