@@ -1631,6 +1631,14 @@
                     $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating...').removeClass(
                         'success error');
 
+                    console.log('Updating assessment with:', {
+                        id: id,
+                        assessment_no: assessmentNo,
+                        square_feet: squareFeet,
+                        usage: usage,
+                        point_data_table: pointDataTable
+                    });
+
                     $.ajax({
                         url: '{{ route('corporation.update.assessment') }}',
                         method: 'POST',
@@ -1643,10 +1651,35 @@
                             id: id
                         },
                         success: function(response) {
+                            console.log('Update response:', response);
                             if (response.success) {
                                 $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response
                                     .message).addClass('success');
                                 showToast(response.message, 'success');
+
+                                // Update the displayed values in the assessment list
+                                if (response.data) {
+                                    // Update the assessment item in the list
+                                    $('.assessment-item').each(function() {
+                                        const itemId = $(this).data('id');
+                                        if (itemId == id || itemId == response.data.id) {
+                                            // Update the sqfeet and usage display in the list
+                                            $(this).find('.assessment-detail-row').each(function() {
+                                                const label = $(this).find(
+                                                    '.assessment-detail-label').text();
+                                                if (label === 'Square Feet:') {
+                                                    $(this).find('.assessment-detail-value')
+                                                        .text(squareFeet + ' sqft');
+                                                }
+                                                if (label === 'Usage:') {
+                                                    $(this).find('.assessment-detail-value')
+                                                        .text(usage);
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+
                                 // Reload the assessment data to show updated values
                                 setTimeout(() => {
                                     $('#assessmentForm').slideUp();
@@ -1654,6 +1687,11 @@
                                     if (currentGisid) {
                                         displayFullPropertyInfo(currentGisid, pointDataTable);
                                     }
+                                    // Reset form
+                                    $('#currentAssessmentNo').val('');
+                                    $('#currentid').val('');
+                                    $('#squareFeet').val('');
+                                    $('#usage').val('');
                                 }, 2000);
                             } else {
                                 $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' +
@@ -1662,10 +1700,14 @@
                             }
                         },
                         error: function(xhr) {
-                            const message = xhr.responseJSON?.message || 'Error updating assessment';
-                            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + message)
-                                .addClass('error');
-                            showToast(message, 'error');
+                            console.error('AJAX Error:', xhr);
+                            let errorMessage = 'Error updating assessment';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' +
+                                errorMessage).addClass('error');
+                            showToast(errorMessage, 'error');
                         },
                         complete: function() {
                             $('#updateAssessmentBtn').prop('disabled', false);

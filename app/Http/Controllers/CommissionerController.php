@@ -238,125 +238,184 @@ class CommissionerController extends Controller
      * Update assessment data by ID
      */
     public function updateAssessment(Request $request)
-    {
-        try {
-            $assessmentId = $request->id;
-            $assessmentNo = $request->assessment_no;
-            $squareFeet = $request->square_feet;
-            $usage = $request->usage;
+{
+    try {
+        $assessmentId = $request->id;
+        $assessmentNo = $request->assessment_no;
+        $squareFeet = $request->square_feet;
+        $usage = $request->usage;
 
-            $user = Auth::user();
-            $corpId = $user->corporation_id;
+        $user = Auth::user();
+        $corpId = $user->corporation_id;
 
-            $pointDataTable = $request->point_data_table;
+        $pointDataTable = $request->point_data_table;
 
-            if (!$pointDataTable || !Schema::hasTable($pointDataTable)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Table not found: ' . $pointDataTable
-                ]);
-            }
-
-            // Check if columns exist
-            $columns = Schema::getColumnListing($pointDataTable);
-            $updateData = [];
-
-            if (in_array('sqfeet', $columns)) {
-                $updateData['qcsqfeet'] = $squareFeet;
-            }
-            if (in_array('usage', $columns)) {
-                $updateData['qcusage'] = $usage;
-            }
-            if (in_array('updated_at', $columns)) {
-                $updateData['updated_at'] = now();
-            }
-
-            if (empty($updateData)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Required columns (sqfeet/usage) not found in table'
-                ]);
-            }
-
-            // Update by ID if provided, otherwise by assessment number
-            if ($assessmentId) {
-                $updated = DB::table($pointDataTable)
-                    ->where('id', $assessmentId)
-                    ->update($updateData);
-            } else {
-                $updated = DB::table($pointDataTable)
-                    ->where('assessment', $assessmentNo)
-                    ->update($updateData);
-            }
-
-            if ($updated) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Assessment updated successfully'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Assessment not found or no changes made'
-                ]);
-            }
-        } catch (\Exception $e) {
+        if (!$pointDataTable || !Schema::hasTable($pointDataTable)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Table not found: ' . $pointDataTable
             ]);
         }
+
+        // Check if columns exist
+        $columns = Schema::getColumnListing($pointDataTable);
+        $updateData = [];
+
+        // Update using actual column names from your table: qcsqfeet and qcusage
+        if (in_array('qcsqfeet', $columns)) {
+            $updateData['qcsqfeet'] = $squareFeet;
+        } else if (in_array('sqfeet', $columns)) {
+            $updateData['sqfeet'] = $squareFeet;
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Column "qcsqfeet" or "sqfeet" not found in table'
+            ]);
+        }
+
+        if (in_array('qcusage', $columns)) {
+            $updateData['qcusage'] = $usage;
+        } else if (in_array('usage', $columns)) {
+            $updateData['usage'] = $usage;
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Column "qcusage" or "usage" not found in table'
+            ]);
+        }
+
+        if (in_array('updated_at', $columns)) {
+            $updateData['updated_at'] = now();
+        }
+
+        // Log the update data for debugging
+        \Log::info('Updating assessment with data:', [
+            'table' => $pointDataTable,
+            'id' => $assessmentId,
+            'assessment_no' => $assessmentNo,
+            'update_data' => $updateData
+        ]);
+
+        // Update by ID if provided, otherwise by assessment number
+        if ($assessmentId && !empty($assessmentId)) {
+            $updated = DB::table($pointDataTable)
+                ->where('id', $assessmentId)
+                ->update($updateData);
+
+            \Log::info('Update by ID result:', ['updated' => $updated, 'id' => $assessmentId]);
+        } else if ($assessmentNo && !empty($assessmentNo)) {
+            $updated = DB::table($pointDataTable)
+                ->where('assessment', $assessmentNo)
+                ->update($updateData);
+
+            \Log::info('Update by Assessment No result:', ['updated' => $updated, 'assessment_no' => $assessmentNo]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No ID or Assessment Number provided'
+            ]);
+        }
+
+        if ($updated) {
+            // Fetch the updated record to confirm
+            if ($assessmentId) {
+                $updatedRecord = DB::table($pointDataTable)->where('id', $assessmentId)->first();
+            } else {
+                $updatedRecord = DB::table($pointDataTable)->where('assessment', $assessmentNo)->first();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Assessment updated successfully',
+                'data' => [
+                    'id' => $updatedRecord->id ?? null,
+                    'assessment' => $updatedRecord->assessment ?? null,
+                    'qcsqfeet' => $updatedRecord->qcsqfeet ?? null,
+                    'qcusage' => $updatedRecord->qcusage ?? null
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Assessment not found or no changes made. Please check if the ID/Assessment Number exists.'
+            ]);
+        }
+    } catch (\Exception $e) {
+        \Log::error('Error updating assessment:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
     }
+}
 
     /**
      * Get assessment details by assessment number or ID
      */
-    public function getAssessmentDetails(Request $request)
-    {
-        try {
-            $assessmentNo = $request->assessment_no;
-            $assessmentId = $request->assessment_id;
-            $user = Auth::user();
-            $corpId = $user->corporation_id;
+   public function getAssessmentDetails(Request $request)
+{
+    try {
+        $assessmentNo = $request->assessment_no;
+        $assessmentId = $request->assessment_id;
+        $user = Auth::user();
+        $corpId = $user->corporation_id;
 
-            $pointDataTable = $request->point_data_table;
+        $pointDataTable = $request->point_data_table;
 
-            if (!$pointDataTable || !Schema::hasTable($pointDataTable)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Table not found'
-                ]);
-            }
-
-            // Query by ID if provided, otherwise by assessment number
-            $query = DB::table($pointDataTable);
-            if ($assessmentId) {
-                $query->where('id', $assessmentId);
-            } else {
-                $query->where('assessment', $assessmentNo);
-            }
-
-            $data = $query->first();
-
-            if ($data) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $data
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Assessment not found'
-                ]);
-            }
-        } catch (\Exception $e) {
+        if (!$pointDataTable || !Schema::hasTable($pointDataTable)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Table not found'
             ]);
         }
-    }
 
+        // Query by ID if provided, otherwise by assessment number
+        $query = DB::table($pointDataTable);
+        if ($assessmentId && !empty($assessmentId)) {
+            $query->where('id', $assessmentId);
+        } else if ($assessmentNo && !empty($assessmentNo)) {
+            $query->where('assessment', $assessmentNo);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No ID or Assessment Number provided'
+            ]);
+        }
+
+        $data = $query->first();
+
+        if ($data) {
+            // Map the response to include sqfeet and usage for the frontend
+            $responseData = (array)$data;
+            $responseData['sqfeet'] = $data->qcsqfeet ?? $data->sqfeet ?? null;
+            $responseData['usage'] = $data->qcusage ?? $data->usage ?? null;
+
+            return response()->json([
+                'success' => true,
+                'data' => $responseData
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Assessment not found'
+            ]);
+        }
+    } catch (\Exception $e) {
+        \Log::error('Error getting assessment details:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage()
+        ]);
+    }
+}
     /**
      * Add missing columns to point data table if needed
      */
