@@ -498,7 +498,7 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
-   public function filterWardData(Request $request)
+  public function filterWardData(Request $request)
 {
     try {
         $wardId = $request->ward_id;
@@ -552,6 +552,27 @@ class CommissionerController extends Controller
             ]);
         }
 
+        // Pre-load all MIS data for assessments
+        $allAssessments = [];
+        foreach ($allPointDatas as $pointData) {
+            if (!empty($pointData->assessment)) {
+                $allAssessments[] = $pointData->assessment;
+            }
+        }
+
+        // Remove duplicates
+        $allAssessments = array_unique($allAssessments);
+
+        // Load plot areas from MIS table if it exists
+        $misPlotAreas = collect();
+        if (Schema::hasTable($misTableName) && !empty($allAssessments)) {
+            $misPlotAreas = DB::table($misTableName)
+                ->select('assessment', 'plot_area')
+                ->whereIn('assessment', $allAssessments)
+                ->get()
+                ->keyBy('assessment');
+        }
+
         // Create maps for quick lookups
         $polygonDataMap = [];
         foreach ($allPolygonDatas as $polygonData) {
@@ -596,36 +617,33 @@ class CommissionerController extends Controller
                 $totalSqFeet = floatval($polygon->sqfeet ?? 0);
             }
 
-            // Calculate assessment total area
-           // Calculate assessment total area
-if (isset($pointDataByGisid[$gisid])) {
-    foreach ($pointDataByGisid[$gisid] as $assessment) {
-        // FIX: Get the actual value from the query result
-        $assessmentRecord = DB::table($misTableName)
-            ->select('plot_area')
-            ->where('assessment', $assessment->assessment)
-            ->first(); // Use first() instead of get()
+            // Calculate assessment total area from point data
+            if (isset($pointDataByGisid[$gisid])) {
+                foreach ($pointDataByGisid[$gisid] as $assessment) {
+                    // Get plot_area from MIS table using assessment value
+                    $plotAreaFromMis = 0;
+                    if ($misPlotAreas->has($assessment->assessment)) {
+                        $plotAreaFromMis = floatval($misPlotAreas[$assessment->assessment]->plot_area);
+                    }
 
-        // Get the plot_area value, default to 0 if not found
-        $sqft = $assessmentRecord ? floatval($assessmentRecord->plot_area) : 0;
+                    // Use plot_area from pointdata or from MIS table
+                    $plotArea = floatval($assessment->plot_area ?? $plotAreaFromMis);
 
-        $plotArea = floatval($assessment->plot_area ?? $sqft);
+                    // Use QC values if available
+                    $qcSqft = floatval($assessment->qcsqfeet ?? 0);
+                    if ($qcSqft > 0) {
+                        $assessmentTotal += $qcSqft;
+                    } else {
+                        $assessmentTotal += $plotArea;
+                    }
 
-        // Use QC values if available
-        $qcSqft = floatval($assessment->qcsqfeet ?? 0);
-        if ($qcSqft > 0) {
-            $assessmentTotal += $qcSqft;
-        } else {
-            $assessmentTotal += $plotArea;
-        }
-
-        // Check for usage variation
-        $assessmentUsage = $assessment->qcusage ?? $assessment->usage ?? null;
-        if ($buildingUsageValue && $assessmentUsage && strtoupper($buildingUsageValue) != strtoupper($assessmentUsage)) {
-            $usageVariation = true;
-        }
-    }
-}
+                    // Check for usage variation
+                    $assessmentUsage = $assessment->qcusage ?? $assessment->usage ?? null;
+                    if ($buildingUsageValue && $assessmentUsage && strtoupper($buildingUsageValue) != strtoupper($assessmentUsage)) {
+                        $usageVariation = true;
+                    }
+                }
+            }
 
             // Calculate area variation (absolute difference)
             $areaVariationValue = abs($totalSqFeet - $assessmentTotal);
@@ -712,7 +730,7 @@ if (isset($pointDataByGisid[$gisid])) {
         return response()->json([
             'success' => true,
             'polygons' => $filteredPolygons,
-            'lines' => $allLines, // Keep all lines, they don't need filtering usually
+            'lines' => $allLines,
             'points' => $filteredPoints,
             'pointDatas' => $filteredPointDatas,
             'polygonDatas' => $filteredPolygonDatas,
@@ -728,7 +746,6 @@ if (isset($pointDataByGisid[$gisid])) {
         ], 500);
     }
 }
-
     public function resetWardData(Request $request)
     {
         try {
