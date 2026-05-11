@@ -535,14 +535,14 @@ class CommissionerController extends Controller
             // $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
             // $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
             // $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
-            // $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
+            $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
             // $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
 
             if ($areaFilter === 'all' && $usageFilter === 'all') {
                 return response()->json([
                     'success' => true,
                     'polygons' => $allPolygons,
-                    // 'lines' => $allLines,
+                    'lines' => $allLines,
                     // 'points' => $allPoints,
                     // 'pointDatas' => $allPointDatas,
                     // 'polygonDatas' => $allPolygonDatas,
