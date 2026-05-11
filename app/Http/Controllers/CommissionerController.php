@@ -498,8 +498,9 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
- public function filterWardData(Request $request)
+    public function filterWardData(Request $request)
     {
+        return response()->json($request->all());
         try {
             $wardId = $request->ward_id;
             $areaFilter = $request->area_filter;
@@ -594,28 +595,28 @@ class CommissionerController extends Controller
             }
 
             // Filter points based on filtered GIS IDs
-            $filteredPoints = $allPoints->filter(function($point) use ($filteredGisIds) {
+            $filteredPoints = $allPoints->filter(function ($point) use ($filteredGisIds) {
                 return in_array($point->gisid, $filteredGisIds);
             })->values();
 
             // Filter point datas based on filtered GIS IDs
-            $filteredPointDatas = $allPointDatas->filter(function($pointData) use ($filteredGisIds) {
+            $filteredPointDatas = $allPointDatas->filter(function ($pointData) use ($filteredGisIds) {
                 return in_array($pointData->point_gisid, $filteredGisIds);
             })->values();
 
             // Filter polygon datas based on filtered GIS IDs
-            $filteredPolygonDatas = $allPolygonDatas->filter(function($polygonData) use ($filteredGisIds) {
+            $filteredPolygonDatas = $allPolygonDatas->filter(function ($polygonData) use ($filteredGisIds) {
                 return in_array($polygonData->gisid, $filteredGisIds);
             })->values();
 
             // Filter lines based on filtered GIS IDs
-            $filteredLines = $allLines->filter(function($line) use ($filteredGisIds) {
+            $filteredLines = $allLines->filter(function ($line) use ($filteredGisIds) {
                 return in_array($line->gisid, $filteredGisIds);
             })->values();
 
             // Filter shops based on filtered point data IDs
             $pointDataIds = $filteredPointDatas->pluck('id')->toArray();
-            $filteredShops = $allShops->filter(function($shop) use ($pointDataIds) {
+            $filteredShops = $allShops->filter(function ($shop) use ($pointDataIds) {
                 return in_array($shop->point_data_id, $pointDataIds);
             })->values();
 
@@ -629,7 +630,6 @@ class CommissionerController extends Controller
                 'shopDatas' => $filteredShops,
                 'count' => count($filteredPolygons)
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Filter error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
@@ -687,7 +687,6 @@ class CommissionerController extends Controller
                 'shopDatas' => $shops,
                 'count' => count($polygons)
             ]);
-
         } catch (\Exception $e) {
             \Log::error('Reset error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
@@ -697,56 +696,4 @@ class CommissionerController extends Controller
         }
     }
 
-    private function calculateTotalBuildingAreaFromData($polygonData)
-    {
-        $sqfeet = floatval($polygonData->sqfeet ?? 0);
-        $totalFloor = floatval($polygonData->total_floor ?? $polygonData->number_floor ?? 1);
-        $floorPercentage = floatval($polygonData->floor_percentage ?? 100);
-        $basement = floatval($polygonData->basement ?? 0);
-
-        return $sqfeet * ($totalFloor + ($floorPercentage / 100) + $basement);
-    }
-
-    private function calculateSumAssessmentAreasFromData($gisid, $pointDatas)
-    {
-        $total = 0;
-        foreach ($pointDatas as $assessment) {
-            if ($assessment->point_gisid == $gisid) {
-                $sqfeet = floatval($assessment->sqfeet ?? 0);
-                $plotArea = floatval($assessment->plot_area ?? $sqfeet);
-                $total += $plotArea;
-            }
-        }
-        return $total;
-    }
-
-    private function hasUsageVariationFromData($gisid, $buildingUsage, $pointDatas)
-    {
-        $buildingUsageUpper = strtoupper($buildingUsage);
-
-        // If building usage is MIXED, no variation needed as it's already mixed
-        if ($buildingUsageUpper === 'MIXED') return false;
-
-        foreach ($pointDatas as $assessment) {
-            if ($assessment->point_gisid == $gisid) {
-                $assessmentUsage = strtoupper($assessment->usage ?? $assessment->qcusage ?? '');
-
-                if ($assessmentUsage) {
-                    // Check for residential/commercial mismatches
-                    if ($buildingUsageUpper === 'RESIDENTIAL' && $assessmentUsage === 'COMMERCIAL') {
-                        return true;
-                    }
-                    if ($buildingUsageUpper === 'COMMERCIAL' && $assessmentUsage === 'RESIDENTIAL') {
-                        return true;
-                    }
-                    // Check for any other usage mismatch (excluding MIXED)
-                    if ($assessmentUsage !== $buildingUsageUpper && $assessmentUsage !== 'MIXED') {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 }

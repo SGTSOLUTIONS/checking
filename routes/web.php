@@ -38,10 +38,10 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::post('/commissioner/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
         Route::get('/commissioner/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
         Route::post('/commissioner/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
-      Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
-    Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
-    Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
-    Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+        Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
+        Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
+        Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
+        Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
