@@ -239,6 +239,8 @@ class CommissionerController extends Controller
      */
     public function updateAssessment(Request $request)
     {
+
+    return response()->json($request->all());
         try {
             $assessmentNo = $request->assessment_no;
             $squareFeet = $request->square_feet;

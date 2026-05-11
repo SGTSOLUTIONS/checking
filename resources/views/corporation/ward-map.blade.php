@@ -1533,7 +1533,7 @@
                         assessmentsHtml = `<div class="assessment-list">`;
                         assessments.forEach((assessment, index) => {
                             assessmentsHtml += `
-                        <div class="assessment-item" data-assessment="${assessment.assessment}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
+                        <div class="assessment-item" data-assessment="${assessment.assessment}" ata-assessment="${assessment.id}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
                             <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
                             <div class="assessment-detail-row">
                                 <span class="assessment-detail-label">Owner Name:</span>
@@ -1580,15 +1580,16 @@
                     // Add click handler for assessment items to populate form
                     $('.assessment-item').on('click', function() {
                         const assessmentNo = $(this).data('assessment');
+                        const assessmentId = $(this).data('id');
                         const pointDataTable = $(this).data('point-data-table');
-                        loadAssessmentForEdit(assessmentNo, pointDataTable);
+                        loadAssessmentForEdit(assessmentNo, pointDataTable,assessmentId);
                     });
 
                     $('#featureInfo').fadeIn();
                 }
 
                 // Load assessment data into edit form
-                function loadAssessmentForEdit(assessmentNo, pointDataTable) {
+                function loadAssessmentForEdit(assessmentNo, pointDataTable,assessmentId) {
                     $('#loadingSpinner').fadeIn();
                     $('#updateStatus').html('');
 
@@ -1598,7 +1599,8 @@
                         method: 'GET',
                         data: {
                             assessment_no: assessmentNo,
-                            point_data_table: pointDataTable
+                            point_data_table: pointDataTable,
+                            assessment_id : assessmentId
                         },
                         success: function(response) {
                             if (response.success && response.data) {
