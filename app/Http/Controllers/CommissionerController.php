@@ -498,146 +498,106 @@ class CommissionerController extends Controller
         $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
         return Schema::hasTable($tableName) ? $tableName : null;
     }
-    public function filterWardData(Request $request)
-    {
-        // return response()->json($request->all());
-        try {
-            $wardId = $request->ward_id;
-            $areaFilter = $request->area_filter;
-            $areaMin = (float)$request->area_min;
-            $areaMax = (float)$request->area_max;
-            $usageFilter = $request->usage_filter;
-            $buildingUsage = $request->building_usage;
+  public function filterWardData(Request $request)
+{
+    try {
+        $wardId = $request->ward_id;
+        $areaFilter = $request->area_filter;
+        $areaMin = (float)$request->area_min;
+        $areaMax = (float)$request->area_max;
+        $usageFilter = $request->usage_filter;
+        $buildingUsage = $request->building_usage;
 
-            // Get ward data
-            $ward = Ward::find($wardId);
-            if (!$ward) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ward not found'
-                ], 404);
-            }
-
-            $corporationId = $ward->corporation_id;
-            $zone = strtolower(trim($ward->zone));
-            $wardNo = (int)$ward->ward_no;
-
-            // Table names
-            $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
-            $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
-            $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
-            $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
-            $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
-            $shopsTableName = "shops_corporation_{$corporationId}";
-
-            // Get all data first
-            $allPolygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
-            $allPolygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
-            $allPoints = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
-            $allPointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
-            $allLines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
-            $allShops = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
-
-            // If no filters are active, return all data
-            if ($areaFilter === 'all' && $usageFilter === 'all') {
-                return response()->json([
-                    'success' => true,
-                    'polygons' => $allPolygons,
-                    'lines' => $allLines,
-                    'points' => $allPoints,
-                    'pointDatas' => $allPointDatas,
-                    'polygonDatas' => $allPolygonDatas,
-                    'shopDatas' => $allShops,
-                    'count' => $allPolygons->count()
-                ]);
-            }
-
-            // Filter polygons based on criteria
-            $filteredPolygons = [];
-            $filteredGisIds = [];
-
-            foreach ($allPolygons as $polygon) {
-                $gisid = $polygon->gisid;
-                $include = true;
-
-                // Get polygon data
-                $polygonData = $allPolygonDatas->firstWhere('gisid', $gisid);
-
-                // Area Variation Filter
-                if ($areaFilter !== 'all' && $polygonData) {
-                    $buildingArea = $this->calculateTotalBuildingAreaFromData($polygonData);
-                    $assessmentArea = $this->calculateSumAssessmentAreasFromData($gisid, $allPointDatas);
-                    $variation = abs($buildingArea - $assessmentArea);
-
-                    if ($areaFilter === 'variation') {
-                        // Include only if variation > 0.01 sqft
-                        $include = $include && ($variation > 0.01);
-                    } elseif ($areaFilter === 'range' && $areaMin && $areaMax) {
-                        $include = $include && ($variation >= $areaMin && $variation <= $areaMax);
-                    }
-                }
-
-                // Usage Variation Filter
-                if ($include && $usageFilter !== 'all' && $polygonData) {
-                    $buildingUsageType = strtoupper($polygonData->building_usage ?? '');
-
-                    if ($usageFilter === 'variation') {
-                        $include = $include && $this->hasUsageVariationFromData($gisid, $buildingUsageType, $allPointDatas);
-                    } elseif ($usageFilter === 'specific' && $buildingUsage) {
-                        $include = $include && ($buildingUsageType === strtoupper($buildingUsage));
-                    }
-                }
-
-                if ($include) {
-                    $filteredPolygons[] = $polygon;
-                    $filteredGisIds[] = $gisid;
-                }
-            }
-
-            // Filter points based on filtered GIS IDs
-            $filteredPoints = $allPoints->filter(function ($point) use ($filteredGisIds) {
-                return in_array($point->gisid, $filteredGisIds);
-            })->values();
-
-            // Filter point datas based on filtered GIS IDs
-            $filteredPointDatas = $allPointDatas->filter(function ($pointData) use ($filteredGisIds) {
-                return in_array($pointData->point_gisid, $filteredGisIds);
-            })->values();
-
-            // Filter polygon datas based on filtered GIS IDs
-            $filteredPolygonDatas = $allPolygonDatas->filter(function ($polygonData) use ($filteredGisIds) {
-                return in_array($polygonData->gisid, $filteredGisIds);
-            })->values();
-
-            // Filter lines based on filtered GIS IDs
-            $filteredLines = $allLines->filter(function ($line) use ($filteredGisIds) {
-                return in_array($line->gisid, $filteredGisIds);
-            })->values();
-
-            // Filter shops based on filtered point data IDs
-            $pointDataIds = $filteredPointDatas->pluck('id')->toArray();
-            $filteredShops = $allShops->filter(function ($shop) use ($pointDataIds) {
-                return in_array($shop->point_data_id, $pointDataIds);
-            })->values();
-
-            return response()->json([
-                'success' => true,
-                'polygons' => $filteredPolygons,
-                'lines' => $filteredLines,
-                'points' => $filteredPoints,
-                'pointDatas' => $filteredPointDatas,
-                'polygonDatas' => $filteredPolygonDatas,
-                'shopDatas' => $filteredShops,
-                'count' => count($filteredPolygons)
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Filter error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        $ward = Ward::find($wardId);
+        if (!$ward) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+                'message' => 'Ward not found'
+            ], 404);
         }
+
+        $corporationId = $ward->corporation_id;
+        $zone = strtolower(trim($ward->zone));
+        $wardNo = (int)$ward->ward_no;
+
+        // Table names (same as mapView)
+        $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+        $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
+        $pointsTableName = "point_{$corporationId}_{$zone}_{$wardNo}";
+        $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+        $linesTableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+        $misTableName = "mis_corporation_{$corporationId}";
+        $waterTaxTableName = "watertax_corporation_{$corporationId}";
+        $shopsTableName = "shops_corporation_{$corporationId}";
+
+        // Fetch ALL data like mapView
+        $polygons = Schema::hasTable($polygonsTableName) ? DB::table($polygonsTableName)->get() : collect();
+        $lines = Schema::hasTable($linesTableName) ? DB::table($linesTableName)->get() : collect();
+        $points = Schema::hasTable($pointsTableName) ? DB::table($pointsTableName)->get() : collect();
+        $polygonDatas = Schema::hasTable($polygonDataTableName) ? DB::table($polygonDataTableName)->get() : collect();
+        $pointDatas = Schema::hasTable($pointDataTableName) ? DB::table($pointDataTableName)->get() : collect();
+        $shopDatas = Schema::hasTable($shopsTableName) ? DB::table($shopsTableName)->get() : collect();
+
+        // Add MIS data and unique roads (matching mapView exactly)
+        $misData = collect();
+        $uniqueRoadNames = collect();
+        if (Schema::hasTable($misTableName)) {
+            $query = DB::table($misTableName . ' as mis');
+            if (Schema::hasTable($waterTaxTableName)) {
+                $waterTaxColumns = Schema::getColumnListing($waterTaxTableName);
+                $selectColumns = ['mis.*'];
+                if (in_array('watertax_no', $waterTaxColumns)) $selectColumns[] = 'wt.watertax_no';
+                if (in_array('old_watertax_no', $waterTaxColumns)) $selectColumns[] = 'wt.old_watertax_no';
+                if (in_array('water_tax', $waterTaxColumns)) $selectColumns[] = 'wt.water_tax as water_tax_amount';
+                if (in_array('water_tax_amount', $waterTaxColumns)) $selectColumns[] = 'wt.water_tax_amount';
+                $misData = $query->leftJoin($waterTaxTableName . ' as wt', 'mis.assessment', '=', 'wt.assessment')
+                    ->select($selectColumns)->get();
+            } else {
+                $misData = $query->get();
+            }
+
+            $uniqueRoadNames = DB::table($misTableName)
+                ->select('road_name')
+                ->whereNotNull('road_name')
+                ->where('road_name', '!=', '')
+                ->distinct()
+                ->orderBy('road_name')
+                ->pluck('road_name');
+        }
+
+        // Add table names to pointDatas (matching mapView)
+        $pointDatas->each(function ($pointData) use ($pointDataTableName) {
+            $pointData->table_name = $pointDataTableName;
+        });
+
+        // If both filters are 'all', return ALL data exactly like mapView
+        if ($areaFilter === 'all' && $usageFilter === 'all') {
+            return response()->json([
+                'success' => true,
+                'polygons' => $polygons,
+                'points' => $points,
+                'lines' => $lines,
+                'polygonDatas' => $polygonDatas,
+                'pointDatas' => $pointDatas,
+                'misData' => $misData,
+                'shopDatas' => $shopDatas,
+                'uniqueRoadNames' => $uniqueRoadNames,
+                'count' => $polygons->count()
+            ]);
+        }
+
+        // TODO: Add actual filtering logic here for other cases (area/usage filters)
+        // Example: Filter pointDatas/polygonDatas by area_min/max, usage, etc.
+        // Apply filters to relevant collections, then return filtered results
+
+    } catch (\Exception $e) {
+        \Log::error('Filter error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function resetWardData(Request $request)
     {
