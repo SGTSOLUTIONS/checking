@@ -968,6 +968,51 @@
         font-size: 30px;
     }
 }
+/* Assessment Search Filter */
+.assessment-search-filter {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+
+.assessment-search-filter input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.assessment-search-filter input:focus {
+    outline: none;
+    border-color: #D4A13E;
+    box-shadow: 0 0 0 2px rgba(212, 161, 62, 0.1);
+}
+
+.btn-edit-assessment {
+    transition: all 0.3s ease;
+}
+
+.btn-edit-assessment:hover {
+    background: #E86A5F !important;
+    transform: translateY(-1px);
+}
+
+/* Animation for filtered items */
+.assessment-item {
+    transition: all 0.3s ease;
+}
+
+.assessment-item.hide {
+    display: none;
+}
     </style>
 @endpush
 
@@ -1613,7 +1658,7 @@ function displayFullPropertyInfo(gisid, pointDataTable = null) {
     `;
 
     if (polygonData) {
-        // Building Images Section
+        // Building Images Section - Using asset() helper
         if (polygonData.image || polygonData.image1) {
             buildingHtml += `
                 <div class="building-images-section">
@@ -1622,21 +1667,23 @@ function displayFullPropertyInfo(gisid, pointDataTable = null) {
                         <div class="image-grid">
             `;
 
-            // Add first image if exists
+            // Add first image if exists - using asset() for proper URL
             if (polygonData.image) {
+                const imageUrl = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
                 buildingHtml += `
                     <div class="image-item">
-                        <img src="${polygonData.image}" alt="Building Image 1" class="building-image" onclick="openImageModal('${polygonData.image}')">
+                        <img src="${imageUrl}" alt="Building Image 1" class="building-image" onclick="openImageModal('${imageUrl}')" onerror="this.src='/images/no-image.png'">
                         <div class="image-caption">Front View</div>
                     </div>
                 `;
             }
 
-            // Add second image if exists
+            // Add second image if exists - using asset() for proper URL
             if (polygonData.image1) {
+                const imageUrl1 = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
                 buildingHtml += `
                     <div class="image-item">
-                        <img src="${polygonData.image1}" alt="Building Image 2" class="building-image" onclick="openImageModal('${polygonData.image1}')">
+                        <img src="${imageUrl1}" alt="Building Image 2" class="building-image" onclick="openImageModal('${imageUrl1}')" onerror="this.src='/images/no-image.png'">
                         <div class="image-caption">Side/Back View</div>
                     </div>
                 `;
@@ -1722,7 +1769,6 @@ function displayFullPropertyInfo(gisid, pointDataTable = null) {
     }
     $('#featureDetails').html(buildingHtml);
 
-    // Rest of your existing code for shops and assessments...
     // Shops List HTML
     let shopsHtml = '';
     if (shops && shops.length > 0) {
@@ -1764,14 +1810,40 @@ function displayFullPropertyInfo(gisid, pointDataTable = null) {
     }
     $('#shopsDetails').html(shopsHtml);
 
-    // Assessments List HTML with clickable assessments to populate form
+    // Assessments List HTML with QC values displayed
     let assessmentsHtml = '';
     if (assessments && assessments.length > 0) {
         assessmentsHtml = `<div class="assessment-list">`;
+
+        // Add search filter for assessments
+        assessmentsHtml += `
+            <div class="assessment-search-filter" style="margin-bottom: 12px; padding: 8px; background: #f5f5f5; border-radius: 8px;">
+                <input type="text" id="assessmentSearchFilter" placeholder="🔍 Search by Assessment No, Owner Name, or Phone..."
+                       style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px;">
+                <div style="margin-top: 6px; font-size: 11px; color: #666;">
+                    <i class="fas fa-info-circle"></i> Total Assessments: ${assessments.length}
+                </div>
+            </div>
+            <div id="assessmentsListContainer">
+        `;
+
         assessments.forEach((assessment, index) => {
+            // Get QC values
+            const qcSqfeet = assessment.qcsqfeet || assessment.sqfeet || 'N/A';
+            const qcUsage = assessment.qcusage || assessment.usage || assessment.bill_usage || 'N/A';
+            const originalSqfeet = assessment.sqfeet || 'N/A';
+            const originalUsage = assessment.bill_usage || assessment.usage || 'N/A';
+            const hasQC = (assessment.qcsqfeet || assessment.qcusage);
+
             assessmentsHtml += `
-                <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}" style="cursor: pointer;">
-                    <h6><span class="badge-shop">Assessment ${index + 1}</span> ${assessment.assessment || 'N/A'}</h6>
+                <div class="assessment-item" data-assessment="${assessment.assessment || ''}" data-id="${assessment.id || ''}" data-point-data-table="${assessment.table_name || ''}"
+                     data-search="${assessment.assessment || ''} ${assessment.owner_name || ''} ${assessment.phone_number || ''}" style="cursor: pointer; margin-bottom: 12px;">
+                    <h6>
+                        <span class="badge-shop">Assessment ${index + 1}</span>
+                        ${assessment.assessment || 'N/A'}
+                        ${hasQC ? '<span class="badge-shop" style="background: #28a745;">QC Verified</span>' : '<span class="badge-shop" style="background: #ffc107;">QC Pending</span>'}
+                    </h6>
+
                     <div class="assessment-detail-row">
                         <span class="assessment-detail-label">Owner Name:</span>
                         <span class="assessment-detail-value">${assessment.owner_name || 'N/A'}</span>
@@ -1789,36 +1861,88 @@ function displayFullPropertyInfo(gisid, pointDataTable = null) {
                         <span class="assessment-detail-value">${assessment.floor || 'N/A'}</span>
                     </div>
                     <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Bill Usage:</span>
-                        <span class="assessment-detail-value">${assessment.bill_usage || 'N/A'}</span>
-                    </div>
-                    <div class="assessment-detail-row">
                         <span class="assessment-detail-label">Door No:</span>
                         <span class="assessment-detail-value">${assessment.new_door_no || assessment.old_door_no || 'N/A'}</span>
                     </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Square Feet:</span>
-                        <span class="assessment-detail-value">${assessment.sqfeet || 'N/A'} sqft</span>
+
+                    <!-- Original Values -->
+                    <div style="margin-top: 8px; padding: 6px; background: #e8f4f8; border-radius: 6px;">
+                        <div style="font-size: 10px; color: #1A6B6E; margin-bottom: 4px;"><i class="fas fa-database"></i> Original Values:</div>
+                        <div class="assessment-detail-row">
+                            <span class="assessment-detail-label">Original Sq.Feet:</span>
+                            <span class="assessment-detail-value"><strong>${originalSqfeet}</strong> sqft</span>
+                        </div>
+                        <div class="assessment-detail-row">
+                            <span class="assessment-detail-label">Original Usage:</span>
+                            <span class="assessment-detail-value"><strong>${originalUsage}</strong></span>
+                        </div>
                     </div>
-                    <div class="assessment-detail-row">
-                        <span class="assessment-detail-label">Usage:</span>
-                        <span class="assessment-detail-value">${assessment.usage || 'N/A'}</span>
+
+                    <!-- QC Values -->
+                    <div style="margin-top: 8px; padding: 6px; background: #fff8e7; border-radius: 6px;">
+                        <div style="font-size: 10px; color: #D4A13E; margin-bottom: 4px;"><i class="fas fa-check-circle"></i> QC Values:</div>
+                        <div class="assessment-detail-row">
+                            <span class="assessment-detail-label">QC Sq.Feet:</span>
+                            <span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcSqfeet}</strong> sqft</span>
+                        </div>
+                        <div class="assessment-detail-row">
+                            <span class="assessment-detail-label">QC Usage:</span>
+                            <span class="assessment-detail-value"><strong style="color: #1A6B6E;">${qcUsage}</strong></span>
+                        </div>
                     </div>
+
+                    <!-- Edit Button -->
+                    <button class="btn-edit-assessment" data-id="${assessment.id}" data-assessment="${assessment.assessment}" style="margin-top: 8px; padding: 4px 12px; background: #D4A13E; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; width: 100%;">
+                        <i class="fas fa-edit"></i> Edit QC Values
+                    </button>
                 </div>
             `;
         });
-        assessmentsHtml += `</div>`;
+        assessmentsHtml += `</div></div>`;
     } else {
         assessmentsHtml = `<div class="text-muted text-center p-3">No assessments found for this building</div>`;
     }
     $('#assessmentsDetails').html(assessmentsHtml);
 
-    // Add click handler for assessment items to populate form
-    $('.assessment-item').on('click', function() {
-        const assessmentNo = $(this).data('assessment');
+    // Add search filter functionality
+    $('#assessmentSearchFilter').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        $('.assessment-item').each(function() {
+            const searchText = $(this).data('search').toLowerCase();
+            if (searchText.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+        const visibleCount = $('.assessment-item:visible').length;
+        if (visibleCount === 0) {
+            if (!$('#noResultsMsg').length) {
+                $('#assessmentsListContainer').append('<div id="noResultsMsg" class="text-muted text-center p-3">No matching assessments found</div>');
+            }
+        } else {
+            $('#noResultsMsg').remove();
+        }
+    });
+
+    // Add click handler for edit buttons
+    $('.btn-edit-assessment').on('click', function(e) {
+        e.stopPropagation();
         const assessmentId = $(this).data('id');
-        const pointDataTable = $(this).data('point-data-table');
+        const assessmentNo = $(this).data('assessment');
+        const pointDataTable = $(this).closest('.assessment-item').data('point-data-table');
         loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
+    });
+
+    // Keep the existing click handler for the assessment item
+    $('.assessment-item').on('click', function(e) {
+        // Don't trigger if clicking on the edit button
+        if (!$(e.target).closest('.btn-edit-assessment').length) {
+            const assessmentNo = $(this).data('assessment');
+            const assessmentId = $(this).data('id');
+            const pointDataTable = $(this).data('point-data-table');
+            loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId);
+        }
     });
 
     $('#featureInfo').fadeIn();
@@ -1882,132 +2006,113 @@ function handleImageError(imgElement) {
     $(imgElement).attr('alt', 'No image available');
 }
                 // Load assessment data into edit form
-                function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
-                    $('#loadingSpinner').fadeIn();
-                    $('#updateStatus').html('');
+                // Load assessment data into edit form
+function loadAssessmentForEdit(assessmentNo, pointDataTable, assessmentId) {
+    $('#loadingSpinner').fadeIn();
+    $('#updateStatus').html('');
 
-                    // Get assessment details from server
-                    $.ajax({
-                        url: '{{ route('corporation.get.assessment.details') }}',
-                        method: 'GET',
-                        data: {
-                            assessment_no: assessmentNo,
-                            point_data_table: pointDataTable,
-                            assessment_id: assessmentId
-                        },
-                        success: function(response) {
-                            if (response.success && response.data) {
-                                $('#currentAssessmentNo').val(assessmentNo);
-                                $('#currentid').val(assessmentId || response.data.id || '');
-                                $('#pointDataTableName').val(pointDataTable);
-                                $('#squareFeet').val(response.data.sqfeet || '');
-                                $('#usage').val(response.data.usage || '');
-                                $('#assessmentForm').slideDown();
-                                showToast('Assessment loaded for editing', 'info');
-                            } else {
-                                showToast(response.message || 'Error loading assessment', 'error');
-                            }
-                        },
-                        error: function(xhr) {
-                            console.error('AJAX Error:', xhr);
-                            showToast('Error loading assessment details', 'error');
-                        },
-                        complete: function() {
-                            $('#loadingSpinner').fadeOut();
-                        }
-                    });
-                }
+    // Get assessment details from server
+    $.ajax({
+        url: '{{ route('corporation.get.assessment.details') }}',
+        method: 'GET',
+        data: {
+            assessment_no: assessmentNo,
+            point_data_table: pointDataTable,
+            assessment_id: assessmentId
+        },
+        success: function(response) {
+            if (response.success && response.data) {
+                $('#currentAssessmentNo').val(assessmentNo);
+                $('#currentid').val(assessmentId || response.data.id || '');
+                $('#pointDataTableName').val(pointDataTable);
+                // Use QC values for editing (qcsqfeet and qcusage)
+                $('#squareFeet').val(response.data.qcsqfeet || response.data.sqfeet || '');
+                $('#usage').val(response.data.qcusage || response.data.usage || response.data.bill_usage || '');
 
-                // Update assessment via AJAX
-                function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
-                    $('#updateAssessmentBtn').prop('disabled', true);
-                    $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating...').removeClass(
-                        'success error');
+                // Show original values in form title for reference
+                const originalSqfeet = response.data.sqfeet || 'N/A';
+                const originalUsage = response.data.bill_usage || response.data.usage || 'N/A';
+                $('#assessmentForm h5').html(`<i class="fas fa-edit me-2"></i>Update QC Values<br><small style="font-size: 11px; color: #666;">Original: ${originalSqfeet} sqft | ${originalUsage}</small>`);
 
-                    console.log('Updating assessment with:', {
-                        id: id,
-                        assessment_no: assessmentNo,
-                        square_feet: squareFeet,
-                        usage: usage,
-                        point_data_table: pointDataTable
-                    });
+                $('#assessmentForm').slideDown();
+                showToast('Assessment loaded for QC editing', 'info');
+            } else {
+                showToast(response.message || 'Error loading assessment', 'error');
+            }
+        },
+        error: function(xhr) {
+            console.error('AJAX Error:', xhr);
+            showToast('Error loading assessment details', 'error');
+        },
+        complete: function() {
+            $('#loadingSpinner').fadeOut();
+        }
+    });
+}
 
-                    $.ajax({
-                        url: '{{ route('corporation.update.assessment') }}',
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            assessment_no: assessmentNo,
-                            square_feet: squareFeet,
-                            usage: usage,
-                            point_data_table: pointDataTable,
-                            id: id
-                        },
-                        success: function(response) {
-                            console.log('Update response:', response);
-                            if (response.success) {
-                                $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response
-                                    .message).addClass('success');
-                                showToast(response.message, 'success');
+           // Update assessment via AJAX (updates QC values)
+function updateAssessment(assessmentNo, squareFeet, usage, pointDataTable, id) {
+    $('#updateAssessmentBtn').prop('disabled', true);
+    $('#updateStatus').html('<i class="fas fa-spinner fa-spin"></i> Updating QC values...').removeClass('success error');
 
-                                // Update the displayed values in the assessment list
-                                if (response.data) {
-                                    // Update the assessment item in the list
-                                    $('.assessment-item').each(function() {
-                                        const itemId = $(this).data('id');
-                                        if (itemId == id || itemId == response.data.id) {
-                                            // Update the sqfeet and usage display in the list
-                                            $(this).find('.assessment-detail-row').each(function() {
-                                                const label = $(this).find(
-                                                    '.assessment-detail-label').text();
-                                                if (label === 'Square Feet:') {
-                                                    $(this).find('.assessment-detail-value')
-                                                        .text(squareFeet + ' sqft');
-                                                }
-                                                if (label === 'Usage:') {
-                                                    $(this).find('.assessment-detail-value')
-                                                        .text(usage);
-                                                }
-                                            });
-                                        }
-                                    });
-                                }
+    console.log('Updating QC values for assessment:', {
+        id: id,
+        assessment_no: assessmentNo,
+        qcsqfeet: squareFeet,
+        qcusage: usage,
+        point_data_table: pointDataTable
+    });
 
-                                // Reload the assessment data to show updated values
-                                setTimeout(() => {
-                                    $('#assessmentForm').slideUp();
-                                    // Refresh the displayed property info
-                                    if (currentGisid) {
-                                        displayFullPropertyInfo(currentGisid, pointDataTable);
-                                    }
-                                    // Reset form
-                                    $('#currentAssessmentNo').val('');
-                                    $('#currentid').val('');
-                                    $('#squareFeet').val('');
-                                    $('#usage').val('');
-                                }, 2000);
-                            } else {
-                                $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' +
-                                    response.message).addClass('error');
-                                showToast(response.message, 'error');
-                            }
-                        },
-                        error: function(xhr) {
-                            console.error('AJAX Error:', xhr);
-                            let errorMessage = 'Error updating assessment';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            }
-                            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' +
-                                errorMessage).addClass('error');
-                            showToast(errorMessage, 'error');
-                        },
-                        complete: function() {
-                            $('#updateAssessmentBtn').prop('disabled', false);
-                            setTimeout(() => $('#updateStatus').html(''), 3000);
-                        }
-                    });
-                }
+    $.ajax({
+        url: '{{ route('corporation.update.assessment') }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            assessment_no: assessmentNo,
+            square_feet: squareFeet,
+            usage: usage,
+            point_data_table: pointDataTable,
+            id: id
+        },
+        success: function(response) {
+            console.log('Update response:', response);
+            if (response.success) {
+                $('#updateStatus').html('<i class="fas fa-check-circle"></i> ' + response.message).addClass('success');
+                showToast(response.message, 'success');
+
+                // Reload the assessment data to show updated values
+                setTimeout(() => {
+                    $('#assessmentForm').slideUp();
+                    // Refresh the displayed property info
+                    if (currentGisid) {
+                        displayFullPropertyInfo(currentGisid, pointDataTable);
+                    }
+                    // Reset form
+                    $('#currentAssessmentNo').val('');
+                    $('#currentid').val('');
+                    $('#squareFeet').val('');
+                    $('#usage').val('');
+                }, 2000);
+            } else {
+                $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + response.message).addClass('error');
+                showToast(response.message, 'error');
+            }
+        },
+        error: function(xhr) {
+            console.error('AJAX Error:', xhr);
+            let errorMessage = 'Error updating QC values';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            $('#updateStatus').html('<i class="fas fa-exclamation-circle"></i> ' + errorMessage).addClass('error');
+            showToast(errorMessage, 'error');
+        },
+        complete: function() {
+            $('#updateAssessmentBtn').prop('disabled', false);
+            setTimeout(() => $('#updateStatus').html(''), 3000);
+        }
+    });
+}
                 // Tab switching
                 $('.info-tab').on('click', function() {
                     const tabId = $(this).data('tab');
