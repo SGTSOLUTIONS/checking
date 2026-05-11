@@ -433,7 +433,7 @@
                 </div>
                 <div class="mt-2">
                     <span class="badge" style="background: rgba(196,154,108,0.25); color:#F8E3C2;">
-                        <i class="fas fa-check-circle me-1"></i> Powered by SGT SOLUTIONS
+                        <i class="fas fa-check-circle me-1"></i> Powered by SGT     SOLUTIONS
                     </span>
                 </div>
             </div>

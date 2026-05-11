@@ -127,7 +127,6 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -170,8 +169,242 @@
             transform: translateY(-1px);
         }
 
-        /* Mobile Menu Button */
-        .mobile-menu-btn {
+        /* Filter Container */
+        .filter-container {
+            position: absolute;
+            top: 20px;
+            left: 420px;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            z-index: 1001;
+            width: 340px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .filter-container {
+                position: fixed;
+                top: auto;
+                bottom: 140px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+                transform: translateY(120%);
+                transition: transform 0.3s ease;
+            }
+            .filter-container.open {
+                transform: translateY(0);
+            }
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            cursor: pointer;
+        }
+
+        .filter-header h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-content {
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .filter-content.show {
+            display: block;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .filter-group h5 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            cursor: pointer;
+        }
+
+        .filter-option input {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .filter-option label {
+            cursor: pointer;
+            margin: 0;
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+
+        .filter-range {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+        }
+
+        .filter-range label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--gray-700);
+        }
+
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .range-inputs input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+        }
+
+        .filter-apply-btn {
+            width: 100%;
+            padding: 6px;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .filter-apply-btn:hover {
+            background: var(--primary);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-filter-apply, .btn-filter-reset {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-filter-apply {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-filter-apply:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-filter-reset {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-filter-reset:hover {
+            background: var(--gray-300);
+        }
+
+        .filter-summary {
+            padding: 10px;
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .filter-summary #filterCount {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        #clearHighlightBtn {
+            padding: 4px 10px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        /* Variation Info */
+        .variation-info {
+            background: #fff8e7;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            margin-bottom: 16px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .variation-info h6 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .text-warning {
+            color: #ff9800 !important;
+            font-weight: bold;
+        }
+
+        .text-success {
+            color: #4caf50 !important;
+        }
+
+        /* Mobile Menu Buttons */
+        .mobile-menu-btn, .mobile-filter-btn {
             position: absolute;
             bottom: 20px;
             right: 20px;
@@ -190,9 +423,17 @@
             transition: all 0.2s;
         }
 
+        .mobile-filter-btn {
+            right: 80px;
+            background: var(--primary);
+        }
+
         @media (max-width: 768px) {
-            .mobile-menu-btn {
+            .mobile-menu-btn, .mobile-filter-btn {
                 display: flex;
+            }
+            .mobile-filter-btn {
+                bottom: 80px;
             }
         }
 
@@ -219,7 +460,6 @@
                 transform: translateX(120%);
                 transition: transform 0.3s ease;
             }
-
             .layer-switcher.open {
                 transform: translateX(0);
             }
@@ -309,7 +549,7 @@
             gap: 8px;
         }
 
-        /* Color Legend */
+        /* Legend */
         .legend-item {
             display: flex;
             align-items: center;
@@ -356,7 +596,6 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -557,7 +796,7 @@
             border-bottom: 1px solid var(--gray-200);
         }
 
-        .live-location-btn {
+        .live-location-btn, .route-btn {
             background: var(--dark);
             color: white;
             border: none;
@@ -578,19 +817,7 @@
         }
 
         .route-btn {
-            background: var(--dark);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            padding: 12px 18px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            box-shadow: var(--shadow-lg);
-            transition: all 0.2s;
             display: none;
-            align-items: center;
-            gap: 8px;
         }
 
         /* Route Info */
@@ -776,20 +1003,7 @@
             cursor: pointer;
         }
 
-        @media (max-width: 768px) {
-            .image-modal .close-modal {
-                top: -50px;
-                right: 0;
-                font-size: 28px;
-            }
-        }
-
         /* Assessment Items */
-        .assessment-list {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
         .assessment-search-filter {
             margin-bottom: 16px;
         }
@@ -867,8 +1081,7 @@
             flex: 1;
         }
 
-        .original-values,
-        .qc-values {
+        .original-values, .qc-values {
             padding: 8px;
             border-radius: var(--radius-sm);
             margin: 8px 0;
@@ -905,7 +1118,6 @@
             background: var(--secondary);
         }
 
-        /* Shop Items */
         .shop-item {
             background: var(--gray-100);
             border-radius: var(--radius-md);
@@ -914,7 +1126,6 @@
             border-left: 3px solid var(--dark-light);
         }
 
-        /* Building Images */
         .building-images-section {
             margin-bottom: 16px;
         }
@@ -945,7 +1156,6 @@
             box-shadow: var(--shadow-md);
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -991,9 +1201,84 @@
                 </div>
             </div>
 
-            <!-- Mobile Menu Button -->
+            <!-- Filter Container -->
+            <div class="filter-container" id="filterContainer">
+                <div class="filter-header" id="filterHeader">
+                    <h4><i class="fas fa-filter"></i> Building Filters</h4>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="filter-content">
+                    <!-- Area Variation Filter -->
+                    <div class="filter-group">
+                        <h5>Area Variation</h5>
+                        <div class="filter-option">
+                            <input type="radio" name="areaFilter" value="all" checked id="areaAll">
+                            <label for="areaAll">All Buildings</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="radio" name="areaFilter" value="variation" id="areaVariationOnly">
+                            <label for="areaVariationOnly">Area Variation Only</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="radio" name="areaFilter" value="range" id="areaRange">
+                            <label for="areaRange">Area Variation Range</label>
+                        </div>
+                        <div class="filter-range" id="areaRangeDiv" style="display: none;">
+                            <label>Range (sq.ft):</label>
+                            <div class="range-inputs">
+                                <input type="number" id="areaMin" placeholder="Min" step="100">
+                                <span>-</span>
+                                <input type="number" id="areaMax" placeholder="Max" step="100">
+                            </div>
+                            <button id="applyAreaRange" class="filter-apply-btn">Apply Range</button>
+                        </div>
+                    </div>
+
+                    <!-- Usage Variation Filter -->
+                    <div class="filter-group">
+                        <h5>Usage Variation</h5>
+                        <div class="filter-option">
+                            <input type="radio" name="usageFilter" value="all" checked id="usageAll">
+                            <label for="usageAll">All Buildings</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="radio" name="usageFilter" value="variation" id="usageVariationOnly">
+                            <label for="usageVariationOnly">Usage Variation Only</label>
+                        </div>
+                        <div class="filter-option">
+                            <input type="radio" name="usageFilter" value="specific" id="usageSpecific">
+                            <label for="usageSpecific">Specific Building Usage:</label>
+                        </div>
+                        <select id="buildingUsageSelect" class="filter-select" style="display: none;">
+                            <option value="">Select Usage</option>
+                            <option value="RESIDENTIAL">Residential</option>
+                            <option value="COMMERCIAL">Commercial</option>
+                            <option value="INDUSTRIAL">Industrial</option>
+                            <option value="MIXED">Mixed Use</option>
+                            <option value="INSTITUTIONAL">Institutional</option>
+                        </select>
+                    </div>
+
+                    <!-- Combined Filter Actions -->
+                    <div class="filter-actions">
+                        <button id="applyFiltersBtn" class="btn-filter-apply"><i class="fas fa-search"></i> Apply Filters</button>
+                        <button id="resetFiltersBtn" class="btn-filter-reset"><i class="fas fa-undo"></i> Reset</button>
+                    </div>
+
+                    <!-- Filter Results Summary -->
+                    <div id="filterSummary" class="filter-summary" style="display: none;">
+                        <span id="filterCount"></span>
+                        <button id="clearHighlightBtn">Clear Highlight</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Buttons -->
             <button class="mobile-menu-btn" id="mobileMenuBtn">
                 <i class="fas fa-layer-group"></i>
+            </button>
+            <button class="mobile-filter-btn" id="mobileFilterBtn">
+                <i class="fas fa-filter"></i>
             </button>
 
             <!-- Layer Switcher -->
@@ -1120,9 +1405,8 @@
                                 <option value="INSTITUTIONAL">Institutional</option>
                             </select>
                         </div>
-                        <button type="submit" class="btn-update"><i class="fas fa-save"></i> Update QC Values</button>
-                        <div id="updateStatus" class="update-status"
-                            style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
+                        <button type="submit" class="btn-update" id="updateAssessmentBtn"><i class="fas fa-save"></i> Update QC Values</button>
+                        <div id="updateStatus" class="update-status" style="margin-top: 10px; font-size: 12px; text-align: center;"></div>
                     </form>
                 </div>
             </div>
@@ -1158,9 +1442,9 @@
                 info: 'ℹ'
             };
             const toast = $(`<div class="toast-notification ${type}">
-        <div class="toast-title">${icons[type]} ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
-        <div class="toast-message">${message}</div>
-    </div>`);
+                <div class="toast-title">${icons[type]} ${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                <div class="toast-message">${message}</div>
+            </div>`);
             $('body').append(toast);
             setTimeout(() => toast.addClass('show'), 10);
             setTimeout(() => {
@@ -1174,7 +1458,7 @@
             if (!$('#imageModal').length) {
                 $('body').append(
                     `<div id="imageModal" class="image-modal"><div class="modal-content"><img id="modalImage" src=""><span class="close-modal">&times;</span></div></div>`
-                    );
+                );
                 $('#imageModal').on('click', function(e) {
                     if (e.target === this || $(e.target).hasClass('close-modal')) $(this).fadeOut();
                 });
@@ -1185,6 +1469,162 @@
             $('#modalImage').attr('src', url);
             $('#imageModal').fadeIn();
         };
+
+        // Calculate total building area
+        function calculateTotalBuildingArea(polygonData) {
+            if (!polygonData) return 0;
+
+            const sqfeet = parseFloat(polygonData.sqfeet) || 0;
+            const totalFloor = parseFloat(polygonData.total_floor) || parseFloat(polygonData.number_floor) || 1;
+            const floorPercentage = parseFloat(polygonData.floor_percentage) || 100;
+            const basement = parseFloat(polygonData.basement) || 0;
+
+            // Formula: sqfeet * (totalFloor + (floorPercentage/100) + basement)
+            const totalArea = sqfeet * (totalFloor + (floorPercentage / 100) + basement);
+            return totalArea;
+        }
+
+        // Calculate sum of assessment plot areas for a building
+        function calculateSumAssessmentAreas(gisid, pointDatas) {
+            const buildingAssessments = pointDatas.filter(pd => pd.point_gisid == gisid);
+            let totalAssessmentArea = 0;
+
+            buildingAssessments.forEach(assessment => {
+                const sqfeet = parseFloat(assessment.sqfeet) || 0;
+                const plotArea = parseFloat(assessment.plot_area) || sqfeet;
+                totalAssessmentArea += plotArea;
+            });
+
+            return totalAssessmentArea;
+        }
+
+        // Calculate area variation
+        function calculateAreaVariation(polygonData, pointDatas) {
+            if (!polygonData) return { variation: 0, percentage: 0, buildingArea: 0, assessmentArea: 0 };
+
+            const buildingArea = calculateTotalBuildingArea(polygonData);
+            const assessmentArea = calculateSumAssessmentAreas(polygonData.gisid, pointDatas);
+            const variation = buildingArea - assessmentArea;
+            const percentage = assessmentArea > 0 ? (variation / assessmentArea) * 100 : 0;
+
+            return { variation, percentage, buildingArea, assessmentArea };
+        }
+
+        // Check if building has usage variation
+        function hasUsageVariation(polygonData, pointDatas) {
+            if (!polygonData) return false;
+
+            const buildingUsage = (polygonData.building_usage || '').toUpperCase();
+
+            // If building usage is MIXED, no problem - return false
+            if (buildingUsage === 'MIXED') return false;
+
+            const buildingAssessments = pointDatas.filter(pd => pd.point_gisid == polygonData.gisid);
+
+            for (const assessment of buildingAssessments) {
+                const assessmentUsage = (assessment.usage || '').toUpperCase();
+
+                // Check if assessment usage is different from building usage
+                if (buildingUsage === 'RESIDENTIAL' && assessmentUsage === 'COMMERCIAL') {
+                    return true;
+                }
+                if (buildingUsage === 'COMMERCIAL' && assessmentUsage === 'RESIDENTIAL') {
+                    return true;
+                }
+
+                // Also check if assessment usage exists but doesn't match building usage for other types
+                if (assessmentUsage && buildingUsage !== assessmentUsage && buildingUsage !== 'MIXED') {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Get filtered features based on criteria
+        function getFilteredFeatures(polygonSource, polygonDatas, pointDatas, filters) {
+            const features = [];
+            const filteredGisids = new Set();
+
+            polygonSource.forEachFeature(feature => {
+                const gisid = feature.get('gisid');
+                const polygonData = polygonDatas.find(d => d.gisid == gisid);
+
+                if (!polygonData) return;
+
+                let include = true;
+
+                // Area variation filter
+                if (filters.areaFilter !== 'all') {
+                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
+
+                    if (filters.areaFilter === 'variation') {
+                        // Show only buildings with variation (difference not zero)
+                        include = include && Math.abs(areaVar.variation) > 0.01;
+                    } else if (filters.areaFilter === 'range' && filters.areaRange) {
+                        // Show buildings within area range
+                        const variationAbs = Math.abs(areaVar.variation);
+                        include = include && variationAbs >= filters.areaRange.min &&
+                                 variationAbs <= filters.areaRange.max;
+                    }
+                }
+
+                // Usage variation filter
+                if (include && filters.usageFilter !== 'all') {
+                    if (filters.usageFilter === 'variation') {
+                        include = include && hasUsageVariation(polygonData, pointDatas);
+                    } else if (filters.usageFilter === 'specific' && filters.buildingUsage) {
+                        const buildingUsage = (polygonData.building_usage || '').toUpperCase();
+                        include = include && buildingUsage === filters.buildingUsage.toUpperCase();
+                    }
+                }
+
+                if (include) {
+                    filteredGisids.add(gisid);
+                    features.push(feature);
+                }
+            });
+
+            return { features, filteredGisids };
+        }
+
+        // Highlight filtered features on map
+        function highlightFilteredFeatures(map, highlightSource, features, polygonDatas, pointDatas) {
+            highlightSource.clear();
+
+            features.forEach(feature => {
+                const clonedFeature = feature.clone();
+                const gisid = feature.get('gisid');
+                const polygonData = polygonDatas.find(d => d.gisid == gisid);
+
+                // Store additional info for display
+                if (polygonData) {
+                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
+                    const hasUsageVar = hasUsageVariation(polygonData, pointDatas);
+
+                    clonedFeature.set('areaVariation', areaVar.variation);
+                    clonedFeature.set('areaVariationPercentage', areaVar.percentage);
+                    clonedFeature.set('hasUsageVariation', hasUsageVar);
+                    clonedFeature.set('buildingArea', areaVar.buildingArea);
+                    clonedFeature.set('assessmentArea', areaVar.assessmentArea);
+                }
+
+                highlightSource.addFeature(clonedFeature);
+            });
+
+            // Fit view to show all highlighted features
+            if (features.length > 0) {
+                const extent = highlightSource.getExtent();
+                if (extent && !isNaN(extent[0])) {
+                    map.getView().fit(extent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                }
+            }
+
+            return features.length;
+        }
 
         $(document).ready(function() {
             // Mobile menu toggle
@@ -1198,12 +1638,20 @@
                 $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
             });
 
+            // Filter header collapsible
+            $('#filterHeader').on('click', function() {
+                $('.filter-content').toggleClass('show');
+                $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+            });
+
             // Close layer switcher when clicking outside on mobile
             $(document).on('click', function(e) {
                 if ($(window).width() <= 768) {
-                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest(
-                            '#mobileMenuBtn').length) {
+                    if (!$(e.target).closest('#layerSwitcher').length && !$(e.target).closest('#mobileMenuBtn').length) {
                         $('#layerSwitcher').removeClass('open');
+                    }
+                    if (!$(e.target).closest('#filterContainer').length && !$(e.target).closest('#mobileFilterBtn').length) {
+                        $('#filterContainer').removeClass('open');
                     }
                 }
             });
@@ -1415,8 +1863,7 @@
                     visible: false
                 });
                 if (ward?.drone_image && ward?.extent_left) {
-                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward
-                        .extent_right), parseFloat(ward.extent_top)];
+                    const extent = [parseFloat(ward.extent_left), parseFloat(ward.extent_bottom), parseFloat(ward.extent_right), parseFloat(ward.extent_top)];
                     const url = "{{ asset($ward->drone_image ?? '') }}";
                     if (url && extent[0]) {
                         droneLayer = new ol.layer.Image({
@@ -1434,8 +1881,7 @@
                 const polygonSource = new ol.source.Vector();
                 polygons.forEach(poly => {
                     try {
-                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                            .coordinates;
+                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                         if (coords?.length) {
                             polygonSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Polygon(coords),
@@ -1454,8 +1900,7 @@
                 const lineSource = new ol.source.Vector();
                 lines.forEach(line => {
                     try {
-                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                            .coordinates;
+                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
                         if (coords?.length >= 2) {
                             if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
                             lineSource.addFeature(new ol.Feature({
@@ -1474,8 +1919,7 @@
                 const pointSource = new ol.source.Vector();
                 points.forEach(point => {
                     try {
-                        let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) :
-                            point.coordinates;
+                        let coords = typeof point.coordinates === 'string' ? JSON.parse(point.coordinates) : point.coordinates;
                         if (coords?.length === 2) {
                             pointSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Point(coords),
@@ -1555,18 +1999,15 @@
                 let center = ol.proj.fromLonLat([80.2707, 13.0827]);
                 if (ward?.boundary?.[0]?.length) {
                     try {
-                        const lons = ward.boundary[0].map(p => p[0]),
-                            lats = ward.boundary[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) +
-                            Math.max(...lats)) / 2]);
+                        const lons = ward.boundary[0].map(p => p[0]);
+                        const lats = ward.boundary[0].map(p => p[1]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
                     } catch (e) {}
                 }
 
                 const map = new ol.Map({
                     target: 'map',
-                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
-                        pointLayer, highlightLayer, locationLayer, routeLayer
-                    ],
+                    layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer, highlightLayer, locationLayer, routeLayer],
                     view: new ol.View({
                         center: center,
                         zoom: 16
@@ -1589,6 +2030,127 @@
                 $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
                 $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
 
+                // Filter functionality
+                let currentFilters = {
+                    areaFilter: 'all',
+                    usageFilter: 'all',
+                    areaRange: null,
+                    buildingUsage: null
+                };
+
+                // Area filter radio buttons
+                $('input[name="areaFilter"]').on('change', function() {
+                    const value = $(this).val();
+                    if (value === 'range') {
+                        $('#areaRangeDiv').show();
+                    } else {
+                        $('#areaRangeDiv').hide();
+                        currentFilters.areaRange = null;
+                    }
+                });
+
+                // Apply area range
+                $('#applyAreaRange').on('click', function() {
+                    const min = parseFloat($('#areaMin').val());
+                    const max = parseFloat($('#areaMax').val());
+
+                    if (!isNaN(min) && !isNaN(max) && min <= max) {
+                        currentFilters.areaRange = { min, max };
+                        currentFilters.areaFilter = 'range';
+                        $('input[name="areaFilter"][value="range"]').prop('checked', true);
+                        $('#areaRangeDiv').show();
+                        showToast(`Area range set: ${min} - ${max} sq.ft`, 'success');
+                    } else {
+                        showToast('Please enter valid min and max values', 'warning');
+                    }
+                });
+
+                // Usage filter radio buttons
+                $('input[name="usageFilter"]').on('change', function() {
+                    const value = $(this).val();
+                    if (value === 'specific') {
+                        $('#buildingUsageSelect').show();
+                    } else {
+                        $('#buildingUsageSelect').hide();
+                        currentFilters.buildingUsage = null;
+                    }
+                });
+
+                $('#buildingUsageSelect').on('change', function() {
+                    currentFilters.buildingUsage = $(this).val();
+                });
+
+                // Apply filters button
+                $('#applyFiltersBtn').on('click', function() {
+                    const areaFilterValue = $('input[name="areaFilter"]:checked').val();
+                    const usageFilterValue = $('input[name="usageFilter"]:checked').val();
+
+                    currentFilters.areaFilter = areaFilterValue;
+                    currentFilters.usageFilter = usageFilterValue;
+
+                    if (usageFilterValue === 'specific') {
+                        currentFilters.buildingUsage = $('#buildingUsageSelect').val();
+                        if (!currentFilters.buildingUsage) {
+                            showToast('Please select a building usage type', 'warning');
+                            return;
+                        }
+                    }
+
+                    $('#loadingSpinner').fadeIn();
+
+                    const { features, filteredGisids } = getFilteredFeatures(polygonSource, polygonDatas, pointDatas, currentFilters);
+                    const count = highlightFilteredFeatures(map, highlightSource, features, polygonDatas, pointDatas);
+
+                    if (count > 0) {
+                        let message = `Found ${count} building(s) matching criteria`;
+                        if (currentFilters.areaFilter === 'variation') message += ' with area variation';
+                        if (currentFilters.areaFilter === 'range') message += ` with area variation in range`;
+                        if (currentFilters.usageFilter === 'variation') message += ' with usage variation';
+                        if (currentFilters.usageFilter === 'specific') message += ` with ${currentFilters.buildingUsage} usage`;
+
+                        $('#filterCount').html(`${count} building(s) found`);
+                        $('#filterSummary').show();
+                        showToast(message, 'success');
+                    } else {
+                        showToast('No buildings match the selected filters', 'warning');
+                        $('#filterSummary').hide();
+                    }
+
+                    $('#loadingSpinner').fadeOut();
+                });
+
+                // Reset filters button
+                $('#resetFiltersBtn').on('click', function() {
+                    $('input[name="areaFilter"][value="all"]').prop('checked', true);
+                    $('input[name="usageFilter"][value="all"]').prop('checked', true);
+                    $('#areaMin, #areaMax').val('');
+                    $('#areaRangeDiv').hide();
+                    $('#buildingUsageSelect').val('').hide();
+
+                    currentFilters = {
+                        areaFilter: 'all',
+                        usageFilter: 'all',
+                        areaRange: null,
+                        buildingUsage: null
+                    };
+
+                    highlightSource.clear();
+                    $('#filterSummary').hide();
+                    showToast('All filters reset', 'info');
+                });
+
+                // Clear highlights button
+                $('#clearHighlightBtn').on('click', function() {
+                    highlightSource.clear();
+                    $('#filterSummary').hide();
+                    showToast('Highlights cleared', 'info');
+                });
+
+                // Mobile filter toggle
+                $('#mobileFilterBtn').on('click', function() {
+                    $('#filterContainer').toggleClass('open');
+                });
+
                 // Display property info
                 function displayPropertyInfo(gisid, table = null) {
                     currentGisid = gisid;
@@ -1598,37 +2160,54 @@
                     const assessments = getAssessmentsByGisid(gisid);
                     const shops = getShopsByBuildingGisid(gisid);
 
-                    // Building details
-                    let html =
-                        `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+                    // Calculate variation info for display
+                    const areaVar = calculateAreaVariation(polygonData, pointDatas);
+                    const hasUsageVar = hasUsageVariation(polygonData, pointDatas);
+
+                    // Building details with variation info
+                    let html = '';
+
+                    // Add variation info if exists
+                    if (Math.abs(areaVar.variation) > 0.01 || hasUsageVar) {
+                        html += `<div class="variation-info"><h6><i class="fas fa-chart-line"></i> Filter Match Info:</h6>`;
+                        if (Math.abs(areaVar.variation) > 0.01) {
+                            const variationClass = areaVar.variation > 0 ? 'text-warning' : 'text-success';
+                            html += `<div class="info-row"><span class="info-label">Area Variation:</span><span class="info-value ${variationClass}">${areaVar.variation.toFixed(2)} sq.ft (${areaVar.percentage.toFixed(2)}%)</span></div>`;
+                            html += `<div class="info-row"><span class="info-label">Building Total:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sq.ft</span></div>`;
+                            html += `<div class="info-row"><span class="info-label">Assessments Sum:</span><span class="info-value">${areaVar.assessmentArea.toFixed(2)} sq.ft</span></div>`;
+                        }
+                        if (hasUsageVar) {
+                            html += `<div class="info-row"><span class="info-label">Usage Variation:</span><span class="info-value text-warning">Yes - Building usage differs from assessment usage</span></div>`;
+                        }
+                        html += `</div>`;
+                    }
+
+                    html += `<div class="info-row"><span class="info-label">GIS ID:</span><span class="info-value"><strong>${gisid}</strong></span></div>`;
+
                     if (polygonData) {
                         if (polygonData.image || polygonData.image1) {
                             html += `<div class="building-images-section"><div class="image-grid">`;
                             if (polygonData.image) {
-                                const url = polygonData.image.startsWith('http') ? polygonData.image :
-                                    '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
-                                html +=
-                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image.startsWith('http') ? polygonData.image : '{{ asset('') }}' + polygonData.image.replace(/^\/+/, '');
+                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             if (polygonData.image1) {
-                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 :
-                                    '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
-                                html +=
-                                    `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
+                                const url = polygonData.image1.startsWith('http') ? polygonData.image1 : '{{ asset('') }}' + polygonData.image1.replace(/^\/+/, '');
+                                html += `<img src="${url}" class="building-image" onclick="openImageModal('${url}')" onerror="this.style.display='none'">`;
                             }
                             html += `</div></div>`;
                         }
-                        html +=
-                            `<div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value" style="color:${getBuildingColor(polygonData.building_usage)};font-weight:bold">${polygonData.building_usage || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Shops/Units:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
-                    <div class="info-row"><span class="info-label">Assessments:</span><span class="info-value">${assessments.length}</span></div>
-                    <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>`;
+                        html += `
+                            <div class="info-row"><span class="info-label">Building Name:</span><span class="info-value">${polygonData.building_name || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Building Usage:</span><span class="info-value" style="color:${getBuildingColor(polygonData.building_usage)};font-weight:bold">${polygonData.building_usage || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Floors:</span><span class="info-value">${polygonData.number_floor || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Shops/Units:</span><span class="info-value">${polygonData.number_shop || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Total Bills:</span><span class="info-value">${polygonData.number_bill || 'N/A'}</span></div>
+                            <div class="info-row"><span class="info-label">Assessments:</span><span class="info-value">${assessments.length}</span></div>
+                            <div class="info-row"><span class="info-label">Square Feet:</span><span class="info-value">${polygonData.sqfeet || 'N/A'} sqft</span></div>
+                            <div class="info-row"><span class="info-label">Total Building Area:</span><span class="info-value">${areaVar.buildingArea.toFixed(2)} sqft</span></div>`;
                     } else {
-                        html +=
-                            `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
+                        html += `<div class="info-row"><span class="info-label">Note:</span><span class="info-value">No building data</span></div>`;
                     }
                     $('#featureDetails').html(html);
 
@@ -1636,11 +2215,13 @@
                     let shopsHtml = '';
                     if (shops.length) {
                         shops.forEach((shop, i) => {
-                            shopsHtml +=
-                                `<div class="shop-item"><div class="info-row"><span class="info-label">Shop ${i+1}:</span><span class="info-value"><strong>${shop.shop_name || 'Unnamed'}</strong></span></div>
-                        <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${shop.shop_owner_name || 'N/A'}</span></div>
-                        <div class="info-row"><span class="info-label">Category:</span><span class="info-value">${shop.shop_category || 'N/A'}</span></div>
-                        <div class="info-row"><span class="info-label">Mobile:</span><span class="info-value">${shop.shop_mobile || 'N/A'}</span></div></div>`;
+                            shopsHtml += `
+                                <div class="shop-item">
+                                    <div class="info-row"><span class="info-label">Shop ${i+1}:</span><span class="info-value"><strong>${shop.shop_name || 'Unnamed'}</strong></span></div>
+                                    <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${shop.shop_owner_name || 'N/A'}</span></div>
+                                    <div class="info-row"><span class="info-label">Category:</span><span class="info-value">${shop.shop_category || 'N/A'}</span></div>
+                                    <div class="info-row"><span class="info-label">Mobile:</span><span class="info-value">${shop.shop_mobile || 'N/A'}</span></div>
+                                </div>`;
                         });
                     } else {
                         shopsHtml = '<div class="text-muted text-center p-3">No shops found</div>';
@@ -1650,28 +2231,31 @@
                     // Assessments
                     let assessmentsHtml = '';
                     if (assessments.length) {
-                        assessmentsHtml =
-                            `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
+                        assessmentsHtml = `<div class="assessment-search-filter"><input type="text" id="assessmentFilter" placeholder="Search assessments..."></div>`;
                         assessments.forEach((a, i) => {
                             const qcSq = a.qcsqfeet || a.sqfeet || 'N/A';
                             const qcUse = a.qcusage || a.usage || 'N/A';
                             const hasQC = a.qcsqfeet || a.qcusage;
-                            assessmentsHtml += `<div class="assessment-item" data-id="${a.id}" data-assessment="${a.assessment}" data-table="${a.table_name}" data-search="${a.assessment} ${a.owner_name}">
-                        <div class="assessment-header">
-                            <span class="badge badge-primary">Assessment ${i+1}</span>
-                            <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">${hasQC ? 'QC Verified' : 'QC Pending'}</span>
-                        </div>
-                        <div class="info-row"><span class="info-label">Number:</span><span class="info-value"><strong>${a.assessment || 'N/A'}</strong></span></div>
-                        <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${a.owner_name || 'N/A'}</span></div>
-                        <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${a.phone_number || 'N/A'}</span></div>
-                        <div class="original-values"><div class="section-title">📋 Original Values</div>
-                            <div class="info-row"><span class="info-label">Sq.Feet:</span><span class="info-value">${a.sqfeet || 'N/A'} sqft</span></div>
-                            <div class="info-row"><span class="info-label">Usage:</span><span class="info-value">${a.usage || 'N/A'}</span></div></div>
-                        <div class="qc-values"><div class="section-title">✅ QC Values</div>
-                            <div class="info-row"><span class="info-label">QC Sq.Feet:</span><span class="info-value"><strong>${qcSq}</strong> sqft</span></div>
-                            <div class="info-row"><span class="info-label">QC Usage:</span><span class="info-value"><strong>${qcUse}</strong></span></div></div>
-                        <button class="btn-edit" onclick="window.editAssessment('${a.assessment}', '${a.table_name}', ${a.id})"><i class="fas fa-edit"></i> Edit QC Values</button>
-                    </div>`;
+                            assessmentsHtml += `
+                                <div class="assessment-item" data-id="${a.id}" data-assessment="${a.assessment}" data-table="${a.table_name}" data-search="${a.assessment} ${a.owner_name}">
+                                    <div class="assessment-header">
+                                        <span class="badge badge-primary">Assessment ${i+1}</span>
+                                        <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">${hasQC ? 'QC Verified' : 'QC Pending'}</span>
+                                    </div>
+                                    <div class="info-row"><span class="info-label">Number:</span><span class="info-value"><strong>${a.assessment || 'N/A'}</strong></span></div>
+                                    <div class="info-row"><span class="info-label">Owner:</span><span class="info-value">${a.owner_name || 'N/A'}</span></div>
+                                    <div class="info-row"><span class="info-label">Phone:</span><span class="info-value">${a.phone_number || 'N/A'}</span></div>
+                                    <div class="original-values"><div class="section-title">📋 Original Values</div>
+                                        <div class="info-row"><span class="info-label">Sq.Feet:</span><span class="info-value">${a.sqfeet || 'N/A'} sqft</span></div>
+                                        <div class="info-row"><span class="info-label">Usage:</span><span class="info-value">${a.usage || 'N/A'}</span></div>
+                                        <div class="info-row"><span class="info-label">Plot Area:</span><span class="info-value">${a.plot_area || a.sqfeet || 'N/A'} sqft</span></div>
+                                    </div>
+                                    <div class="qc-values"><div class="section-title">✅ QC Values</div>
+                                        <div class="info-row"><span class="info-label">QC Sq.Feet:</span><span class="info-value"><strong>${qcSq}</strong> sqft</span></div>
+                                        <div class="info-row"><span class="info-label">QC Usage:</span><span class="info-value"><strong>${qcUse}</strong></span></div>
+                                    </div>
+                                    <button class="btn-edit" onclick="window.editAssessment('${a.assessment}', '${a.table_name}', ${a.id})"><i class="fas fa-edit"></i> Edit QC Values</button>
+                                </div>`;
                         });
                         $('#assessmentsDetails').html(assessmentsHtml);
                         $('#assessmentFilter').on('keyup', function() {
@@ -1681,8 +2265,7 @@
                             });
                         });
                     } else {
-                        $('#assessmentsDetails').html(
-                            '<div class="text-muted text-center p-3">No assessments found</div>');
+                        $('#assessmentsDetails').html('<div class="text-muted text-center p-3">No assessments found</div>');
                     }
                     $('#featureInfo').fadeIn();
                 }
@@ -1743,8 +2326,7 @@
                         success: function(res) {
                             if (res.success) {
                                 showToast(res.message, 'success');
-                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (
-                                    assessmentNo && p.assessment == assessmentNo));
+                                const idx = pointDatas.findIndex(p => (id && p.id == id) || (assessmentNo && p.assessment == assessmentNo));
                                 if (idx !== -1) {
                                     pointDatas[idx].qcsqfeet = res.data.qcsqfeet;
                                     pointDatas[idx].qcusage = res.data.qcusage;
@@ -1836,8 +2418,7 @@
                         if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
                         locationSource.clear();
                         isLiveLocationActive = false;
-                        $('#liveLocationBtn').removeClass('active').html(
-                            '<i class="fas fa-location-dot"></i> Live Location');
+                        $('#liveLocationBtn').removeClass('active').html('<i class="fas fa-location-dot"></i> Live Location');
                         showToast('Location tracking stopped', 'info');
                     } else {
                         if (!navigator.geolocation) return showToast('Geolocation not supported', 'error');
@@ -1862,18 +2443,14 @@
                 // Calculate route
                 async function calculateRoute() {
                     if (!selectedFeature) return showToast('Select a property first', 'warning');
-                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first',
-                        'warning');
+                    if (!locationSource.getFeatures().length) return showToast('Enable Live Location first', 'warning');
                     $('#loadingSpinner').fadeIn();
                     routeSource.clear();
                     const start = ol.proj.toLonLat(locationSource.getFeatures()[0].getGeometry().getCoordinates());
                     const targetGeom = selectedFeature.getGeometry();
-                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) :
-                        ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
+                    const end = targetGeom.getType() === 'Point' ? ol.proj.toLonLat(targetGeom.getCoordinates()) : ol.proj.toLonLat(ol.extent.getCenter(targetGeom.getExtent()));
                     try {
-                        const res = await fetch(
-                            `https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`
-                            );
+                        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[0]},${start[1]};${end[0]},${end[1]}?overview=full&geometries=geojson`);
                         const data = await res.json();
                         if (data.code === 'Ok') {
                             const route = data.routes[0];
@@ -1881,27 +2458,20 @@
                             routeSource.addFeature(new ol.Feature({
                                 geometry: new ol.geom.LineString(coords)
                             }));
-                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route
-                                .distance / 1000).toFixed(2) + ' km';
-                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration %
-                                60) + ' sec';
-                            $('#routeSummary').html(
-                                `<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
+                            const dist = route.distance < 1000 ? route.distance.toFixed(0) + ' m' : (route.distance / 1000).toFixed(2) + ' km';
+                            const dur = Math.floor(route.duration / 60) + ' min ' + Math.floor(route.duration % 60) + ' sec';
+                            $('#routeSummary').html(`<strong>Distance:</strong> ${dist}<br><strong>Duration:</strong> ${dur}`);
                             let stepsHtml = '';
                             if (route.legs?.[0]?.steps) {
                                 route.legs[0].steps.forEach((step, i) => {
                                     if (step.maneuver?.instruction) {
-                                        stepsHtml +=
-                                            `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
+                                        stepsHtml += `<div class="direction-step"><span class="step-number">${i+1}</span><span>${step.maneuver.instruction} (${step.distance.toFixed(0)}m)</span></div>`;
                                     }
                                 });
                             }
-                            $('#directionsList').html(stepsHtml ||
-                                '<div class="text-muted">No step-by-step directions</div>');
+                            $('#directionsList').html(stepsHtml || '<div class="text-muted">No step-by-step directions</div>');
                             $('#routeInfo').show();
-                            map.getView().fit(routeSource.getExtent(), {
-                                padding: [50, 50, 50, 50]
-                            });
+                            map.getView().fit(routeSource.getExtent(), { padding: [50, 50, 50, 50] });
                             showToast('Route calculated', 'success');
                         } else {
                             showToast('No route found', 'error');
@@ -1915,8 +2485,9 @@
                 // Map click handler
                 map.on('click', function(evt) {
                     const target = evt.originalEvent.target;
-                    if (target.closest?.('.search-container') || target.closest?.('.layer-switcher') || target
-                        .closest?.('.controls') || target.closest?.('.feature-info')) return;
+                    if (target.closest?.('.search-container') || target.closest?.('.filter-container') ||
+                        target.closest?.('.layer-switcher') || target.closest?.('.controls') ||
+                        target.closest?.('.feature-info')) return;
                     const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
                     if (feature?.get('gisid')) {
                         highlightSource.clear();
@@ -1938,8 +2509,7 @@
                 $('#gisidSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByGISID($('#gisidSearchInput').val().trim());
                 });
-                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val()
-                .trim()));
+                $('#assessmentSearchBtn').on('click', () => searchByAssessment($('#assessmentSearchInput').val().trim()));
                 $('#assessmentSearchInput').on('keypress', e => {
                     if (e.key === 'Enter') searchByAssessment($('#assessmentSearchInput').val().trim());
                 });
@@ -1959,9 +2529,7 @@
                             ol.extent.extend(extent, f.getGeometry().getExtent());
                             has = true;
                         });
-                        if (has) map.getView().fit(extent, {
-                            padding: [30, 30, 30, 30]
-                        });
+                        if (has) map.getView().fit(extent, { padding: [30, 30, 30, 30] });
                     } catch (e) {}
                 }, 800);
             }
