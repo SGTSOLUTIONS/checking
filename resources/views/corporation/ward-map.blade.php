@@ -2044,105 +2044,104 @@
                 });
 
                 // Apply filters button - calls server
-                // $('#applyFiltersBtn').on('click', function() {
-                //     const areaFilterValue = $('input[name="areaFilter"]:checked').val();
-                //     const usageFilterValue = $('input[name="usageFilter"]:checked').val();
-
-                //     filters.areaFilter = areaFilterValue;
-                //     filters.usageFilter = usageFilterValue;
-
-                //     if (usageFilterValue === 'specific') {
-                //         filters.buildingUsage = $('#buildingUsageSelect').val();
-                //         if (!filters.buildingUsage) {
-                //             showToast('Please select a building usage type', 'warning');
-                //             return;
-                //         }
-                //     } else {
-                //         filters.buildingUsage = null;
-                //     }
-
-                //     if (areaFilterValue === 'range') {
-                //         const min = parseFloat($('#areaMin').val());
-                //         const max = parseFloat($('#areaMax').val());
-
-                //         if (isNaN(min) || isNaN(max)) {
-                //             showToast('Please set area range values first', 'warning');
-                //             return;
-                //         }
-                //         if (min > max) {
-                //             showToast('Min value cannot be greater than Max value', 'warning');
-                //             return;
-                //         }
-
-                //         filters.areaMin = min;
-                //         filters.areaMax = max;
-                //     } else {
-                //         filters.areaMin = null;
-                //         filters.areaMax = null;
-                //     }
-
-                //     // Show loading spinner
-                //     $('#loadingSpinner').fadeIn();
-
-                //     // Make AJAX call to server
-                //     $.ajax({
-                //         url: '{{ route('corporation.ward.filter') }}',
-                //         method: 'POST',
-                //         data: {
-                //             _token: '{{ csrf_token() }}',
-                //             ward_id: '{{ $ward->id ?? '' }}',
-                //             area_filter: filters.areaFilter,
-                //             area_min: filters.areaMin,
-                //             area_max: filters.areaMax,
-                //             usage_filter: filters.usageFilter,
-                //             building_usage: filters.buildingUsage
-                //         },
-                //         success: function(response) {
-                //             if (response.success) {
-                //                 // Update the map with filtered data
-                //                 updateMapWithFilteredData(response);
-
-                //                 // Update filter summary
-                //                 const totalBuildings = response.count || response.polygons.length;
-                //                 if (totalBuildings > 0) {
-                //                     let message =
-                //                         `Found ${totalBuildings} building(s) matching criteria`;
-                //                     if (filters.areaFilter === 'variation') message +=
-                //                         ' with area variation';
-                //                     if (filters.areaFilter === 'range') message +=
-                //                         ` with area variation in range ${filters.areaMin} - ${filters.areaMax} sq.ft`;
-                //                     if (filters.usageFilter === 'variation') message +=
-                //                         ' with usage variation';
-                //                     if (filters.usageFilter === 'specific') message +=
-                //                         ` with ${filters.buildingUsage} usage`;
-
-                //                     $('#filterCount').html(`${totalBuildings} building(s) found`);
-                //                     $('#filterSummary').show();
-                //                     showToast(message, 'success');
-                //                 } else {
-                //                     // showToast('No buildings match the selected filters', 'warning');
-                //                     $('#filterSummary').hide();
-                //                 }
-                //             } else {
-                //                 showToast(response.message || 'Error applying filters', 'error');
-                //             }
-                //         },
-                //         error: function(xhr, status, error) {
-                //             console.error('Filter error:', xhr, status, error);
-                //             let errorMsg = 'Error applying filters';
-                //             if (xhr.responseJSON && xhr.responseJSON.message) {
-                //                 errorMsg = xhr.responseJSON.message;
-                //             }
-                //             showToast(errorMsg, 'error');
-                //         },
-                //         complete: function() {
-                //             $('#loadingSpinner').fadeOut();
-                //         }
-                //     });
-                // });
                 $('#applyFiltersBtn').on('click', function() {
-                alert("ho");
+                    const areaFilterValue = $('input[name="areaFilter"]:checked').val();
+                    const usageFilterValue = $('input[name="usageFilter"]:checked').val();
+
+                    filters.areaFilter = areaFilterValue;
+                    filters.usageFilter = usageFilterValue;
+
+                    if (usageFilterValue === 'specific') {
+                        filters.buildingUsage = $('#buildingUsageSelect').val();
+                        if (!filters.buildingUsage) {
+                            showToast('Please select a building usage type', 'warning');
+                            return;
+                        }
+                    } else {
+                        filters.buildingUsage = null;
+                    }
+
+                    if (areaFilterValue === 'range') {
+                        const min = parseFloat($('#areaMin').val());
+                        const max = parseFloat($('#areaMax').val());
+
+                        if (isNaN(min) || isNaN(max)) {
+                            showToast('Please set area range values first', 'warning');
+                            return;
+                        }
+                        if (min > max) {
+                            showToast('Min value cannot be greater than Max value', 'warning');
+                            return;
+                        }
+
+                        filters.areaMin = min;
+                        filters.areaMax = max;
+                    } else {
+                        filters.areaMin = null;
+                        filters.areaMax = null;
+                    }
+
+                    // Show loading spinner
+                    $('#loadingSpinner').fadeIn();
+
+                    // Make AJAX call to server
+                    $.ajax({
+                        url: '{{ route('corporation.ward.filter') }}',
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            ward_id: '{{ $ward->id ?? '' }}',
+                            area_filter: filters.areaFilter,
+                            area_min: filters.areaMin,
+                            area_max: filters.areaMax,
+                            usage_filter: filters.usageFilter,
+                            building_usage: filters.buildingUsage
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Update the map with filtered data
+                                updateMapWithFilteredData(response);
+
+                                // Update filter summary
+                                const totalBuildings = response.count || response.polygons.length;
+                                if (totalBuildings > 0) {
+                                    let message =
+                                        `Found ${totalBuildings} building(s) matching criteria`;
+                                    if (filters.areaFilter === 'variation') message +=
+                                        ' with area variation';
+                                    if (filters.areaFilter === 'range') message +=
+                                        ` with area variation in range ${filters.areaMin} - ${filters.areaMax} sq.ft`;
+                                    if (filters.usageFilter === 'variation') message +=
+                                        ' with usage variation';
+                                    if (filters.usageFilter === 'specific') message +=
+                                        ` with ${filters.buildingUsage} usage`;
+
+                                    $('#filterCount').html(`${totalBuildings} building(s) found`);
+                                    $('#filterSummary').show();
+                                    showToast(message, 'success');
+                                } else {
+                                    // showToast('No buildings match the selected filters', 'warning');
+                                    $('#filterSummary').hide();
+                                }
+                            } else {
+                                showToast(response.message || 'Error applying filters', 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+
+                            console.error('Filter error:', xhr, status, error);
+                            let errorMsg = 'Error applying filters';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            showToast(errorMsg, 'error');
+                        },
+                        complete: function() {
+                            $('#loadingSpinner').fadeOut();
+                        }
+                    });
                 });
+
 
                 // Reset filters button
                 $('#resetFiltersBtn').on('click', function() {
