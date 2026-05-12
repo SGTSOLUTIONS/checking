@@ -1769,6 +1769,7 @@
             let polygonDatas = @json($polygonDatas ?? []);
             let ward = @json($ward ?? []);
             let mis = @json($misData ?? []);
+
 console.log("mis:", mis);
             let routes = {
                 surveyorPolygonDatasUpload: "{{ route('surveyor.polygon.datas.upload') }}",
