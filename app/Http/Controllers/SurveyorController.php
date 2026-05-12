@@ -1080,7 +1080,10 @@ class SurveyorController extends Controller
             if ($buildingData->building_usage != "MIXED") {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Building data usage and bill usage is different',
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'bill_usage' => ['Building data usage and bill usage is different']
+                    ]
                 ], 422);
             }
         }
@@ -1089,7 +1092,10 @@ class SurveyorController extends Controller
         if ($data['floor'] > $buildingData->number_floor) {
             return response()->json([
                 'success' => false,
-                'message' => 'Entered floor number exceeds building floor limit. Building has ' . $buildingData->number_floor . ' floors.',
+                'message' => 'Validation errors',
+                'errors' => [
+                    'floor' => ['Entered floor number exceeds building floor limit. Building has ' . $buildingData->number_floor . ' floors.']
+                ]
             ], 422);
         }
 
@@ -1128,6 +1134,17 @@ class SurveyorController extends Controller
         // Handle type validation before proceeding
         switch ($request->type) {
             case "NEW":
+                // Check for error assessment value
+                if ($request->assessment === "error") {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['Assessment value "error" is not allowed for NEW type. Please provide a valid assessment number.']
+                        ]
+                    ], 422);
+                }
+
                 // Check if assessment already exists in MIS data
                 $checkExist = DB::table($allMisTable)
                     ->where('assessment', $request->assessment)
@@ -1140,12 +1157,26 @@ class SurveyorController extends Controller
                 if ($checkExist || ($checkBuildingExist && $checkBuildingExist->assessment)) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'This assessment already exists. This is not new data.'
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['This assessment already exists. This is not new data.']
+                        ]
                     ], 422);
                 }
                 break;
 
             case "OLD":
+                // Check for error assessment value
+                if ($request->assessment === "error") {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['Assessment value "error" is not valid. Please provide a valid assessment number from MIS data.']
+                        ]
+                    ], 422);
+                }
+
                 // Check if assessment exists in MIS table for this ward
                 $checkOld = DB::table($allMisTable)
                     ->where('assessment', $request->assessment)
@@ -1155,7 +1186,10 @@ class SurveyorController extends Controller
                 if (!$checkOld) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'This assessment does not exist in this ward. Please check the data.'
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['This assessment does not exist in this ward. Please check the data.']
+                        ]
                     ], 422);
                 }
 
@@ -1168,14 +1202,20 @@ class SurveyorController extends Controller
                     if (!$waterTaxData) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Water tax data not found for assessment number: ' . $request->assessment
+                            'message' => 'Validation errors',
+                            'errors' => [
+                                'water_tax' => ['Water tax data not found for assessment number: ' . $request->assessment]
+                            ]
                         ], 422);
                     }
 
                     if ($waterTaxData->watertax_no != $request->water_tax) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Water tax number does not match. Expected: ' . $waterTaxData->watertax_no
+                            'message' => 'Validation errors',
+                            'errors' => [
+                                'water_tax' => ['Water tax number does not match. Expected: ' . $waterTaxData->watertax_no]
+                            ]
                         ], 422);
                     }
                 }
@@ -1189,7 +1229,10 @@ class SurveyorController extends Controller
                     if ($waterTaxData && $waterTaxData->old_watertax_no != $request->old_water_tax) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Old water tax number does not match'
+                            'message' => 'Validation errors',
+                            'errors' => [
+                                'old_water_tax' => ['Old water tax number does not match']
+                            ]
                         ], 422);
                     }
                 }
@@ -1202,12 +1245,26 @@ class SurveyorController extends Controller
                 if ($alreadyExist) {
                     return response()->json([
                         'success' => false,
-                        'message' => "This assessment is already entered"
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['This assessment is already entered in the system']
+                        ]
                     ], 422);
                 }
                 break;
 
             case "OTHER":
+                // Check for error assessment value
+                if ($request->assessment === "error") {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['Assessment value "error" is not valid. Please provide a valid assessment number from another ward.']
+                        ]
+                    ], 422);
+                }
+
                 $checkOther = DB::table($allMisTable)
                     ->where('assessment', $request->assessment)
                     ->where('ward_no', '!=', $wardNo)
@@ -1216,15 +1273,26 @@ class SurveyorController extends Controller
                 if (!$checkOther) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'This assessment does not belong to other ward.'
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'assessment' => ['This assessment does not belong to other ward. It either doesn\'t exist or belongs to the same ward.']
+                        ]
                     ], 422);
                 }
+                break;
+
+            case "NO_TAX":
+            case "VACCAND":
+                // Add specific validation for these types if needed
                 break;
 
             default:
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid request type'
+                    'message' => 'Validation errors',
+                    'errors' => [
+                        'type' => ['Invalid request type']
+                    ]
                 ], 400);
         }
 
