@@ -191,17 +191,15 @@ private function calculateWardVariations($corporationId, $zone, $wardNo)
     $polygonDatas = Schema::hasTable($polygonDataTableName) ?
         DB::table($polygonDataTableName)->get()->keyBy('gisid') : collect();
 
-    // Get point data with MIS join
+    // Get point data - using bill_usage column
     $pointDataQuery = DB::table($pointDataTableName . ' as pd')
         ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
         ->select(
             'pd.point_gisid',
             'pd.assessment',
             'pd.qcsqfeet',
-            'pd.qcusage',
-            'pd.usage as pd_usage',
-            'mis.plot_area',
-            'mis.assessment as mis_assessment'
+            'pd.bill_usage',  // Using bill_usage instead of usage/qcusage
+            'mis.plot_area'
         );
 
     $pointDatas = $pointDataQuery->get();
@@ -244,16 +242,18 @@ private function calculateWardVariations($corporationId, $zone, $wardNo)
 
         if (isset($pointDataByGisid[$gisid])) {
             foreach ($pointDataByGisid[$gisid] as $pointData) {
-                // Get area
-                $pointArea = floatval($pointData->qcsqfeet ?? 0);
-                if ($pointArea == 0) {
-                    $pointArea = floatval($pointData->plot_area ?? 0);
+                // Get area - try qcsqfeet first, then plot_area
+                $pointArea = 0;
+                if (isset($pointData->qcsqfeet) && $pointData->qcsqfeet > 0) {
+                    $pointArea = floatval($pointData->qcsqfeet);
+                } elseif (isset($pointData->plot_area) && $pointData->plot_area > 0) {
+                    $pointArea = floatval($pointData->plot_area);
                 }
                 $assessmentArea += $pointArea;
 
-                // Check usage mismatch
-                $pointUsage = $pointData->qcusage ?? $pointData->pd_usage ?? null;
-                if ($buildingUsage && $pointUsage && strtoupper($buildingUsage) != strtoupper($pointUsage)) {
+                // Check usage mismatch using bill_usage
+                $pointUsage = $pointData->bill_usage ?? null;
+                if ($buildingUsage && $pointUsage && strtoupper(trim($buildingUsage)) != strtoupper(trim($pointUsage))) {
                     $hasUsageMismatch = true;
                 }
             }
@@ -264,7 +264,8 @@ private function calculateWardVariations($corporationId, $zone, $wardNo)
             $validBuildingsCount++;
 
             $areaDiff = abs($buildingArea - $assessmentArea);
-            if ($areaDiff > 0) {
+            // Consider variation if difference is more than 1 sq ft
+            if ($areaDiff > 1) {
                 $areaVariationCount++;
             }
 
