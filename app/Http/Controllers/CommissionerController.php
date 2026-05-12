@@ -110,12 +110,16 @@ class CommissionerController extends Controller
             $total_usage_variation += $variationStats['usage_variation_count'];
 
             // Prepare chart data
-            $chartData[] = [
-                'ward' => "Ward {$wardlist->ward_no}",
-                'area_variation' => $variationStats['area_variation_count'],
-                'usage_variation' => $variationStats['usage_variation_count'],
-                'total_buildings' => $buildingCount
-            ];
+           // Prepare chart data - FIXED structure
+$chartData[] = [
+    'ward' => "Ward {$wardlist->ward_no}",
+    'ward_no' => $wardlist->ward_no,
+    'area_variation' => $variationStats['area_variation_count'],  // Note: underscore
+    'usage_variation' => $variationStats['usage_variation_count'], // Note: underscore
+    'total_buildings' => $buildingCount,
+    'areaVariationCount' => $variationStats['area_variation_count'], // For backward compatibility
+    'usageVariationCount' => $variationStats['usage_variation_count'] // For backward compatibility
+];
 
             $data = [
                 "zone"                     => $wardlist->zone,

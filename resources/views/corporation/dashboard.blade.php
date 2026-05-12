@@ -242,6 +242,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const chartData = @json($chartData ?? []);
 
+    console.log('Chart Data:', chartData); // Debug: Check what data is being passed
+
     const totalBuildings = Number({{ $total_buildings ?? 0 }});
     const totalAreaVariation = Number({{ $total_area_variation ?? 0 }});
     const totalUsageVariation = Number({{ $total_usage_variation ?? 0 }});
@@ -253,26 +255,15 @@ document.addEventListener("DOMContentLoaded", function () {
     let bothVariations = 0;
 
     chartData.forEach(item => {
-
         bothVariations += Math.min(
-            Number(item.areaVariationCount || 0),
-            Number(item.usageVariationCount || 0)
+            Number(item.area_variation || 0),      // Changed: area_variation (underscore)
+            Number(item.usage_variation || 0)      // Changed: usage_variation (underscore)
         );
-
     });
 
-    const onlyAreaVariation =
-        Math.max(0, totalAreaVariation - bothVariations);
-
-    const onlyUsageVariation =
-        Math.max(0, totalUsageVariation - bothVariations);
-
-    const noVariation =
-        Math.max(
-            0,
-            totalBuildings -
-            (onlyAreaVariation + onlyUsageVariation + bothVariations)
-        );
+    const onlyAreaVariation = Math.max(0, totalAreaVariation - bothVariations);
+    const onlyUsageVariation = Math.max(0, totalUsageVariation - bothVariations);
+    const noVariation = Math.max(0, totalBuildings - (onlyAreaVariation + onlyUsageVariation + bothVariations));
 
     // =========================
     // BAR CHART
@@ -288,7 +279,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             data: {
 
-                labels: chartData.map(item => 'Ward ' + item.ward),
+                labels: chartData.map(item => item.ward || 'Ward ' + item.ward_no),
 
                 datasets: [
 
@@ -296,7 +287,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         label: 'Area Variation',
 
                         data: chartData.map(item =>
-                            Number(item.areaVariationCount || 0)
+                            Number(item.area_variation || 0)    // Changed: area_variation
                         ),
 
                         backgroundColor: 'rgba(255, 193, 7, 0.7)',
@@ -309,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         label: 'Usage Variation',
 
                         data: chartData.map(item =>
-                            Number(item.usageVariationCount || 0)
+                            Number(item.usage_variation || 0)   // Changed: usage_variation
                         ),
 
                         backgroundColor: 'rgba(23, 162, 184, 0.7)',
@@ -341,14 +332,11 @@ document.addEventListener("DOMContentLoaded", function () {
                                 let label = context.dataset.label || '';
                                 let value = context.raw || 0;
 
-                                let total =
-                                    chartData[context.dataIndex]
-                                        ?.buildingCount || 0;
+                                let total = chartData[context.dataIndex]?.total_buildings || 0;
 
-                                let percentage =
-                                    total > 0
-                                        ? ((value / total) * 100).toFixed(1)
-                                        : 0;
+                                let percentage = total > 0
+                                    ? ((value / total) * 100).toFixed(1)
+                                    : 0;
 
                                 return `${label}: ${value} (${percentage}%)`;
 
@@ -360,24 +348,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 scales: {
 
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Buildings'
+                        }
+                    },
+
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Wards'
+                        },
+                        ticks: {
+                            rotate: 45,
+                            autoSkip: true
+                        }
                     }
                 }
             }
         });
+    } else {
+        console.log('Bar chart not showing. chartData length:', chartData.length);
     }
 
     // =========================
-    // PIE CHART
+    // PIE CHART (3D)
     // =========================
 
-    const pieChartElement =
-        document.getElementById('pieChart3D');
+    const pieChartElement = document.getElementById('pieChart3D');
 
-    if (pieChartElement) {
+    if (pieChartElement && totalBuildings > 0) {
 
-        const pieChart3D =
-            echarts.init(pieChartElement);
+        const pieChart3D = echarts.init(pieChartElement);
 
         const pieData = [
 
@@ -407,52 +410,188 @@ document.addEventListener("DOMContentLoaded", function () {
 
         ].filter(item => item.value > 0);
 
-        pieChart3D.setOption({
+        if (pieData.length > 0) {
+            pieChart3D.setOption({
 
-            tooltip: {
-                trigger: 'item'
-            },
-
-            legend: {
-                bottom: 0
-            },
-
-            series: [
-
-                {
-                    name: 'Variation Summary',
-
-                    type: 'pie',
-
-                    radius: ['40%', '70%'],
-
-                    data: pieData,
-
-                    label: {
-                        formatter: '{b}\n{d}%'
-                    },
-
-                    itemStyle: {
-                        borderRadius: 10,
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    },
-
-                    emphasis: {
-                        scale: true,
-                        scaleSize: 10
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                        return `<strong>${params.name}</strong><br/>
+                                Count: ${params.value} buildings<br/>
+                                Percentage: ${percentage}%`;
                     }
+                },
+
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    data: pieData.map(item => item.name),
+                    formatter: function(name) {
+                        const item = pieData.find(d => d.name === name);
+                        if (item) {
+                            const percentage = ((item.value / totalBuildings) * 100).toFixed(1);
+                            return `${name}: ${percentage}%`;
+                        }
+                        return name;
+                    }
+                },
+
+                series: [
+
+                    {
+                        name: 'Variation Summary',
+
+                        type: 'pie',
+
+                        radius: ['40%', '70%'],
+                        center: ['50%', '50%'],
+
+                        data: pieData,
+
+                        label: {
+                            show: true,
+                            formatter: function(params) {
+                                const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                                return `${params.name}\n${percentage}%`;
+                            },
+                            fontSize: 11,
+                            fontWeight: 'bold',
+                            position: 'outside'
+                        },
+
+                        itemStyle: {
+                            borderRadius: 10,
+                            borderColor: '#fff',
+                            borderWidth: 2,
+                            shadowBlur: 10,
+                            shadowOffsetX: 3,
+                            shadowOffsetY: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.3)'
+                        },
+
+                        emphasis: {
+                            scale: true,
+                            scaleSize: 10,
+                            label: {
+                                show: true,
+                                fontSize: 14,
+                                fontWeight: 'bold'
+                            }
+                        },
+
+                        animation: true,
+                        animationDuration: 1000,
+                        hoverAnimation: true,
+                        hoverOffset: 10
+                    }
+                ],
+
+                title: {
+                    show: true,
+                    text: `Total Buildings: ${totalBuildings}`,
+                    left: 'center',
+                    top: 0,
+                    textStyle: {
+                        fontSize: 12,
+                        color: '#666'
+                    }
+                },
+
+                backgroundColor: 'transparent'
+            });
+
+            window.addEventListener('resize', function () {
+                pieChart3D.resize();
+            });
+
+            // Add click event
+            pieChart3D.on('click', function(params) {
+                if (params.componentType === 'series' && totalBuildings > 0) {
+                    const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                    alert(`${params.name}\nCount: ${params.value} buildings\nPercentage: ${percentage}% of total buildings`);
                 }
-            ]
-        });
-
-        window.addEventListener('resize', function () {
-            pieChart3D.resize();
-        });
+            });
+        } else {
+            // Show message if no data
+            pieChartElement.innerHTML = '<div style="text-align: center; padding: 50px;">No variation data available</div>';
+        }
+    } else {
+        console.log('Pie chart not showing. totalBuildings:', totalBuildings);
+        if (pieChartElement) {
+            pieChartElement.innerHTML = '<div style="text-align: center; padding: 50px;">No building data available</div>';
+        }
     }
-
 });
 </script>
+
+<style>
+
+.dashboard-content-area {
+    padding: 20px;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.96);
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    width: 55px;
+    height: 55px;
+    background: rgba(22,121,171,0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #1679AB;
+}
+
+.table th {
+    background: #102C57;
+    color: #fff;
+    border: none;
+}
+
+.badge {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+#pieChart3D {
+    width: 100%;
+    height: 380px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+    border-radius: 12px;
+    padding: 10px;
+}
+
+canvas#areaVariationChart {
+    max-height: 350px;
+    width: 100%;
+}
+
+@media(max-width:768px){
+
+    .stat-card {
+        margin-bottom: 15px;
+    }
+
+    #pieChart3D {
+        height: 320px;
+    }
+}
+
+</style>
+
+@endpush
 
 <style>
 
