@@ -1418,7 +1418,7 @@ public function uploadPointData(Request $request)
             'message' => $message,
             'pointData' => $updatedPointData,
             'shops' => $updatedShops,
-           'pointDatas' => DB::table($pointDataTableName)->get(),
+             'pointDatas' => DB::table($pointDataTableName)->get(),
                 'points' => $this->getPointsData($ward) // You'll need to implement this method
         ]);
 
@@ -1438,15 +1438,52 @@ public function uploadPointData(Request $request)
     }
 }
     // Helper method to get points data
-    private function getPointsData($ward)
-    {
-        $zone = strtolower(trim($ward->zone));
-        $wardNo = (int)$ward->ward_no;
-        $corp = (int)$ward->corporation_id;
-        $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
+ // Helper method to get points data - FIXED to use correct table
+private function getPointsData($ward)
+{
+    $zone = strtolower(trim($ward->zone));
+    $wardNo = (int)$ward->ward_no;
+    $corp = (int)$ward->corporation_id;
 
-        return DB::table($pointsTableName)->get();
+    // FIXED: Use pointdata table instead of point table
+    $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
+    $shopDataTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+    $allPointsData = DB::table($pointDataTableName)->get();
+
+    if ($allPointsData->isEmpty()) {
+        return [];
     }
+
+    $allPointIds = $allPointsData->pluck('id')->toArray();
+
+    // Get all shops for these points in a single query for performance
+    $allShops = DB::table($shopDataTableName)
+        ->whereIn('point_data_id', $allPointIds)
+        ->get()
+        ->groupBy('point_data_id');
+
+    $formattedPoints = [];
+    foreach ($allPointsData as $point) {
+        $pointShops = $allShops->get($point->id, collect());
+
+        $formattedPoints[] = [
+            'id' => $point->id,
+            'point_gisid' => $point->point_gisid,
+            'assessment' => $point->assessment,
+            'owner_name' => $point->owner_name,
+            'floor' => $point->floor,
+            'no_of_shop' => $pointShops->count(),
+            'bill_usage' => $point->bill_usage,
+            'water_tax' => $point->water_tax,
+            'assessment_type' => $point->assessment_type,
+            'shops_count' => $pointShops->count(),
+            'shops' => $pointShops->values(),
+        ];
+    }
+
+    return $formattedPoints;
+}
 
     public function searchPointData(Request $request)
     {
@@ -1570,30 +1607,7 @@ public function uploadPointData(Request $request)
             'wardNo' => $wardNo
         ]);
     }
-    // public function updatePointRecord(Request $request)
-    // {
-    //     try {
-    //         $corp = $request->corp;
-    //         $zone = $request->zone;
-    //         $wardNo = $request->ward_no;
 
-    //         if ($request->type === 'point') {
-    //             $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
-    //             DB::table($table)
-    //                 ->where('id', $request->id)
-    //                 ->update($request->data);
-    //         } else {
-    //             $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
-    //             DB::table($table)
-    //                 ->where('id', $request->id)
-    //                 ->update($request->data);
-    //         }
-
-    //         return response()->json(['success' => true]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    //     }
-    // }
     public function updatePointRecord(Request $request)
     {
         try {
