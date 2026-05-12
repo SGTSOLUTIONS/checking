@@ -3361,10 +3361,15 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        showFlashMessage(response.message, "success");
+                        let successMsg = response.message || "Point data saved successfully";
+
+                        showFlashMessage(successMsg, "success");
+
                         $("#pointModal").modal("hide");
+
                         if (response.pointDatas) pointDatas = response.pointDatas;
                         if (response.points) points = response.points;
+
                         refreshVectorLayer();
                         resetPointFormFields();
                         $('#append').empty();
@@ -3402,7 +3407,7 @@
                                                 .length === 0) {
                                                 inputElement.after(
                                                     `<div id="${key}_error" class="error-message text-danger"></div>`
-                                                    );
+                                                );
                                             }
                                             $(`#${key}_error`).text(value[0]);
                                         }
