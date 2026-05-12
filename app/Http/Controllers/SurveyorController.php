@@ -987,7 +987,7 @@ class SurveyorController extends Controller
             ], 500);
         }
     }
- public function uploadPointData(Request $request)
+public function uploadPointData(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'type' => 'required|in:OLD,NEW,OTHER,NO_TAX,VACCAND',
@@ -1034,7 +1034,7 @@ class SurveyorController extends Controller
         ->where('user_id', $userId)
         ->first();
 
-    if (!$teamMember || !$teamMember->team || !$teamMember->team->ward) {
+    if (!$teamMember) {
         return response()->json([
             'success' => false,
             'message' => 'You are not assigned to any team.',
@@ -1067,19 +1067,19 @@ class SurveyorController extends Controller
         ], 404);
     }
 
-    if (!empty($data['bill_usage']) &&
-        $buildingData->building_usage != $data['bill_usage'] &&
-        $buildingData->building_usage != 'MIXED') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation errors',
-            'errors' => [
-                'bill_usage' => ['Building data usage and bill usage is different']
-            ]
-        ], 422);
+    if (!empty($data['bill_usage']) && $buildingData->building_usage != $data['bill_usage']) {
+        if ($buildingData->building_usage != "MIXED") {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => [
+                    'bill_usage' => ['Building data usage and bill usage is different']
+                ]
+            ], 422);
+        }
     }
 
-    if ((int) $data['floor'] > (int) $buildingData->number_floor) {
+    if ((int)$data['floor'] > (int)$buildingData->number_floor) {
         return response()->json([
             'success' => false,
             'message' => 'Validation errors',
@@ -1089,26 +1089,25 @@ class SurveyorController extends Controller
         ], 422);
     }
 
-    $requestedShopCount = (int) ($data['no_of_shop'] ?? 0);
+    $requestedShopCount = (int)($data['no_of_shop'] ?? 0);
 
     if ($existingPoint) {
         $shopDataCount = DB::table($shopDataTableName)
             ->where('point_data_id', $existingPoint->id)
             ->count();
 
-        if (($requestedShopCount + $shopDataCount) > (int) $buildingData->number_shop) {
-            $remaining = (int) $buildingData->number_shop - $shopDataCount;
-
+        if (($requestedShopCount + $shopDataCount) > (int)$buildingData->number_shop) {
+            $remaining = (int)$buildingData->number_shop - $shopDataCount;
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
                 'errors' => [
-                    'no_of_shop' => ["Only {$remaining} shops can be added. Building has {$buildingData->number_shop} total shops."]
+                    'no_of_shop' => ["Only $remaining shops can be added. Building has {$buildingData->number_shop} total shops."]
                 ]
             ], 422);
         }
     } else {
-        if ($requestedShopCount > (int) $buildingData->number_shop) {
+        if ($requestedShopCount > (int)$buildingData->number_shop) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
@@ -1130,8 +1129,8 @@ class SurveyorController extends Controller
     }
 
     switch ($data['type']) {
-        case 'NEW':
-            if (($data['assessment'] ?? null) === 'error') {
+        case "NEW":
+            if (($data['assessment'] ?? null) === "error") {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1156,8 +1155,8 @@ class SurveyorController extends Controller
             }
             break;
 
-        case 'OLD':
-            if (($data['assessment'] ?? null) === 'error') {
+        case "OLD":
+            if (($data['assessment'] ?? null) === "error") {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1182,34 +1181,38 @@ class SurveyorController extends Controller
                 ], 422);
             }
 
-            if (!empty($data['water_tax']) || !empty($data['old_water_tax'])) {
+            if (!empty($data['water_tax'])) {
                 $waterTaxData = DB::table($waterTaxTable)
                     ->where('assessment', $data['assessment'])
                     ->first();
 
-                if (!empty($data['water_tax'])) {
-                    if (!$waterTaxData) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Validation errors',
-                            'errors' => [
-                                'water_tax' => ['Water tax data not found for assessment number: ' . $data['assessment']]
-                            ]
-                        ], 422);
-                    }
-
-                    if ($waterTaxData->watertax_no != $data['water_tax']) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Validation errors',
-                            'errors' => [
-                                'water_tax' => ['Water tax number does not match. Expected: ' . $waterTaxData->watertax_no]
-                            ]
-                        ], 422);
-                    }
+                if (!$waterTaxData) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'water_tax' => ['Water tax data not found for assessment number: ' . $data['assessment']]
+                        ]
+                    ], 422);
                 }
 
-                if (!empty($data['old_water_tax']) && $waterTaxData && $waterTaxData->old_watertax_no != $data['old_water_tax']) {
+                if ($waterTaxData->watertax_no != $data['water_tax']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation errors',
+                        'errors' => [
+                            'water_tax' => ['Water tax number does not match. Expected: ' . $waterTaxData->watertax_no]
+                        ]
+                    ], 422);
+                }
+            }
+
+            if (!empty($data['old_water_tax'])) {
+                $waterTaxData = DB::table($waterTaxTable)
+                    ->where('assessment', $data['assessment'])
+                    ->first();
+
+                if ($waterTaxData && $waterTaxData->old_watertax_no != $data['old_water_tax']) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Validation errors',
@@ -1240,8 +1243,8 @@ class SurveyorController extends Controller
             }
             break;
 
-        case 'OTHER':
-            if (($data['assessment'] ?? null) === 'error') {
+        case "OTHER":
+            if (($data['assessment'] ?? null) === "error") {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
@@ -1267,8 +1270,8 @@ class SurveyorController extends Controller
             }
             break;
 
-        case 'NO_TAX':
-        case 'VACCAND':
+        case "NO_TAX":
+        case "VACCAND":
             break;
 
         default:
@@ -1314,133 +1317,113 @@ class SurveyorController extends Controller
     ];
 
     try {
-        $result = DB::transaction(function () use (
-            $existingPoint,
-            $pointDataTableName,
-            $shopDataTableName,
-            $pointData,
-            $data,
-            $requestedShopCount
-        ) {
-            if ($existingPoint) {
-                DB::table($pointDataTableName)
-                    ->where('id', $existingPoint->id)
-                    ->update($pointData);
+        DB::beginTransaction();
 
-                $pointId = $existingPoint->id;
-                $message = 'Point data updated successfully';
-            } else {
-                $pointData['created_at'] = now();
-                $pointId = DB::table($pointDataTableName)->insertGetId($pointData);
-                $message = 'Point data saved successfully';
-            }
+        if ($existingPoint) {
+            DB::table($pointDataTableName)
+                ->where('id', $existingPoint->id)
+                ->update($pointData);
 
-            $existingShops = DB::table($shopDataTableName)
+            $pointId = $existingPoint->id;
+            $message = 'Point data updated successfully';
+        } else {
+            $pointData['created_at'] = now();
+            $pointId = DB::table($pointDataTableName)->insertGetId($pointData);
+            $message = 'Point data saved successfully';
+        }
+
+        $existingShopIds = DB::table($shopDataTableName)
+            ->where('point_data_id', $pointId)
+            ->pluck('id')
+            ->toArray();
+
+        $newShopIds = [];
+
+        for ($i = 1; $i <= $requestedShopCount; $i++) {
+            $shopData = [
+                'point_data_id' => $pointId,
+                'shop_floor' => $data["shop_floor_{$i}"] ?? null,
+                'shop_name' => $data["shop_name_{$i}"] ?? null,
+                'shop_owner_name' => $data["shop_owner_name_{$i}"] ?? null,
+                'shop_category' => $data["shop_category_{$i}"] ?? null,
+                'shop_mobile' => $data["shop_mobile_{$i}"] ?? null,
+                'license' => $data["license_{$i}"] ?? null,
+                'number_of_employee' => $data["number_of_employee_{$i}"] ?? null,
+                'updated_at' => now(),
+            ];
+
+            $existingShop = DB::table($shopDataTableName)
                 ->where('point_data_id', $pointId)
-                ->get()
-                ->keyBy(function ($shop) {
-                    return ($shop->shop_floor ?? '') . '|' . ($shop->shop_name ?? '');
-                });
-
-            $newShopIds = [];
-
-            for ($i = 1; $i <= $requestedShopCount; $i++) {
-                $shopData = [
-                    'point_data_id' => $pointId,
-                    'shop_floor' => $data["shop_floor_{$i}"] ?? null,
-                    'shop_name' => $data["shop_name_{$i}"] ?? null,
-                    'shop_owner_name' => $data["shop_owner_name_{$i}"] ?? null,
-                    'shop_category' => $data["shop_category_{$i}"] ?? null,
-                    'shop_mobile' => $data["shop_mobile_{$i}"] ?? null,
-                    'license' => $data["license_{$i}"] ?? null,
-                    'number_of_employee' => $data["number_of_employee_{$i}"] ?? null,
-                    'updated_at' => now(),
-                ];
-
-                $shopKey = ($shopData['shop_floor'] ?? '') . '|' . ($shopData['shop_name'] ?? '');
-
-                if ($existingShops->has($shopKey)) {
-                    $existingShop = $existingShops->get($shopKey);
-
-                    DB::table($shopDataTableName)
-                        ->where('id', $existingShop->id)
-                        ->update($shopData);
-
-                    $newShopIds[] = $existingShop->id;
-                } else {
-                    $shopData['created_at'] = now();
-                    $shopId = DB::table($shopDataTableName)->insertGetId($shopData);
-                    $newShopIds[] = $shopId;
-                }
-            }
-
-            if (!empty($newShopIds)) {
-                DB::table($shopDataTableName)
-                    ->where('point_data_id', $pointId)
-                    ->whereNotIn('id', $newShopIds)
-                    ->delete();
-            } else {
-                DB::table($shopDataTableName)
-                    ->where('point_data_id', $pointId)
-                    ->delete();
-            }
-
-            $updatedPointData = DB::table($pointDataTableName)
-                ->where('id', $pointId)
+                ->where('shop_floor', $shopData['shop_floor'])
+                ->where('shop_name', $shopData['shop_name'])
                 ->first();
 
-            $updatedShops = DB::table($shopDataTableName)
-                ->where('point_data_id', $pointId)
+            if ($existingShop) {
+                DB::table($shopDataTableName)
+                    ->where('id', $existingShop->id)
+                    ->update($shopData);
+
+                $newShopIds[] = $existingShop->id;
+            } else {
+                $shopData['created_at'] = now();
+                $shopId = DB::table($shopDataTableName)->insertGetId($shopData);
+                $newShopIds[] = $shopId;
+            }
+        }
+
+        $shopsToDelete = array_diff($existingShopIds, $newShopIds);
+        if (!empty($shopsToDelete)) {
+            DB::table($shopDataTableName)
+                ->whereIn('id', $shopsToDelete)
+                ->delete();
+        }
+
+        DB::commit();
+
+        $updatedPointData = DB::table($pointDataTableName)
+            ->where('id', $pointId)
+            ->first();
+
+        $updatedShops = DB::table($shopDataTableName)
+            ->where('point_data_id', $pointId)
+            ->get();
+
+        $allPointsData = DB::table($pointDataTableName)
+            ->select('*')
+            ->get();
+
+        $formattedPoints = [];
+        foreach ($allPointsData as $point) {
+            $pointShops = DB::table($shopDataTableName)
+                ->where('point_data_id', $point->id)
                 ->get();
 
-            $allPointsData = DB::table($pointDataTableName)->get();
-
-            $allPointIds = $allPointsData->pluck('id')->toArray();
-
-            $allShops = collect();
-            if (!empty($allPointIds)) {
-                $allShops = DB::table($shopDataTableName)
-                    ->whereIn('point_data_id', $allPointIds)
-                    ->get()
-                    ->groupBy('point_data_id');
-            }
-
-            $formattedPoints = $allPointsData->map(function ($point) use ($allShops) {
-                $pointShops = $allShops->get($point->id, collect());
-
-                return [
-                    'id' => $point->id,
-                    'point_gisid' => $point->point_gisid,
-                    'assessment' => $point->assessment,
-                    'owner_name' => $point->owner_name,
-                    'floor' => $point->floor,
-                    'no_of_shop' => $pointShops->count(),
-                    'bill_usage' => $point->bill_usage,
-                    'water_tax' => $point->water_tax,
-                    'assessment_type' => $point->assessment_type,
-                    'shops_count' => $pointShops->count(),
-                    'shops' => $pointShops->values(),
-                ];
-            })->values();
-
-            return [
-                'message' => $message,
-                'pointData' => $updatedPointData,
-                'shops' => $updatedShops,
-                'pointDatas' => $allPointsData,
-                'points' => $formattedPoints,
+            $formattedPoints[] = [
+                'id' => $point->id,
+                'point_gisid' => $point->point_gisid,
+                'assessment' => $point->assessment,
+                'owner_name' => $point->owner_name,
+                'floor' => $point->floor,
+                'no_of_shop' => $pointShops->count(),
+                'bill_usage' => $point->bill_usage,
+                'water_tax' => $point->water_tax,
+                'assessment_type' => $point->assessment_type,
+                'shops_count' => $pointShops->count(),
+                'shops' => $pointShops
             ];
-        });
+        }
 
         return response()->json([
             'success' => true,
-            'message' => $result['message'],
-            'pointData' => $result['pointData'],
-            'shops' => $result['shops'],
-            'pointDatas' => $result['pointDatas'],
-            'points' => $result['points']
+            'message' => $message,
+            'pointData' => $updatedPointData,
+            'shops' => $updatedShops,
+            'pointDatas' => $allPointsData,
+            'points' => $formattedPoints
         ]);
-    } catch (\Throwable $e) {
+    } catch (\Exception $e) {
+        DB::rollBack();
+
         Log::error('Point data upload error: ' . $e->getMessage(), [
             'trace' => $e->getTraceAsString(),
             'data' => $data

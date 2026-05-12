@@ -15,11 +15,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WardController;
 use App\Models\CorporationUser;
 use Illuminate\Support\Facades\Mail;
-
 use App\Http\Controllers\CorporationAuthController;
 
 // Corporation Auth Routes
-
 Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
@@ -35,16 +33,23 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::middleware('auth:corporation')->group(function () {
         Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
         Route::get('/commissioner/ward/{ward_no}/map', [CommissionerController::class, 'mapView'])->name('ward.map');
+
+        // REMOVED DUPLICATE - keeping only one
         Route::post('/commissioner/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
         Route::get('/commissioner/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+
         Route::post('/commissioner/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
         Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
         Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
-        Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
-        Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+
+        // REMOVED DUPLICATES - these are already defined above
+        // Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
+        // Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -83,20 +88,12 @@ Route::middleware('auth')->group(function () {
     // =============================
     // 📍 TRACKING ROUTES (Add these)
     // =============================
-
-    // Tracking data routes - accessible by authenticated users
     Route::prefix('tracking')->name('tracking.')->group(function () {
-        // Store tracking location (for surveyors)
         Route::post('/store', [TrackingController::class, 'store'])->name('store');
-
-        // Get tracking data for specific user
         Route::get('/data/{userId?}', [TrackingController::class, 'getUserTracking'])->name('data');
-
-        // Get tracking summary for dashboard
         Route::get('/summary', [TrackingController::class, 'getTrackingSummary'])->name('summary');
     });
 
-    // IMPORTANT: Map view route (outside the prefix to avoid duplication)
     Route::get('/admin/tracking/map-view', [TrackingController::class, 'mapView'])->name('tracking.map-view');
 
     // =============================
@@ -120,9 +117,9 @@ Route::middleware('auth')->group(function () {
             Route::post('/wards', [WardController::class, 'store'])->name('admin.wards.store');
             Route::put('/wards/{id}', [WardController::class, 'update'])->name('admin.wards.update');
             Route::delete('/wards/{id}', [WardController::class, 'destroy'])->name('admin.wards.destroy');
-            // Missing Bill Download Route
             Route::get('/wards/{id}/download-missing-bill', [WardController::class, 'downloadMissingBill']);
             Route::get('/wards/{id}/download-polygon', [WardController::class, 'downloadPolygon']);
+
             // User Management Routes
             Route::get('/users', [UserController::class, 'showUsers'])->name('admin.users');
             Route::get('/users/data', [UserController::class, 'index'])->name('admin.users.data');
@@ -138,7 +135,6 @@ Route::middleware('auth')->group(function () {
             Route::put('/teams/{id}', [TeamController::class, 'update'])->name('admin.teams.update');
             Route::delete('/teams/{id}', [TeamController::class, 'destroy'])->name('admin.teams.destroy');
 
-            // Team Members Management
             Route::get('/teams/{team}/available-surveyors', [TeamController::class, 'getAvailableSurveyors'])->name('admin.teams.available-surveyors');
             Route::post('/teams/{team}/add-member', [TeamController::class, 'addMember'])->name('admin.teams.add-member');
             Route::delete('/teams/{team}/remove-member/{user}', [TeamController::class, 'removeMember'])->name('admin.teams.remove-member');
@@ -187,15 +183,12 @@ Route::middleware('auth')->group(function () {
             Route::post('/delete-feature', [SurveyorController::class, 'deleteFeature'])->name('surveyor.delete.feature');
             Route::get('/progress', [SurveyorController::class, 'progress'])->name('surveyor.progress');
 
-
-
             Route::get('/search-ajax', [SurveyorController::class, 'searchPointData'])->name('surveyor.searchpointdata');
             Route::get('/point-data/{data}', [SurveyorController::class, 'getPointData'])->name('surveyor.point.data');
-            Route::post('surveyor/update-point-record', [SurveyorController::class, 'updatePointRecord'])->name('surveyor.updatePointRecord');
-            Route::post('surveyor/add-shop-record', [SurveyorController::class, 'addShopRecord'])->name('surveyor.addShopRecord');
-            Route::post('surveyor/delete-shop-record', [SurveyorController::class, 'deleteShopRecord'])->name('surveyor.deleteShopRecord');
-            Route::post('surveyor/update-point-record', [SurveyorController::class, 'updatePointRecord'])->name('surveyor.updatePointRecord');
-            Route::post('surveyor/bulk-update-points', [SurveyorController::class, 'bulkUpdatePoints'])->name('surveyor.bulkUpdatePoints');
+            Route::post('/update-point-record', [SurveyorController::class, 'updatePointRecord'])->name('surveyor.updatePointRecord');
+            Route::post('/add-shop-record', [SurveyorController::class, 'addShopRecord'])->name('surveyor.addShopRecord');
+            Route::post('/delete-shop-record', [SurveyorController::class, 'deleteShopRecord'])->name('surveyor.deleteShopRecord');
+            Route::post('/bulk-update-points', [SurveyorController::class, 'bulkUpdatePoints'])->name('surveyor.bulkUpdatePoints');
         });
     });
 
@@ -232,10 +225,5 @@ Route::get('/test-mail', function () {
         return 'Error: ' . $e->getMessage();
     }
 });
-
-
-
-
-
 
 Route::get('DC/Dashboard', [DcController::class, 'dashboard'])->name('dc.dashboard');
