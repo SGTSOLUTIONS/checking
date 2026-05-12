@@ -1770,7 +1770,6 @@
             let ward = @json($ward ?? []);
             let mis = @json($misData ?? []);
 
-console.log("mis:", mis);
             let routes = {
                 surveyorPolygonDatasUpload: "{{ route('surveyor.polygon.datas.upload') }}",
                 surveyorPointDataUpload: "{{ route('surveyor.point.data.upload') }}",
@@ -3345,6 +3344,10 @@ console.log("mis:", mis);
                         .val() || '');
                 }
 
+                // Clear previous errors
+                $('.is-invalid').removeClass('is-invalid');
+                $('.error-message').text('');
+
                 $("#pointSubmit").prop("disabled", true).html(
                     '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
 
@@ -3372,17 +3375,45 @@ console.log("mis:", mis);
                         console.log(xhr);
                         let errorMsg =
                             "An error occurred while processing your request. Please try again.";
-                        if (xhr.responseJSON && xhr.responseJSON.msg) {
-                            errorMsg = xhr.responseJSON.msg;
+
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+
+                            // Show flash message
+                            showFlashMessage(errorMsg, "error");
+
+                            // Handle validation errors
+                            if (xhr.responseJSON.errors) {
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    // Add is-invalid class to input
+                                    $(`[name="${key}"]`).addClass("is-invalid");
+
+                                    // Show error in the corresponding _error div
+                                    $(`#${key}_error`).text(value[0]);
+
+                                    // For fields that don't have _error div, create one
+                                    if ($(`#${key}_error`).length === 0) {
+                                        // Try to find parent and add error message
+                                        let inputElement = $(`[name="${key}"]`);
+                                        if (inputElement.length > 0) {
+                                            if (inputElement.next('.error-message')
+                                                .length === 0) {
+                                                inputElement.after(
+                                                    `<div id="${key}_error" class="error-message text-danger"></div>`
+                                                    );
+                                            }
+                                            $(`#${key}_error`).text(value[0]);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            showFlashMessage(errorMsg, "error");
                         }
-                        showFlashMessage(errorMsg, "error");
+
                         $("#pointSubmit").prop("disabled", false);
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            $.each(xhr.responseJSON.errors, function(key, value) {
-                                $("#" + key).addClass("is-invalid");
-                                $("#" + key + "_error").text(value[0]);
-                            });
-                        }
                     },
                     complete: function() {
                         $("#pointSubmit").prop("disabled", false).html(
