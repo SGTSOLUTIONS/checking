@@ -428,7 +428,7 @@
         .search-container {
             position: absolute;
             top: 10px;
-            left: 10px;
+            left: 1100px;
             z-index: 1000;
             background: white;
             border-radius: 8px;
