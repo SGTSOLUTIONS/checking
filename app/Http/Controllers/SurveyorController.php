@@ -1418,9 +1418,11 @@ public function uploadPointData(Request $request)
             'message' => $message,
             'pointData' => $updatedPointData,
             'shops' => $updatedShops,
-            'pointDatas' => $allPointsData,
-            'points' => $formattedPoints
+           'pointDatas' => DB::table($pointDataTableName)->get(),
+                'points' => $this->getPointsData($ward) // You'll need to implement this method
         ]);
+
+
     } catch (\Exception $e) {
         DB::rollBack();
 
