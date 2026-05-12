@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\FetchTallyData;
+use App\Http\Middleware\RedirectIfAuthenticatedCustom;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
           $middleware->alias([
                 'role' => RoleMiddleware::class,
                  'corporation.auth' => \App\Http\Middleware\CorporationAuth::class,
+                 'guest' => RedirectIfAuthenticatedCustom::class,
 
             ]);
     })
