@@ -45,51 +45,200 @@
                                         @endif
                                     </label>
 
+                                    @php
+                                        $fieldValue = $point->$field ?? '';
+                                        $isReadonly = !canEdit($surveyor->name, $point->worker_name);
+                                    @endphp
+
+                                    {{-- Bill Usage Dropdown --}}
                                     @if($field === 'bill_usage')
                                         <select name="{{ $field }}" id="field_{{ $point->id }}_{{ $field }}"
                                                 class="form-control form-control-sm point-field"
                                                 data-point-id="{{ $point->id }}"
                                                 data-field="{{ $field }}"
-                                                {{ !canEdit($surveyor->name, $point->worker_name) ? 'disabled' : '' }}>
+                                                {{ $isReadonly ? 'disabled' : '' }}>
                                             <option value="">Select Usage</option>
-                                            <option value="COMMERCIAL" {{ ($point->$field ?? '') == 'COMMERCIAL' ? 'selected' : '' }}>COMMERCIAL</option>
-                                            <option value="EDUCATIONAL INSTITUTIONS" {{ ($point->$field ?? '') == 'EDUCATIONAL INSTITUTIONS' ? 'selected' : '' }}>EDUCATIONAL INSTITUTIONS</option>
-                                            <option value="GOVERNMENT BUILDING" {{ ($point->$field ?? '') == 'GOVERNMENT BUILDING' ? 'selected' : '' }}>GOVERNMENT BUILDING</option>
-                                            <option value="INDUSTRIAL" {{ ($point->$field ?? '') == 'INDUSTRIAL' ? 'selected' : '' }}>INDUSTRIAL</option>
-                                            <option value="OFFICE / LODGE / THEATER / RESTAURANTS" {{ ($point->$field ?? '') == 'OFFICE / LODGE / THEATER / RESTAURANTS' ? 'selected' : '' }}>OFFICE / LODGE / THEATER / RESTAURANTS</option>
-                                            <option value="RESIDENTIAL" {{ ($point->$field ?? '') == 'RESIDENTIAL' ? 'selected' : '' }}>RESIDENTIAL</option>
-                                            <option value="STAR HOTEL" {{ ($point->$field ?? '') == 'STAR HOTEL' ? 'selected' : '' }}>STAR HOTEL</option>
+                                            <option value="COMMERCIAL" {{ $fieldValue == 'COMMERCIAL' ? 'selected' : '' }}>COMMERCIAL</option>
+                                            <option value="EDUCATIONAL INSTITUTIONS" {{ $fieldValue == 'EDUCATIONAL INSTITUTIONS' ? 'selected' : '' }}>EDUCATIONAL INSTITUTIONS</option>
+                                            <option value="GOVERNMENT BUILDING" {{ $fieldValue == 'GOVERNMENT BUILDING' ? 'selected' : '' }}>GOVERNMENT BUILDING</option>
+                                            <option value="INDUSTRIAL" {{ $fieldValue == 'INDUSTRIAL' ? 'selected' : '' }}>INDUSTRIAL</option>
+                                            <option value="OFFICE / LODGE / THEATER / RESTAURANTS" {{ $fieldValue == 'OFFICE / LODGE / THEATER / RESTAURANTS' ? 'selected' : '' }}>OFFICE / LODGE / THEATER / RESTAURANTS</option>
+                                            <option value="RESIDENTIAL" {{ $fieldValue == 'RESIDENTIAL' ? 'selected' : '' }}>RESIDENTIAL</option>
+                                            <option value="STAR HOTEL" {{ $fieldValue == 'STAR HOTEL' ? 'selected' : '' }}>STAR HOTEL</option>
                                         </select>
+
+                                    {{-- Assessment Type Dropdown --}}
                                     @elseif($field === 'assessment_type')
                                         <select name="{{ $field }}" id="field_{{ $point->id }}_{{ $field }}"
                                                 class="form-control form-control-sm point-field"
                                                 data-point-id="{{ $point->id }}"
                                                 data-field="{{ $field }}"
-                                                {{ !canEdit($surveyor->name, $point->worker_name) ? 'disabled' : '' }}>
-                                            <option value="OLD" {{ ($point->$field ?? '') == 'OLD' ? 'selected' : '' }}>OLD</option>
-                                            <option value="NEW" {{ ($point->$field ?? '') == 'NEW' ? 'selected' : '' }}>NEW</option>
-                                            <option value="OTHER" {{ ($point->$field ?? '') == 'OTHER' ? 'selected' : '' }}>OTHER</option>
-                                            <option value="NO_TAX" {{ ($point->$field ?? '') == 'NO_TAX' ? 'selected' : '' }}>NO TAX</option>
-                                            <option value="VACCAND" {{ ($point->$field ?? '') == 'VACCAND' ? 'selected' : '' }}>VACCAND</option>
+                                                {{ $isReadonly ? 'disabled' : '' }}>
+                                            <option value="OLD" {{ $fieldValue == 'OLD' ? 'selected' : '' }}>OLD</option>
+                                            <option value="NEW" {{ $fieldValue == 'NEW' ? 'selected' : '' }}>NEW</option>
+                                            <option value="OTHER" {{ $fieldValue == 'OTHER' ? 'selected' : '' }}>OTHER</option>
+                                            <option value="NO_TAX" {{ $fieldValue == 'NO_TAX' ? 'selected' : '' }}>NO TAX</option>
+                                            <option value="VACCAND" {{ $fieldValue == 'VACCAND' ? 'selected' : '' }}>VACCAND</option>
                                         </select>
-                                    @elseif(in_array($field, ['no_of_shop', 'floor', 'no_of_persons', 'trade_income']))
+
+                                    {{-- Type Dropdown (if exists) --}}
+                                    @elseif($field === 'type')
+                                        <select name="{{ $field }}" id="field_{{ $point->id }}_{{ $field }}"
+                                                class="form-control form-control-sm point-field"
+                                                data-point-id="{{ $point->id }}"
+                                                data-field="{{ $field }}"
+                                                {{ $isReadonly ? 'disabled' : '' }}>
+                                            <option value="OLD" {{ $fieldValue == 'OLD' ? 'selected' : '' }}>OLD</option>
+                                            <option value="NEW" {{ $fieldValue == 'NEW' ? 'selected' : '' }}>NEW</option>
+                                            <option value="OTHER" {{ $fieldValue == 'OTHER' ? 'selected' : '' }}>OTHER</option>
+                                            <option value="NO_TAX" {{ $fieldValue == 'NO_TAX' ? 'selected' : '' }}>NO TAX</option>
+                                            <option value="VACCAND" {{ $fieldValue == 'VACCAND' ? 'selected' : '' }}>VACCAND</option>
+                                        </select>
+
+                                    {{-- Water Tax Dropdown (example if you have predefined values) --}}
+                                    @elseif($field === 'water_tax')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter water tax number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Old Water Tax --}}
+                                    @elseif($field === 'old_water_tax')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter old water tax number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Professional Tax --}}
+                                    @elseif($field === 'professional_tax')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter professional tax"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- GST --}}
+                                    @elseif($field === 'gst')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter GST number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Trade Income (Number field) --}}
+                                    @elseif($field === 'trade_income')
+                                        <input type="number"
+                                               step="0.01"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter trade income"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Phone Number (with maxlength) --}}
+                                    @elseif($field === 'phone_number')
+                                        <input type="tel"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               maxlength="10"
+                                               placeholder="Enter 10 digit mobile number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Aadhar Number (with maxlength) --}}
+                                    @elseif($field === 'aadhar_no')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               maxlength="12"
+                                               placeholder="Enter 12 digit Aadhar number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Ration Number --}}
+                                    @elseif($field === 'ration_no')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter ration card number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- EB Number --}}
+                                    @elseif($field === 'eb')
+                                        <input type="text"
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               value="{{ $fieldValue }}"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               placeholder="Enter EB number"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Number fields (no_of_shop, floor, no_of_persons) --}}
+                                    @elseif(in_array($field, ['no_of_shop', 'floor', 'no_of_persons']))
                                         <input type="number"
                                                name="{{ $field }}"
                                                id="field_{{ $point->id }}_{{ $field }}"
                                                class="form-control form-control-sm point-field"
-                                               value="{{ $point->$field ?? '' }}"
+                                               value="{{ $fieldValue }}"
                                                data-point-id="{{ $point->id }}"
                                                data-field="{{ $field }}"
-                                               {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                               min="0"
+                                               {{ $isReadonly ? 'readonly' : '' }}>
+
+                                    {{-- Textarea for remarks fields --}}
+                                    @elseif(in_array($field, ['remarks', 'qc_remarks', 'establishment_remarks']))
+                                        <textarea
+                                               name="{{ $field }}"
+                                               id="field_{{ $point->id }}_{{ $field }}"
+                                               class="form-control form-control-sm point-field"
+                                               data-point-id="{{ $point->id }}"
+                                               data-field="{{ $field }}"
+                                               rows="2"
+                                               {{ $isReadonly ? 'readonly' : '' }}>{{ $fieldValue }}</textarea>
+
+                                    {{-- Default text input --}}
                                     @else
                                         <input type="text"
                                                name="{{ $field }}"
                                                id="field_{{ $point->id }}_{{ $field }}"
                                                class="form-control form-control-sm point-field"
-                                               value="{{ $point->$field ?? '' }}"
+                                               value="{{ $fieldValue }}"
                                                data-point-id="{{ $point->id }}"
                                                data-field="{{ $field }}"
-                                               {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                               {{ $isReadonly ? 'readonly' : '' }}>
                                     @endif
 
                                     <div class="invalid-feedback"></div>
@@ -166,18 +315,31 @@
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label">Category</label>
-                                                <input type="text" class="form-control form-control-sm shop-field"
-                                                       value="{{ $shop->shop_category ?? '' }}"
-                                                       data-shop-id="{{ $shop->id }}"
-                                                       data-field="shop_category"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                <select class="form-control form-control-sm shop-field"
+                                                        data-shop-id="{{ $shop->id }}"
+                                                        data-field="shop_category"
+                                                        {{ !canEdit($surveyor->name, $point->worker_name) ? 'disabled' : '' }}>
+                                                    <option value="">Select Category</option>
+                                                    <option value="Grocery" {{ ($shop->shop_category ?? '') == 'Grocery' ? 'selected' : '' }}>Grocery</option>
+                                                    <option value="Clothing" {{ ($shop->shop_category ?? '') == 'Clothing' ? 'selected' : '' }}>Clothing</option>
+                                                    <option value="Electronics" {{ ($shop->shop_category ?? '') == 'Electronics' ? 'selected' : '' }}>Electronics</option>
+                                                    <option value="Restaurant" {{ ($shop->shop_category ?? '') == 'Restaurant' ? 'selected' : '' }}>Restaurant</option>
+                                                    <option value="Pharmacy" {{ ($shop->shop_category ?? '') == 'Pharmacy' ? 'selected' : '' }}>Pharmacy</option>
+                                                    <option value="Stationery" {{ ($shop->shop_category ?? '') == 'Stationery' ? 'selected' : '' }}>Stationery</option>
+                                                    <option value="Hardware" {{ ($shop->shop_category ?? '') == 'Hardware' ? 'selected' : '' }}>Hardware</option>
+                                                    <option value="Furniture" {{ ($shop->shop_category ?? '') == 'Furniture' ? 'selected' : '' }}>Furniture</option>
+                                                    <option value="Beauty Parlor" {{ ($shop->shop_category ?? '') == 'Beauty Parlor' ? 'selected' : '' }}>Beauty Parlor</option>
+                                                    <option value="Salon" {{ ($shop->shop_category ?? '') == 'Salon' ? 'selected' : '' }}>Salon</option>
+                                                    <option value="Other" {{ ($shop->shop_category ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                                                </select>
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label">Mobile</label>
-                                                <input type="text" class="form-control form-control-sm shop-field"
+                                                <input type="tel" class="form-control form-control-sm shop-field"
                                                        value="{{ $shop->shop_mobile ?? '' }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="shop_mobile"
+                                                       maxlength="10"
                                                        {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-3 mb-2">
@@ -194,6 +356,7 @@
                                                        value="{{ $shop->number_of_employee ?? 0 }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="number_of_employee"
+                                                       min="0"
                                                        {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
                                             </div>
                                         </div>
@@ -299,7 +462,6 @@
                     },
                     error: function(xhr) {
                         if (xhr.status === 422 && xhr.responseJSON) {
-                            // Handle validation errors
                             var errors = xhr.responseJSON;
                             if (errors.error) {
                                 showMessage('error', errors.error);
