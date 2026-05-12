@@ -987,7 +987,7 @@ class SurveyorController extends Controller
             ], 500);
         }
     }
-   public function uploadPointData(Request $request)
+  public function uploadPointData(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'type' => 'required|in:OLD,NEW,OTHER,NO_TAX,VACCAND',
@@ -1096,7 +1096,7 @@ class SurveyorController extends Controller
         ], 422);
     }
 
-    // Shop count validation
+    // Shop count validation - FIXED: Using number_shop instead of no_of_shop
     if ($existingPoint) {
         $shopDataCount = DB::table($shopDataTableName)
             ->where('point_data_id', $existingPoint->id)
@@ -1158,22 +1158,12 @@ class SurveyorController extends Controller
                 ->where('gisid', $request->point_gisid)
                 ->first();
 
-            if ($checkExist) {
+            if ($checkExist || ($checkBuildingExist && $checkBuildingExist->assessment)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation errors',
                     'errors' => [
-                        'assessment' => ['This assessment already exists in MIS data. This is not new data.']
-                    ]
-                ], 422);
-            }
-
-            if ($checkBuildingExist && $checkBuildingExist->assessment) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation errors',
-                    'errors' => [
-                        'assessment' => ['This assessment already exists in building data. This is not new data.']
+                        'assessment' => ['This assessment already exists. This is not new data.']
                     ]
                 ], 422);
             }
