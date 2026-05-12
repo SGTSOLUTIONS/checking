@@ -122,7 +122,7 @@
                                             ({{ $data['areaVariationPercentage'] ?? 0 }}%)
                                             @endif
                                         </span>
-                                    <\/td>
+                                    </td>
                                     <td>
                                         <span class="badge {{ ($data['usageVariationCount'] ?? 0) > 0 ? 'bg-info' : 'bg-success' }}">
                                             {{ $data['usageVariationCount'] ?? 0 }}
@@ -130,18 +130,18 @@
                                             ({{ $data['usageVariationPercentage'] ?? 0 }}%)
                                             @endif
                                         </span>
-                                    <\/td>
+                                    </td>
                                     <td>
                                         <a href="{{ route('corporation.ward.map', $data['ward_no']) }}"
                                            class="btn btn-sm btn-primary">
                                             <i class="fas fa-map-marked-alt"></i> View Map
                                         </a>
-                                    <\/td>
-                                \n
+                                    </td>
+                                </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">No ward data available<\/td>
-                                \n
+                                    <td colspan="7" class="text-center text-muted">No ward data available</td>
+                                </tr>
                                 @endforelse
                             </tbody>
                         </table>
@@ -164,7 +164,6 @@
     const totalUsageVariation = {{ $total_usage_variation ?? 0 }};
 
     // Calculate both variations (buildings that have BOTH area and usage variation)
-    // You can adjust this logic based on your actual data
     function calculateBothVariations() {
         let bothCount = 0;
         if (chartData.length > 0) {
@@ -181,201 +180,197 @@
     const onlyUsageVariation = Math.max(0, totalUsageVariation - bothVariations);
     const noVariation = Math.max(0, totalBuildings - (onlyAreaVariation + onlyUsageVariation + bothVariations));
 
-    // Bar Chart
-    const ctx1 = document.getElementById('areaVariationChart').getContext('2d');
-    new Chart(ctx1, {
-        type: 'bar',
-        data: {
-            labels: chartData.map(item => `Ward ${item.ward}`),
-            datasets: [
-                {
-                    label: 'Area Variation',
-                    data: chartData.map(item => item.area_variation || 0),
-                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                    borderColor: 'rgba(255, 193, 7, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5
+    // Only create charts if there's data and DOM elements exist
+    if (document.getElementById('areaVariationChart')) {
+        // Bar Chart
+        const ctx1 = document.getElementById('areaVariationChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: chartData.map(item => `Ward ${item.ward}`),
+                datasets: [
+                    {
+                        label: 'Area Variation',
+                        data: chartData.map(item => item.area_variation || 0),
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    },
+                    {
+                        label: 'Usage Variation',
+                        data: chartData.map(item => item.usage_variation || 0),
+                        backgroundColor: 'rgba(23, 162, 184, 0.7)',
+                        borderColor: 'rgba(23, 162, 184, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                let value = context.raw || 0;
+                                let total = chartData[context.dataIndex]?.total_buildings || 0;
+                                let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percentage}% of ward buildings)`;
+                            }
+                        }
+                    }
                 },
-                {
-                    label: 'Usage Variation',
-                    data: chartData.map(item => item.usage_variation || 0),
-                    backgroundColor: 'rgba(23, 162, 184, 0.7)',
-                    borderColor: 'rgba(23, 162, 184, 1)',
-                    borderWidth: 1,
-                    borderRadius: 5
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            let value = context.raw || 0;
-                            let total = chartData[context.dataIndex]?.total_buildings || 0;
-                            let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percentage}% of ward buildings)`;
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Buildings',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Wards',
+                            font: { weight: 'bold' }
+                        },
+                        ticks: {
+                            rotate: 45,
+                            autoSkip: true,
+                            maxRotation: 45,
+                            minRotation: 45
                         }
                     }
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Buildings',
-                        font: { weight: 'bold' }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Wards',
-                        font: { weight: 'bold' }
-                    },
-                    ticks: {
-                        rotate: 45,
-                        autoSkip: true,
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                }
             }
-        }
-    });
+        });
+    }
 
     // 3D Pie Chart using ECharts
-    const pieChart3D = echarts.init(document.getElementById('pieChart3D'));
+    if (document.getElementById('pieChart3D')) {
+        const pieChart3D = echarts.init(document.getElementById('pieChart3D'));
 
-    const pieData = [
-        { name: 'No Variation', value: noVariation, itemStyle: { color: '#28a745' } },
-        { name: 'Only Area Variation', value: onlyAreaVariation, itemStyle: { color: '#ffc107' } },
-        { name: 'Only Usage Variation', value: onlyUsageVariation, itemStyle: { color: '#17a2b8' } },
-        { name: 'Both Variations', value: bothVariations, itemStyle: { color: '#dc3545' } }
-    ].filter(item => item.value > 0); // Remove zero values
+        const pieData = [
+            { name: 'No Variation', value: noVariation, itemStyle: { color: '#28a745' } },
+            { name: 'Only Area Variation', value: onlyAreaVariation, itemStyle: { color: '#ffc107' } },
+            { name: 'Only Usage Variation', value: onlyUsageVariation, itemStyle: { color: '#17a2b8' } },
+            { name: 'Both Variations', value: bothVariations, itemStyle: { color: '#dc3545' } }
+        ].filter(item => item.value > 0);
 
-    const option = {
-        tooltip: {
-            trigger: 'item',
-            formatter: function(params) {
-                const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
-                return `<strong>${params.name}</strong><br/>
-                        Count: ${params.value} buildings<br/>
-                        Percentage: ${percentage}%`;
+        const option = {
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                    return `<strong>${params.name}</strong><br/>
+                            Count: ${params.value} buildings<br/>
+                            Percentage: ${percentage}%`;
+                },
+                backgroundColor: 'rgba(0,0,0,0.8)',
+                borderColor: '#fff',
+                borderWidth: 1,
+                textStyle: { color: '#fff', fontSize: 12 }
             },
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            borderColor: '#fff',
-            borderWidth: 1,
-            textStyle: { color: '#fff', fontSize: 12 }
-        },
-        legend: {
-            orient: 'vertical',
-            left: 'left',
-            data: pieData.map(item => item.name),
-            textStyle: { color: '#333', fontSize: 11 },
-            formatter: function(name) {
-                const item = pieData.find(d => d.name === name);
-                const percentage = ((item.value / totalBuildings) * 100).toFixed(1);
-                return `${name}: ${percentage}%`;
-            }
-        },
-        series: [
-            {
-                name: 'Variation Summary',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                center: ['50%', '50%'],
-                avoidLabelOverlap: false,
-                itemStyle: {
-                    borderRadius: 10,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                label: {
-                    show: true,
-                    formatter: function(params) {
-                        const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
-                        return `${params.name}\n${percentage}%`;
-                    },
-                    fontSize: 11,
-                    fontWeight: 'bold',
-                    position: 'outside'
-                },
-                emphasis: {
-                    scale: true,
+            legend: {
+                orient: 'vertical',
+                left: 'left',
+                data: pieData.map(item => item.name),
+                textStyle: { color: '#333', fontSize: 11 },
+                formatter: function(name) {
+                    const item = pieData.find(d => d.name === name);
+                    if (item && totalBuildings > 0) {
+                        const percentage = ((item.value / totalBuildings) * 100).toFixed(1);
+                        return `${name}: ${percentage}%`;
+                    }
+                    return name;
+                }
+            },
+            series: [
+                {
+                    name: 'Variation Summary',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '50%'],
+                    avoidLabelOverlap: false,
                     label: {
                         show: true,
-                        fontSize: 14,
-                        fontWeight: 'bold'
-                    }
+                        formatter: function(params) {
+                            if (totalBuildings > 0) {
+                                const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                                return `${params.name}\n${percentage}%`;
+                            }
+                            return params.name;
+                        },
+                        fontSize: 11,
+                        fontWeight: 'bold',
+                        position: 'outside'
+                    },
+                    emphasis: {
+                        scale: true,
+                        label: {
+                            show: true,
+                            fontSize: 14,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    data: pieData,
+                    animation: true,
+                    animationDuration: 1000,
+                    animationEasing: 'cubicOut',
+                    itemStyle: {
+                        borderRadius: 8,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        shadowBlur: 10,
+                        shadowOffsetX: 3,
+                        shadowOffsetY: 3,
+                        shadowColor: 'rgba(0, 0, 0, 0.3)'
+                    },
+                    hoverAnimation: true,
+                    hoverOffset: 10
+                }
+            ],
+            title: {
+                show: true,
+                text: `Total Buildings: ${totalBuildings}`,
+                subtext: 'Click on segments for details',
+                left: 'center',
+                top: 0,
+                textStyle: {
+                    fontSize: 12,
+                    fontWeight: 'normal',
+                    color: '#666'
                 },
-                data: pieData,
-                // 3D effect
-                animation: true,
-                animationDuration: 1000,
-                animationEasing: 'cubicOut',
-                // Rose type for 3D effect
-                roseType: false,
-                // Add shadow for 3D effect
-                itemStyle: {
-                    borderRadius: 8,
-                    borderColor: '#fff',
-                    borderWidth: 2,
-                    shadowBlur: 10,
-                    shadowOffsetX: 3,
-                    shadowOffsetY: 3,
-                    shadowColor: 'rgba(0, 0, 0, 0.3)'
-                },
-                // Explode effect on hover
-                hoverAnimation: true,
-                hoverOffset: 10
-            }
-        ],
-        // Add title with total
-        title: {
-            show: true,
-            text: `Total Buildings: ${totalBuildings}`,
-            subtext: 'Click on segments for details',
-            left: 'center',
-            top: 0,
-            textStyle: {
-                fontSize: 12,
-                fontWeight: 'normal',
-                color: '#666'
+                subtextStyle: {
+                    fontSize: 10,
+                    color: '#999'
+                }
             },
-            subtextStyle: {
-                fontSize: 10,
-                color: '#999'
+            backgroundColor: 'transparent'
+        };
+
+        pieChart3D.setOption(option);
+
+        // Make chart responsive
+        window.addEventListener('resize', function() {
+            pieChart3D.resize();
+        });
+
+        // Add click event to show detailed alert
+        pieChart3D.on('click', function(params) {
+            if (params.componentType === 'series' && totalBuildings > 0) {
+                const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                alert(`${params.name}\nCount: ${params.value} buildings\nPercentage: ${percentage}% of total buildings`);
             }
-        },
-        grid: {
-            containLabel: true
-        },
-        // Add background color for 3D effect
-        backgroundColor: 'transparent'
-    };
-
-    pieChart3D.setOption(option);
-
-    // Make chart responsive
-    window.addEventListener('resize', function() {
-        pieChart3D.resize();
-    });
-
-    // Add click event to show detailed alert
-    pieChart3D.on('click', function(params) {
-        if (params.componentType === 'series') {
-            const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
-            alert(`${params.name}\nCount: ${params.value} buildings\nPercentage: ${percentage}% of total buildings`);
-        }
-    });
+        });
+    }
 </script>
 
 <style>
