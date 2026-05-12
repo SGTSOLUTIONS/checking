@@ -17,9 +17,25 @@ class CorporationAuthController extends Controller
     public function showLogin()
     {
 
-      // Check regular users (default 'web' guard)
+        // Check regular users (web guard)
         if (Auth::guard('web')->check()) {
-            return redirect()->route('admin.dashboard');
+
+            $user = Auth::guard('web')->user();
+
+            // Admin
+            if ($user->role == 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+
+            // Team Leader
+            if ($user->role == 'team_leader') {
+                return redirect()->route('teamleader.dashboard');
+            }
+
+            // Surveyor
+            if ($user->role == 'surveyor') {
+                return redirect()->route('surveyor.dashboard');
+            }
         }
 
         // Check corporation guard
@@ -27,8 +43,12 @@ class CorporationAuthController extends Controller
             return redirect()->route('corporation.dashboard');
         }
 
-    return view('corporation-auth.login');
+        return view('auth.login');
 
+        // Check corporation guard
+
+
+        return view('corporation-auth.login');
     }
 
     public function login(Request $request)
@@ -170,7 +190,7 @@ class CorporationAuthController extends Controller
                 'resetUrl' => $resetUrl
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                        ->subject('Password Reset Request - Corporation Portal');
+                    ->subject('Password Reset Request - Corporation Portal');
             });
 
             return response()->json([

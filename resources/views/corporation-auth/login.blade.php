@@ -5,8 +5,8 @@
 @section('form-content')
 <div id="loginFormContainer">
     <div class="mb-4">
-        <h4 class="fw-bold" style="color: #32012F;">Welcome to Municipal e-Services</h4>
-        <p class="text-secondary small">Sign in to access property tax, licenses, complaints, and more</p>
+        <h4 class="fw-bold" style="color: #32012F;">Welcome to SRIS</h4>
+        {{-- <p class="text-secondary small">Sign in to access property tax, licenses, complaints, and more</p> --}}
     </div>
 
     <form id="loginForm" method="POST" action="{{ route('corporation.login.submit') }}">
