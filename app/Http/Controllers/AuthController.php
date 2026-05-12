@@ -18,25 +18,9 @@ class AuthController extends Controller
     /** Show Login Page */
     public function showLogin()
     {
-        // Check regular users (web guard)
+        // Check regular users (default 'web' guard)
         if (Auth::guard('web')->check()) {
-
-            $user = Auth::guard('web')->user();
-
-            // Admin
-            if ($user->role == 'admin') {
-                return redirect()->route('admin.dashboard');
-            }
-
-            // Team Leader
-            if ($user->role == 'team_leader') {
-                return redirect()->route('teamleader.dashboard');
-            }
-
-            // Surveyor
-            if ($user->role == 'surveyor') {
-                return redirect()->route('surveyor.dashboard');
-            }
+            return redirect()->route('admin.dashboard');
         }
 
         // Check corporation guard
