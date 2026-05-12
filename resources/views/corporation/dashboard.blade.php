@@ -33,7 +33,7 @@
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Total Buildings</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_buildings }}</h2>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_buildings ?? 0 }}</h2>
                         <small class="text-success"><i class="fas fa-building"></i> Across all wards</small>
                     </div>
                     <div class="stat-icon"><i class="fas fa-building"></i></div>
@@ -43,9 +43,9 @@
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Area Variation</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_area_variation }}</h2>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_area_variation ?? 0 }}</h2>
                         <small class="text-warning">
-                            <i class="fas fa-chart-line"></i> {{ $area_variation_percentage }}% of buildings
+                            <i class="fas fa-chart-line"></i> {{ $area_variation_percentage ?? 0 }}% of buildings
                         </small>
                     </div>
                     <div class="stat-icon" style="background: #fff3cd;"><i class="fas fa-arrows-alt" style="color:#ffc107;"></i></div>
@@ -55,9 +55,9 @@
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Usage Variation</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_usage_variation }}</h2>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $total_usage_variation ?? 0 }}</h2>
                         <small class="text-info">
-                            <i class="fas fa-exchange-alt"></i> {{ $usage_variation_percentage }}% of buildings
+                            <i class="fas fa-exchange-alt"></i> {{ $usage_variation_percentage ?? 0 }}% of buildings
                         </small>
                     </div>
                     <div class="stat-icon" style="background: #d1ecf1;"><i class="fas fa-building" style="color:#17a2b8;"></i></div>
@@ -67,22 +67,22 @@
 
         <!-- Charts Row -->
         <div class="row g-4 mb-4">
-            <div class="col-md-6">
+            <div class="col-md-7">
                 <div class="stat-card p-3">
                     <h5 class="fw-bold mb-3">
                         <i class="fas fa-chart-bar me-2" style="color:#1679AB;"></i>
-                        Ward-wise Area Variation
+                        Ward-wise Area & Usage Variation
                     </h5>
-                    <canvas id="areaVariationChart" height="250"></canvas>
+                    <canvas id="areaVariationChart" height="280"></canvas>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <div class="stat-card p-3">
                     <h5 class="fw-bold mb-3">
                         <i class="fas fa-chart-pie me-2" style="color:#1679AB;"></i>
-                        Overall Variation Summary
+                        Overall Variation Summary (3D)
                     </h5>
-                    <canvas id="summaryChart" height="250"></canvas>
+                    <div id="pieChart3D" style="height: 320px; width: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -116,32 +116,32 @@
                                     <td>{{ $data['buildingCount'] }}</td>
                                     <td>{{ $data['surveyedBuildingCount'] }}</td>
                                     <td>
-                                        <span class="badge {{ $data['areaVariationCount'] > 0 ? 'bg-warning' : 'bg-success' }}">
-                                            {{ $data['areaVariationCount'] }}
-                                            @if($data['buildingCount'] > 0)
-                                            ({{ $data['areaVariationPercentage'] }}%)
+                                        <span class="badge {{ ($data['areaVariationCount'] ?? 0) > 0 ? 'bg-warning' : 'bg-success' }}">
+                                            {{ $data['areaVariationCount'] ?? 0 }}
+                                            @if(($data['buildingCount'] ?? 0) > 0)
+                                            ({{ $data['areaVariationPercentage'] ?? 0 }}%)
                                             @endif
                                         </span>
-                                    </td>
+                                    <\/td>
                                     <td>
-                                        <span class="badge {{ $data['usageVariationCount'] > 0 ? 'bg-info' : 'bg-success' }}">
-                                            {{ $data['usageVariationCount'] }}
-                                            @if($data['buildingCount'] > 0)
-                                            ({{ $data['usageVariationPercentage'] }}%)
+                                        <span class="badge {{ ($data['usageVariationCount'] ?? 0) > 0 ? 'bg-info' : 'bg-success' }}">
+                                            {{ $data['usageVariationCount'] ?? 0 }}
+                                            @if(($data['buildingCount'] ?? 0) > 0)
+                                            ({{ $data['usageVariationPercentage'] ?? 0 }}%)
                                             @endif
                                         </span>
-                                    </td>
+                                    <\/td>
                                     <td>
                                         <a href="{{ route('corporation.ward.map', $data['ward_no']) }}"
                                            class="btn btn-sm btn-primary">
                                             <i class="fas fa-map-marked-alt"></i> View Map
                                         </a>
-                                    </td>
-                                </tr>
+                                    <\/td>
+                                \n
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">No ward data available</td>
-                                </tr>
+                                    <td colspan="7" class="text-center text-muted">No ward data available<\/td>
+                                \n
                                 @endforelse
                             </tbody>
                         </table>
@@ -155,20 +155,42 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
     // Chart data from PHP
-    const chartData = {!! $chartData !!};
+    const chartData = @json($chartData ?? []);
+    const totalBuildings = {{ $total_buildings ?? 0 }};
+    const totalAreaVariation = {{ $total_area_variation ?? 0 }};
+    const totalUsageVariation = {{ $total_usage_variation ?? 0 }};
 
-    // Area Variation Bar Chart
+    // Calculate both variations (buildings that have BOTH area and usage variation)
+    // You can adjust this logic based on your actual data
+    function calculateBothVariations() {
+        let bothCount = 0;
+        if (chartData.length > 0) {
+            chartData.forEach(item => {
+                // Buildings that have both variations (estimated minimum)
+                bothCount += Math.min(item.area_variation || 0, item.usage_variation || 0);
+            });
+        }
+        return bothCount;
+    }
+
+    const bothVariations = calculateBothVariations();
+    const onlyAreaVariation = Math.max(0, totalAreaVariation - bothVariations);
+    const onlyUsageVariation = Math.max(0, totalUsageVariation - bothVariations);
+    const noVariation = Math.max(0, totalBuildings - (onlyAreaVariation + onlyUsageVariation + bothVariations));
+
+    // Bar Chart
     const ctx1 = document.getElementById('areaVariationChart').getContext('2d');
     new Chart(ctx1, {
         type: 'bar',
         data: {
-            labels: chartData.map(item => item.ward),
+            labels: chartData.map(item => `Ward ${item.ward}`),
             datasets: [
                 {
                     label: 'Area Variation',
-                    data: chartData.map(item => item.area_variation),
+                    data: chartData.map(item => item.area_variation || 0),
                     backgroundColor: 'rgba(255, 193, 7, 0.7)',
                     borderColor: 'rgba(255, 193, 7, 1)',
                     borderWidth: 1,
@@ -176,7 +198,7 @@
                 },
                 {
                     label: 'Usage Variation',
-                    data: chartData.map(item => item.usage_variation),
+                    data: chartData.map(item => item.usage_variation || 0),
                     backgroundColor: 'rgba(23, 162, 184, 0.7)',
                     borderColor: 'rgba(23, 162, 184, 1)',
                     borderWidth: 1,
@@ -196,9 +218,9 @@
                         label: function(context) {
                             let label = context.dataset.label || '';
                             let value = context.raw || 0;
-                            let total = chartData[context.dataIndex].total_buildings;
+                            let total = chartData[context.dataIndex]?.total_buildings || 0;
                             let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percentage}% of total buildings)`;
+                            return `${label}: ${value} (${percentage}% of ward buildings)`;
                         }
                     }
                 }
@@ -209,18 +231,14 @@
                     title: {
                         display: true,
                         text: 'Number of Buildings',
-                        font: {
-                            weight: 'bold'
-                        }
+                        font: { weight: 'bold' }
                     }
                 },
                 x: {
                     title: {
                         display: true,
                         text: 'Wards',
-                        font: {
-                            weight: 'bold'
-                        }
+                        font: { weight: 'bold' }
                     },
                     ticks: {
                         rotate: 45,
@@ -233,62 +251,129 @@
         }
     });
 
-    // Summary Pie Chart
-    const totalAreaVariation = {{ $total_area_variation }};
-    const totalUsageVariation = {{ $total_usage_variation }};
-    const totalBuildings = {{ $total_buildings }};
-    const noVariation = totalBuildings - (totalAreaVariation + totalUsageVariation - getBothVariationCount());
+    // 3D Pie Chart using ECharts
+    const pieChart3D = echarts.init(document.getElementById('pieChart3D'));
 
-    function getBothVariationCount() {
-        // Calculate buildings with both variations
-        let bothCount = 0;
-        chartData.forEach(item => {
-            // Buildings with both variations (estimated)
-            bothCount += Math.min(item.area_variation, item.usage_variation);
-        });
-        return bothCount;
-    }
+    const pieData = [
+        { name: 'No Variation', value: noVariation, itemStyle: { color: '#28a745' } },
+        { name: 'Only Area Variation', value: onlyAreaVariation, itemStyle: { color: '#ffc107' } },
+        { name: 'Only Usage Variation', value: onlyUsageVariation, itemStyle: { color: '#17a2b8' } },
+        { name: 'Both Variations', value: bothVariations, itemStyle: { color: '#dc3545' } }
+    ].filter(item => item.value > 0); // Remove zero values
 
-    const bothVariation = getBothVariationCount();
-    const onlyAreaVariation = totalAreaVariation - bothVariation;
-    const onlyUsageVariation = totalUsageVariation - bothVariation;
-    const noVariationCount = totalBuildings - (onlyAreaVariation + onlyUsageVariation + bothVariation);
-
-    const ctx2 = document.getElementById('summaryChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'pie',
-        data: {
-            labels: ['No Variation', 'Only Area Variation', 'Only Usage Variation', 'Both Variations'],
-            datasets: [{
-                data: [noVariationCount, onlyAreaVariation, onlyUsageVariation, bothVariation],
-                backgroundColor: [
-                    '#28a745',
-                    '#ffc107',
-                    '#17a2b8',
-                    '#dc3545'
-                ],
-                borderColor: '#fff',
-                borderWidth: 2
-            }]
+    const option = {
+        tooltip: {
+            trigger: 'item',
+            formatter: function(params) {
+                const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                return `<strong>${params.name}</strong><br/>
+                        Count: ${params.value} buildings<br/>
+                        Percentage: ${percentage}%`;
+            },
+            backgroundColor: 'rgba(0,0,0,0.8)',
+            borderColor: '#fff',
+            borderWidth: 1,
+            textStyle: { color: '#fff', fontSize: 12 }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            let value = context.raw || 0;
-                            let percentage = totalBuildings > 0 ? ((value / totalBuildings) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
+        legend: {
+            orient: 'vertical',
+            left: 'left',
+            data: pieData.map(item => item.name),
+            textStyle: { color: '#333', fontSize: 11 },
+            formatter: function(name) {
+                const item = pieData.find(d => d.name === name);
+                const percentage = ((item.value / totalBuildings) * 100).toFixed(1);
+                return `${name}: ${percentage}%`;
             }
+        },
+        series: [
+            {
+                name: 'Variation Summary',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['50%', '50%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                },
+                label: {
+                    show: true,
+                    formatter: function(params) {
+                        const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+                        return `${params.name}\n${percentage}%`;
+                    },
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    position: 'outside'
+                },
+                emphasis: {
+                    scale: true,
+                    label: {
+                        show: true,
+                        fontSize: 14,
+                        fontWeight: 'bold'
+                    }
+                },
+                data: pieData,
+                // 3D effect
+                animation: true,
+                animationDuration: 1000,
+                animationEasing: 'cubicOut',
+                // Rose type for 3D effect
+                roseType: false,
+                // Add shadow for 3D effect
+                itemStyle: {
+                    borderRadius: 8,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    shadowBlur: 10,
+                    shadowOffsetX: 3,
+                    shadowOffsetY: 3,
+                    shadowColor: 'rgba(0, 0, 0, 0.3)'
+                },
+                // Explode effect on hover
+                hoverAnimation: true,
+                hoverOffset: 10
+            }
+        ],
+        // Add title with total
+        title: {
+            show: true,
+            text: `Total Buildings: ${totalBuildings}`,
+            subtext: 'Click on segments for details',
+            left: 'center',
+            top: 0,
+            textStyle: {
+                fontSize: 12,
+                fontWeight: 'normal',
+                color: '#666'
+            },
+            subtextStyle: {
+                fontSize: 10,
+                color: '#999'
+            }
+        },
+        grid: {
+            containLabel: true
+        },
+        // Add background color for 3D effect
+        backgroundColor: 'transparent'
+    };
+
+    pieChart3D.setOption(option);
+
+    // Make chart responsive
+    window.addEventListener('resize', function() {
+        pieChart3D.resize();
+    });
+
+    // Add click event to show detailed alert
+    pieChart3D.on('click', function(params) {
+        if (params.componentType === 'series') {
+            const percentage = ((params.value / totalBuildings) * 100).toFixed(1);
+            alert(`${params.name}\nCount: ${params.value} buildings\nPercentage: ${percentage}% of total buildings`);
         }
     });
 </script>
@@ -328,9 +413,19 @@
         padding: 5px 10px;
     }
 
+    /* 3D Pie Chart container styles */
+    #pieChart3D {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 10px;
+    }
+
     @media (max-width: 768px) {
         .stat-card {
             margin-bottom: 15px;
+        }
+        .col-md-5, .col-md-7 {
+            margin-bottom: 20px;
         }
     }
 </style>
