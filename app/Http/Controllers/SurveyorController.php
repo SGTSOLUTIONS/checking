@@ -987,7 +987,7 @@ class SurveyorController extends Controller
             ], 500);
         }
     }
-  public function uploadPointData(Request $request)
+ public function uploadPointData(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'type' => 'required|in:OLD,NEW,OTHER,NO_TAX,VACCAND',
@@ -996,8 +996,8 @@ class SurveyorController extends Controller
         'old_assessment' => 'nullable|string|max:100',
         'owner_name' => 'required|string|max:255',
         'present_owner_name' => 'nullable|string|max:255',
-        'no_of_shop' => 'required|integer|min:0',
-        'floor' => 'required|integer|min:0',
+        'no_of_shop' => 'required|integer|min:0',  // Shops in this point (from frontend)
+        'floor' => 'required|integer|min:0',       // Floor number for this point
         'old_door_no' => 'nullable|string|max:50',
         'no_of_persons' => 'nullable|integer|min:0',
         'new_door_no' => 'nullable|string|max:50',
@@ -1017,7 +1017,6 @@ class SurveyorController extends Controller
         'qc_remarks' => 'nullable|string|max:500',
         'establishment_remarks' => 'nullable|string|max:500',
         'remarks' => 'nullable|string|max:500',
-        'total_shops' => 'required|integer|min:0',
     ]);
 
     if ($validator->fails()) {
@@ -1059,7 +1058,7 @@ class SurveyorController extends Controller
         ->where('point_gisid', $data['point_gisid'])
         ->first();
 
-    // Find the building_data_id from polygon data
+    // Find the building data from polygon data
     $buildingData = DB::table($polygonDataTableName)
         ->where('gisid', $data['point_gisid'])
         ->first();
@@ -1085,7 +1084,7 @@ class SurveyorController extends Controller
         }
     }
 
-    // Building floor check
+    // Building floor check - using number_floor from building data
     if ($data['floor'] > $buildingData->number_floor) {
         return response()->json([
             'success' => false,
@@ -1096,7 +1095,7 @@ class SurveyorController extends Controller
         ], 422);
     }
 
-    // Shop count validation - FIXED: Using number_shop instead of no_of_shop
+    // Shop count validation - using number_shop from building data
     if ($existingPoint) {
         $shopDataCount = DB::table($shopDataTableName)
             ->where('point_data_id', $existingPoint->id)
@@ -1108,7 +1107,7 @@ class SurveyorController extends Controller
                 'success' => false,
                 'message' => 'Validation errors',
                 'errors' => [
-                    'no_of_shop' => ["Only $remaining shops can be added"]
+                    'no_of_shop' => ["Only $remaining shops can be added. Building has {$buildingData->number_shop} total shops."]
                 ]
             ], 422);
         }
@@ -1118,7 +1117,7 @@ class SurveyorController extends Controller
                 'success' => false,
                 'message' => 'Validation errors',
                 'errors' => [
-                    'no_of_shop' => ["Only {$buildingData->number_shop} shops can be added. Building has {$buildingData->number_shop} shops."]
+                    'no_of_shop' => ["Only {$buildingData->number_shop} shops can be added. Building has {$buildingData->number_shop} total shops."]
                 ]
             ], 422);
         }
@@ -1351,8 +1350,8 @@ class SurveyorController extends Controller
             $message = 'Point data saved successfully';
         }
 
-        // Handle shop details
-        $totalShops = (int)($data['total_shops'] ?? 0);
+        // Handle shop details - use no_of_shop from request
+        $totalShops = (int)($data['no_of_shop'] ?? 0);
 
         // Get existing shop IDs for this point
         $existingShopIds = DB::table($shopDataTableName)
@@ -1362,7 +1361,7 @@ class SurveyorController extends Controller
 
         $newShopIds = [];
 
-        // Process each shop
+        // Process each shop based on no_of_shop value
         for ($i = 1; $i <= $totalShops; $i++) {
             $shopData = [
                 'point_data_id' => $pointId,
