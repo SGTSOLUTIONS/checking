@@ -1570,31 +1570,7 @@ public function uploadPointData(Request $request)
             'wardNo' => $wardNo
         ]);
     }
-    // public function updatePointRecord(Request $request)
-    // {
-    //     try {
-    //         $corp = $request->corp;
-    //         $zone = $request->zone;
-    //         $wardNo = $request->ward_no;
-
-    //         if ($request->type === 'point') {
-    //             $table = "pointdata_{$corp}_{$zone}_{$wardNo}";
-    //             DB::table($table)
-    //                 ->where('id', $request->id)
-    //                 ->update($request->data);
-    //         } else {
-    //             $table = "shopdata_{$corp}_{$zone}_{$wardNo}";
-    //             DB::table($table)
-    //                 ->where('id', $request->id)
-    //                 ->update($request->data);
-    //         }
-
-    //         return response()->json(['success' => true]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
-    //     }
-    // }
-    public function updatePointRecord(Request $request)
+        public function updatePointRecord(Request $request)
     {
         try {
             $corp = $request->corp;
@@ -1827,4 +1803,22 @@ public function uploadPointData(Request $request)
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+    private function canEdit($surveyorName, $workerName)
+{
+    $adminUsers = ['sgt', 'malaqc', 'mala57sgtqc', 'MALA QC SGT', 'malasgt', 'mala51qc', 'sir', 'Anand', 'anandnew', 'malanew', 'anandnew91', 'Anandnew55', 'SGT', 'ward90', 'anandnew89', 'malanew51', 'officeqc52', 'Anandnew51'];
+
+    if (in_array($surveyorName, $adminUsers)) {
+        return true;
+    }
+
+    if ($workerName && $surveyorName && strtolower($workerName) === strtolower($surveyorName)) {
+        return true;
+    }
+
+    if ($workerName && $surveyorName && strpos(strtolower($workerName), strtolower($surveyorName)) !== false) {
+        return true;
+    }
+
+    return false;
+}
 }
