@@ -29,7 +29,7 @@
                         @csrf
                         <div class="row">
                             @php
-                                $excludeFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'building_data_id', 'shops', 'worker_name'];
+                                $excludeFields = ['id', 'created_at', 'updated_at', 'deleted_at', 'building_data_id', 'shops', 'worker_name', 'can_edit'];
                                 $fields = array_keys((array)$point);
                                 $displayFields = array_filter($fields, function($field) use ($excludeFields) {
                                     return !in_array($field, $excludeFields);
@@ -47,7 +47,7 @@
 
                                     @php
                                         $fieldValue = $point->$field ?? '';
-                                        $isReadonly = !canEdit($surveyor->name, $point->worker_name);
+                                        $isReadonly = !$point->can_edit;
                                     @endphp
 
                                     {{-- Bill Usage Dropdown --}}
@@ -95,7 +95,7 @@
                                             <option value="VACCAND" {{ $fieldValue == 'VACCAND' ? 'selected' : '' }}>VACCAND</option>
                                         </select>
 
-                                    {{-- Water Tax Dropdown (example if you have predefined values) --}}
+                                    {{-- Water Tax Dropdown --}}
                                     @elseif($field === 'water_tax')
                                         <input type="text"
                                                name="{{ $field }}"
@@ -221,13 +221,13 @@
                                     {{-- Textarea for remarks fields --}}
                                     @elseif(in_array($field, ['remarks', 'qc_remarks', 'establishment_remarks']))
                                         <textarea
-                                               name="{{ $field }}"
-                                               id="field_{{ $point->id }}_{{ $field }}"
-                                               class="form-control form-control-sm point-field"
-                                               data-point-id="{{ $point->id }}"
-                                               data-field="{{ $field }}"
-                                               rows="2"
-                                               {{ $isReadonly ? 'readonly' : '' }}>{{ $fieldValue }}</textarea>
+                                            name="{{ $field }}"
+                                            id="field_{{ $point->id }}_{{ $field }}"
+                                            class="form-control form-control-sm point-field"
+                                            data-point-id="{{ $point->id }}"
+                                            data-field="{{ $field }}"
+                                            rows="2"
+                                            {{ $isReadonly ? 'readonly' : '' }}>{{ $fieldValue }}</textarea>
 
                                     {{-- Default text input --}}
                                     @else
@@ -246,7 +246,7 @@
                             @endforeach
                         </div>
 
-                        @if(canEdit($surveyor->name, $point->worker_name))
+                        @if($point->can_edit)
                             <div class="row mt-2">
                                 <div class="col-12">
                                     <button type="button" class="btn btn-primary update-point-btn" data-point-id="{{ $point->id }}">
@@ -269,7 +269,7 @@
                     <h6 class="mb-0">Shops for Point {{ $point->assessment ?? $point->point_gisid }}</h6>
                 </div>
                 <div class="card-body">
-                    @if(canEdit($surveyor->name, $point->worker_name))
+                    @if($point->can_edit)
                         <button type="button" class="btn btn-success mb-3 add-shop-btn" data-point-id="{{ $point->id }}">
                             <i class="fas fa-plus"></i> Add New Shop
                         </button>
@@ -281,7 +281,7 @@
                                 <div class="card mb-3 shop-card" data-shop-id="{{ $shop->id }}">
                                     <div class="card-header bg-light">
                                         <strong>Shop: {{ $shop->shop_name ?? 'Unnamed' }}</strong>
-                                        @if(canEdit($surveyor->name, $point->worker_name))
+                                        @if($point->can_edit)
                                             <button type="button" class="btn btn-danger btn-sm float-end delete-shop-btn" data-shop-id="{{ $shop->id }}" data-point-id="{{ $point->id }}">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
@@ -295,7 +295,7 @@
                                                        value="{{ $shop->shop_floor ?? '' }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="shop_floor"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label class="form-label">Shop Name</label>
@@ -303,7 +303,7 @@
                                                        value="{{ $shop->shop_name ?? '' }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="shop_name"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-4 mb-2">
                                                 <label class="form-label">Owner Name</label>
@@ -311,14 +311,14 @@
                                                        value="{{ $shop->shop_owner_name ?? '' }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="shop_owner_name"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label">Category</label>
                                                 <select class="form-control form-control-sm shop-field"
                                                         data-shop-id="{{ $shop->id }}"
                                                         data-field="shop_category"
-                                                        {{ !canEdit($surveyor->name, $point->worker_name) ? 'disabled' : '' }}>
+                                                        {{ !$point->can_edit ? 'disabled' : '' }}>
                                                     <option value="">Select Category</option>
                                                     <option value="Grocery" {{ ($shop->shop_category ?? '') == 'Grocery' ? 'selected' : '' }}>Grocery</option>
                                                     <option value="Clothing" {{ ($shop->shop_category ?? '') == 'Clothing' ? 'selected' : '' }}>Clothing</option>
@@ -340,7 +340,7 @@
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="shop_mobile"
                                                        maxlength="10"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label">License</label>
@@ -348,7 +348,7 @@
                                                        value="{{ $shop->license ?? '' }}"
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="license"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label">No. of Employees</label>
@@ -357,10 +357,10 @@
                                                        data-shop-id="{{ $shop->id }}"
                                                        data-field="number_of_employee"
                                                        min="0"
-                                                       {{ !canEdit($surveyor->name, $point->worker_name) ? 'readonly' : '' }}>
+                                                       {{ !$point->can_edit ? 'readonly' : '' }}>
                                             </div>
                                         </div>
-                                        @if(canEdit($surveyor->name, $point->worker_name))
+                                        @if($point->can_edit)
                                             <div class="row mt-2">
                                                 <div class="col-12">
                                                     <button type="button" class="btn btn-primary btn-sm update-shop-btn" data-shop-id="{{ $shop->id }}">
@@ -383,27 +383,6 @@
 
     <script>
         $(document).ready(function() {
-            var surveyor = @json($surveyor);
-
-            // Helper function to check edit permission
-            function canEdit(surveyorName, workerName) {
-                var adminUsers = ['sgt', 'malaqc', 'mala57sgtqc', 'MALA QC SGT', 'malasgt', 'mala51qc', 'sir', 'Anand', 'anandnew', 'malanew', 'anandnew91', 'Anandnew55', 'SGT', 'ward90', 'anandnew89', 'malanew51', 'officeqc52', 'Anandnew51'];
-
-                if (adminUsers.includes(surveyorName)) {
-                    return true;
-                }
-
-                if (workerName && surveyorName && workerName.toLowerCase() === surveyorName.toLowerCase()) {
-                    return true;
-                }
-
-                if (workerName && surveyorName && workerName.toLowerCase().includes(surveyorName.toLowerCase())) {
-                    return true;
-                }
-
-                return false;
-            }
-
             function showMessage(type, message) {
                 var alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-danger');
                 var html = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
