@@ -753,9 +753,6 @@
                                 color: '#ff0000',
                                 width: 3,
                                 lineDash: [10, 5]
-                            }),
-                            fill: new ol.style.Fill({
-                                color: 'rgba(255, 0, 0, 0.05)'
                             })
                         }),
                         visible: true
