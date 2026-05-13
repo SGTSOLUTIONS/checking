@@ -605,12 +605,12 @@ class CommissionerController extends Controller
                 'number_floor',
                 DB::raw('Percentage as floor_percentage'),
                 'building_usage',
-                'contruction_type',
+                'construction_type',
                 'road_name',
                 'ugd',
                 'basement',
                 'water_connection',
-                'building_tupe',
+                'building_type',
                 'image1',
                 'remarks'
             )
