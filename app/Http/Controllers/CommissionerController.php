@@ -574,39 +574,16 @@ class CommissionerController extends Controller
 
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-        // Get all data once
-        $pointDatas = DB::table($pointDataTable)->get();
-
-        $polygonDatas = DB::table($polygonDataTable)
+        // Point Data
+        $pointDatas = DB::table($pointDataTable)
             ->select(
                 'id',
-                'gisid',
-                'number_bill',
-                'number_floor',
-                'Percentage as floor_percentage',
-                'building_usage',
-                'construction_type',
-                'road_name',
-                'ugd',
-                'basement',
-                'water_connection',
-                'building_type',
-                'image',
-                'image2',
-                'remarks'
-            )
-            ->get();
-
-        $shopDatas = DB::table($shopTableName)
-            ->select(
-                'id',
-                'point_data_id',
                 'building_data_id',
                 'point_gisid',
                 'assessment',
                 'old_assessment',
                 'owner_name',
-                'presen_owner_name',
+                'present_owner_name',
                 'floor',
                 'bill_usage',
                 'phone_number',
@@ -618,6 +595,29 @@ class CommissionerController extends Controller
                 'qcsqfeet'
             )
             ->get();
+
+        // Polygon Data
+        $polygonDatas = DB::table($polygonDataTable)
+            ->select(
+                'id',
+                'gisid',
+                'number_bill',
+                'number_floor',
+                DB::raw('Percentage as floor_percentage'),
+                'building_usage',
+                'contruction_type',
+                'road_name',
+                'ugd',
+                'basement',
+                'water_connection',
+                'building_tupe',
+                'image1',
+                'remarks'
+            )
+            ->get();
+
+        // Shop Data
+        $shopDatas = DB::table($shopTableName)->get();
 
         // Group shops by point_data_id
         $shopsGrouped = $shopDatas->groupBy('point_data_id');
@@ -636,7 +636,7 @@ class CommissionerController extends Controller
 
             $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
 
-            // Optional counts
+            // Optional statistics
             $polygondata->total_points = count($polygondata->pointdata);
 
             $polygondata->total_shops = collect($polygondata->pointdata)
@@ -646,6 +646,7 @@ class CommissionerController extends Controller
         }
 
         return response()->json($polygonDatas);
+
         // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
             ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
