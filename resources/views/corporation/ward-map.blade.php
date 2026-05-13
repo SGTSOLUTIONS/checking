@@ -43,17 +43,18 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             font-size: 12px;
             min-width: 160px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
             touch-action: auto;
             pointer-events: auto;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
         }
 
         @media (max-width: 768px) {
@@ -98,8 +99,8 @@
             margin: 0 0 10px 0;
             font-size: 14px;
             font-weight: 600;
-            color: #333;
-            border-bottom: 1px solid #ddd;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             padding-bottom: 5px;
         }
 
@@ -114,7 +115,7 @@
             cursor: pointer;
             margin: 8px 0;
             font-size: 12px;
-            color: #555;
+            color: #eee;
             touch-action: manipulation;
         }
 
@@ -125,7 +126,7 @@
 
         .layer-group .group-title {
             font-weight: 600;
-            color: #1679AB;
+            color: #ffc107;
             margin-bottom: 5px;
             font-size: 11px;
             text-transform: uppercase;
@@ -136,23 +137,24 @@
             position: absolute;
             bottom: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             font-size: 12px;
             min-width: 140px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
             pointer-events: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
         }
 
         .map-legend h5 {
             margin: 0 0 8px 0;
             font-size: 13px;
             font-weight: 600;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             padding-bottom: 5px;
         }
 
@@ -170,7 +172,7 @@
         }
 
         .legend-color.building {
-            background: rgba(255, 68, 68, 0.3);
+            background: rgba(255, 68, 68, 0.5);
             border: 2px solid #ff4444;
         }
 
@@ -187,8 +189,8 @@
         }
 
         .legend-color.drone {
-            background: rgba(128, 128, 128, 0.5);
-            border: 1px solid #666;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid #fff;
         }
 
         /* Zoom Controls */
@@ -196,22 +198,24 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            background: white;
+            background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             z-index: 1000;
+            backdrop-filter: blur(10px);
         }
 
         .zoom-btn {
             width: 40px;
             height: 40px;
             border: none;
-            background: white;
+            background: transparent;
             cursor: pointer;
             font-size: 18px;
             transition: all 0.2s;
             touch-action: manipulation;
+            color: white;
         }
 
         .zoom-btn:active {
@@ -221,7 +225,7 @@
         }
 
         .zoom-btn:first-child {
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .ol-viewport {
@@ -238,14 +242,15 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
             z-index: 2000;
             font-size: 14px;
             pointer-events: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            backdrop-filter: blur(10px);
         }
     </style>
 @endpush
@@ -286,6 +291,7 @@
         let boundaryLayer;
         let osmLayer;
         let satelliteLayer;
+        let currentBaseLayer = 'osm';
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -322,7 +328,7 @@
                 visible: false
             });
 
-            // ========== DRONE IMAGE LAYER - FIXED ==========
+            // ========== DRONE IMAGE LAYER - FULL OPACITY, NO WHITE SMOKEY EFFECT ==========
             let droneImage = @json($ward->drone_image ?? null);
             let extentLeft = @json($ward->extent_left ?? null);
             let extentBottom = @json($ward->extent_bottom ?? null);
@@ -339,17 +345,13 @@
 
             let imageUrl = null;
             if (droneImage) {
-                // Handle different path formats
                 let cleanPath = droneImage.replace(/^\/+/, '');
                 imageUrl = "{{ asset('') }}" + cleanPath;
                 console.log('Constructed Image URL:', imageUrl);
             }
 
-            // Default image layer
-            imageLayer = new ol.layer.Image({
-                visible: true,
-                opacity: 0.7
-            });
+            // Default - no image layer
+            let hasDroneImage = false;
 
             // Check if we have valid image and extent
             const hasValidExtent = extentLeft !== null && extentBottom !== null &&
@@ -368,34 +370,27 @@
 
                     console.log('Image Extent:', imageExtent);
 
-                    // Test if image loads
-                    const testImg = new Image();
-                    testImg.onload = function() {
-                        console.log('Drone image loaded successfully');
-                        imageLayer.setVisible(true);
-                    };
-                    testImg.onerror = function() {
-                        console.error('Failed to load drone image:', imageUrl);
-                        imageLayer.setVisible(false);
-                    };
-                    testImg.src = imageUrl;
-
+                    // Create image layer with FULL OPACITY (no transparency)
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
                             url: imageUrl,
                             imageExtent: imageExtent,
                             projection: 'EPSG:3857'
                         }),
-                        opacity: 0.7,
+                        opacity: 1.0, // FULL OPACITY - NO WHITE SMOKEY EFFECT
                         visible: true
                     });
+
+                    hasDroneImage = true;
+                    console.log('Drone image layer created successfully');
+
                 } catch (e) {
                     console.error('Error creating drone image layer:', e);
+                    imageLayer = null;
                 }
             } else {
                 console.log('Drone image not available or invalid extent');
-                if (!imageUrl) console.log('No drone image URL');
-                if (!hasValidExtent) console.log('Invalid extent values');
+                imageLayer = null;
             }
 
             // ========== BOUNDARY LAYER ==========
@@ -458,49 +453,44 @@
                 } catch (e) {}
             }
 
-            // Create Map
+            // Create Map - Build layers array
+            let layers = [osmLayer, satelliteLayer];
+
             map = new ol.Map({
                 target: 'map',
-                layers: [osmLayer, satelliteLayer],
+                layers: layers,
                 view: new ol.View({
                     center: center,
                     zoom: zoom
                 })
             });
 
-            // Add additional layers
-            if (imageLayer && imageLayer.getSource()) {
+            // Add drone image layer if available (on top of base maps)
+            if (imageLayer) {
                 map.addLayer(imageLayer);
-                console.log('Image layer added to map');
+                console.log('Drone image layer added to map');
             }
-            if (boundaryLayer) map.addLayer(boundaryLayer);
+
+            // Add boundary layer
+            if (boundaryLayer) {
+                map.addLayer(boundaryLayer);
+                console.log('Boundary layer added to map');
+            }
 
             // ========== ZOOM TO BOUNDARY OR POLYGONS ==========
             setTimeout(function() {
                 if (boundaryExtent && boundaryExtent.length === 4) {
-                    // Zoom to boundary
                     map.getView().fit(boundaryExtent, {
                         padding: [50, 50, 50, 50],
                         duration: 1000
                     });
                     console.log('Zooming to boundary');
-                } else if (polygonLayer && polygonLayer.getSource().getFeatures().length > 0) {
-                    // Zoom to polygons
-                    const extent = polygonLayer.getSource().getExtent();
-                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
-                        extent[0] !== Infinity && extent[1] !== -Infinity) {
-                        map.getView().fit(extent, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                        console.log('Zooming to polygons');
-                    }
                 }
             }, 500);
 
             // Add UI controls
-            addLayerSwitcher();
-            addLegend();
+            addLayerSwitcher(hasDroneImage);
+            addLegend(hasDroneImage);
             addZoomControls();
 
             // Load vector layers
@@ -509,16 +499,14 @@
             showLoading(false);
         }
 
-        function addLayerSwitcher() {
-            const hasDrone = imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl();
-
+        function addLayerSwitcher(hasDroneImage) {
             const switcher = document.createElement('div');
             switcher.className = 'layer-switcher';
             switcher.innerHTML = `
                 <h5><i class="fas fa-layer-group"></i> Layers</h5>
                 <div class="layer-group">
                     <div class="group-title">Base Maps</div>
-                    <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+                    <label><input type="radio" name="baseLayer" value="osm" ${currentBaseLayer === 'osm' ? 'checked' : ''}> <i class="fas fa-map"></i> OpenStreetMap</label>
                     <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
                 </div>
                 <div class="layer-group">
@@ -526,15 +514,16 @@
                     <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
                     <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
                     <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                    ${hasDrone ? `<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
+                    ${hasDroneImage ? `<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
                 </div>
             `;
             document.body.appendChild(switcher);
 
             document.querySelectorAll('input[name="baseLayer"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
-                    osmLayer.setVisible(e.target.value === 'osm');
-                    satelliteLayer.setVisible(e.target.value === 'satellite');
+                    currentBaseLayer = e.target.value;
+                    osmLayer.setVisible(currentBaseLayer === 'osm');
+                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
                 });
             });
 
@@ -549,16 +538,14 @@
             });
 
             const droneToggle = document.getElementById('toggleDrone');
-            if (droneToggle) {
+            if (droneToggle && imageLayer) {
                 droneToggle.addEventListener('change', (e) => {
-                    if (imageLayer) imageLayer.setVisible(e.target.checked);
+                    imageLayer.setVisible(e.target.checked);
                 });
             }
         }
 
-        function addLegend() {
-            const hasDrone = imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl();
-
+        function addLegend(hasDroneImage) {
             const legend = document.createElement('div');
             legend.className = 'map-legend';
             legend.innerHTML = `
@@ -566,7 +553,7 @@
                 <div class="legend-item"><div class="legend-color building"></div><span>Buildings</span></div>
                 <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
                 <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                ${hasDrone ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
+                ${hasDroneImage ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
             `;
             document.body.appendChild(legend);
         }
@@ -675,6 +662,22 @@
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
+
+            // Fit to polygons if no boundary exists
+            if (!boundaryLayer && polygonSource.getFeatures().length > 0) {
+                try {
+                    const extent = polygonSource.getExtent();
+                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
+                        extent[0] !== Infinity && extent[1] !== -Infinity) {
+                        map.getView().fit(extent, {
+                            padding: [50, 50, 50, 50],
+                            duration: 1000
+                        });
+                    }
+                } catch (e) {
+                    console.log('Error fitting to polygons:', e);
+                }
+            }
 
             console.log('Layers Refreshed Successfully');
         }
