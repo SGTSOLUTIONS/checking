@@ -276,68 +276,6 @@ class CommissionerController extends Controller
         ];
     }
 
-    public function mapView($ward_no)
-    {
-        $userId = Auth::user();
-        $warddetail = Ward::where('corporation_id', $userId->corporation_id)
-            ->where('ward_no', $ward_no)
-            ->first();
-
-        if (!$warddetail) {
-            return back()->with('error', 'Ward not found');
-        }
-
-        $zone = strtolower(trim($warddetail->zone));
-        $wardNo = (int)$warddetail->ward_no;
-        $corp = (int)$warddetail->corporation_id;
-
-        // Table names
-        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
-
-        // Get polygons (buildings) - only needed fields
-        $polygons = Schema::hasTable($polygonsTableName)
-            ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
-            : [];
-
-        // Get lines (roads) - only needed fields
-        $lines = Schema::hasTable($linesTableName)
-            ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
-            : [];
-
-        $ward = $warddetail;
-
-        return view('corporation.ward-map', compact('ward', 'polygons', 'lines'));
-    }
-
-    private function getPointDataTable($corporationId, $wardNo, $zone)
-    {
-        $zone = trim(strtolower($zone));
-        $tableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
-        return Schema::hasTable($tableName) ? $tableName : null;
-    }
-
-    private function getPolygonDataTable($corporationId, $wardNo, $zone)
-    {
-        $zone = trim(strtolower($zone));
-        $tableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
-        return Schema::hasTable($tableName) ? $tableName : null;
-    }
-
-    private function getPolygonTable($corporationId, $wardNo, $zone)
-    {
-        $zone = trim(strtolower($zone));
-        $tableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
-        return Schema::hasTable($tableName) ? $tableName : null;
-    }
-
-    private function getLineTable($corporationId, $wardNo, $zone)
-    {
-        $zone = trim(strtolower($zone));
-        $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
-        return Schema::hasTable($tableName) ? $tableName : null;
-    }
-
     /**
      * Export ward data to Excel with building variations
      */
@@ -407,11 +345,24 @@ class CommissionerController extends Controller
         $rowNumber = 1;
 
         $excelData[] = [
-            'S.No', 'GIS ID', 'Building Sq Feet', 'Number of Floors', 'Basement',
-            'Floor Percentage', 'Total Building Area', 'Building Usage',
-            'Total Assessment Area', 'Area Variation', 'Area Variation Status',
-            'Number of Bills', 'Usage Variation Status', 'Negative Area Variation',
-            'Variation Percentage', 'Owner Name', 'Address', 'Road Name'
+            'S.No',
+            'GIS ID',
+            'Building Sq Feet',
+            'Number of Floors',
+            'Basement',
+            'Floor Percentage',
+            'Total Building Area',
+            'Building Usage',
+            'Total Assessment Area',
+            'Area Variation',
+            'Area Variation Status',
+            'Number of Bills',
+            'Usage Variation Status',
+            'Negative Area Variation',
+            'Variation Percentage',
+            'Owner Name',
+            'Address',
+            'Road Name'
         ];
 
         foreach ($polygons as $polygon) {
@@ -476,11 +427,24 @@ class CommissionerController extends Controller
             $negativeStatus = $isNegativeVariation ? 'YES' : 'NO';
 
             $excelData[] = [
-                $rowNumber++, $gisid, $polygonSqfeet, $numberFloor, $basement,
-                $floorPercentage . '%', round($totalBuildingArea, 2), $buildingUsage ?? 'N/A',
-                round($assessmentArea, 2), round($areaVariation, 2), $areaStatus,
-                $assessmentCount, $usageStatus, $negativeStatus, $variationPercentage . '%',
-                $ownerName, $address, $roadName
+                $rowNumber++,
+                $gisid,
+                $polygonSqfeet,
+                $numberFloor,
+                $basement,
+                $floorPercentage . '%',
+                round($totalBuildingArea, 2),
+                $buildingUsage ?? 'N/A',
+                round($assessmentArea, 2),
+                round($areaVariation, 2),
+                $areaStatus,
+                $assessmentCount,
+                $usageStatus,
+                $negativeStatus,
+                $variationPercentage . '%',
+                $ownerName,
+                $address,
+                $roadName
             ];
         }
 
@@ -583,5 +547,86 @@ class CommissionerController extends Controller
         echo '<tr><td style="background-color: #FFC7CE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Variation:</strong> Area or Usage mismatch detected</td></tr>';
         echo '</table></body></html>';
         exit;
+    }
+
+    public function mapView($ward_no)
+    {
+        $userId = Auth::user();
+        $warddetail = Ward::where('corporation_id', $userId->corporation_id)
+            ->where('ward_no', $ward_no)
+            ->first();
+
+        if (!$warddetail) {
+            return back()->with('error', 'Ward not found');
+        }
+
+        $zone = strtolower(trim($warddetail->zone));
+        $wardNo = (int)$warddetail->ward_no;
+        $corp = (int)$warddetail->corporation_id;
+
+        // Table names
+        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+        $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
+        $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
+        $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+        $pointDatas = DB::table($pointDataTable . ' as pd')
+            ->leftJoin('shopdata as sd', 'pd.id', '=', 'sd.point_data_id')
+            ->select(
+                'pd.id',
+                'pd.assessment',
+                'pd.owner_name',
+                DB::raw('COUNT(sd.id) as total_shops')
+            )
+            ->groupBy(
+                'pd.id',
+                'pd.assessment',
+                'pd.owner_name'
+            )
+            ->get();
+return response()->json($pointDatas);
+
+        // Get polygons (buildings) - only needed fields
+        $polygons = Schema::hasTable($polygonsTableName)
+            ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
+            : [];
+
+        // Get lines (roads) - only needed fields
+        $lines = Schema::hasTable($linesTableName)
+            ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
+            : [];
+
+
+        $ward = $warddetail;
+
+        return view('corporation.ward-map', compact('ward', 'polygons', 'lines'));
+    }
+
+    private function getPointDataTable($corporationId, $wardNo, $zone)
+    {
+        $zone = trim(strtolower($zone));
+        $tableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
+        return Schema::hasTable($tableName) ? $tableName : null;
+    }
+
+    private function getPolygonDataTable($corporationId, $wardNo, $zone)
+    {
+        $zone = trim(strtolower($zone));
+        $tableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
+        return Schema::hasTable($tableName) ? $tableName : null;
+    }
+
+    private function getPolygonTable($corporationId, $wardNo, $zone)
+    {
+        $zone = trim(strtolower($zone));
+        $tableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+        return Schema::hasTable($tableName) ? $tableName : null;
+    }
+
+    private function getLineTable($corporationId, $wardNo, $zone)
+    {
+        $zone = trim(strtolower($zone));
+        $tableName = "line_{$corporationId}_{$zone}_{$wardNo}";
+        return Schema::hasTable($tableName) ? $tableName : null;
     }
 }
