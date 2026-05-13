@@ -605,7 +605,7 @@ class CommissionerController extends Controller
                 'assessment',
                 'old_assessment',
                 'owner_name',
-                'presenowner_name',
+                'presen_owner_name',
                 'floor',
                 'bill_usage',
                 'phone_number',
@@ -613,7 +613,7 @@ class CommissionerController extends Controller
                 'new_door_no',
                 'remarks',
                 'water_tax',
-                'zoneqcusage',
+                'zone','qcusage',
                 'qcsqfeet'
             )
             ->get();
