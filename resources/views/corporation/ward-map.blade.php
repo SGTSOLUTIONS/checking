@@ -93,6 +93,12 @@
                 height: 44px;
                 font-size: 20px;
             }
+
+            .ol-popup {
+                max-width: 280px !important;
+                max-height: 70vh !important;
+                overflow-y: auto !important;
+            }
         }
 
         .layer-switcher h5 {
@@ -252,6 +258,154 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             backdrop-filter: blur(10px);
         }
+
+        /* Popup Styles */
+        .ol-popup {
+            position: absolute;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 0;
+            min-width: 280px;
+            max-width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1100;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        .ol-popup:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #1a1a2e transparent transparent;
+        }
+
+        .popup-header {
+            background: rgba(255, 68, 68, 0.2);
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .popup-header h4 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ff4444;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .popup-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .popup-content {
+            padding: 15px;
+        }
+
+        .popup-section {
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .popup-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffc107;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .popup-row {
+            display: flex;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+
+        .popup-label {
+            font-weight: 600;
+            color: #aaa;
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        .popup-value {
+            color: white;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .popup-value strong {
+            color: #ff4444;
+        }
+
+        .assessment-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        .assessment-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .shop-item {
+            background: rgba(255, 193, 7, 0.1);
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin-top: 5px;
+            font-size: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
     </style>
 @endpush
 
@@ -292,6 +446,11 @@
         let osmLayer;
         let satelliteLayer;
         let currentBaseLayer = 'osm';
+        let popupOverlay;
+        let popupElement;
+
+        // Polygon data from server
+        let polygonDatas = @json($polygonDatas ?? []);
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -308,6 +467,204 @@
                 if (loadingEl) {
                     loadingEl.style.display = 'none';
                 }
+            }
+        }
+
+        // Create popup overlay
+        function createPopup() {
+            popupElement = document.createElement('div');
+            popupElement.className = 'ol-popup';
+            popupElement.style.display = 'none';
+            document.body.appendChild(popupElement);
+
+            popupOverlay = new ol.Overlay({
+                element: popupElement,
+                positioning: 'bottom-center',
+                stopEvent: true,
+                offset: [0, -10]
+            });
+
+            return popupOverlay;
+        }
+
+        // Show popup with building details
+        function showPopup(gisid, coordinate) {
+            // Find polygon data by GIS ID
+            const polyData = polygonDatas.find(p => p.gisid == gisid);
+
+            if (!polyData) {
+                console.log('No data found for GIS ID:', gisid);
+                return;
+            }
+
+            console.log('Showing popup for:', polyData);
+
+            // Build popup HTML
+            let html = `
+                <div class="popup-header">
+                    <h4><i class="fas fa-building"></i> Building Details</h4>
+                    <button class="popup-close" onclick="document.querySelector('.ol-popup').style.display='none'">&times;</button>
+                </div>
+                <div class="popup-content">
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-info-circle"></i> Basic Information</div>
+                        <div class="popup-row">
+                            <span class="popup-label">GIS ID:</span>
+                            <span class="popup-value"><strong>${polyData.gisid || 'N/A'}</strong></span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Building Usage:</span>
+                            <span class="popup-value">${polyData.building_usage || 'N/A'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Building Type:</span>
+                            <span class="popup-value">${polyData.building_type || 'N/A'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Construction Type:</span>
+                            <span class="popup-value">${polyData.construction_type || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-chart-simple"></i> Statistics</div>
+                        <div class="popup-row">
+                            <span class="popup-label">Number of Floors:</span>
+                            <span class="popup-value">${polyData.number_floor || '0'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Floor Percentage:</span>
+                            <span class="popup-value">${polyData.floor_percentage || '100'}%</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Basement:</span>
+                            <span class="popup-value">${polyData.basement || '0'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Number of Bills:</span>
+                            <span class="popup-value">${polyData.number_bill || '0'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Total Points:</span>
+                            <span class="popup-value">${polyData.total_points || '0'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Total Shops:</span>
+                            <span class="popup-value">${polyData.total_shops || '0'}</span>
+                        </div>
+                    </div>
+
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
+                        <div class="popup-row">
+                            <span class="popup-label">Road Name:</span>
+                            <span class="popup-value">${polyData.road_name || 'N/A'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">Zone:</span>
+                            <span class="popup-value">${polyData.zone || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-tint"></i> Utilities</div>
+                        <div class="popup-row">
+                            <span class="popup-label">Water Connection:</span>
+                            <span class="popup-value">${polyData.water_connection || 'N/A'}</span>
+                        </div>
+                        <div class="popup-row">
+                            <span class="popup-label">UGD:</span>
+                            <span class="popup-value">${polyData.ugd || 'N/A'}</span>
+                        </div>
+                    </div>
+            `;
+
+            // Add Assessments/Bills section if exists
+            if (polyData.pointdata && polyData.pointdata.length > 0) {
+                html += `
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-receipt"></i> Assessments / Bills (${polyData.pointdata.length})</div>
+                `;
+
+                polyData.pointdata.forEach((assessment, idx) => {
+                    const hasQC = assessment.qcsqfeet || assessment.qcusage;
+                    html += `
+                        <div class="assessment-item">
+                            <div class="popup-row">
+                                <span class="popup-label">Assessment ${idx + 1}:</span>
+                                <span class="popup-value"><strong>${assessment.assessment || 'N/A'}</strong> <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">${hasQC ? 'QC Done' : 'QC Pending'}</span></span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">Owner:</span>
+                                <span class="popup-value">${assessment.owner_name || assessment.present_owner_name || 'N/A'}</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">Phone:</span>
+                                <span class="popup-value">${assessment.phone_number || 'N/A'}</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">Floor:</span>
+                                <span class="popup-value">${assessment.floor || 'N/A'}</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">Usage:</span>
+                                <span class="popup-value">${assessment.bill_usage || 'N/A'}</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">QC Sqft:</span>
+                                <span class="popup-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</span>
+                            </div>
+                            <div class="popup-row">
+                                <span class="popup-label">QC Usage:</span>
+                                <span class="popup-value">${assessment.qcusage || assessment.usage || 'N/A'}</span>
+                            </div>
+                    `;
+
+                    // Add shops if exists
+                    if (assessment.shops && assessment.shops.length > 0) {
+                        html +=
+                            `<div class="popup-row"><span class="popup-label">Shops (${assessment.shops.length}):</span></div>`;
+                        assessment.shops.forEach(shop => {
+                            html += `
+                                <div class="shop-item">
+                                    <div><strong>${shop.shop_name || 'Shop'}</strong> - ${shop.shop_category || 'N/A'}</div>
+                                    <div>Owner: ${shop.shop_owner_name || 'N/A'}</div>
+                                    <div>Mobile: ${shop.shop_mobile || 'N/A'}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+            }
+
+            // Add Remarks if exists
+            if (polyData.remarks) {
+                html += `
+                    <div class="popup-section">
+                        <div class="popup-section-title"><i class="fas fa-comment"></i> Remarks</div>
+                        <div class="popup-row">
+                            <span class="popup-value">${polyData.remarks}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+
+            popupElement.innerHTML = html;
+            popupElement.style.display = 'block';
+            popupOverlay.setPosition(coordinate);
+
+            // Add close button event listener
+            const closeBtn = popupElement.querySelector('.popup-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    popupElement.style.display = 'none';
+                });
             }
         }
 
@@ -335,19 +692,10 @@
             let extentRight = @json($ward->extent_right ?? null);
             let extentTop = @json($ward->extent_top ?? null);
 
-            console.log('Drone Image Data:', {
-                droneImage: droneImage,
-                extentLeft: extentLeft,
-                extentBottom: extentBottom,
-                extentRight: extentRight,
-                extentTop: extentTop
-            });
-
             let imageUrl = null;
             if (droneImage) {
                 let cleanPath = droneImage.replace(/^\/+/, '');
                 imageUrl = "{{ asset('') }}" + cleanPath;
-                console.log('Constructed Image URL:', imageUrl);
             }
 
             let hasDroneImage = false;
@@ -365,8 +713,6 @@
                         parseFloat(extentRight),
                         parseFloat(extentTop)
                     ];
-
-                    console.log('Image Extent:', imageExtent);
 
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
@@ -386,7 +732,6 @@
                     imageLayer = null;
                 }
             } else {
-                console.log('Drone image not available or invalid extent');
                 imageLayer = null;
             }
 
@@ -444,7 +789,6 @@
                         (Math.min(...lats) + Math.max(...lats)) / 2
                     ]);
                     zoom = 16;
-                    console.log('Center from boundary:', center);
                 } catch (e) {}
             }
 
@@ -460,14 +804,16 @@
                 })
             });
 
+            // Add popup overlay
+            const popup = createPopup();
+            map.addOverlay(popup);
+
             if (imageLayer) {
                 map.addLayer(imageLayer);
-                console.log('Drone image layer added to map');
             }
 
             if (boundaryLayer) {
                 map.addLayer(boundaryLayer);
-                console.log('Boundary layer added to map');
             }
 
             // Zoom to boundary
@@ -477,7 +823,6 @@
                         padding: [50, 50, 50, 50],
                         duration: 1000
                     });
-                    console.log('Zooming to boundary');
                 }
             }, 500);
 
@@ -543,7 +888,7 @@
             legend.className = 'map-legend';
             legend.innerHTML = `
                 <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                <div class="legend-item"><div class="legend-color building"></div><span>Buildings (with labels)</span></div>
+                <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
                 <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
                 <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
                 ${hasDroneImage ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
@@ -613,7 +958,6 @@
                 const sqfeet = feature.get('sqfeet');
                 const geometry = feature.getGeometry();
 
-                // Get center point for label placement
                 let center;
                 try {
                     center = geometry.getInteriorPoint();
@@ -631,17 +975,15 @@
                 }
 
                 return [
-                    // Polygon outline and fill
                     new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: '#ff4444',
                             width: 2
                         }),
                         fill: new ol.style.Fill({
-                            color: 'rgba(255, 68, 68, 0.5)'
+                            color: 'rgba(255, 68, 68, 0.15)'
                         })
                     }),
-                    // Label with GIS ID and Sq Feet
                     new ol.style.Style({
                         geometry: center,
                         text: new ol.style.Text({
@@ -710,6 +1052,37 @@
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
 
+            // Add click handler for polygons
+            map.on('click', function(evt) {
+                const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
+                    return feature;
+                });
+
+                if (feature && feature.get('gisid')) {
+                    const gisid = feature.get('gisid');
+                    const coordinate = evt.coordinate;
+                    showPopup(gisid, coordinate);
+                } else {
+                    if (popupElement) {
+                        popupElement.style.display = 'none';
+                    }
+                }
+            });
+
+            // Change cursor on hover
+            map.on('pointermove', function(evt) {
+                const pixel = evt.pixel;
+                const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
+                    return feature;
+                });
+
+                if (feature && feature.get('gisid')) {
+                    map.getTargetElement().style.cursor = 'pointer';
+                } else {
+                    map.getTargetElement().style.cursor = '';
+                }
+            });
+
             // Fit to polygons if no boundary exists
             if (!boundaryLayer && polygonSource.getFeatures().length > 0) {
                 try {
@@ -726,7 +1099,7 @@
                 }
             }
 
-            console.log('Layers Refreshed Successfully with Labels');
+            console.log('Layers Refreshed Successfully with Labels and Popup');
         }
 
         // Handle orientation changes

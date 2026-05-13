@@ -646,7 +646,7 @@ class CommissionerController extends Controller
                 });
         }
 
-        return response()->json($polygonDatas);
+
 
         // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
@@ -661,7 +661,7 @@ class CommissionerController extends Controller
 
         $ward = $warddetail;
 
-        return view('corporation.ward-map', compact('ward', 'polygons', 'lines'));
+        return view('corporation.ward-map', compact('ward', 'polygons', 'lines'.'polygonDatas'));
     }
 
     private function getPointDataTable($corporationId, $wardNo, $zone)

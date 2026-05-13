@@ -47,6 +47,7 @@ class GeoDataService
         $pointDataTable = $this->generatePointDataTableName($corporationId, $zone, $wardNumber);
         $polygonDataTable = $this->generatePolygonDataTableName($corporationId, $zone, $wardNumber);
         $shopDataTable = $this->generateShopDataTableName($corporationId, $zone, $wardNumber);
+        $shopTable = $this->generateShopTableName($corporationId, $zone, $wardNumber);
 
         try {
             // ✅ Create Polygon Table
@@ -183,6 +184,26 @@ class GeoDataService
                 });
 
                 Log::info("✅ Shop table created: {$shopDataTable}");
+            }
+            if (!Schema::hasTable($shopTable)) {
+                Schema::create($polygonTable, function (Blueprint $table) {
+                    $table->id();
+                    $table->string('ward_no')->nullable();
+                    $table->string('road_name')->nullable();
+                    $table->string('prof_tax_assessment')->nullable();
+                    $table->string('old_prof_tax_assessment')->nullable();
+                    $table->string('name')->nullable();
+                    $table->string('door_no')->nullable();
+                    $table->string('phone')->nullable();
+                    $table->string('category')->nullable();
+                    $table->string('bussiness_name')->nullable();
+                    $table->string('hlafyear_tax')->nullable();
+                    $table->string('blalance')->nullable();
+                    $table->timestamps();
+                    $table->softDeletes();
+                });
+
+                Log::info("✅ Shop table created: {$shopTable}");
             }
 
             return [
@@ -1088,6 +1109,10 @@ class GeoDataService
     public function generateShopDataTableName($corporationId, $zone, $wardNumber)
     {
         return 'shopdata_' . $corporationId . '_' . $this->sanitize($zone) . '_' . $this->sanitize($wardNumber);
+    }
+    public function generateShopTableName($corporationId, $zone, $wardNumber)
+    {
+        return 'shop_' . $corporationId . '_' . $this->sanitize($zone) . '_' . $this->sanitize($wardNumber);
     }
 
     private function sanitize($string)
