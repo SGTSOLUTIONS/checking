@@ -601,7 +601,7 @@ class CommissionerController extends Controller
             ->select(
                 'id',
                 'point_data_id',
-                'building_id',
+                'building_data_id',
                 'point_gisid',
                 'assessment',
                 'old_assessment',
