@@ -636,9 +636,6 @@
                         stroke: new ol.style.Stroke({
                             color: '#ff4444',
                             width: 2
-                        }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255, 68, 68, 0.15)'
                         })
                     }),
                     // Label with GIS ID and Sq Feet
