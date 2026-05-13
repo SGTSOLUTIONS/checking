@@ -231,6 +231,13 @@
                                             View Map
 
                                         </a>
+                                         <a href="{{ route('corporation.ward.excel', $data['ward_no']) }}"
+                                           class="btn btn-primary btn-sm">
+
+                                            <i class="fas fa-map-marked-alt"></i>
+                                            Download excel
+
+                                        </a>
                                     </td>
 
                                 </tr>

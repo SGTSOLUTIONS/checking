@@ -959,4 +959,336 @@ class CommissionerController extends Controller
             ], 500);
         }
     }
+    /**
+ * Export ward data to Excel with building variations
+ */
+public function mapDownloadExcel($ward_no)
+{
+    $user = Auth::guard('corporation')->user();
+
+    if (!$user) {
+        return redirect()->route('corporation.login');
+    }
+
+    $warddetail = Ward::where('corporation_id', $user->corporation_id)
+        ->where('ward_no', $ward_no)
+        ->first();
+
+    if (!$warddetail) {
+        return back()->with('error', 'Ward not found');
+    }
+
+    $zone = strtolower(trim($warddetail->zone));
+    $wardNo = (int)$warddetail->ward_no;
+    $corp = (int)$warddetail->corporation_id;
+
+    // Table names
+    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+    $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
+    $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
+    $misTableName = "mis_corporation_{$corp}";
+
+    if (!Schema::hasTable($polygonsTableName)) {
+        return back()->with('error', 'Building data not found for this ward');
+    }
+
+    // Get all polygons (buildings)
+    $polygons = DB::table($polygonsTableName)->get();
+    $polygonDatas = Schema::hasTable($polygonDataTableName)
+        ? DB::table($polygonDataTableName)->get()->keyBy('gisid')
+        : collect();
+
+    // Get all point data (assessments/bills)
+    $pointDatas = collect();
+    $pointDataByGisid = [];
+
+    if (Schema::hasTable($pointDataTableName)) {
+        $pointDataQuery = DB::table($pointDataTableName . ' as pd')
+            ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
+            ->select(
+                'pd.point_gisid',
+                'pd.assessment',
+                'pd.qcsqfeet',
+                'pd.bill_usage',
+                'pd.usage as point_usage',
+                'pd.qcusage',
+                'mis.plot_area',
+                'mis.owner_name',
+                'mis.address',
+                'mis.road_name'
+            );
+
+        $pointDatas = $pointDataQuery->get();
+
+        // Group by point_gisid
+        foreach ($pointDatas as $pointData) {
+            $gisid = $pointData->point_gisid;
+            if (!isset($pointDataByGisid[$gisid])) {
+                $pointDataByGisid[$gisid] = [];
+            }
+            $pointDataByGisid[$gisid][] = $pointData;
+        }
+    }
+
+    // Prepare Excel data
+    $excelData = [];
+    $rowNumber = 1;
+
+    // Headers
+    $excelData[] = [
+        'S.No',
+        'GIS ID',
+        'Building Sq Feet',
+        'Number of Floors',
+        'Basement',
+        'Floor Percentage',
+        'Total Building Area',
+        'Building Usage',
+        'Total Assessment Area (Sum of Bills)',
+        'Area Variation',
+        'Area Variation Status',
+        'Number of Bills/Assessments',
+        'Usage Variation Status',
+        'Negative Area Variation',
+        'Variation Percentage',
+        'Owner Name',
+        'Address',
+        'Road Name'
+    ];
+
+    foreach ($polygons as $polygon) {
+        $gisid = $polygon->gisid;
+        $polygonSqfeet = floatval($polygon->sqfeet ?? 0);
+
+        // Get polygon data (floor details)
+        $polyData = $polygonDatas->get($gisid);
+        $numberFloor = 0;
+        $basement = 0;
+        $floorPercentage = 100;
+        $buildingUsage = null;
+        $totalBuildingArea = $polygonSqfeet;
+
+        if ($polyData) {
+            $numberFloor = floatval($polyData->number_floor ?? 0);
+            $basement = floatval($polyData->basement ?? 0);
+            $floorPercentage = floatval($polyData->percentage ?? 100);
+            $buildingUsage = $polyData->building_usage ?? null;
+
+            // Calculate total building area with floors and basement
+            $totalBuildingArea = $polygonSqfeet * ($numberFloor + ($floorPercentage / 100) + $basement);
+        }
+
+        // Get assessment data for this building
+        $assessmentArea = 0;
+        $assessmentCount = 0;
+        $hasUsageMismatch = false;
+        $ownerName = '';
+        $address = '';
+        $roadName = '';
+        $billUsages = [];
+
+        if (isset($pointDataByGisid[$gisid])) {
+            $assessmentCount = count($pointDataByGisid[$gisid]);
+
+            foreach ($pointDataByGisid[$gisid] as $pointData) {
+                // Calculate area
+                $pointArea = 0;
+                if (isset($pointData->qcsqfeet) && $pointData->qcsqfeet > 0) {
+                    $pointArea = floatval($pointData->qcsqfeet);
+                } elseif (isset($pointData->plot_area) && $pointData->plot_area > 0) {
+                    $pointArea = floatval($pointData->plot_area);
+                }
+                $assessmentArea += $pointArea;
+
+                // Check usage mismatch
+                $pointUsage = $pointData->bill_usage ?? $pointData->qcusage ?? $pointData->point_usage ?? null;
+                if ($buildingUsage && $pointUsage && strtoupper(trim($buildingUsage)) != strtoupper(trim($pointUsage))) {
+                    $hasUsageMismatch = true;
+                }
+
+                // Get MIS details (use first assessment's data for reference)
+                if (empty($ownerName) && isset($pointData->owner_name)) {
+                    $ownerName = $pointData->owner_name;
+                    $address = $pointData->address ?? '';
+                    $roadName = $pointData->road_name ?? '';
+                }
+
+                $billUsages[] = $pointUsage;
+            }
+        }
+
+        // Calculate variations
+        $areaVariation = $totalBuildingArea - $assessmentArea;
+        $areaVariationAbs = abs($areaVariation);
+        $hasAreaVariation = $areaVariationAbs > 1;
+        $isNegativeVariation = $areaVariation < 0;
+        $variationPercentage = $totalBuildingArea > 0
+            ? round(($areaVariationAbs / $totalBuildingArea) * 100, 2)
+            : 0;
+
+        // Determine status
+        $areaStatus = $hasAreaVariation ? 'VARIATION' : 'MATCH';
+        $usageStatus = $hasUsageMismatch ? 'VARIATION' : 'MATCH';
+        $negativeStatus = $isNegativeVariation ? 'YES' : 'NO';
+
+        // Add to Excel data
+        $excelData[] = [
+            'S.No' => $rowNumber++,
+            'GIS ID' => $gisid,
+            'Building Sq Feet' => $polygonSqfeet,
+            'Number of Floors' => $numberFloor,
+            'Basement' => $basement,
+            'Floor Percentage' => $floorPercentage . '%',
+            'Total Building Area' => round($totalBuildingArea, 2),
+            'Building Usage' => $buildingUsage ?? 'N/A',
+            'Total Assessment Area (Sum of Bills)' => round($assessmentArea, 2),
+            'Area Variation' => round($areaVariation, 2),
+            'Area Variation Status' => $areaStatus,
+            'Number of Bills/Assessments' => $assessmentCount,
+            'Usage Variation Status' => $usageStatus,
+            'Negative Area Variation' => $negativeStatus,
+            'Variation Percentage' => $variationPercentage . '%',
+            'Owner Name' => $ownerName,
+            'Address' => $address,
+            'Road Name' => $roadName
+        ];
+    }
+
+    // Add summary sheet data
+    $totalBuildings = count($polygons);
+    $buildingsWithAreaVariation = 0;
+    $buildingsWithUsageVariation = 0;
+    $buildingsWithNegativeVariation = 0;
+    $totalBuildingAreaSum = 0;
+    $totalAssessmentAreaSum = 0;
+
+    foreach ($excelData as $index => $row) {
+        if ($index === 0) continue; // Skip header
+
+        if ($row['Area Variation Status'] === 'VARIATION') {
+            $buildingsWithAreaVariation++;
+        }
+        if ($row['Usage Variation Status'] === 'VARIATION') {
+            $buildingsWithUsageVariation++;
+        }
+        if ($row['Negative Area Variation'] === 'YES') {
+            $buildingsWithNegativeVariation++;
+        }
+        $totalBuildingAreaSum += floatval($row['Total Building Area']);
+        $totalAssessmentAreaSum += floatval($row['Total Assessment Area (Sum of Bills)']);
+    }
+
+    // Create Excel file using Laravel Excel or raw PHP
+    return $this->generateExcel($excelData, $warddetail, [
+        'totalBuildings' => $totalBuildings,
+        'areaVariationCount' => $buildingsWithAreaVariation,
+        'usageVariationCount' => $buildingsWithUsageVariation,
+        'negativeVariationCount' => $buildingsWithNegativeVariation,
+        'totalBuildingArea' => round($totalBuildingAreaSum, 2),
+        'totalAssessmentArea' => round($totalAssessmentAreaSum, 2),
+        'wardName' => "Ward {$warddetail->ward_no}",
+        'zone' => $warddetail->zone,
+        'corporationName' => $user->name ?? 'Corporation'
+    ]);
+}
+
+/**
+ * Generate Excel file using PHP native functions
+ */
+private function generateExcel($data, $ward, $summary)
+{
+    // Create temporary file
+    $filename = "ward_{$ward->ward_no}_building_variations_" . date('Ymd_His') . ".xls";
+
+    // Set headers for Excel download
+    header('Content-Type: application/vnd.ms-excel');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    // Create HTML table for Excel
+    echo '<html>';
+    echo '<head>';
+    echo '<meta charset="UTF-8">';
+    echo '<title>Ward ' . $ward->ward_no . ' Building Variations Report</title>';
+    echo '<style>';
+    echo 'th { background-color: #4472C4; color: white; border: 1px solid #000; padding: 8px; }';
+    echo 'td { border: 1px solid #ccc; padding: 6px; }';
+    echo '.summary-table { margin-bottom: 20px; border-collapse: collapse; width: 100%; }';
+    echo '.summary-table td { padding: 8px; }';
+    echo '.header { font-size: 18px; font-weight: bold; margin-bottom: 20px; }';
+    echo '.subheader { font-size: 14px; margin-bottom: 20px; color: #666; }';
+    echo '.variation-match { background-color: #C6EFCE; }';
+    echo '.variation-mismatch { background-color: #FFC7CE; }';
+    echo '</style>';
+    echo '</head>';
+    echo '<body>';
+
+    // Report Header
+    echo '<div class="header">';
+    echo '<h2>' . htmlspecialchars($summary['corporationName']) . '</h2>';
+    echo '<h3>Building Variation Report - ' . htmlspecialchars($summary['wardName']) . ' (' . htmlspecialchars($summary['zone']) . ' Zone)</h3>';
+    echo '</div>';
+
+    echo '<div class="subheader">';
+    echo 'Generated on: ' . date('d-m-Y H:i:s') . '<br>';
+    echo '</div>';
+
+    // Summary Statistics
+    echo '<h3>Summary Statistics</h3>';
+    echo '<table class="summary-table" border="1" cellpadding="5" cellspacing="0">';
+    echo '<tr style="background-color: #E6E6E6;"><td width="50%"><strong>Total Buildings:</strong></td><td>' . $summary['totalBuildings'] . '</td></tr>';
+    echo '<tr><td><strong>Buildings with Area Variation:</strong></td><td>' . $summary['areaVariationCount'] . ' (' . round(($summary['areaVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
+    echo '<tr style="background-color: #E6E6E6;"><td><strong>Buildings with Usage Variation:</strong></td><td>' . $summary['usageVariationCount'] . ' (' . round(($summary['usageVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
+    echo '<tr><td><strong>Buildings with Negative Variation (Assessment < Building):</strong></td><td>' . $summary['negativeVariationCount'] . ' (' . round(($summary['negativeVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
+    echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Building Area (All Buildings):</strong></td><td>' . number_format($summary['totalBuildingArea'], 2) . ' sq ft</td></tr>';
+    echo '<tr><td><strong>Total Assessment Area (All Bills):</strong></td><td>' . number_format($summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
+    echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Area Variation:</strong></td><td>' . number_format($summary['totalBuildingArea'] - $summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
+    echo '</table>';
+
+    echo '<br><br>';
+
+    // Detailed Data Table
+    echo '<h3>Detailed Building Data</h3>';
+    echo '<table border="1" cellpadding="5" cellspacing="0">';
+
+    // Headers
+    echo '<tr>';
+    foreach ($data[0] as $header) {
+        echo '<th>' . htmlspecialchars($header) . '</th>';
+    }
+    echo '</tr>';
+
+    // Data rows
+    for ($i = 1; $i < count($data); $i++) {
+        $row = $data[$i];
+        $rowClass = '';
+
+        // Color code rows based on variation status
+        if ($row['Area Variation Status'] === 'VARIATION' || $row['Usage Variation Status'] === 'VARIATION') {
+            $rowClass = 'class="variation-mismatch"';
+        } elseif ($row['Area Variation Status'] === 'MATCH' && $row['Usage Variation Status'] === 'MATCH') {
+            $rowClass = 'class="variation-match"';
+        }
+
+        echo '<tr ' . $rowClass . '>';
+        foreach ($row as $key => $value) {
+            echo '<td>' . htmlspecialchars($value) . '</td>';
+        }
+        echo '</tr>';
+    }
+
+    echo '</table>';
+
+    // Legend
+    echo '<br><br>';
+    echo '<table border="0" cellpadding="5">';
+    echo '<tr><td style="background-color: #C6EFCE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Match:</strong> No variations found</td></tr>';
+    echo '<tr><td style="background-color: #FFC7CE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Variation:</strong> Area or Usage mismatch detected</td></tr>';
+    echo '</table>';
+
+    echo '</body>';
+    echo '</html>';
+
+    exit;
+}
 }
