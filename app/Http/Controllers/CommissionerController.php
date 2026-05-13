@@ -612,7 +612,7 @@ class CommissionerController extends Controller
                 'water_connection',
                 'image',
                 'building_type',
-                'image1',
+                'image2',
                 'remarks'
             )
             ->get();
