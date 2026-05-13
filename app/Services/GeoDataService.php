@@ -84,7 +84,6 @@ class GeoDataService
                     $table->string('number_bill')->nullable();
                     $table->string('number_shop')->nullable();
                     $table->string('number_floor')->nullable();
-                    $table->string('new_address')->nullable();
                     $table->string('liftroom')->nullable();
                     $table->string('headroom')->nullable();
                     $table->string('overhead_tank')->nullable();
@@ -107,10 +106,7 @@ class GeoDataService
                     $table->string('building_type')->nullable();
                     $table->string('image')->nullable();
                     $table->string('image2')->nullable();
-                    $table->string('sqfeet')->nullable();
-                    $table->string('merge')->nullable();
                     $table->string('zone')->nullable();
-                    $table->string('split')->nullable();
                     $table->string('worker_name')->nullable();
                     $table->string('remarks')->nullable();
                     $table->string('corporationremarks')->nullable();
@@ -144,19 +140,8 @@ class GeoDataService
                     $table->string('aadhar_no')->nullable();
                     $table->string('ration_no')->nullable();
                     $table->string('phone_number')->nullable();
-                    $table->string('shop_floor')->nullable();
-                    $table->string('shop_name')->nullable();
-                    $table->string('shop_owner_name')->nullable();
                     $table->string('old_door_no')->nullable();
                     $table->string('new_door_no')->nullable();
-                    $table->string('shop_category')->nullable();
-                    $table->string('shop_mobile')->nullable();
-                    $table->string('license')->nullable();
-                    $table->string('professional_tax')->nullable();
-                    $table->string('gst')->nullable();
-                    $table->string('number_of_employee')->nullable();
-                    $table->string('trade_income')->nullable();
-                    $table->string('establishment_remarks')->nullable();
                     $table->string('remarks')->nullable();
                     $table->string('plot_area')->nullable();
                     $table->string('water_tax')->nullable();
@@ -167,7 +152,6 @@ class GeoDataService
                     $table->string('qc_usage')->nullable();
                     $table->string('qc_name')->nullable();
                     $table->string('qc_remarks')->nullable();
-                    $table->string('otsarea')->nullable();
                     $table->string('zone')->nullable();
                     $table->timestamps();
                     $table->softDeletes();

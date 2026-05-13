@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Corporation;
 use App\Models\Ward;
+use SebastianBergmann\CodeCoverage\Util\Percentage;
 
 class CommissionerController extends Controller
 {
@@ -575,8 +576,47 @@ class CommissionerController extends Controller
 
         // Get all data once
         $pointDatas = DB::table($pointDataTable)->get();
-        $polygonDatas = DB::table($polygonDataTable)->get();
-        $shopDatas = DB::table($shopTableName)->get();
+
+        $polygonDatas = DB::table($polygonDataTable)
+            ->select(
+                'id',
+                'gisid',
+                'number_bill',
+                'number_floor',
+                'Percentage as floor_percentage',
+                'building_usage',
+                'contruction_type',
+                'road_name',
+                'ugd',
+                'basement',
+                'water_connection',
+                'building_tupe',
+                'image1',
+                'remarks'
+            )
+            ->get();
+
+        $shopDatas = DB::table($shopTableName)
+            ->select(
+                'id',
+                'point_data_id',
+                'building_id',
+                'point_gisid',
+                'assessment',
+                'old_assessment',
+                'owner_name',
+                'presenowner_name',
+                'floor',
+                'bill_usage',
+                'phone_number',
+                'old_door_no',
+                'new_door_no',
+                'remarks',
+                'water_tax',
+                'zoneqcusage',
+                'qcsqfeet'
+            )
+            ->get();
 
         // Group shops by point_data_id
         $shopsGrouped = $shopDatas->groupBy('point_data_id');
@@ -594,10 +634,17 @@ class CommissionerController extends Controller
         foreach ($polygonDatas as $polygondata) {
 
             $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
+
+            // Optional counts
+            $polygondata->total_points = count($polygondata->pointdata);
+
+            $polygondata->total_shops = collect($polygondata->pointdata)
+                ->sum(function ($point) {
+                    return count($point->shops);
+                });
         }
 
         return response()->json($polygonDatas);
-
         // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
             ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
