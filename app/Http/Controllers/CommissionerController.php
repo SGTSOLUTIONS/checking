@@ -1010,7 +1010,7 @@ public function mapDownloadExcel($ward_no)
                 'pd.assessment',
                 'pd.qcsqfeet',
                 'pd.bill_usage',
-                'pd.usage as point_usage',
+                'pd.bill_usage as point_usage',
                 'pd.qcusage',
                 'mis.plot_area',
                 'mis.owner_name',
