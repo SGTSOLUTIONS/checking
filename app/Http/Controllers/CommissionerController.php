@@ -1014,7 +1014,7 @@ public function mapDownloadExcel($ward_no)
                 'pd.qcusage',
                 'mis.plot_area',
                 'mis.owner_name',
-                'mis.address',
+                'mis.road_name as address',
                 'mis.road_name'
             );
 
