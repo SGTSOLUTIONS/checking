@@ -576,7 +576,7 @@ class CommissionerController extends Controller
             ->select(
                 'pd.*',
                 'sd.shop_name',
-                'sd.shop_type',
+                'sd.type',
                 'sd.id as shop_id'
             )
             ->get();
