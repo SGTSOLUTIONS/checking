@@ -661,7 +661,7 @@ class CommissionerController extends Controller
 
         $ward = $warddetail;
 
-        return view('corporation.ward-map', compact('ward', 'polygons', 'lines'.'polygonDatas'));
+        return view('corporation.ward-map', compact('ward', 'polygons', 'lines','polygonDatas'));
     }
 
     private function getPointDataTable($corporationId, $wardNo, $zone)
