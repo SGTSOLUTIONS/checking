@@ -12,15 +12,133 @@
 
 @push('styles')
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 <style>
+    /* Prevent body scrolling and zoom */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+        touch-action: none; /* Prevents browser zoom/pinch on entire page */
+    }
+
     #map {
         width: 100%;
         height: 100vh;
+        height: 100dvh; /* Dynamic viewport height for mobile */
+        position: relative;
+        touch-action: pan-x pan-y pinch-zoom; /* Allows map to handle touch events */
     }
 
-    /* Simple Legend */
+    /* Layer Switcher */
+    .layer-switcher {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        font-size: 12px;
+        min-width: 160px;
+        backdrop-filter: blur(5px);
+        touch-action: auto;
+        pointer-events: auto;
+    }
+
+    @media (max-width: 768px) {
+        .layer-switcher {
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            min-width: 140px;
+        }
+
+        .layer-switcher label {
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .layer-switcher input {
+            width: 18px;
+            height: 18px;
+        }
+
+        .map-legend {
+            bottom: 70px;
+            right: 10px;
+            font-size: 10px;
+            padding: 8px;
+            min-width: 110px;
+        }
+
+        .zoom-controls {
+            bottom: 20px;
+            left: 10px;
+        }
+
+        .zoom-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+        }
+    }
+
+    .layer-switcher h5 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+    }
+
+    .layer-group {
+        margin-bottom: 12px;
+    }
+
+    .layer-group label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        margin: 8px 0;
+        font-size: 12px;
+        color: #555;
+        touch-action: manipulation;
+    }
+
+    .layer-group input {
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .layer-group .group-title {
+        font-weight: 600;
+        color: #1679AB;
+        margin-bottom: 5px;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    /* Legend */
     .map-legend {
         position: absolute;
         bottom: 20px;
@@ -31,7 +149,8 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         z-index: 1000;
         font-size: 12px;
-        font-family: Arial, sans-serif;
+        min-width: 140px;
+        backdrop-filter: blur(5px);
         pointer-events: none;
     }
 
@@ -39,12 +158,14 @@
         margin: 0 0 8px 0;
         font-size: 13px;
         font-weight: 600;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
     }
 
     .legend-item {
         display: flex;
         align-items: center;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
 
     .legend-color {
@@ -55,18 +176,20 @@
     }
 
     .legend-color.building {
-        background: rgba(255, 0, 0, 0.2);
-        border: 2px solid red;
+        background: rgba(255, 68, 68, 0.3);
+        border: 2px solid #ff4444;
     }
 
     .legend-color.road {
         background: none;
-        border: 2px solid green;
+        border: 2px solid #ffc107;
+        height: 3px;
+        margin-top: 8px;
     }
 
-    .legend-color.point {
-        background: blue;
-        border-radius: 50%;
+    .legend-color.boundary {
+        background: none;
+        border: 2px dashed #ff0000;
     }
 
     .legend-color.drone {
@@ -94,40 +217,41 @@
         cursor: pointer;
         font-size: 18px;
         transition: all 0.2s;
+        touch-action: manipulation;
     }
 
-    .zoom-btn:hover {
+    .zoom-btn:active {
         background: #1679AB;
         color: white;
+        transform: scale(0.95);
     }
 
     .zoom-btn:first-child {
         border-bottom: 1px solid #ddd;
     }
 
-    /* Layer Toggle */
-    .layer-toggle {
+    /* Ensure OpenLayers map captures touch events properly */
+    .ol-viewport {
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+
+    .ol-viewport canvas {
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+
+    /* Loading message */
+    .map-loading {
         position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255, 255, 255, 0.95);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 20px;
         border-radius: 8px;
-        padding: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-        font-size: 12px;
-    }
-
-    .layer-toggle label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        margin: 5px 0;
-    }
-
-    .layer-toggle input {
-        cursor: pointer;
+        z-index: 2000;
+        font-size: 14px;
+        pointer-events: none;
     }
 </style>
 
@@ -135,33 +259,84 @@
 
 @push('scripts')
 
+<script>
+    // Prevent default touch zoom on entire page
+    (function() {
+        // Prevent touchmove on non-map elements
+        document.addEventListener('touchmove', function(e) {
+            // Allow touchmove only on map and controls
+            const isMap = e.target.closest('#map');
+            const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls');
+
+            if (!isMap && !isControl) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Prevent pinch zoom on non-map elements
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                // Allow pinch only on map
+                if (!e.target.closest('#map')) {
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
+
+        // Prevent double-tap zoom on entire page
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                if (!e.target.closest('#map')) {
+                    e.preventDefault();
+                }
+            }
+            lastTouchEnd = now;
+        }, false);
+    })();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
 <script>
-
     let map;
     let polygonLayer;
-    let pointLayer;
     let lineLayer;
     let imageLayer;
     let boundaryLayer;
+    let osmLayer;
+    let satelliteLayer;
+    let isLoading = false;
 
     // =========================
     // MAP INIT
     // =========================
 
     function initMap() {
+        showLoading(true);
 
         // =========================
-        // OSM LAYER
+        // BASE LAYERS
         // =========================
 
-        const osmLayer = new ol.layer.Tile({
-            source: new ol.source.OSM()
+        // OSM Layer
+        osmLayer = new ol.layer.Tile({
+            source: new ol.source.OSM(),
+            visible: true
+        });
+
+        // Satellite Layer (ArcGIS Imagery)
+        satelliteLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attributions: 'Tiles &copy; Esri'
+            }),
+            visible: false
         });
 
         // =========================
-        // IMAGE LAYER (DRONE)
+        // DRONE IMAGE LAYER
         // =========================
 
         let droneImage = @json($ward->drone_image ?? null);
@@ -170,28 +345,19 @@
         let extentRight  = @json($ward->extent_right ?? null);
         let extentTop    = @json($ward->extent_top ?? null);
 
-        // Build image URL properly
         let imageUrl = null;
         if (droneImage) {
-            // Remove leading slashes if any
             let cleanPath = droneImage.replace(/^\/+/, '');
             imageUrl = "{{ asset('') }}" + cleanPath;
         }
 
-        // Default Empty Layer
         imageLayer = new ol.layer.Image({
-            visible: true,
+            visible: false,
             opacity: 0.7
         });
 
-        // If image exists with valid extent
-        if (
-            imageUrl &&
-            extentLeft !== null &&
-            extentBottom !== null &&
-            extentRight !== null &&
-            extentTop !== null
-        ) {
+        if (imageUrl && extentLeft !== null && extentBottom !== null &&
+            extentRight !== null && extentTop !== null) {
             try {
                 imageLayer = new ol.layer.Image({
                     source: new ol.source.ImageStatic({
@@ -205,18 +371,16 @@
                         projection: 'EPSG:3857'
                     }),
                     opacity: 0.7,
-                    visible: true
+                    visible: false
                 });
-                console.log('Drone image loaded:', imageUrl);
+                console.log('Drone image loaded');
             } catch(e) {
                 console.error('Error loading drone image:', e);
             }
-        } else {
-            console.log('No drone image or extent available');
         }
 
         // =========================
-        // BOUNDARY LAYER (Optional)
+        // BOUNDARY LAYER
         // =========================
 
         let boundary = @json($ward->boundary ?? null);
@@ -241,7 +405,7 @@
                             lineDash: [10, 5]
                         }),
                         fill: new ol.style.Fill({
-                            color: 'rgba(255, 0, 0, 0.05)'
+                            color: 'rgba(255, 0, 0, 0)'
                         })
                     }),
                     visible: true
@@ -252,10 +416,9 @@
         }
 
         // =========================
-        // CREATE MAP
+        // CALCULATE MAP CENTER
         // =========================
 
-        // Calculate center from boundary if available
         let center = ol.proj.fromLonLat([80.2707, 13.0827]);
         let zoom = 16;
 
@@ -271,28 +434,41 @@
             } catch(e) {}
         }
 
-        // Build layers array
-        let layers = [osmLayer];
-
-        if (imageLayer) layers.push(imageLayer);
-        if (boundaryLayer) layers.push(boundaryLayer);
+        // =========================
+        // CREATE MAP with touch interactions
+        // =========================
 
         map = new ol.Map({
             target: 'map',
-            layers: layers,
+            layers: [osmLayer, satelliteLayer],
             view: new ol.View({
                 center: center,
-                zoom: zoom
+                zoom: zoom,
+                smoothExtentConstraint: true,
+                smoothResolutionConstraint: true,
+                constrainResolution: true
+            }),
+            interactions: ol.interaction.defaults({
+                pinchRotate: false,
+                pinchZoom: true,
+                doubleClickZoom: true,
+                dragPan: true,
+                keyboard: false,
+                mouseWheelZoom: true
             })
         });
 
+        // Add additional layers after map creation
+        if (imageLayer) map.addLayer(imageLayer);
+        if (boundaryLayer) map.addLayer(boundaryLayer);
+
         // =========================
-        // ADD LEGEND TO DOM
+        // ADD UI CONTROLS
         // =========================
 
+        addLayerSwitcher();
         addLegend();
         addZoomControls();
-        addLayerControls();
 
         // =========================
         // LOAD VECTOR LAYERS
@@ -300,6 +476,81 @@
 
         refreshLayers();
 
+        showLoading(false);
+    }
+
+    // =========================
+    // ADD LAYER SWITCHER
+    // =========================
+
+    function addLayerSwitcher() {
+        const switcher = document.createElement('div');
+        switcher.className = 'layer-switcher';
+        switcher.innerHTML = `
+            <h5><i class="fas fa-layer-group"></i> Layers</h5>
+
+            <div class="layer-group">
+                <div class="group-title">Base Maps</div>
+                <label>
+                    <input type="radio" name="baseLayer" value="osm" checked>
+                    <i class="fas fa-map"></i> OpenStreetMap
+                </label>
+                <label>
+                    <input type="radio" name="baseLayer" value="satellite">
+                    <i class="fas fa-satellite"></i> Satellite
+                </label>
+            </div>
+
+            <div class="layer-group">
+                <div class="group-title">Overlays</div>
+                <label>
+                    <input type="checkbox" id="toggleBuildings" checked>
+                    <i class="fas fa-building"></i> Buildings
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleRoads" checked>
+                    <i class="fas fa-road"></i> Roads
+                </label>
+                <label>
+                    <input type="checkbox" id="toggleBoundary" checked>
+                    <i class="fas fa-draw-polygon"></i> Ward Boundary
+                </label>
+                ${imageLayer && imageLayer.get('visible') !== undefined ? `
+                <label>
+                    <input type="checkbox" id="toggleDrone">
+                    <i class="fas fa-drone"></i> Drone Image
+                </label>
+                ` : ''}
+            </div>
+        `;
+        document.body.appendChild(switcher);
+
+        // Base layer switcher
+        document.querySelectorAll('input[name="baseLayer"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                osmLayer.setVisible(e.target.value === 'osm');
+                satelliteLayer.setVisible(e.target.value === 'satellite');
+            });
+        });
+
+        // Overlay toggles
+        document.getElementById('toggleBuildings').addEventListener('change', (e) => {
+            if (polygonLayer) polygonLayer.setVisible(e.target.checked);
+        });
+
+        document.getElementById('toggleRoads').addEventListener('change', (e) => {
+            if (lineLayer) lineLayer.setVisible(e.target.checked);
+        });
+
+        document.getElementById('toggleBoundary').addEventListener('change', (e) => {
+            if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
+        });
+
+        if (document.getElementById('toggleDrone')) {
+            document.getElementById('toggleDrone').addEventListener('change', (e) => {
+                if (imageLayer) imageLayer.setVisible(e.target.checked);
+            });
+        }
     }
 
     // =========================
@@ -310,7 +561,7 @@
         const legend = document.createElement('div');
         legend.className = 'map-legend';
         legend.innerHTML = `
-            <h5><i class="fas fa-layer-group"></i> Legend</h5>
+            <h5><i class="fas fa-info-circle"></i> Legend</h5>
             <div class="legend-item">
                 <div class="legend-color building"></div>
                 <span>Buildings</span>
@@ -320,13 +571,13 @@
                 <span>Roads</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color point"></div>
-                <span>Points of Interest</span>
+                <div class="legend-color boundary"></div>
+                <span>Ward Boundary</span>
             </div>
-            ${imageLayer && imageLayer.get('visible') !== false ? `
+            ${imageLayer ? `
             <div class="legend-item">
                 <div class="legend-color drone"></div>
-                <span>Drone Image</span>
+                <span>Drone Imagery</span>
             </div>
             ` : ''}
         `;
@@ -346,62 +597,53 @@
         `;
         document.body.appendChild(controls);
 
-        document.getElementById('zoomInBtn').addEventListener('click', () => {
+        document.getElementById('zoomInBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const view = map.getView();
             view.setZoom(view.getZoom() + 1);
         });
 
-        document.getElementById('zoomOutBtn').addEventListener('click', () => {
+        document.getElementById('zoomOutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const view = map.getView();
             view.setZoom(view.getZoom() - 1);
+        });
+
+        // Prevent touch events on buttons from bubbling to map
+        const buttons = document.querySelectorAll('.zoom-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+            });
         });
     }
 
     // =========================
-    // ADD LAYER CONTROLS
+    // SHOW/HIDE LOADING
     // =========================
 
-    function addLayerControls() {
-        const controls = document.createElement('div');
-        controls.className = 'layer-toggle';
-        controls.innerHTML = `
-            <label>
-                <input type="checkbox" id="toggleBuildings" checked>
-                <i class="fas fa-building"></i> Buildings
-            </label>
-            <label>
-                <input type="checkbox" id="toggleRoads" checked>
-                <i class="fas fa-road"></i> Roads
-            </label>
-            <label>
-                <input type="checkbox" id="togglePoints" checked>
-                <i class="fas fa-map-marker-alt"></i> Points
-            </label>
-            ${imageLayer && imageLayer.get('visible') !== false ? `
-            <label>
-                <input type="checkbox" id="toggleDrone" checked>
-                <i class="fas fa-drone"></i> Drone Image
-            </label>
-            ` : ''}
-        `;
-        document.body.appendChild(controls);
+    function showLoading(show) {
+        isLoading = show;
+        let loadingEl = document.getElementById('mapLoading');
 
-        document.getElementById('toggleBuildings').addEventListener('change', (e) => {
-            if (polygonLayer) polygonLayer.setVisible(e.target.checked);
-        });
-
-        document.getElementById('toggleRoads').addEventListener('change', (e) => {
-            if (lineLayer) lineLayer.setVisible(e.target.checked);
-        });
-
-        document.getElementById('togglePoints').addEventListener('change', (e) => {
-            if (pointLayer) pointLayer.setVisible(e.target.checked);
-        });
-
-        if (document.getElementById('toggleDrone')) {
-            document.getElementById('toggleDrone').addEventListener('change', (e) => {
-                if (imageLayer) imageLayer.setVisible(e.target.checked);
-            });
+        if (show) {
+            if (!loadingEl) {
+                loadingEl = document.createElement('div');
+                loadingEl.id = 'mapLoading';
+                loadingEl.className = 'map-loading';
+                loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map...';
+                document.body.appendChild(loadingEl);
+            }
+            loadingEl.style.display = 'block';
+        } else {
+            if (loadingEl) {
+                loadingEl.style.display = 'none';
+            }
         }
     }
 
@@ -413,7 +655,6 @@
 
         // Remove old layers
         if (polygonLayer) map.removeLayer(polygonLayer);
-        if (pointLayer) map.removeLayer(pointLayer);
         if (lineLayer) map.removeLayer(lineLayer);
 
         // =========================
@@ -421,13 +662,12 @@
         // =========================
 
         let polygons = @json($polygons ?? []);
-        let points   = @json($points ?? []);
         let lines    = @json($lines ?? []);
 
-        console.log(`Loading: ${polygons.length} polygons, ${points.length} points, ${lines.length} lines`);
+        console.log(`Loading: ${polygons.length} polygons, ${lines.length} lines`);
 
         // =========================
-        // POLYGON SOURCE
+        // POLYGON SOURCE (BUILDINGS)
         // =========================
 
         const polygonSource = new ol.source.Vector();
@@ -461,58 +701,16 @@
                 stroke: new ol.style.Stroke({
                     color: '#ff4444',
                     width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 68, 68, 0.15)'
                 })
             }),
             visible: true
         });
 
         // =========================
-        // POINT SOURCE
-        // =========================
-
-        const pointSource = new ol.source.Vector();
-
-        points.forEach(function(point) {
-            try {
-                let coords = typeof point.coordinates === 'string'
-                    ? JSON.parse(point.coordinates)
-                    : point.coordinates;
-
-                if (coords && coords.length === 2) {
-                    const feature = new ol.Feature({
-                        geometry: new ol.geom.Point(coords),
-                        gisid: point.gisid
-                    });
-                    pointSource.addFeature(feature);
-                }
-            } catch(e) {
-                console.log('Error parsing point:', e);
-            }
-        });
-
-        // =========================
-        // POINT LAYER
-        // =========================
-
-        pointLayer = new ol.layer.Vector({
-            source: pointSource,
-            style: new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: 6,
-                    fill: new ol.style.Fill({
-                        color: '#1679AB'
-                    }),
-                    stroke: new ol.style.Stroke({
-                        color: '#ffffff',
-                        width: 2
-                    })
-                })
-            }),
-            visible: true
-        });
-
-        // =========================
-        // LINE SOURCE
+        // LINE SOURCE (ROADS)
         // =========================
 
         const lineSource = new ol.source.Vector();
@@ -561,16 +759,16 @@
 
         map.addLayer(polygonLayer);
         map.addLayer(lineLayer);
-        map.addLayer(pointLayer);
 
         // =========================
-        // FIT TO POLYGONS
+        // FIT TO POLYGONS (only if no polygons loaded before)
         // =========================
 
         if (polygonSource.getFeatures().length > 0) {
             try {
                 const extent = polygonSource.getExtent();
-                if (extent && !isNaN(extent[0]) && !isNaN(extent[1])) {
+                if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
+                    extent[0] !== Infinity && extent[1] !== -Infinity) {
                     map.getView().fit(extent, {
                         padding: [50, 50, 50, 50],
                         duration: 1000
@@ -582,8 +780,27 @@
         }
 
         console.log('Layers Refreshed Successfully');
-
     }
+
+    // =========================
+    // HANDLE ORIENTATION CHANGE
+    // =========================
+
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            if (map) {
+                map.updateSize();
+            }
+        }, 100);
+    });
+
+    window.addEventListener('resize', function() {
+        if (map) {
+            setTimeout(function() {
+                map.updateSize();
+            }, 100);
+        }
+    });
 
     // =========================
     // DOCUMENT READY
