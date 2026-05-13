@@ -44,7 +44,7 @@
             top: 20px;
             right: 20px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 1000;
@@ -53,6 +53,7 @@
             backdrop-filter: blur(5px);
             touch-action: auto;
             pointer-events: auto;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         @media (max-width: 768px) {
@@ -136,7 +137,7 @@
             bottom: 20px;
             right: 20px;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 1000;
@@ -144,6 +145,7 @@
             min-width: 140px;
             backdrop-filter: blur(5px);
             pointer-events: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         .map-legend h5 {
@@ -195,7 +197,7 @@
             bottom: 20px;
             left: 20px;
             background: white;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             z-index: 1000;
@@ -229,11 +231,28 @@
         .ol-viewport canvas {
             touch-action: pan-x pan-y pinch-zoom;
         }
+
+        /* Loading indicator */
+        .map-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            font-size: 14px;
+            pointer-events: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
     </style>
 @endpush
 
 @push('scripts')
     <script>
+        // Prevent default touch zoom on entire page
         (function() {
             document.addEventListener('touchmove', function(e) {
                 const isMap = e.target.closest('#map');
@@ -268,7 +287,27 @@
         let osmLayer;
         let satelliteLayer;
 
+        function showLoading(show) {
+            let loadingEl = document.getElementById('mapLoading');
+            if (show) {
+                if (!loadingEl) {
+                    loadingEl = document.createElement('div');
+                    loadingEl.id = 'mapLoading';
+                    loadingEl.className = 'map-loading';
+                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map...';
+                    document.body.appendChild(loadingEl);
+                }
+                loadingEl.style.display = 'block';
+            } else {
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+            }
+        }
+
         function initMap() {
+            showLoading(true);
+
             // Base Layers
             osmLayer = new ol.layer.Tile({
                 source: new ol.source.OSM(),
@@ -316,6 +355,7 @@
                         opacity: 0.7,
                         visible: false
                     });
+                    console.log('Drone image loaded');
                 } catch (e) {
                     console.error('Error loading drone image:', e);
                 }
@@ -364,51 +404,49 @@
                 } catch (e) {}
             }
 
-            // Create Map
+            // Create Map - REMOVED interactions property to fix the error
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
                 view: new ol.View({
                     center: center,
                     zoom: zoom
-                }),
-                interactions: ol.interaction.defaults({
-                    pinchRotate: false,
-                    pinchZoom: true,
-                    doubleClickZoom: true,
-                    dragPan: true,
-                    keyboard: false,
-                    mouseWheelZoom: true
                 })
             });
 
+            // Add additional layers
             if (imageLayer) map.addLayer(imageLayer);
             if (boundaryLayer) map.addLayer(boundaryLayer);
 
+            // Add UI controls
             addLayerSwitcher();
             addLegend();
             addZoomControls();
+
+            // Load vector layers
             refreshLayers();
+
+            showLoading(false);
         }
 
         function addLayerSwitcher() {
             const switcher = document.createElement('div');
             switcher.className = 'layer-switcher';
             switcher.innerHTML = `
-            <h5><i class="fas fa-layer-group"></i> Layers</h5>
-            <div class="layer-group">
-                <div class="group-title">Base Maps</div>
-                <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
-                <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-            </div>
-            <div class="layer-group">
-                <div class="group-title">Overlays</div>
-                <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                ${imageLayer ? `<label><input type="checkbox" id="toggleDrone"> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
-            </div>
-        `;
+                <h5><i class="fas fa-layer-group"></i> Layers</h5>
+                <div class="layer-group">
+                    <div class="group-title">Base Maps</div>
+                    <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+                    <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
+                </div>
+                <div class="layer-group">
+                    <div class="group-title">Overlays</div>
+                    <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
+                    <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
+                    <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
+                    ${imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl() ? `<label><input type="checkbox" id="toggleDrone"> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
+                </div>
+            `;
             document.body.appendChild(switcher);
 
             document.querySelectorAll('input[name="baseLayer"]').forEach(radio => {
@@ -438,31 +476,35 @@
             const legend = document.createElement('div');
             legend.className = 'map-legend';
             legend.innerHTML = `
-            <h5><i class="fas fa-info-circle"></i> Legend</h5>
-            <div class="legend-item"><div class="legend-color building"></div><span>Buildings</span></div>
-            <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
-            <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-            ${imageLayer ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
-        `;
+                <h5><i class="fas fa-info-circle"></i> Legend</h5>
+                <div class="legend-item"><div class="legend-color building"></div><span>Buildings</span></div>
+                <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
+                <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
+                ${imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl() ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
+            `;
             document.body.appendChild(legend);
         }
 
         function addZoomControls() {
             const controls = document.createElement('div');
             controls.className = 'zoom-controls';
-            controls.innerHTML =
-                `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
+            controls.innerHTML = `
+                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+            `;
             document.body.appendChild(controls);
 
             document.getElementById('zoomInBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                map.getView().setZoom(map.getView().getZoom() + 1);
+                const view = map.getView();
+                view.setZoom(view.getZoom() + 1);
             });
             document.getElementById('zoomOutBtn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                map.getView().setZoom(map.getView().getZoom() - 1);
+                const view = map.getView();
+                view.setZoom(view.getZoom() - 1);
             });
 
             document.querySelectorAll('.zoom-btn').forEach(btn => {
@@ -478,17 +520,21 @@
             let polygons = @json($polygons ?? []);
             let lines = @json($lines ?? []);
 
+            console.log(`Loading: ${polygons.length} polygons, ${lines.length} lines`);
+
+            // Polygon Source
             const polygonSource = new ol.source.Vector();
             polygons.forEach(function(poly) {
                 try {
                     let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
                         .coordinates;
                     if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({
+                        const feature = new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
                             gisid: poly.gisid,
                             sqfeet: poly.sqfeet
-                        }));
+                        });
+                        polygonSource.addFeature(feature);
                     }
                 } catch (e) {
                     console.log('Error parsing polygon:', e);
@@ -509,17 +555,21 @@
                 visible: true
             });
 
+            // Line Source
             const lineSource = new ol.source.Vector();
             lines.forEach(function(line) {
                 try {
                     let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
                         .coordinates;
                     if (coords && coords.length) {
-                        if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({
+                        if (coords.length === 1 && Array.isArray(coords[0][0])) {
+                            coords = coords[0];
+                        }
+                        const feature = new ol.Feature({
                             geometry: new ol.geom.LineString(coords),
                             gisid: line.gisid
-                        }));
+                        });
+                        lineSource.addFeature(feature);
                     }
                 } catch (e) {
                     console.log('Error parsing line:', e);
@@ -540,11 +590,12 @@
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
 
+            // Fit to polygons
             if (polygonSource.getFeatures().length > 0) {
                 try {
                     const extent = polygonSource.getExtent();
-                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) && extent[0] !== Infinity && extent[1] !== -
-                        Infinity) {
+                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
+                        extent[0] !== Infinity && extent[1] !== -Infinity) {
                         map.getView().fit(extent, {
                             padding: [50, 50, 50, 50],
                             duration: 1000
@@ -554,10 +605,34 @@
                     console.log('Error fitting to polygons:', e);
                 }
             }
+
+            console.log('Layers Refreshed Successfully');
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            initMap();
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                if (map) {
+                    map.updateSize();
+                }
+            }, 100);
         });
+
+        window.addEventListener('resize', function() {
+            setTimeout(function() {
+                if (map) {
+                    map.updateSize();
+                }
+            }, 100);
+        });
+
+        // Initialize map when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initMap();
+            });
+        } else {
+            initMap();
+        }
     </script>
 @endpush
