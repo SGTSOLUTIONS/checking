@@ -5,6 +5,14 @@
 @section('content')
     <div class="container-fluid p-0">
         <div id="map"></div>
+
+        <!-- Mobile Menu Buttons -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-layer-group"></i>
+        </button>
+        <button class="mobile-legend-btn" id="mobileLegendBtn">
+            <i class="fas fa-info-circle"></i>
+        </button>
     </div>
 @endsection
 
@@ -38,7 +46,47 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Layer Switcher */
+        /* Mobile Menu Buttons */
+        .mobile-menu-btn,
+        .mobile-legend-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1002;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+
+        .mobile-legend-btn {
+            right: 80px;
+            background: rgba(255, 193, 7, 0.9);
+        }
+
+        .mobile-menu-btn:active,
+        .mobile-legend-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn,
+            .mobile-legend-btn {
+                display: flex;
+            }
+        }
+
+        /* Layer Switcher - Desktop */
         .layer-switcher {
             position: absolute;
             top: 20px;
@@ -55,49 +103,25 @@
             pointer-events: auto;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
+            transition: transform 0.3s ease;
         }
 
+        /* Layer Switcher - Mobile */
         @media (max-width: 768px) {
             .layer-switcher {
-                top: 10px;
-                right: 10px;
-                padding: 10px;
-                min-width: 140px;
+                position: fixed;
+                bottom: 80px;
+                right: 20px;
+                top: auto;
+                transform: translateX(120%);
+                transition: transform 0.3s ease;
+                max-width: calc(100% - 40px);
+                min-width: 200px;
+                z-index: 1003;
             }
 
-            .layer-switcher label {
-                padding: 8px 0;
-                font-size: 13px;
-            }
-
-            .layer-switcher input {
-                width: 18px;
-                height: 18px;
-            }
-
-            .map-legend {
-                bottom: 70px;
-                right: 10px;
-                font-size: 10px;
-                padding: 8px;
-                min-width: 110px;
-            }
-
-            .zoom-controls {
-                bottom: 20px;
-                left: 10px;
-            }
-
-            .zoom-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 20px;
-            }
-
-            .ol-popup {
-                max-width: 280px !important;
-                max-height: 70vh !important;
-                overflow-y: auto !important;
+            .layer-switcher.open {
+                transform: translateX(0);
             }
         }
 
@@ -128,6 +152,8 @@
         .layer-group input {
             cursor: pointer;
             margin: 0;
+            width: 16px;
+            height: 16px;
         }
 
         .layer-group .group-title {
@@ -138,7 +164,7 @@
             text-transform: uppercase;
         }
 
-        /* Legend */
+        /* Legend - Desktop */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -154,6 +180,27 @@
             pointer-events: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
+            transition: transform 0.3s ease;
+        }
+
+        /* Legend - Mobile */
+        @media (max-width: 768px) {
+            .map-legend {
+                position: fixed;
+                bottom: 140px;
+                right: 20px;
+                top: auto;
+                transform: translateX(120%);
+                transition: transform 0.3s ease;
+                min-width: 160px;
+                pointer-events: auto;
+                z-index: 1003;
+            }
+
+            .map-legend.open {
+                transform: translateX(0);
+                pointer-events: auto;
+            }
         }
 
         .map-legend h5 {
@@ -167,7 +214,7 @@
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .legend-color {
@@ -199,6 +246,11 @@
             border: 1px solid #fff;
         }
 
+        .legend-color.popup {
+            background: #1a1a2e;
+            border: 1px solid #ff4444;
+        }
+
         /* Zoom Controls */
         .zoom-controls {
             position: absolute;
@@ -210,6 +262,13 @@
             overflow: hidden;
             z-index: 1000;
             backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .zoom-controls {
+                bottom: 20px;
+                left: 20px;
+            }
         }
 
         .zoom-btn {
@@ -276,6 +335,13 @@
             border: 1px solid rgba(255, 68, 68, 0.3);
         }
 
+        @media (max-width: 768px) {
+            .ol-popup {
+                max-width: 280px;
+                max-height: 60vh;
+            }
+        }
+
         .ol-popup:after {
             content: '';
             position: absolute;
@@ -295,6 +361,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: 1;
         }
 
         .popup-header h4 {
@@ -311,13 +381,14 @@
             font-size: 20px;
             cursor: pointer;
             padding: 0;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             transition: all 0.2s;
         }
 
-        .popup-close:hover {
+        .popup-close:hover,
+        .popup-close:active {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
         }
@@ -330,6 +401,12 @@
             margin-bottom: 15px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 10px;
+        }
+
+        .popup-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
         }
 
         .popup-section-title {
@@ -415,7 +492,9 @@
         (function() {
             document.addEventListener('touchmove', function(e) {
                 const isMap = e.target.closest('#map');
-                const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls');
+                const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls') ||
+                                 e.target.closest('.mobile-menu-btn') || e.target.closest('.mobile-legend-btn') ||
+                                 e.target.closest('.ol-popup');
                 if (!isMap && !isControl) {
                     e.preventDefault();
                 }
@@ -489,7 +568,6 @@
 
         // Show popup with building details
         function showPopup(gisid, coordinate) {
-            // Find polygon data by GIS ID
             const polyData = polygonDatas.find(p => p.gisid == gisid);
 
             if (!polyData) {
@@ -497,9 +575,6 @@
                 return;
             }
 
-            console.log('Showing popup for:', polyData);
-
-            // Build popup HTML
             let html = `
                 <div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
@@ -579,7 +654,6 @@
                     </div>
             `;
 
-            // Add Assessments/Bills section if exists
             if (polyData.pointdata && polyData.pointdata.length > 0) {
                 html += `
                     <div class="popup-section">
@@ -620,10 +694,8 @@
                             </div>
                     `;
 
-                    // Add shops if exists
                     if (assessment.shops && assessment.shops.length > 0) {
-                        html +=
-                            `<div class="popup-row"><span class="popup-label">Shops (${assessment.shops.length}):</span></div>`;
+                        html += `<div class="popup-row"><span class="popup-label">Shops (${assessment.shops.length}):</span></div>`;
                         assessment.shops.forEach(shop => {
                             html += `
                                 <div class="shop-item">
@@ -641,7 +713,6 @@
                 html += `</div>`;
             }
 
-            // Add Remarks if exists
             if (polyData.remarks) {
                 html += `
                     <div class="popup-section">
@@ -659,7 +730,6 @@
             popupElement.style.display = 'block';
             popupOverlay.setPosition(coordinate);
 
-            // Add close button event listener
             const closeBtn = popupElement.querySelector('.popup-close');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
@@ -685,7 +755,7 @@
                 visible: false
             });
 
-            // ========== DRONE IMAGE LAYER ==========
+            // Drone Image Layer
             let droneImage = @json($ward->drone_image ?? null);
             let extentLeft = @json($ward->extent_left ?? null);
             let extentBottom = @json($ward->extent_bottom ?? null);
@@ -725,7 +795,6 @@
                     });
 
                     hasDroneImage = true;
-                    console.log('Drone image layer created successfully');
 
                 } catch (e) {
                     console.error('Error creating drone image layer:', e);
@@ -735,7 +804,7 @@
                 imageLayer = null;
             }
 
-            // ========== BOUNDARY LAYER ==========
+            // Boundary Layer
             let boundary = @json($ward->boundary ?? null);
             let boundaryExtent = null;
 
@@ -753,6 +822,9 @@
                                 color: '#ff0000',
                                 width: 3,
                                 lineDash: [10, 5]
+                            }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255, 0, 0, 0.05)'
                             })
                         }),
                         visible: true
@@ -767,15 +839,14 @@
                         Math.max(...lats)
                     ]);
 
-                    console.log('Boundary extent calculated:', boundaryExtent);
                 } catch (e) {
                     console.error('Error creating boundary:', e);
                 }
             }
 
-            // ========== MAP CENTER ==========
+            // Map Center
             let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-            let zoom = 16;
+            let zoom = 24;
 
             if (boundary && boundary[0] && boundary[0].length) {
                 try {
@@ -801,7 +872,6 @@
                 })
             });
 
-            // Add popup overlay
             const popup = createPopup();
             map.addOverlay(popup);
 
@@ -823,12 +893,11 @@
                 }
             }, 500);
 
-            // Add UI controls
             addLayerSwitcher(hasDroneImage);
             addLegend(hasDroneImage);
             addZoomControls();
+            addMobileControls();
 
-            // Load vector layers
             refreshLayers();
 
             showLoading(false);
@@ -837,6 +906,7 @@
         function addLayerSwitcher(hasDroneImage) {
             const switcher = document.createElement('div');
             switcher.className = 'layer-switcher';
+            switcher.id = 'layerSwitcher';
             switcher.innerHTML = `
                 <h5><i class="fas fa-layer-group"></i> Layers</h5>
                 <div class="layer-group">
@@ -883,6 +953,7 @@
         function addLegend(hasDroneImage) {
             const legend = document.createElement('div');
             legend.className = 'map-legend';
+            legend.id = 'mapLegend';
             legend.innerHTML = `
                 <h5><i class="fas fa-info-circle"></i> Legend</h5>
                 <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
@@ -921,6 +992,39 @@
             });
         }
 
+        function addMobileControls() {
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            const legendBtn = document.getElementById('mobileLegendBtn');
+            const layerSwitcher = document.getElementById('layerSwitcher');
+            const mapLegend = document.getElementById('mapLegend');
+
+            if (menuBtn && layerSwitcher) {
+                menuBtn.addEventListener('click', () => {
+                    layerSwitcher.classList.toggle('open');
+                    if (mapLegend) mapLegend.classList.remove('open');
+                });
+            }
+
+            if (legendBtn && mapLegend) {
+                legendBtn.addEventListener('click', () => {
+                    mapLegend.classList.toggle('open');
+                    if (layerSwitcher) layerSwitcher.classList.remove('open');
+                });
+            }
+
+            // Close panels when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 768) {
+                    if (layerSwitcher && !layerSwitcher.contains(e.target) && !menuBtn.contains(e.target)) {
+                        layerSwitcher.classList.remove('open');
+                    }
+                    if (mapLegend && !mapLegend.contains(e.target) && !legendBtn.contains(e.target)) {
+                        mapLegend.classList.remove('open');
+                    }
+                }
+            });
+        }
+
         function refreshLayers() {
             if (polygonLayer) map.removeLayer(polygonLayer);
             if (lineLayer) map.removeLayer(lineLayer);
@@ -930,12 +1034,10 @@
 
             console.log(`Loading: ${polygons.length} polygons, ${lines.length} lines`);
 
-            // Polygon Source
             const polygonSource = new ol.source.Vector();
             polygons.forEach(function(poly) {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                        .coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                     if (coords && coords.length) {
                         const feature = new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
@@ -949,7 +1051,6 @@
                 }
             });
 
-            // Style function with labels for GISID and SqFeet
             function polygonStyleFunction(feature) {
                 const gisid = feature.get('gisid');
                 const sqfeet = feature.get('sqfeet');
@@ -1014,12 +1115,10 @@
                 visible: true
             });
 
-            // Line Source
             const lineSource = new ol.source.Vector();
             lines.forEach(function(line) {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                        .coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) {
                             coords = coords[0];
@@ -1049,7 +1148,7 @@
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
 
-            // Add click handler for polygons
+            // Click handler for polygons
             map.on('click', function(evt) {
                 const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature) {
                     return feature;
@@ -1066,7 +1165,7 @@
                 }
             });
 
-            // Change cursor on hover
+            // Hover cursor
             map.on('pointermove', function(evt) {
                 const pixel = evt.pixel;
                 const feature = map.forEachFeatureAtPixel(pixel, function(feature) {
@@ -1080,7 +1179,6 @@
                 }
             });
 
-            // Fit to polygons if no boundary exists
             if (!boundaryLayer && polygonSource.getFeatures().length > 0) {
                 try {
                     const extent = polygonSource.getExtent();
@@ -1096,10 +1194,9 @@
                 }
             }
 
-            console.log('Layers Refreshed Successfully with Labels and Popup');
+            console.log('Layers Refreshed Successfully');
         }
 
-        // Handle orientation changes
         window.addEventListener('orientationchange', function() {
             setTimeout(function() {
                 if (map) {
@@ -1116,7 +1213,6 @@
             }, 100);
         });
 
-        // Initialize map when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
                 initMap();
