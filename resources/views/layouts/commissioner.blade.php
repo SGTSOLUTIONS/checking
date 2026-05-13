@@ -52,7 +52,7 @@
             position: fixed;
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, rgba(212, 161, 62, 0.08) 0%, transparent 70%);
+            /* background: radial-gradient(circle, rgba(212, 161, 62, 0.08) 0%, transparent 70%); */
             top: -250px;
             right: -150px;
             border-radius: 50%;
