@@ -590,7 +590,7 @@ class CommissionerController extends Controller
                 'ugd',
                 'basement',
                 'water_connection',
-                'building_tupe',
+                'building_type',
                 'image1',
                 'remarks'
             )
