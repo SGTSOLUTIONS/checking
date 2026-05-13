@@ -328,7 +328,7 @@
                 visible: false
             });
 
-            // ========== DRONE IMAGE LAYER - FULL OPACITY, NO WHITE SMOKEY EFFECT ==========
+            // ========== DRONE IMAGE LAYER ==========
             let droneImage = @json($ward->drone_image ?? null);
             let extentLeft = @json($ward->extent_left ?? null);
             let extentBottom = @json($ward->extent_bottom ?? null);
@@ -350,10 +350,8 @@
                 console.log('Constructed Image URL:', imageUrl);
             }
 
-            // Default - no image layer
             let hasDroneImage = false;
 
-            // Check if we have valid image and extent
             const hasValidExtent = extentLeft !== null && extentBottom !== null &&
                 extentRight !== null && extentTop !== null &&
                 !isNaN(parseFloat(extentLeft)) && !isNaN(parseFloat(extentBottom)) &&
@@ -370,14 +368,13 @@
 
                     console.log('Image Extent:', imageExtent);
 
-                    // Create image layer with FULL OPACITY (no transparency)
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
                             url: imageUrl,
                             imageExtent: imageExtent,
                             projection: 'EPSG:3857'
                         }),
-                        opacity: 1.0, // FULL OPACITY - NO WHITE SMOKEY EFFECT
+                        opacity: 1.0,
                         visible: true
                     });
 
@@ -419,7 +416,6 @@
                         visible: true
                     });
 
-                    // Calculate boundary extent for zoom
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
                     boundaryExtent = ol.proj.fromLonLat([
@@ -435,11 +431,10 @@
                 }
             }
 
-            // ========== MAP CENTER - PRIORITIZE BOUNDARY ==========
+            // ========== MAP CENTER ==========
             let center = ol.proj.fromLonLat([80.2707, 13.0827]);
             let zoom = 16;
 
-            // Use boundary for center if available
             if (boundary && boundary[0] && boundary[0].length) {
                 try {
                     const lons = boundary[0].map(p => p[0]);
@@ -453,7 +448,7 @@
                 } catch (e) {}
             }
 
-            // Create Map - Build layers array
+            // Create Map
             let layers = [osmLayer, satelliteLayer];
 
             map = new ol.Map({
@@ -465,19 +460,17 @@
                 })
             });
 
-            // Add drone image layer if available (on top of base maps)
             if (imageLayer) {
                 map.addLayer(imageLayer);
                 console.log('Drone image layer added to map');
             }
 
-            // Add boundary layer
             if (boundaryLayer) {
                 map.addLayer(boundaryLayer);
                 console.log('Boundary layer added to map');
             }
 
-            // ========== ZOOM TO BOUNDARY OR POLYGONS ==========
+            // Zoom to boundary
             setTimeout(function() {
                 if (boundaryExtent && boundaryExtent.length === 4) {
                     map.getView().fit(boundaryExtent, {
@@ -550,7 +543,7 @@
             legend.className = 'map-legend';
             legend.innerHTML = `
                 <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                <div class="legend-item"><div class="legend-color building"></div><span>Buildings</span></div>
+                <div class="legend-item"><div class="legend-color building"></div><span>Buildings (with labels)</span></div>
                 <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
                 <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
                 ${hasDroneImage ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
@@ -614,17 +607,71 @@
                 }
             });
 
+            // Style function with labels for GISID and SqFeet
+            function polygonStyleFunction(feature) {
+                const gisid = feature.get('gisid');
+                const sqfeet = feature.get('sqfeet');
+                const geometry = feature.getGeometry();
+
+                // Get center point for label placement
+                let center;
+                try {
+                    center = geometry.getInteriorPoint();
+                    if (!center) {
+                        const extent = geometry.getExtent();
+                        const x = (extent[0] + extent[2]) / 2;
+                        const y = (extent[1] + extent[3]) / 2;
+                        center = new ol.geom.Point([x, y]);
+                    }
+                } catch (e) {
+                    const extent = geometry.getExtent();
+                    const x = (extent[0] + extent[2]) / 2;
+                    const y = (extent[1] + extent[3]) / 2;
+                    center = new ol.geom.Point([x, y]);
+                }
+
+                return [
+                    // Polygon outline and fill
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 68, 68, 0.15)'
+                        })
+                    }),
+                    // Label with GIS ID and Sq Feet
+                    new ol.style.Style({
+                        geometry: center,
+                        text: new ol.style.Text({
+                            text: `${gisid}\n${sqfeet} sqft`,
+                            font: 'bold 10px Arial, sans-serif',
+                            fill: new ol.style.Fill({
+                                color: '#ffffff'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000000',
+                                width: 2
+                            }),
+                            textAlign: 'center',
+                            offsetY: 0,
+                            backgroundFill: new ol.style.Fill({
+                                color: 'rgba(0, 0, 0, 0.7)'
+                            }),
+                            backgroundStroke: new ol.style.Stroke({
+                                color: '#ff4444',
+                                width: 1
+                            }),
+                            padding: [4, 8, 4, 8]
+                        })
+                    })
+                ];
+            }
+
             polygonLayer = new ol.layer.Vector({
                 source: polygonSource,
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff4444',
-                        width: 2
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255, 68, 68, 0.15)'
-                    })
-                }),
+                style: polygonStyleFunction,
                 visible: true
             });
 
@@ -679,7 +726,7 @@
                 }
             }
 
-            console.log('Layers Refreshed Successfully');
+            console.log('Layers Refreshed Successfully with Labels');
         }
 
         // Handle orientation changes
