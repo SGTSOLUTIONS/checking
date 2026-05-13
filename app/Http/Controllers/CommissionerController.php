@@ -571,6 +571,7 @@ class CommissionerController extends Controller
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
         $pointDatas = DB::table($pointDataTable)->get();
+         $polygonDatas = DB::table($polygonDataTable)->get();
         foreach ($pointDatas as $pointdata) {
 
             $shopdata = DB::table($shopTableName)
@@ -579,8 +580,16 @@ class CommissionerController extends Controller
 
             $pointdata->shops = $shopdata;
         }
+        foreach ($polygonDatas as $polygondata) {
 
-        return response()->json($pointDatas);
+            $shopdata = DB::table($pointDataTable)
+                ->where('point_gisid', $polygondata->gisid)
+                ->get();
+
+            $polygondata->pointdata = $shopdata;
+        }
+
+        return response()->json($polygonDatas);
 
         // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
