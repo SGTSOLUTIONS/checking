@@ -638,7 +638,7 @@
                             width: 2
                         }),
                         fill: new ol.style.Fill({
-                            color: 'rgba(255, 68, 68, 0.95)'
+                            color: 'rgba(255, 68, 68, 0.5)'
                         })
                     }),
                     // Label with GIS ID and Sq Feet
