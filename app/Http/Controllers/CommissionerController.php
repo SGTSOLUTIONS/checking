@@ -591,7 +591,8 @@ class CommissionerController extends Controller
                 'basement',
                 'water_connection',
                 'building_type',
-                'image1',
+                'image',
+                'image2',
                 'remarks'
             )
             ->get();
