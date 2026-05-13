@@ -6,7 +6,7 @@
 
 <div class="container-fluid p-0">
 
-    <div id="map" style="width:100%; height:100vh;"></div>
+    <div id="map"></div>
 
 </div>
 
@@ -28,7 +28,7 @@
 @endpush
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
 <script>
@@ -38,6 +38,7 @@
     let polygonLayer;
     let pointLayer;
     let lineLayer;
+    let imageLayer;
 
     // =========================
     // MAP INIT
@@ -45,27 +46,91 @@
 
     function initMap() {
 
-        // Base Layer
+        // =========================
+        // OSM LAYER
+        // =========================
+
         const osmLayer = new ol.layer.Tile({
+
             source: new ol.source.OSM()
+
         });
 
-        // Map
+        // =========================
+        // IMAGE LAYER
+        // =========================
+
+        let droneImage = @json($ward->drone_image ?? null);
+
+        let extentLeft   = @json($ward->extent_left ?? null);
+        let extentBottom = @json($ward->extent_bottom ?? null);
+        let extentRight  = @json($ward->extent_right ?? null);
+        let extentTop    = @json($ward->extent_top ?? null);
+
+        // Default Empty Layer
+        imageLayer = new ol.layer.Image({
+            visible: false
+        });
+
+        // If image exists
+        if (
+            droneImage &&
+            extentLeft &&
+            extentBottom &&
+            extentRight &&
+            extentTop
+        ) {
+
+            imageLayer = new ol.layer.Image({
+
+                source: new ol.source.ImageStatic({
+
+                    url: "{{ asset('') }}" + droneImage,
+
+                    imageExtent: [
+                        parseFloat(extentLeft),
+                        parseFloat(extentBottom),
+                        parseFloat(extentRight),
+                        parseFloat(extentTop)
+                    ]
+
+                }),
+
+                opacity: 0.7,
+                visible: true
+
+            });
+
+        }
+
+        // =========================
+        // CREATE MAP
+        // =========================
+
         map = new ol.Map({
+
             target: 'map',
 
             layers: [
-                osmLayer
+                osmLayer,
+                imageLayer
             ],
 
             view: new ol.View({
+
                 center: ol.proj.fromLonLat([80.2707, 13.0827]),
                 zoom: 16
+
             })
+
         });
 
-        // Load Layers
+        // =========================
+        // LOAD VECTOR LAYERS
+        // =========================
+
         refreshLayers();
+
     }
 
     // =========================
@@ -88,12 +153,12 @@
         }
 
         // =========================
-        // DATA FROM LARAVEL
+        // GET DATA
         // =========================
 
         let polygons = @json($polygons ?? []);
-        let points = @json($points ?? []);
-        let lines = @json($lines ?? []);
+        let points   = @json($points ?? []);
+        let lines    = @json($lines ?? []);
 
         // =========================
         // POLYGON SOURCE
@@ -112,18 +177,28 @@
                 if(coords && coords.length){
 
                     const feature = new ol.Feature({
+
                         geometry: new ol.geom.Polygon(coords),
+
                         gisid: poly.gisid
+
                     });
 
                     polygonSource.addFeature(feature);
+
                 }
 
             } catch(e){
+
                 console.log(e);
+
             }
 
         });
+
+        // =========================
+        // POLYGON LAYER
+        // =========================
 
         polygonLayer = new ol.layer.Vector({
 
@@ -161,18 +236,28 @@
                 if(coords && coords.length === 2){
 
                     const feature = new ol.Feature({
+
                         geometry: new ol.geom.Point(coords),
+
                         gisid: point.gisid
+
                     });
 
                     pointSource.addFeature(feature);
+
                 }
 
             }catch(e){
+
                 console.log(e);
+
             }
 
         });
+
+        // =========================
+        // POINT LAYER
+        // =========================
 
         pointLayer = new ol.layer.Vector({
 
@@ -215,19 +300,34 @@
 
                 if(coords && coords.length){
 
+                    // Multi line support
+                    if(coords.length === 1 && Array.isArray(coords[0][0])){
+                        coords = coords[0];
+                    }
+
                     const feature = new ol.Feature({
+
                         geometry: new ol.geom.LineString(coords),
+
                         gisid: line.gisid
+
                     });
 
                     lineSource.addFeature(feature);
+
                 }
 
             }catch(e){
+
                 console.log(e);
+
             }
 
         });
+
+        // =========================
+        // LINE LAYER
+        // =========================
 
         lineLayer = new ol.layer.Vector({
 
@@ -249,11 +349,13 @@
         // =========================
 
         map.addLayer(polygonLayer);
+
         map.addLayer(lineLayer);
+
         map.addLayer(pointLayer);
 
         // =========================
-        // FIT TO POLYGON
+        // FIT TO POLYGONS
         // =========================
 
         if (polygonSource.getFeatures().length > 0) {
@@ -265,6 +367,7 @@
                     duration: 1000
                 }
             );
+
         }
 
         console.log('Layers Refreshed');
@@ -275,7 +378,7 @@
     // DOCUMENT READY
     // =========================
 
-    $(document).ready(function(){
+    document.addEventListener("DOMContentLoaded", function () {
 
         initMap();
 
