@@ -585,7 +585,7 @@ class CommissionerController extends Controller
                 'number_floor',
                 'Percentage as floor_percentage',
                 'building_usage',
-                'contruction_type',
+                'construction_type',
                 'road_name',
                 'ugd',
                 'basement',
