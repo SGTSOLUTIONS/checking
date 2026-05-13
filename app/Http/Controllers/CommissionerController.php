@@ -570,16 +570,16 @@ class CommissionerController extends Controller
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
+        $pointDatas = DB::table($pointDataTable)->get();
+        foreach ($pointDatas as $pointdata) {
 
-        $pointDatas = DB::table($pointDataTable . ' as pd')
-            ->leftJoin($shopTableName . ' as sd', 'pd.id', '=', 'sd.point_data_id')
-            ->select(
-                'pd.*',
-                'sd.shop_name',
-                'sd.type',
-                'sd.id as shop_id'
-            )
-            ->get();
+            $shopdata = DB::table($shopTableName)
+                ->where('point_data_id', $pointdata->id)
+                ->get();
+
+            $pointdata->shops = $shopdata;
+        }
+
         return response()->json($pointDatas);
 
         // Get polygons (buildings) - only needed fields
