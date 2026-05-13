@@ -322,47 +322,86 @@
                 visible: false
             });
 
-            // Drone Image Layer
+            // ========== DRONE IMAGE LAYER - FIXED ==========
             let droneImage = @json($ward->drone_image ?? null);
             let extentLeft = @json($ward->extent_left ?? null);
             let extentBottom = @json($ward->extent_bottom ?? null);
             let extentRight = @json($ward->extent_right ?? null);
             let extentTop = @json($ward->extent_top ?? null);
 
+            console.log('Drone Image Data:', {
+                droneImage: droneImage,
+                extentLeft: extentLeft,
+                extentBottom: extentBottom,
+                extentRight: extentRight,
+                extentTop: extentTop
+            });
+
             let imageUrl = null;
             if (droneImage) {
+                // Handle different path formats
                 let cleanPath = droneImage.replace(/^\/+/, '');
                 imageUrl = "{{ asset('') }}" + cleanPath;
+                console.log('Constructed Image URL:', imageUrl);
             }
 
+            // Default image layer
             imageLayer = new ol.layer.Image({
-                visible: false,
+                visible: true,
                 opacity: 0.7
             });
 
-            if (imageUrl && extentLeft !== null && extentBottom !== null &&
-                extentRight !== null && extentTop !== null) {
+            // Check if we have valid image and extent
+            const hasValidExtent = extentLeft !== null && extentBottom !== null &&
+                extentRight !== null && extentTop !== null &&
+                !isNaN(parseFloat(extentLeft)) && !isNaN(parseFloat(extentBottom)) &&
+                !isNaN(parseFloat(extentRight)) && !isNaN(parseFloat(extentTop));
+
+            if (imageUrl && hasValidExtent) {
                 try {
+                    const imageExtent = [
+                        parseFloat(extentLeft),
+                        parseFloat(extentBottom),
+                        parseFloat(extentRight),
+                        parseFloat(extentTop)
+                    ];
+
+                    console.log('Image Extent:', imageExtent);
+
+                    // Test if image loads
+                    const testImg = new Image();
+                    testImg.onload = function() {
+                        console.log('Drone image loaded successfully');
+                        imageLayer.setVisible(true);
+                    };
+                    testImg.onerror = function() {
+                        console.error('Failed to load drone image:', imageUrl);
+                        imageLayer.setVisible(false);
+                    };
+                    testImg.src = imageUrl;
+
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
                             url: imageUrl,
-                            imageExtent: [
-                                parseFloat(extentLeft), parseFloat(extentBottom),
-                                parseFloat(extentRight), parseFloat(extentTop)
-                            ],
+                            imageExtent: imageExtent,
                             projection: 'EPSG:3857'
                         }),
                         opacity: 0.7,
-                        visible: false
+                        visible: true
                     });
-                    console.log('Drone image loaded');
                 } catch (e) {
-                    console.error('Error loading drone image:', e);
+                    console.error('Error creating drone image layer:', e);
                 }
+            } else {
+                console.log('Drone image not available or invalid extent');
+                if (!imageUrl) console.log('No drone image URL');
+                if (!hasValidExtent) console.log('Invalid extent values');
             }
 
-            // Boundary Layer
+            // ========== BOUNDARY LAYER ==========
             let boundary = @json($ward->boundary ?? null);
+            let boundaryExtent = null;
+
             if (boundary && boundary.length > 0 && boundary[0] && boundary[0].length) {
                 try {
                     const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
@@ -379,19 +418,33 @@
                                 lineDash: [10, 5]
                             }),
                             fill: new ol.style.Fill({
-                                color: 'rgba(255, 0, 0, 0)'
+                                color: 'rgba(255, 0, 0, 0.05)'
                             })
                         }),
                         visible: true
                     });
+
+                    // Calculate boundary extent for zoom
+                    const lons = boundary[0].map(p => p[0]);
+                    const lats = boundary[0].map(p => p[1]);
+                    boundaryExtent = ol.proj.fromLonLat([
+                        Math.min(...lons),
+                        Math.min(...lats),
+                        Math.max(...lons),
+                        Math.max(...lats)
+                    ]);
+
+                    console.log('Boundary extent calculated:', boundaryExtent);
                 } catch (e) {
                     console.error('Error creating boundary:', e);
                 }
             }
 
-            // Map Center
+            // ========== MAP CENTER - PRIORITIZE BOUNDARY ==========
             let center = ol.proj.fromLonLat([80.2707, 13.0827]);
             let zoom = 16;
+
+            // Use boundary for center if available
             if (boundary && boundary[0] && boundary[0].length) {
                 try {
                     const lons = boundary[0].map(p => p[0]);
@@ -400,11 +453,12 @@
                         (Math.min(...lons) + Math.max(...lons)) / 2,
                         (Math.min(...lats) + Math.max(...lats)) / 2
                     ]);
-                    zoom = 17;
+                    zoom = 16;
+                    console.log('Center from boundary:', center);
                 } catch (e) {}
             }
 
-            // Create Map - REMOVED interactions property to fix the error
+            // Create Map
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
@@ -415,8 +469,34 @@
             });
 
             // Add additional layers
-            if (imageLayer) map.addLayer(imageLayer);
+            if (imageLayer && imageLayer.getSource()) {
+                map.addLayer(imageLayer);
+                console.log('Image layer added to map');
+            }
             if (boundaryLayer) map.addLayer(boundaryLayer);
+
+            // ========== ZOOM TO BOUNDARY OR POLYGONS ==========
+            setTimeout(function() {
+                if (boundaryExtent && boundaryExtent.length === 4) {
+                    // Zoom to boundary
+                    map.getView().fit(boundaryExtent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                    console.log('Zooming to boundary');
+                } else if (polygonLayer && polygonLayer.getSource().getFeatures().length > 0) {
+                    // Zoom to polygons
+                    const extent = polygonLayer.getSource().getExtent();
+                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
+                        extent[0] !== Infinity && extent[1] !== -Infinity) {
+                        map.getView().fit(extent, {
+                            padding: [50, 50, 50, 50],
+                            duration: 1000
+                        });
+                        console.log('Zooming to polygons');
+                    }
+                }
+            }, 500);
 
             // Add UI controls
             addLayerSwitcher();
@@ -430,6 +510,8 @@
         }
 
         function addLayerSwitcher() {
+            const hasDrone = imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl();
+
             const switcher = document.createElement('div');
             switcher.className = 'layer-switcher';
             switcher.innerHTML = `
@@ -444,7 +526,7 @@
                     <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
                     <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
                     <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                    ${imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl() ? `<label><input type="checkbox" id="toggleDrone"> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
+                    ${hasDrone ? `<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>` : ''}
                 </div>
             `;
             document.body.appendChild(switcher);
@@ -465,14 +547,18 @@
             document.getElementById('toggleBoundary').addEventListener('change', (e) => {
                 if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
             });
-            if (document.getElementById('toggleDrone')) {
-                document.getElementById('toggleDrone').addEventListener('change', (e) => {
+
+            const droneToggle = document.getElementById('toggleDrone');
+            if (droneToggle) {
+                droneToggle.addEventListener('change', (e) => {
                     if (imageLayer) imageLayer.setVisible(e.target.checked);
                 });
             }
         }
 
         function addLegend() {
+            const hasDrone = imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl();
+
             const legend = document.createElement('div');
             legend.className = 'map-legend';
             legend.innerHTML = `
@@ -480,7 +566,7 @@
                 <div class="legend-item"><div class="legend-color building"></div><span>Buildings</span></div>
                 <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
                 <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                ${imageLayer && imageLayer.getSource() && imageLayer.getSource().getUrl() ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
+                ${hasDrone ? `<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>` : ''}
             `;
             document.body.appendChild(legend);
         }
@@ -589,22 +675,6 @@
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
-
-            // Fit to polygons
-            if (polygonSource.getFeatures().length > 0) {
-                try {
-                    const extent = polygonSource.getExtent();
-                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
-                        extent[0] !== Infinity && extent[1] !== -Infinity) {
-                        map.getView().fit(extent, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                    }
-                } catch (e) {
-                    console.log('Error fitting to polygons:', e);
-                }
-            }
 
             console.log('Layers Refreshed Successfully');
         }
