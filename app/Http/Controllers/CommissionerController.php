@@ -567,26 +567,33 @@ class CommissionerController extends Controller
         // Table names
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
         $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
+
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+        // Get all data once
         $pointDatas = DB::table($pointDataTable)->get();
-         $polygonDatas = DB::table($polygonDataTable)->get();
+        $polygonDatas = DB::table($polygonDataTable)->get();
+        $shopDatas = DB::table($shopTableName)->get();
+
+        // Group shops by point_data_id
+        $shopsGrouped = $shopDatas->groupBy('point_data_id');
+
+        // Attach shops into pointdata
         foreach ($pointDatas as $pointdata) {
 
-            $shopdata = DB::table($shopTableName)
-                ->where('point_data_id', $pointdata->id)
-                ->get();
-
-            $pointdata->shops = $shopdata;
+            $pointdata->shops = $shopsGrouped[$pointdata->id] ?? collect();
         }
+
+        // Group pointdata by point_gisid
+        $pointGrouped = collect($pointDatas)->groupBy('point_gisid');
+
+        // Attach pointdata into polygondata
         foreach ($polygonDatas as $polygondata) {
 
-            $shopdata = DB::table($pointDataTable)
-                ->where('point_gisid', $polygondata->gisid)
-                ->get();
-
-            $polygondata->pointdata = $shopdata;
+            $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
         }
 
         return response()->json($polygonDatas);
