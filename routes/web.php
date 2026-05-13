@@ -17,7 +17,6 @@ use App\Models\CorporationUser;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\CorporationAuthController;
 
-// Corporation Auth Routes
 Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::middleware('guest:corporation')->group(function () {
         Route::get('/login', [CorporationAuthController::class, 'showLogin'])->name('login');
@@ -31,15 +30,17 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     });
 
     Route::middleware('auth:corporation')->group(function () {
-          Route::get('/commissioner/dashboard', [CommissionerController::class, 'dashboard'])->name('corporation.dashboard');
-    Route::get('/commissioner/ward/{ward_no}', [CommissionerController::class, 'mapView'])->name('corporation.ward.map');
-    Route::get('/commissioner/ward/{ward_no}/excel', [CommissionerController::class, 'mapDownloadExcel'])->name('ward.excel');
-
-
+        Route::get('/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/ward/{ward_no}', [CommissionerController::class, 'mapView'])->name('ward.map');
+        Route::get('/ward/{ward_no}/excel', [CommissionerController::class, 'mapDownloadExcel'])->name('ward.excel');
+        Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
+        Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
+        Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
+        Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
+        Route::post('/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
     });
 });
-
 Route::get('/', function () {
     return redirect()->route('login');
 });
