@@ -18,7 +18,7 @@
 
 @push('styles')
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -33,8 +33,9 @@
         body {
             width: 100%;
             height: 100%;
-            overflow: auto;
-            position: relative;
+            overflow: hidden;
+            position: fixed;
+            touch-action: none;
         }
 
         #map {
@@ -48,7 +49,7 @@
         /* Mobile Menu Buttons */
         .mobile-menu-btn,
         .mobile-legend-btn {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             right: 20px;
             z-index: 1002;
@@ -248,7 +249,7 @@
 
         /* Zoom Controls */
         .zoom-controls {
-            position: fixed;
+            position: absolute;
             bottom: 20px;
             left: 20px;
             background: rgba(0, 0, 0, 0.85);
@@ -298,7 +299,7 @@
 
         /* Loading indicator */
         .map-loading {
-            position: fixed;
+            position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -313,7 +314,7 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Mobile Responsive Popup - FIXED */
+        /* Mobile Responsive Popup Styles */
         .ol-popup {
             position: absolute;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
@@ -331,57 +332,32 @@
             backdrop-filter: blur(5px);
         }
 
-        /* Mobile popup - Bottom sheet style */
+        /* Mobile responsive popup */
         @media (max-width: 768px) {
             .ol-popup {
                 position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
+                bottom: 20px !important;
+                left: 10px !important;
+                right: 10px !important;
                 top: auto !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                min-width: 100% !important;
-                max-height: 70vh !important;
-                border-radius: 20px 20px 0 0 !important;
                 transform: none !important;
-                z-index: 9999 !important;
+                width: calc(100% - 20px) !important;
+                max-width: none !important;
+                min-width: auto !important;
+                max-height: 60vh !important;
+                border-radius: 20px !important;
                 margin: 0 !important;
-                animation: slideUp 0.3s ease-out !important;
-            }
-
-            @keyframes slideUp {
-                from {
-                    transform: translateY(100%);
-                }
-                to {
-                    transform: translateY(0);
-                }
             }
 
             .ol-popup:after {
                 display: none !important;
-            }
-
-            /* Add a drag handle at the top */
-            .ol-popup::before {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 50px;
-                height: 4px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-                z-index: 1;
             }
         }
 
         /* Tablet responsive */
         @media (min-width: 769px) and (max-width: 1024px) {
             .ol-popup {
-                max-width: 450px !important;
+                max-width: 400px !important;
                 max-height: 70vh !important;
             }
         }
@@ -397,13 +373,6 @@
             position: sticky;
             top: 0;
             z-index: 10;
-        }
-
-        @media (max-width: 768px) {
-            .popup-header {
-                padding: 20px 18px 16px 18px;
-                border-radius: 20px 20px 0 0;
-            }
         }
 
         .popup-header h4 {
@@ -455,12 +424,12 @@
             }
 
             .popup-tab {
-                font-size: 12px !important;
-                padding: 12px 4px !important;
+                font-size: 11px !important;
+                padding: 10px 4px !important;
             }
 
             .popup-tab i {
-                font-size: 14px !important;
+                font-size: 12px !important;
             }
         }
 
@@ -513,8 +482,8 @@
 
         @media (max-width: 768px) {
             .popup-tab-content {
-                max-height: 55vh;
-                padding: 16px;
+                max-height: 45vh;
+                padding: 12px;
             }
         }
 
@@ -550,18 +519,16 @@
         @media (max-width: 768px) {
             .detail-row {
                 flex-direction: column;
-                margin-bottom: 12px;
+                margin-bottom: 10px;
             }
 
             .detail-label {
                 width: 100% !important;
-                margin-bottom: 5px;
-                font-size: 12px;
+                margin-bottom: 4px;
             }
 
             .detail-value {
                 width: 100%;
-                font-size: 13px;
             }
         }
 
@@ -668,7 +635,7 @@
 
             .assessment-label {
                 width: 100% !important;
-                margin-bottom: 4px;
+                margin-bottom: 3px;
             }
 
             .assessment-value {
@@ -717,7 +684,7 @@
 
             .shop-detail-label {
                 width: 100% !important;
-                margin-bottom: 3px;
+                margin-bottom: 2px;
             }
         }
 
@@ -762,8 +729,8 @@
 
         @media (max-width: 768px) {
             .assessment-form-container {
-                margin: 10px 0;
-                padding: 15px;
+                margin: 10px -5px;
+                padding: 12px;
             }
 
             .assessment-form-container h4 {
@@ -802,11 +769,30 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Simple touch handling - don't block page refresh
-        document.addEventListener('touchmove', function(e) {
-            // Allow all touch moves by default for pull-to-refresh
-            // No preventDefault here
-        }, { passive: false });
+        // Prevent default touch zoom on entire page
+        (function() {
+            document.addEventListener('touchmove', function(e) {
+                const isMap = e.target.closest('#map');
+                const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls') ||
+                    e.target.closest('.mobile-menu-btn') || e.target.closest('.mobile-legend-btn') ||
+                    e.target.closest('.ol-popup');
+                if (!isMap && !isControl) {
+                    e.preventDefault();
+                }
+            }, {
+                passive: false
+            });
+
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    if (!e.target.closest('#map')) {
+                        e.preventDefault();
+                    }
+                }
+            }, {
+                passive: false
+            });
+        })();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
@@ -870,12 +856,7 @@
                 element: popupElement,
                 positioning: 'bottom-center',
                 stopEvent: true,
-                offset: [0, -10],
-                autoPan: {
-                    animation: {
-                        duration: 250
-                    }
-                }
+                offset: [0, -10]
             });
 
             return popupOverlay;
@@ -898,15 +879,6 @@
                 selectedTab.classList.add('active');
             }
             currentActiveTab = tabId;
-        };
-
-        // Close popup function
-        window.closePopup = function() {
-            if (popupElement) {
-                popupElement.style.display = 'none';
-                // Also remove any open forms
-                $('.assessment-form-container').remove();
-            }
         };
 
         // Show popup with three tabbed sections
@@ -1084,7 +1056,7 @@
             const html = `
                 <div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
-                    <button class="popup-close" onclick="closePopup()">&times;</button>
+                    <button class="popup-close" onclick="document.querySelector('.ol-popup').style.display='none'">&times;</button>
                 </div>
                 <div class="popup-tabs">
                     <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')">
@@ -1111,24 +1083,23 @@
             popupElement.innerHTML = html;
             popupElement.style.display = 'block';
 
-            // Handle popup positioning based on device
+            // Adjust popup position for mobile
             if (window.innerWidth <= 768) {
-                // Mobile: Bottom sheet style
-                if (popupOverlay) {
-                    popupOverlay.setPosition(undefined);
-                }
-                popupElement.style.position = 'fixed';
-                popupElement.style.bottom = '0';
-                popupElement.style.left = '0';
-                popupElement.style.right = '0';
+                popupOverlay.setPosition(undefined);
+                popupElement.style.bottom = '20px';
+                popupElement.style.left = '10px';
+                popupElement.style.right = '10px';
                 popupElement.style.top = 'auto';
-                popupElement.style.width = '100%';
             } else {
-                // Desktop: Position near clicked building
-                popupElement.style.position = 'absolute';
-                if (popupOverlay) {
-                    popupOverlay.setPosition(coordinate);
-                }
+                popupOverlay.setPosition(coordinate);
+            }
+
+            // Close button event
+            const closeBtn = popupElement.querySelector('.popup-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    popupElement.style.display = 'none';
+                });
             }
 
             // Assessment card click handler
@@ -1565,6 +1536,8 @@
                 const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
                 if (feature && feature.get('gisid')) {
                     showPopup(feature.get('gisid'), evt.coordinate);
+                } else if (popupElement) {
+                    popupElement.style.display = 'none';
                 }
             });
 
@@ -1577,11 +1550,6 @@
         }
 
         window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initMap);
-        } else {
-            initMap();
-        }
+        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initMap) : initMap();
     </script>
 @endpush
