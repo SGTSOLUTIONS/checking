@@ -13,6 +13,15 @@
         <button class="mobile-legend-btn" id="mobileLegendBtn">
             <i class="fas fa-info-circle"></i>
         </button>
+        <!-- Search Button -->
+        <button class="mobile-search-btn" id="mobileSearchBtn">
+            <i class="fas fa-search"></i>
+        </button>
+
+        <!-- Filter Button -->
+        <button class="mobile-filter-btn" id="mobileFilterBtn">
+            <i class="fas fa-filter"></i>
+        </button>
     </div>
 @endsection
 
@@ -339,6 +348,7 @@
             from {
                 transform: translateY(100%);
             }
+
             to {
                 transform: translateY(0);
             }
@@ -912,7 +922,9 @@
         function showLoading(show) {
             if (show) {
                 if ($('#mapLoading').length === 0) {
-                    $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
+                    $('body').append(
+                        '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
+                    );
                 }
                 $('#mapLoading').show();
             } else {
@@ -922,7 +934,10 @@
 
         // Create popup
         function createPopup() {
-            popupElement = $('<div>', { class: 'ol-popup', style: 'display:none' })[0];
+            popupElement = $('<div>', {
+                class: 'ol-popup',
+                style: 'display:none'
+            })[0];
             $('body').append(popupElement);
 
             popupOverlay = new ol.Overlay({
@@ -930,7 +945,11 @@
                 positioning: 'bottom-center',
                 stopEvent: true,
                 offset: [0, -10],
-                autoPan: { animation: { duration: 250 } }
+                autoPan: {
+                    animation: {
+                        duration: 250
+                    }
+                }
             });
 
             return popupOverlay;
@@ -959,7 +978,8 @@
                 const $card = $(this);
                 const assessmentNumber = $card.data('assessment') || '';
                 const ownerName = $card.data('owner') || '';
-                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text().toLowerCase();
+                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text()
+                    .toLowerCase();
                 const floor = $card.find('.assessment-row').eq(2).find('.assessment-value').text().toLowerCase();
                 const usage = $card.find('.assessment-row').eq(3).find('.assessment-value').text().toLowerCase();
                 const hasQC = $card.find('.badge-success').length > 0;
@@ -969,10 +989,10 @@
 
                 if (searchTerm) {
                     matchesSearch = assessmentNumber.toLowerCase().includes(searchTerm) ||
-                                   ownerName.includes(searchTerm) ||
-                                   phoneNumber.includes(searchTerm) ||
-                                   floor.includes(searchTerm) ||
-                                   usage.includes(searchTerm);
+                        ownerName.includes(searchTerm) ||
+                        phoneNumber.includes(searchTerm) ||
+                        floor.includes(searchTerm) ||
+                        usage.includes(searchTerm);
                 }
 
                 if (filterType === 'completed') {
@@ -993,7 +1013,9 @@
             $('.assessment-count').text(`Showing ${visibleCount} of ${totalCount} assessments`);
 
             if (visibleCount === 0 && $('.no-results-message').length === 0) {
-                $('.assessments-list').append('<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>');
+                $('.assessments-list').append(
+                    '<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>'
+                );
             } else if (visibleCount > 0) {
                 $('.no-results-message').remove();
             }
@@ -1004,11 +1026,13 @@
             let assessmentsHtml = '';
 
             if (assessments.length === 0) {
-                assessmentsHtml = '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>';
+                assessmentsHtml =
+                    '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>';
             } else {
                 $.each(assessments, function(idx, assessment) {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
-                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A').toLowerCase();
+                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A')
+                        .toLowerCase();
                     assessmentsHtml += `
                         <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}" data-owner="${ownerName}" data-status="${hasQC ? 'completed' : 'pending'}">
                             <div class="assessment-header">
@@ -1119,7 +1143,8 @@
             `;
 
             if (polyData.remarks) {
-                buildingHtml += `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
+                buildingHtml +=
+                    `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
             }
             buildingHtml += `</div>`;
 
@@ -1305,9 +1330,15 @@
             showLoading(true);
 
             // Base layers
-            osmLayer = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true });
+            osmLayer = new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                visible: true
+            });
             satelliteLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles &copy; Esri' }),
+                source: new ol.source.XYZ({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    attributions: 'Tiles &copy; Esri'
+                }),
                 visible: false
             });
 
@@ -1337,7 +1368,9 @@
                         visible: true
                     });
                     hasDroneImage = true;
-                } catch (e) { console.error('Drone image error:', e); }
+                } catch (e) {
+                    console.error('Drone image error:', e);
+                }
             }
 
             // Boundary layer
@@ -1347,8 +1380,21 @@
                 try {
                     const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
                     boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({ features: [new ol.Feature({ geometry: new ol.geom.Polygon([boundaryCoords]) })] }),
-                        style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }), fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' }) }),
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Polygon([boundaryCoords])
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff0000',
+                                width: 3,
+                                lineDash: [10, 5]
+                            }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255, 0, 0, 0.05)'
+                            })
+                        }),
                         visible: true
                     });
                     const lons = boundary[0].map(p => p[0]);
@@ -1359,7 +1405,9 @@
                         Math.max(...lons),
                         Math.max(...lats)
                     ]);
-                } catch (e) { console.error('Boundary error:', e); }
+                } catch (e) {
+                    console.error('Boundary error:', e);
+                }
             }
 
             // Map center
@@ -1381,7 +1429,10 @@
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
-                view: new ol.View({ center: center, zoom: zoom })
+                view: new ol.View({
+                    center: center,
+                    zoom: zoom
+                })
             });
 
             const popup = createPopup();
@@ -1391,12 +1442,16 @@
 
             setTimeout(() => {
                 if (boundaryExtent && boundaryExtent.length === 4) {
-                    map.getView().fit(boundaryExtent, { padding: [50, 50, 50, 50], duration: 1000 });
+                    map.getView().fit(boundaryExtent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
                 }
             }, 500);
 
             addLayerSwitcher(hasDroneImage);
             addLegend(hasDroneImage);
+            addSearchLegend();
             addZoomControls();
             addMobileControls();
             refreshLayers();
@@ -1458,7 +1513,60 @@
             `;
             $('body').append(legendHtml);
         }
+        // Add Search Panel
+        function addSearchLegend() {
 
+            const searchHtml = `
+                <div class="search-legend" id="searchPanel">
+                    <h5>
+                        <i class="fas fa-search"></i> Search
+                    </h5>
+
+                    <div class="search-group">
+                        <input type="text"
+                            id="searchInput"
+                            class="form-control"
+                            placeholder="Search GIS ID / Assessment / Owner">
+                    </div>
+
+                    <div class="search-group mt-2">
+                        <button class="btn btn-primary w-100" id="searchSubmitBtn">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(searchHtml);
+
+        }
+
+        function addFilterLegend() {
+
+            const searchHtml = `
+                <div class="search-legend" id="filterPanel">
+                    <h5>
+                        <i class="fas fa-search"></i> Search
+                    </h5>
+
+                    <div class="search-group">
+                        <input type="text"
+                            id="searchInput"
+                            class="form-control"
+                            placeholder="Search GIS ID / Assessment / Owner">
+                    </div>
+
+                    <div class="search-group mt-2">
+                        <button class="btn btn-primary w-100" id="searchSubmitBtn">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            $('body').append(searchHtml);
+
+        }
         // Add zoom controls
         function addZoomControls() {
             const controlsHtml = `
@@ -1485,25 +1593,66 @@
             const legendBtn = $('#mobileLegendBtn');
             const layerSwitcher = $('#layerSwitcher');
             const mapLegend = $('#mapLegend');
+            const searchBtn = $('#mobileSearchBtn');
+            const filterBtn = $('#mobileFilterBtn');
+            const searchPanel = $('#searchPanel');
+            const filterPanel = $('#filterPanel');
 
             menuBtn.on('click', function() {
                 layerSwitcher.toggleClass('open');
                 mapLegend.removeClass('open');
+                searchPanel.removeClass('open');
+                filterPanel.removeClass('open');
             });
 
             legendBtn.on('click', function() {
                 mapLegend.toggleClass('open');
                 layerSwitcher.removeClass('open');
+                searchPanel.removeClass('open');
+                filterPanel.removeClass('open');
+            });
+
+            searchBtn.on('click', function(e) {
+                e.stopPropagation();
+                searchPanel.toggleClass('open');
+                filterPanel.removeClass('open');
+                layerSwitcher.removeClass('open');
+                mapLegend.removeClass('open');
+            });
+
+            filterBtn.on('click', function(e) {
+                e.stopPropagation();
+                filterPanel.toggleClass('open');
+                searchPanel.removeClass('open');
+                layerSwitcher.removeClass('open');
+                mapLegend.removeClass('open');
             });
 
             // Close panels when clicking outside on mobile
             $(document).on('click', function(e) {
                 if ($(window).width() <= 768) {
-                    if (!layerSwitcher.is(e.target) && !layerSwitcher.has(e.target).length && !menuBtn.is(e.target) && !menuBtn.has(e.target).length) {
+                    // Close layer switcher if clicking outside
+                    if (!layerSwitcher.is(e.target) && !layerSwitcher.has(e.target).length &&
+                        !menuBtn.is(e.target) && !menuBtn.has(e.target).length) {
                         layerSwitcher.removeClass('open');
                     }
-                    if (!mapLegend.is(e.target) && !mapLegend.has(e.target).length && !legendBtn.is(e.target) && !legendBtn.has(e.target).length) {
+
+                    // Close legend if clicking outside
+                    if (!mapLegend.is(e.target) && !mapLegend.has(e.target).length &&
+                        !legendBtn.is(e.target) && !legendBtn.has(e.target).length) {
                         mapLegend.removeClass('open');
+                    }
+
+                    // Close search panel if clicking outside
+                    if (!searchPanel.is(e.target) && !searchPanel.has(e.target).length &&
+                        !searchBtn.is(e.target) && !searchBtn.has(e.target).length) {
+                        searchPanel.removeClass('open');
+                    }
+
+                    // Close filter panel if clicking outside
+                    if (!filterPanel.is(e.target) && !filterPanel.has(e.target).length &&
+                        !filterBtn.is(e.target) && !filterBtn.has(e.target).length) {
+                        filterPanel.removeClass('open');
                     }
                 }
             });
@@ -1526,8 +1675,33 @@
                 center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
             }
             return [
-                new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }), fill: new ol.style.Fill({ color: 'rgba(255, 68, 68, 0.15)' }) }),
-                new ol.style.Style({ geometry: center, text: new ol.style.Text({ text: `${gisid}\n${sqfeet} sqft`, font: 'bold 10px Arial', fill: new ol.style.Fill({ color: '#ffffff' }), stroke: new ol.style.Stroke({ color: '#000000', width: 2 }), backgroundFill: new ol.style.Fill({ color: 'rgba(0, 0, 0, 0.7)' }), padding: [4, 8, 4, 8] }) })
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ff4444',
+                        width: 2
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 68, 68, 0.15)'
+                    })
+                }),
+                new ol.style.Style({
+                    geometry: center,
+                    text: new ol.style.Text({
+                        text: `${gisid}\n${sqfeet} sqft`,
+                        font: 'bold 10px Arial',
+                        fill: new ol.style.Fill({
+                            color: '#ffffff'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 2
+                        }),
+                        backgroundFill: new ol.style.Fill({
+                            color: 'rgba(0, 0, 0, 0.7)'
+                        }),
+                        padding: [4, 8, 4, 8]
+                    })
+                })
             ];
         }
 
@@ -1539,27 +1713,53 @@
             const polygonSource = new ol.source.Vector();
             $.each(polygons, function(i, poly) {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
+                        .coordinates;
                     if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({ geometry: new ol.geom.Polygon(coords), gisid: poly.gisid, sqfeet: poly.sqfeet }));
+                        polygonSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Polygon(coords),
+                            gisid: poly.gisid,
+                            sqfeet: poly.sqfeet
+                        }));
                     }
-                } catch (e) { console.log('Polygon error:', e); }
+                } catch (e) {
+                    console.log('Polygon error:', e);
+                }
             });
 
-            polygonLayer = new ol.layer.Vector({ source: polygonSource, style: polygonStyleFunction, visible: true });
+            polygonLayer = new ol.layer.Vector({
+                source: polygonSource,
+                style: polygonStyleFunction,
+                visible: true
+            });
 
             const lineSource = new ol.source.Vector();
             $.each(lines, function(i, line) {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
+                        .coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords), gisid: line.gisid }));
+                        lineSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: line.gisid
+                        }));
                     }
-                } catch (e) { console.log('Line error:', e); }
+                } catch (e) {
+                    console.log('Line error:', e);
+                }
             });
 
-            lineLayer = new ol.layer.Vector({ source: lineSource, style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 }) }), visible: true });
+            lineLayer = new ol.layer.Vector({
+                source: lineSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ffc107',
+                        width: 3
+                    })
+                }),
+                visible: true
+            });
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
