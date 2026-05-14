@@ -313,62 +313,63 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Popup Styles - Mobile Friendly */
+        /* Popup Styles - Mobile First */
         .ol-popup {
-            position: absolute;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
             color: white;
-            border-radius: 16px;
+            border-radius: 20px 20px 0 0 !important;
             padding: 0;
-            min-width: 300px;
-            max-width: 350px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            z-index: 1100;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            max-height: 70vh !important;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 9999 !important;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            border: 1px solid rgba(255, 68, 68, 0.4);
-            backdrop-filter: blur(5px);
+            border: none !important;
+            overflow-y: auto;
+            transform: none !important;
+            animation: slideUp 0.3s ease-out !important;
         }
 
-        /* Mobile Popup - Bottom Sheet */
-        @media (max-width: 768px) {
-            .ol-popup {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                top: auto !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                min-width: 100% !important;
-                max-height: 70vh !important;
-                border-radius: 20px 20px 0 0 !important;
-                transform: none !important;
-                margin: 0 !important;
-                animation: slideUp 0.3s ease-out !important;
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
             }
+            to {
+                transform: translateY(0);
+            }
+        }
 
-            @keyframes slideUp {
-                from {
-                    transform: translateY(100%);
-                }
-
-                to {
-                    transform: translateY(0);
-                }
+        /* Desktop Popup */
+        @media (min-width: 769px) {
+            .ol-popup {
+                position: absolute !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: auto !important;
+                top: auto !important;
+                width: auto !important;
+                min-width: 320px !important;
+                max-width: 400px !important;
+                border-radius: 16px !important;
+                animation: none !important;
             }
 
             .ol-popup:after {
-                display: none !important;
-            }
-        }
-
-        /* Tablet Popup */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .ol-popup {
-                max-width: 450px !important;
-                max-height: 70vh !important;
+                content: '';
+                position: absolute;
+                bottom: -10px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 10px 10px 0;
+                border-style: solid;
+                border-color: #1a1a2e transparent transparent;
             }
         }
 
@@ -376,7 +377,7 @@
             background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
             padding: 16px 18px;
             border-bottom: 2px solid #ff4444;
-            border-radius: 16px 16px 0 0;
+            border-radius: 20px 20px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -385,9 +386,9 @@
             z-index: 10;
         }
 
-        @media (max-width: 768px) {
+        @media (min-width: 769px) {
             .popup-header {
-                padding: 20px 18px 16px 18px;
+                border-radius: 16px 16px 0 0;
             }
         }
 
@@ -848,11 +849,7 @@
                 positioning: 'bottom-center',
                 stopEvent: true,
                 offset: [0, -10],
-                autoPan: {
-                    animation: {
-                        duration: 250
-                    }
-                }
+                autoPan: { animation: { duration: 250 } }
             });
 
             return popupOverlay;
@@ -964,15 +961,13 @@
             `;
 
             if (polyData.remarks) {
-                buildingHtml +=
-                    `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
+                buildingHtml += `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
             }
 
             // Assessments HTML
             let assessmentsHtml = '';
             if (assessments.length === 0) {
-                assessmentsHtml =
-                    `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
+                assessmentsHtml = `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
             } else {
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
@@ -1037,17 +1032,9 @@
             popupElement.innerHTML = html;
             popupElement.style.display = 'block';
 
-            // Mobile vs Desktop positioning
-            if (window.innerWidth <= 768) {
-                if (popupOverlay) popupOverlay.setPosition(undefined);
-                popupElement.style.position = 'fixed';
-                popupElement.style.bottom = '0';
-                popupElement.style.left = '0';
-                popupElement.style.right = '0';
-                popupElement.style.top = 'auto';
-            } else {
-                popupElement.style.position = 'absolute';
-                if (popupOverlay) popupOverlay.setPosition(coordinate);
+            // For desktop, set position to coordinate
+            if (window.innerWidth > 768 && popupOverlay) {
+                popupOverlay.setPosition(coordinate);
             }
 
             // Assessment card click handler
@@ -1125,15 +1112,9 @@
             showLoading(true);
 
             // Base layers
-            osmLayer = new ol.layer.Tile({
-                source: new ol.source.OSM(),
-                visible: true
-            });
+            osmLayer = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true });
             satelliteLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                    attributions: 'Tiles &copy; Esri'
-                }),
+                source: new ol.source.XYZ({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles &copy; Esri' }),
                 visible: false
             });
 
@@ -1150,17 +1131,14 @@
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
                             url: "{{ asset('') }}" + droneImage.replace(/^\/+/, ''),
-                            imageExtent: [parseFloat(extentLeft), parseFloat(extentBottom), parseFloat(
-                                extentRight), parseFloat(extentTop)],
+                            imageExtent: [parseFloat(extentLeft), parseFloat(extentBottom), parseFloat(extentRight), parseFloat(extentTop)],
                             projection: 'EPSG:3857'
                         }),
                         opacity: 1.0,
                         visible: true
                     });
                     hasDroneImage = true;
-                } catch (e) {
-                    console.error('Drone image error:', e);
-                }
+                } catch (e) { console.error('Drone image error:', e); }
             }
 
             // Boundary layer
@@ -1170,30 +1148,14 @@
                 try {
                     const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
                     boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Polygon([boundaryCoords])
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#ff0000',
-                                width: 3,
-                                lineDash: [10, 5]
-                            }),
-                            fill: new ol.style.Fill({
-                                color: 'rgba(255, 0, 0, 0.05)'
-                            })
-                        }),
+                        source: new ol.source.Vector({ features: [new ol.Feature({ geometry: new ol.geom.Polygon([boundaryCoords]) })] }),
+                        style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }), fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' }) }),
                         visible: true
                     });
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
-                    boundaryExtent = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(
-                        ...lats)]);
-                } catch (e) {
-                    console.error('Boundary error:', e);
-                }
+                    boundaryExtent = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
+                } catch (e) { console.error('Boundary error:', e); }
             }
 
             // Map center
@@ -1203,8 +1165,7 @@
                 try {
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
-                    center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(
-                        ...lats)) / 2]);
+                    center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
                     zoom = 18;
                 } catch (e) {}
             }
@@ -1213,10 +1174,7 @@
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
-                view: new ol.View({
-                    center: center,
-                    zoom: zoom
-                })
+                view: new ol.View({ center: center, zoom: zoom })
             });
 
             const popup = createPopup();
@@ -1226,10 +1184,7 @@
 
             setTimeout(() => {
                 if (boundaryExtent && boundaryExtent.length === 4) {
-                    map.getView().fit(boundaryExtent, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
+                    map.getView().fit(boundaryExtent, { padding: [50, 50, 50, 50], duration: 1000 });
                 }
             }, 500);
 
@@ -1267,18 +1222,11 @@
                 });
             });
 
-            document.getElementById('toggleBuildings')?.addEventListener('change', (e) => {
-                if (polygonLayer) polygonLayer.setVisible(e.target.checked);
-            });
-            document.getElementById('toggleRoads')?.addEventListener('change', (e) => {
-                if (lineLayer) lineLayer.setVisible(e.target.checked);
-            });
-            document.getElementById('toggleBoundary')?.addEventListener('change', (e) => {
-                if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
-            });
+            document.getElementById('toggleBuildings')?.addEventListener('change', (e) => { if (polygonLayer) polygonLayer.setVisible(e.target.checked); });
+            document.getElementById('toggleRoads')?.addEventListener('change', (e) => { if (lineLayer) lineLayer.setVisible(e.target.checked); });
+            document.getElementById('toggleBoundary')?.addEventListener('change', (e) => { if (boundaryLayer) boundaryLayer.setVisible(e.target.checked); });
             const droneToggle = document.getElementById('toggleDrone');
-            if (droneToggle && imageLayer) droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target
-                .checked));
+            if (droneToggle && imageLayer) droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target.checked));
         }
 
         function addLegend(hasDroneImage) {
@@ -1298,13 +1246,10 @@
         function addZoomControls() {
             const controls = document.createElement('div');
             controls.className = 'zoom-controls';
-            controls.innerHTML =
-                `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
+            controls.innerHTML = `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
             document.body.appendChild(controls);
-            document.getElementById('zoomInBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
-                .getZoom() + 1));
-            document.getElementById('zoomOutBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
-                .getZoom() - 1));
+            document.getElementById('zoomInBtn').addEventListener('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
+            document.getElementById('zoomOutBtn').addEventListener('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
         }
 
         function addMobileControls() {
@@ -1314,16 +1259,10 @@
             const mapLegend = document.getElementById('mapLegend');
 
             if (menuBtn && layerSwitcher) {
-                menuBtn.addEventListener('click', () => {
-                    layerSwitcher.classList.toggle('open');
-                    if (mapLegend) mapLegend.classList.remove('open');
-                });
+                menuBtn.addEventListener('click', () => { layerSwitcher.classList.toggle('open'); if (mapLegend) mapLegend.classList.remove('open'); });
             }
             if (legendBtn && mapLegend) {
-                legendBtn.addEventListener('click', () => {
-                    mapLegend.classList.toggle('open');
-                    if (layerSwitcher) layerSwitcher.classList.remove('open');
-                });
+                legendBtn.addEventListener('click', () => { mapLegend.classList.toggle('open'); if (layerSwitcher) layerSwitcher.classList.remove('open'); });
             }
         }
 
@@ -1343,33 +1282,8 @@
                 center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
             }
             return [
-                new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff4444',
-                        width: 2
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255, 68, 68, 0.15)'
-                    })
-                }),
-                new ol.style.Style({
-                    geometry: center,
-                    text: new ol.style.Text({
-                        text: `${gisid}\n${sqfeet} sqft`,
-                        font: 'bold 10px Arial',
-                        fill: new ol.style.Fill({
-                            color: '#ffffff'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#000000',
-                            width: 2
-                        }),
-                        backgroundFill: new ol.style.Fill({
-                            color: 'rgba(0, 0, 0, 0.7)'
-                        }),
-                        padding: [4, 8, 4, 8]
-                    })
-                })
+                new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }), fill: new ol.style.Fill({ color: 'rgba(255, 68, 68, 0.15)' }) }),
+                new ol.style.Style({ geometry: center, text: new ol.style.Text({ text: `${gisid}\n${sqfeet} sqft`, font: 'bold 10px Arial', fill: new ol.style.Fill({ color: '#ffffff' }), stroke: new ol.style.Stroke({ color: '#000000', width: 2 }), backgroundFill: new ol.style.Fill({ color: 'rgba(0, 0, 0, 0.7)' }), padding: [4, 8, 4, 8] }) })
             ];
         }
 
@@ -1380,53 +1294,27 @@
             const polygonSource = new ol.source.Vector();
             polygons.forEach(poly => {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                        .coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                     if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.Polygon(coords),
-                            gisid: poly.gisid,
-                            sqfeet: poly.sqfeet
-                        }));
+                        polygonSource.addFeature(new ol.Feature({ geometry: new ol.geom.Polygon(coords), gisid: poly.gisid, sqfeet: poly.sqfeet }));
                     }
-                } catch (e) {
-                    console.log('Polygon error:', e);
-                }
+                } catch (e) { console.log('Polygon error:', e); }
             });
 
-            polygonLayer = new ol.layer.Vector({
-                source: polygonSource,
-                style: polygonStyleFunction,
-                visible: true
-            });
+            polygonLayer = new ol.layer.Vector({ source: polygonSource, style: polygonStyleFunction, visible: true });
 
             const lineSource = new ol.source.Vector();
             lines.forEach(line => {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                        .coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.LineString(coords),
-                            gisid: line.gisid
-                        }));
+                        lineSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords), gisid: line.gisid }));
                     }
-                } catch (e) {
-                    console.log('Line error:', e);
-                }
+                } catch (e) { console.log('Line error:', e); }
             });
 
-            lineLayer = new ol.layer.Vector({
-                source: lineSource,
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ffc107',
-                        width: 3
-                    })
-                }),
-                visible: true
-            });
+            lineLayer = new ol.layer.Vector({ source: lineSource, style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 }) }), visible: true });
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
