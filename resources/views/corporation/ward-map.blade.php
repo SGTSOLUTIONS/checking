@@ -339,6 +339,7 @@
             from {
                 transform: translateY(100%);
             }
+
             to {
                 transform: translateY(0);
             }
@@ -873,9 +874,6 @@
     <!-- OpenLayers -->
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
-    <!-- CSRF Token for AJAX -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <script>
         // Global map variables
         let map;
@@ -895,18 +893,23 @@
         let currentFilter = 'all';
         let currentSearchTerm = '';
 
-        // Data variables (will be populated via AJAX)
-        let polygonDatas = [];
-        let polygons = [];
-        let lines = [];
-        let wardData = {};
+        // Data passed directly from server (no AJAX needed!)
+        let polygonDatas = @json($polygonDatas ?? []);
+        let polygons = @json($polygons ?? []);
+        let lines = @json($lines ?? []);
 
-        // Set CSRF token for all AJAX requests
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+        // Ward data from server
+        let wardData = {
+            ward_no: @json($ward->ward_no ?? ''),
+            drone_image: @json($ward->drone_image ?? null),
+            extent_left: @json($ward->extent_left ?? null),
+            extent_bottom: @json($ward->extent_bottom ?? null),
+            extent_right: @json($ward->extent_right ?? null),
+            extent_top: @json($ward->extent_top ?? null),
+            boundary: @json($ward->boundary ?? null),
+            zone: @json($ward->zone ?? ''),
+            corporation_id: @json($ward->corporation_id ?? '')
+        };
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -915,7 +918,7 @@
                     loadingEl = document.createElement('div');
                     loadingEl.id = 'mapLoading';
                     loadingEl.className = 'map-loading';
-                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map data...';
+                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map...';
                     document.body.appendChild(loadingEl);
                 }
                 loadingEl.style.display = 'block';
@@ -924,77 +927,6 @@
                     loadingEl.style.display = 'none';
                 }
             }
-        }
-
-        // Load all map data via AJAX
-        function loadMapData(callback) {
-            showLoading(true);
-
-            const wardNo = '{{ $ward->ward_no ?? "" }}';
-
-            // Load all data in parallel
-            $.ajax({
-                url: '/api/ward-map-data/' + wardNo,
-                method: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        polygonDatas = response.polygonDatas || [];
-                        polygons = response.polygons || [];
-                        lines = response.lines || [];
-                        wardData = response.wardData || {};
-
-                        console.log('Data loaded via AJAX:', {
-                            polygonDatas: polygonDatas.length,
-                            polygons: polygons.length,
-                            lines: lines.length,
-                            hasWardData: !!wardData.ward_no
-                        });
-
-                        if (callback) callback(true);
-                    } else {
-                        console.error('API error:', response.message);
-                        if (callback) callback(false);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX error:', error);
-                    console.error('Status:', status);
-                    console.error('Response:', xhr.responseText);
-                    if (callback) callback(false);
-                },
-                complete: function() {
-                    showLoading(false);
-                }
-            });
-        }
-
-        // Save QC data via AJAX
-        function saveQCData(assessmentId, qcData, callback) {
-            $.ajax({
-                url: '/api/save-qc-data',
-                method: 'POST',
-                data: {
-                    assessment_id: assessmentId,
-                    qc_sqfeet: qcData.qc_sqfeet,
-                    qc_usage: qcData.qc_usage,
-                    tax_amount: qcData.tax_amount,
-                    qc_complete: qcData.isComplete
-                },
-                success: function(response) {
-                    if (response.success) {
-                        console.log('QC data saved successfully');
-                        if (callback) callback(true, response);
-                    } else {
-                        console.error('Save error:', response.message);
-                        if (callback) callback(false, response);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX save error:', error);
-                    if (callback) callback(false, null);
-                }
-            });
         }
 
         // Create popup
@@ -1009,7 +941,11 @@
                 positioning: 'bottom-center',
                 stopEvent: true,
                 offset: [0, -10],
-                autoPan: { animation: { duration: 250 } }
+                autoPan: {
+                    animation: {
+                        duration: 250
+                    }
+                }
             });
 
             return popupOverlay;
@@ -1049,8 +985,9 @@
             $('.assessment-card').each(function() {
                 const $card = $(this);
                 const assessmentNumber = $card.data('assessment') || '';
-                const ownerName = $card.find('.assessment-value strong').text().toLowerCase();
-                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text().toLowerCase();
+                const ownerName = $card.data('owner') || '';
+                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text()
+                    .toLowerCase();
                 const floor = $card.find('.assessment-row').eq(2).find('.assessment-value').text().toLowerCase();
                 const usage = $card.find('.assessment-row').eq(3).find('.assessment-value').text().toLowerCase();
                 const hasQC = $card.find('.badge-success').length > 0;
@@ -1060,10 +997,10 @@
 
                 if (searchTerm) {
                     matchesSearch = assessmentNumber.toLowerCase().includes(searchTerm) ||
-                                   ownerName.includes(searchTerm) ||
-                                   phoneNumber.includes(searchTerm) ||
-                                   floor.includes(searchTerm) ||
-                                   usage.includes(searchTerm);
+                        ownerName.includes(searchTerm) ||
+                        phoneNumber.includes(searchTerm) ||
+                        floor.includes(searchTerm) ||
+                        usage.includes(searchTerm);
                 }
 
                 if (filterType === 'completed') {
@@ -1085,7 +1022,9 @@
 
             if (visibleCount === 0) {
                 if ($('.no-results-message').length === 0) {
-                    $('.assessments-list').append('<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>');
+                    $('.assessments-list').append(
+                        '<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>'
+                        );
                 }
             } else {
                 $('.no-results-message').remove();
@@ -1097,12 +1036,15 @@
             let assessmentsHtml = '';
 
             if (assessments.length === 0) {
-                assessmentsHtml = `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
+                assessmentsHtml =
+                    `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
             } else {
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
+                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A')
+                    .toLowerCase();
                     assessmentsHtml += `
-                        <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}" data-owner="${(assessment.owner_name || assessment.present_owner_name || '').toLowerCase()}" data-status="${hasQC ? 'completed' : 'pending'}">
+                        <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}" data-owner="${ownerName}" data-status="${hasQC ? 'completed' : 'pending'}">
                             <div class="assessment-header">
                                 <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
                                 <span class="assessment-status">
@@ -1211,7 +1153,8 @@
             `;
 
             if (polyData.remarks) {
-                buildingHtml += `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
+                buildingHtml +=
+                    `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
             }
             buildingHtml += `</div>`;
 
@@ -1338,40 +1281,21 @@
                     const taxAmount = $(this).find('input[name="tax_amount"]').val();
                     const isComplete = qcSqfeet && qcUsage && taxAmount;
 
-                    // Show saving indicator
-                    const submitBtn = $(this).find('button[type="submit"]');
-                    const originalText = submitBtn.html();
-                    submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+                    if (isComplete) {
+                        $(this).closest('.assessment-card').find('.badge')
+                            .removeClass('badge-warning').addClass('badge-success')
+                            .html('<i class="fas fa-check-circle"></i> QC Complete');
+                        $(this).closest('.assessment-card').data('status', 'completed');
+                    } else {
+                        $(this).closest('.assessment-card').find('.badge')
+                            .removeClass('badge-success').addClass('badge-warning')
+                            .html('<i class="fas fa-clock"></i> QC Pending');
+                        $(this).closest('.assessment-card').data('status', 'pending');
+                    }
 
-                    // Save via AJAX
-                    saveQCData(assessmentId, {
-                        qc_sqfeet: qcSqfeet,
-                        qc_usage: qcUsage,
-                        tax_amount: taxAmount,
-                        isComplete: isComplete
-                    }, function(success, response) {
-                        submitBtn.html(originalText).prop('disabled', false);
-
-                        if (success) {
-                            if (isComplete) {
-                                $(this).closest('.assessment-card').find('.badge')
-                                    .removeClass('badge-warning').addClass('badge-success')
-                                    .html('<i class="fas fa-check-circle"></i> QC Complete');
-                                $(this).closest('.assessment-card').data('status', 'completed');
-                            } else {
-                                $(this).closest('.assessment-card').find('.badge')
-                                    .removeClass('badge-success').addClass('badge-warning')
-                                    .html('<i class="fas fa-clock"></i> QC Pending');
-                                $(this).closest('.assessment-card').data('status', 'pending');
-                            }
-
-                            alert('QC Saved Successfully! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
-                            $('.assessment-form-container').remove();
-                            filterAssessments();
-                        } else {
-                            alert('Error saving QC data. Please try again.');
-                        }
-                    }.bind(this));
+                    alert('QC Saved! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
+                    $('.assessment-form-container').remove();
+                    filterAssessments();
                 });
 
                 $('.close-form-btn, .cancel-form-btn').on('click', function() {
@@ -1384,6 +1308,8 @@
         function initAssessmentFilters() {
             const searchInput = $('#assessmentSearchInput');
             const clearBtn = $('#clearSearchBtn');
+
+            if (searchInput.length === 0) return;
 
             searchInput.off('input').on('input', function() {
                 currentSearchTerm = $(this).val();
@@ -1415,9 +1341,15 @@
             showLoading(true);
 
             // Base layers
-            osmLayer = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true });
+            osmLayer = new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                visible: true
+            });
             satelliteLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles &copy; Esri' }),
+                source: new ol.source.XYZ({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    attributions: 'Tiles &copy; Esri'
+                }),
                 visible: false
             });
 
@@ -1439,7 +1371,7 @@
                     ];
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
-                            url: droneImage,
+                            url: "{{ asset('') }}" + droneImage.replace(/^\/+/, ''),
                             imageExtent: imageExtent,
                             projection: 'EPSG:3857'
                         }),
@@ -1447,7 +1379,9 @@
                         visible: true
                     });
                     hasDroneImage = true;
-                } catch (e) { console.error('Drone image error:', e); }
+                } catch (e) {
+                    console.error('Drone image error:', e);
+                }
             }
 
             // Boundary layer
@@ -1457,8 +1391,21 @@
                 try {
                     const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
                     boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({ features: [new ol.Feature({ geometry: new ol.geom.Polygon([boundaryCoords]) })] }),
-                        style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }), fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' }) }),
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Polygon([boundaryCoords])
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff0000',
+                                width: 3,
+                                lineDash: [10, 5]
+                            }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255, 0, 0, 0.05)'
+                            })
+                        }),
                         visible: true
                     });
                     const lons = boundary[0].map(p => p[0]);
@@ -1469,7 +1416,9 @@
                         Math.max(...lons),
                         Math.max(...lats)
                     ]);
-                } catch (e) { console.error('Boundary error:', e); }
+                } catch (e) {
+                    console.error('Boundary error:', e);
+                }
             }
 
             // Map center
@@ -1491,7 +1440,10 @@
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
-                view: new ol.View({ center: center, zoom: zoom })
+                view: new ol.View({
+                    center: center,
+                    zoom: zoom
+                })
             });
 
             const popup = createPopup();
@@ -1501,7 +1453,10 @@
 
             setTimeout(() => {
                 if (boundaryExtent && boundaryExtent.length === 4) {
-                    map.getView().fit(boundaryExtent, { padding: [50, 50, 50, 50], duration: 1000 });
+                    map.getView().fit(boundaryExtent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
                 }
             }, 500);
 
@@ -1539,11 +1494,18 @@
                 });
             });
 
-            document.getElementById('toggleBuildings')?.addEventListener('change', (e) => { if (polygonLayer) polygonLayer.setVisible(e.target.checked); });
-            document.getElementById('toggleRoads')?.addEventListener('change', (e) => { if (lineLayer) lineLayer.setVisible(e.target.checked); });
-            document.getElementById('toggleBoundary')?.addEventListener('change', (e) => { if (boundaryLayer) boundaryLayer.setVisible(e.target.checked); });
+            document.getElementById('toggleBuildings')?.addEventListener('change', (e) => {
+                if (polygonLayer) polygonLayer.setVisible(e.target.checked);
+            });
+            document.getElementById('toggleRoads')?.addEventListener('change', (e) => {
+                if (lineLayer) lineLayer.setVisible(e.target.checked);
+            });
+            document.getElementById('toggleBoundary')?.addEventListener('change', (e) => {
+                if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
+            });
             const droneToggle = document.getElementById('toggleDrone');
-            if (droneToggle && imageLayer) droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target.checked));
+            if (droneToggle && imageLayer) droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target
+                .checked));
         }
 
         function addLegend(hasDroneImage) {
@@ -1563,10 +1525,13 @@
         function addZoomControls() {
             const controls = document.createElement('div');
             controls.className = 'zoom-controls';
-            controls.innerHTML = `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
+            controls.innerHTML =
+                `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
             document.body.appendChild(controls);
-            document.getElementById('zoomInBtn').addEventListener('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
-            document.getElementById('zoomOutBtn').addEventListener('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
+            document.getElementById('zoomInBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
+                .getZoom() + 1));
+            document.getElementById('zoomOutBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
+                .getZoom() - 1));
         }
 
         function addMobileControls() {
@@ -1576,10 +1541,16 @@
             const mapLegend = document.getElementById('mapLegend');
 
             if (menuBtn && layerSwitcher) {
-                menuBtn.addEventListener('click', () => { layerSwitcher.classList.toggle('open'); if (mapLegend) mapLegend.classList.remove('open'); });
+                menuBtn.addEventListener('click', () => {
+                    layerSwitcher.classList.toggle('open');
+                    if (mapLegend) mapLegend.classList.remove('open');
+                });
             }
             if (legendBtn && mapLegend) {
-                legendBtn.addEventListener('click', () => { mapLegend.classList.toggle('open'); if (layerSwitcher) layerSwitcher.classList.remove('open'); });
+                legendBtn.addEventListener('click', () => {
+                    mapLegend.classList.toggle('open');
+                    if (layerSwitcher) layerSwitcher.classList.remove('open');
+                });
             }
         }
 
@@ -1599,8 +1570,33 @@
                 center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
             }
             return [
-                new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }), fill: new ol.style.Fill({ color: 'rgba(255, 68, 68, 0.15)' }) }),
-                new ol.style.Style({ geometry: center, text: new ol.style.Text({ text: `${gisid}\n${sqfeet} sqft`, font: 'bold 10px Arial', fill: new ol.style.Fill({ color: '#ffffff' }), stroke: new ol.style.Stroke({ color: '#000000', width: 2 }), backgroundFill: new ol.style.Fill({ color: 'rgba(0, 0, 0, 0.7)' }), padding: [4, 8, 4, 8] }) })
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ff4444',
+                        width: 2
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 68, 68, 0.15)'
+                    })
+                }),
+                new ol.style.Style({
+                    geometry: center,
+                    text: new ol.style.Text({
+                        text: `${gisid}\n${sqfeet} sqft`,
+                        font: 'bold 10px Arial',
+                        fill: new ol.style.Fill({
+                            color: '#ffffff'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 2
+                        }),
+                        backgroundFill: new ol.style.Fill({
+                            color: 'rgba(0, 0, 0, 0.7)'
+                        }),
+                        padding: [4, 8, 4, 8]
+                    })
+                })
             ];
         }
 
@@ -1611,27 +1607,53 @@
             const polygonSource = new ol.source.Vector();
             polygons.forEach(poly => {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
+                        .coordinates;
                     if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({ geometry: new ol.geom.Polygon(coords), gisid: poly.gisid, sqfeet: poly.sqfeet }));
+                        polygonSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Polygon(coords),
+                            gisid: poly.gisid,
+                            sqfeet: poly.sqfeet
+                        }));
                     }
-                } catch (e) { console.log('Polygon error:', e); }
+                } catch (e) {
+                    console.log('Polygon error:', e);
+                }
             });
 
-            polygonLayer = new ol.layer.Vector({ source: polygonSource, style: polygonStyleFunction, visible: true });
+            polygonLayer = new ol.layer.Vector({
+                source: polygonSource,
+                style: polygonStyleFunction,
+                visible: true
+            });
 
             const lineSource = new ol.source.Vector();
             lines.forEach(line => {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
+                        .coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords), gisid: line.gisid }));
+                        lineSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: line.gisid
+                        }));
                     }
-                } catch (e) { console.log('Line error:', e); }
+                } catch (e) {
+                    console.log('Line error:', e);
+                }
             });
 
-            lineLayer = new ol.layer.Vector({ source: lineSource, style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 }) }), visible: true });
+            lineLayer = new ol.layer.Vector({
+                source: lineSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ffc107',
+                        width: 3
+                    })
+                }),
+                visible: true
+            });
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
@@ -1655,15 +1677,7 @@
 
         // Start the application
         $(document).ready(function() {
-            loadMapData(function(success) {
-                if (success) {
-                    initMap();
-                } else {
-                    console.error('Failed to load map data');
-                    showLoading(false);
-                    alert('Error loading map data. Please refresh the page.');
-                }
-            });
+            initMap();
         });
 
         window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
