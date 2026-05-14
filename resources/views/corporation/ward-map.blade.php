@@ -18,7 +18,7 @@
 
 @push('styles')
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -33,10 +33,10 @@
         body {
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            position: fixed;
-            touch-action: pan-x pan-y pinch-zoom;
-            /* Changed from 'none' to allow panning but prevent pull-to-refresh */
+            overflow: auto;
+            /* Changed to auto to allow refresh */
+            position: relative;
+            /* Changed from fixed */
         }
 
         #map {
@@ -50,7 +50,7 @@
         /* Mobile Menu Buttons */
         .mobile-menu-btn,
         .mobile-legend-btn {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             right: 20px;
             z-index: 1002;
@@ -250,7 +250,7 @@
 
         /* Zoom Controls */
         .zoom-controls {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 20px;
             background: rgba(0, 0, 0, 0.85);
@@ -300,7 +300,7 @@
 
         /* Loading indicator */
         .map-loading {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -344,9 +344,10 @@
                 width: auto !important;
                 max-width: none !important;
                 min-width: auto !important;
-                max-height: 55vh !important;
+                max-height: 60vh !important;
                 border-radius: 20px !important;
                 transform: none !important;
+                display: block !important;
             }
 
             .ol-popup:after {
@@ -761,6 +762,11 @@
         .close-form-btn:active {
             color: #ff4444;
         }
+
+        /* Ensure map container doesn't interfere with refresh */
+        #map canvas {
+            pointer-events: auto;
+        }
     </style>
 @endpush
 
@@ -769,54 +775,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Prevent pull-to-refresh on mobile while allowing map panning
+        // Allow page refresh while maintaining map functionality
         (function() {
-            let startY = 0;
-            let isScrolling = false;
+            // Don't block touch events - allow normal browser behavior including pull-to-refresh
+            // This ensures users can refresh the page by swiping down
 
-            document.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-                const target = e.target;
-                const isPopupScroll = target.closest('.popup-tab-content') || target.closest('.assessment-form-container');
-                const isMap = target.closest('#map');
-                const isControl = target.closest('.layer-switcher') || target.closest('.zoom-controls') ||
-                    target.closest('.mobile-menu-btn') || target.closest('.mobile-legend-btn');
-
-                if (isPopupScroll) {
-                    isScrolling = true;
-                } else if (!isMap && !isControl) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
+            // Only prevent zoom on map when needed
             document.addEventListener('touchmove', function(e) {
-                const currentY = e.touches[0].clientY;
-                const isPopupScroll = e.target.closest('.popup-tab-content') || e.target.closest('.assessment-form-container');
                 const isMap = e.target.closest('#map');
+                const isPopup = e.target.closest('.ol-popup');
+                const isForm = e.target.closest('.assessment-form-container');
 
-                // Prevent pull-to-refresh when at top of scrollable content
-                if (isPopupScroll) {
-                    const scrollable = e.target.closest('.popup-tab-content') || e.target.closest('.assessment-form-container');
-                    if (scrollable) {
-                        const isAtTop = scrollable.scrollTop === 0;
-                        if (isAtTop && currentY > startY) {
-                            e.preventDefault();
-                        }
-                    }
+                // Only prevent default if it's map zoom gesture
+                if (isMap && e.touches.length > 1) {
+                    // Allow pinch zoom on map
+                    return;
                 }
-                // Prevent page refresh on map
-                else if (isMap) {
-                    // Allow map panning but prevent pull-to-refresh
-                    if (currentY > startY && window.scrollY === 0) {
-                        e.preventDefault();
-                    }
+                // Allow normal scrolling on popup and form
+                if (isPopup || isForm) {
+                    return;
                 }
-                // Prevent touch on other elements
-                else if (!e.target.closest('.layer-switcher') && !e.target.closest('.zoom-controls') &&
-                    !e.target.closest('.mobile-menu-btn') && !e.target.closest('.mobile-legend-btn')) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
+            }, {
+                passive: false
+            });
         })();
     </script>
 
@@ -909,6 +890,13 @@
                 selectedTab.classList.add('active');
             }
             currentActiveTab = tabId;
+        };
+
+        // Close popup function
+        window.closePopup = function() {
+            if (popupElement) {
+                popupElement.style.display = 'none';
+            }
         };
 
         // Show popup with three tabbed sections
@@ -1116,7 +1104,9 @@
             // Handle popup positioning based on device
             if (window.innerWidth <= 768) {
                 // Mobile: Fixed position at bottom
-                popupOverlay.setPosition(undefined);
+                if (popupOverlay) {
+                    popupOverlay.setPosition(undefined);
+                }
                 popupElement.style.position = 'fixed';
                 popupElement.style.bottom = '20px';
                 popupElement.style.left = '10px';
@@ -1125,13 +1115,10 @@
             } else {
                 // Desktop: Position near clicked building
                 popupElement.style.position = 'absolute';
-                popupOverlay.setPosition(coordinate);
+                if (popupOverlay) {
+                    popupOverlay.setPosition(coordinate);
+                }
             }
-
-            // Close button event
-            window.closePopup = function() {
-                popupElement.style.display = 'none';
-            };
 
             // Assessment card click handler
             $('.assessment-card').off('click').on('click', function(e) {
@@ -1567,8 +1554,6 @@
                 const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
                 if (feature && feature.get('gisid')) {
                     showPopup(feature.get('gisid'), evt.coordinate);
-                } else if (popupElement) {
-                    popupElement.style.display = 'none';
                 }
             });
 
@@ -1581,6 +1566,11 @@
         }
 
         window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
-        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initMap) : initMap();
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMap);
+        } else {
+            initMap();
+        }
     </script>
 @endpush
