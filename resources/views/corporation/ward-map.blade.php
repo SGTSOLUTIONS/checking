@@ -859,7 +859,7 @@
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
                     assessmentsHtml += `
-                        <div class="assessment-card">
+                        <div class="assessment-card" id="assessment-card" data-id= ${assessment.id} data-assessment= ${assessment.assessment}>
                             <div class="assessment-header">
                                 <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
                                 <span class="assessment-status">
@@ -980,6 +980,9 @@
                 });
             }
         }
+        $('#assessment-card').on('click', function() {
+            alert('assessment');
+        });
 
         function initMap() {
             showLoading(true);
@@ -1280,7 +1283,8 @@
             const polygonSource = new ol.source.Vector();
             polygons.forEach(function(poly) {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
+                        .coordinates;
                     if (coords && coords.length) {
                         const feature = new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
@@ -1361,7 +1365,8 @@
             const lineSource = new ol.source.Vector();
             lines.forEach(function(line) {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
+                        .coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) {
                             coords = coords[0];
