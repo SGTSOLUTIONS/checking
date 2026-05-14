@@ -1337,7 +1337,7 @@
                     $('#mapLegend').removeClass('open');
                 });
                 $(document).on('click', function(e) {
-                    if ($(window).width() <= 2068) {
+                    if ($(window).width() <= 768) {
                         if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target)
                             .length && !$('#mobileMenuBtn').is(e.target)) $('#layerSwitcher').removeClass(
                             'open');
