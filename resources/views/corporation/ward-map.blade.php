@@ -100,7 +100,7 @@
         /* Layer Switcher */
         .layer-switcher {
             position: absolute;
-            top: 20px;
+            top: 100px;
             right: 20px;
             background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
@@ -220,8 +220,8 @@
         /* Search Panel */
         .search-panel {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 0px;
+            left: 230px;
             background: rgba(0, 0, 0, 0.9);
             border-radius: 12px;
             padding: 15px;
@@ -318,8 +318,8 @@
         /* Filter Panel */
         .filter-panel {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 100px;
+            right: 200px;
             background: rgba(0, 0, 0, 0.9);
             border-radius: 12px;
             padding: 15px;
@@ -1337,7 +1337,7 @@
                     $('#mapLegend').removeClass('open');
                 });
                 $(document).on('click', function(e) {
-                    if ($(window).width() <= 768) {
+                    if ($(window).width() <= 2068) {
                         if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target)
                             .length && !$('#mobileMenuBtn').is(e.target)) $('#layerSwitcher').removeClass(
                             'open');
