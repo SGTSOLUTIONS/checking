@@ -339,7 +339,6 @@
             from {
                 transform: translateY(100%);
             }
-
             to {
                 transform: translateY(0);
             }
@@ -906,46 +905,32 @@
             extent_bottom: @json($ward->extent_bottom ?? null),
             extent_right: @json($ward->extent_right ?? null),
             extent_top: @json($ward->extent_top ?? null),
-            boundary: @json($ward->boundary ?? null),
-            zone: @json($ward->zone ?? ''),
-            corporation_id: @json($ward->corporation_id ?? '')
+            boundary: @json($ward->boundary ?? null)
         };
 
+        // Show/hide loading indicator
         function showLoading(show) {
-            let loadingEl = document.getElementById('mapLoading');
             if (show) {
-                if (!loadingEl) {
-                    loadingEl = document.createElement('div');
-                    loadingEl.id = 'mapLoading';
-                    loadingEl.className = 'map-loading';
-                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map...';
-                    document.body.appendChild(loadingEl);
+                if ($('#mapLoading').length === 0) {
+                    $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
                 }
-                loadingEl.style.display = 'block';
+                $('#mapLoading').show();
             } else {
-                if (loadingEl) {
-                    loadingEl.style.display = 'none';
-                }
+                $('#mapLoading').hide();
             }
         }
 
         // Create popup
         function createPopup() {
-            popupElement = document.createElement('div');
-            popupElement.className = 'ol-popup';
-            popupElement.style.display = 'none';
-            document.body.appendChild(popupElement);
+            popupElement = $('<div>', { class: 'ol-popup', style: 'display:none' })[0];
+            $('body').append(popupElement);
 
             popupOverlay = new ol.Overlay({
                 element: popupElement,
                 positioning: 'bottom-center',
                 stopEvent: true,
                 offset: [0, -10],
-                autoPan: {
-                    animation: {
-                        duration: 250
-                    }
-                }
+                autoPan: { animation: { duration: 250 } }
             });
 
             return popupOverlay;
@@ -953,27 +938,15 @@
 
         // Close popup
         window.closePopup = function() {
-            if (popupElement) {
-                popupElement.style.display = 'none';
-            }
+            $('.ol-popup').hide();
         };
 
         // Switch tabs
         window.switchTab = function(tabId) {
-            document.querySelectorAll('.popup-tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.querySelectorAll('.popup-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            const selectedContent = document.getElementById(`tab-${tabId}`);
-            if (selectedContent) {
-                selectedContent.classList.add('active');
-            }
-            const selectedTab = document.querySelector(`.popup-tab[data-tab="${tabId}"]`);
-            if (selectedTab) {
-                selectedTab.classList.add('active');
-            }
+            $('.popup-tab-content').removeClass('active');
+            $('.popup-tab').removeClass('active');
+            $('#tab-' + tabId).addClass('active');
+            $('.popup-tab[data-tab="' + tabId + '"]').addClass('active');
             currentActiveTab = tabId;
         };
 
@@ -986,8 +959,7 @@
                 const $card = $(this);
                 const assessmentNumber = $card.data('assessment') || '';
                 const ownerName = $card.data('owner') || '';
-                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text()
-                    .toLowerCase();
+                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text().toLowerCase();
                 const floor = $card.find('.assessment-row').eq(2).find('.assessment-value').text().toLowerCase();
                 const usage = $card.find('.assessment-row').eq(3).find('.assessment-value').text().toLowerCase();
                 const hasQC = $card.find('.badge-success').length > 0;
@@ -997,10 +969,10 @@
 
                 if (searchTerm) {
                     matchesSearch = assessmentNumber.toLowerCase().includes(searchTerm) ||
-                        ownerName.includes(searchTerm) ||
-                        phoneNumber.includes(searchTerm) ||
-                        floor.includes(searchTerm) ||
-                        usage.includes(searchTerm);
+                                   ownerName.includes(searchTerm) ||
+                                   phoneNumber.includes(searchTerm) ||
+                                   floor.includes(searchTerm) ||
+                                   usage.includes(searchTerm);
                 }
 
                 if (filterType === 'completed') {
@@ -1020,13 +992,9 @@
             const totalCount = $('.assessment-card').length;
             $('.assessment-count').text(`Showing ${visibleCount} of ${totalCount} assessments`);
 
-            if (visibleCount === 0) {
-                if ($('.no-results-message').length === 0) {
-                    $('.assessments-list').append(
-                        '<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>'
-                        );
-                }
-            } else {
+            if (visibleCount === 0 && $('.no-results-message').length === 0) {
+                $('.assessments-list').append('<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>');
+            } else if (visibleCount > 0) {
                 $('.no-results-message').remove();
             }
         }
@@ -1036,13 +1004,11 @@
             let assessmentsHtml = '';
 
             if (assessments.length === 0) {
-                assessmentsHtml =
-                    `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
+                assessmentsHtml = '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>';
             } else {
-                assessments.forEach((assessment, idx) => {
+                $.each(assessments, function(idx, assessment) {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
-                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A')
-                    .toLowerCase();
+                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A').toLowerCase();
                     assessmentsHtml += `
                         <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}" data-owner="${ownerName}" data-status="${hasQC ? 'completed' : 'pending'}">
                             <div class="assessment-header">
@@ -1083,9 +1049,9 @@
             currentAssessments = assessments;
 
             const allShops = [];
-            assessments.forEach((assessment, idx) => {
+            $.each(assessments, function(idx, assessment) {
                 if (assessment.shops && assessment.shops.length > 0) {
-                    assessment.shops.forEach(shop => {
+                    $.each(assessment.shops, function(shopIdx, shop) {
                         allShops.push({
                             ...shop,
                             assessmentNumber: assessment.assessment || `Bill ${idx + 1}`,
@@ -1153,8 +1119,7 @@
             `;
 
             if (polyData.remarks) {
-                buildingHtml +=
-                    `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
+                buildingHtml += `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
             }
             buildingHtml += `</div>`;
 
@@ -1183,9 +1148,9 @@
             // Shops HTML
             let shopsHtml = '';
             if (allShops.length === 0) {
-                shopsHtml = `<div class="empty-state"><i class="fas fa-store"></i><p>No shop records found</p></div>`;
+                shopsHtml = '<div class="empty-state"><i class="fas fa-store"></i><p>No shop records found</p></div>';
             } else {
-                allShops.forEach((shop, idx) => {
+                $.each(allShops, function(idx, shop) {
                     shopsHtml += `
                         <div class="shop-item">
                             <div class="shop-name"><i class="fas fa-store"></i> ${shop.shop_name || `Shop ${idx + 1}`}</div>
@@ -1220,11 +1185,10 @@
                 </div>
             `;
 
-            popupElement.innerHTML = html;
-            popupElement.style.display = 'block';
+            $(popupElement).html(html).show();
 
             // For desktop, set position
-            if (window.innerWidth > 768 && popupOverlay) {
+            if ($(window).width() > 768 && popupOverlay) {
                 popupOverlay.setPosition(coordinate);
             }
 
@@ -1341,15 +1305,9 @@
             showLoading(true);
 
             // Base layers
-            osmLayer = new ol.layer.Tile({
-                source: new ol.source.OSM(),
-                visible: true
-            });
+            osmLayer = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true });
             satelliteLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                    attributions: 'Tiles &copy; Esri'
-                }),
+                source: new ol.source.XYZ({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles &copy; Esri' }),
                 visible: false
             });
 
@@ -1379,9 +1337,7 @@
                         visible: true
                     });
                     hasDroneImage = true;
-                } catch (e) {
-                    console.error('Drone image error:', e);
-                }
+                } catch (e) { console.error('Drone image error:', e); }
             }
 
             // Boundary layer
@@ -1391,21 +1347,8 @@
                 try {
                     const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
                     boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Polygon([boundaryCoords])
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#ff0000',
-                                width: 3,
-                                lineDash: [10, 5]
-                            }),
-                            fill: new ol.style.Fill({
-                                color: 'rgba(255, 0, 0, 0.05)'
-                            })
-                        }),
+                        source: new ol.source.Vector({ features: [new ol.Feature({ geometry: new ol.geom.Polygon([boundaryCoords]) })] }),
+                        style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }), fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.05)' }) }),
                         visible: true
                     });
                     const lons = boundary[0].map(p => p[0]);
@@ -1416,9 +1359,7 @@
                         Math.max(...lons),
                         Math.max(...lats)
                     ]);
-                } catch (e) {
-                    console.error('Boundary error:', e);
-                }
+                } catch (e) { console.error('Boundary error:', e); }
             }
 
             // Map center
@@ -1440,10 +1381,7 @@
             map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer],
-                view: new ol.View({
-                    center: center,
-                    zoom: zoom
-                })
+                view: new ol.View({ center: center, zoom: zoom })
             });
 
             const popup = createPopup();
@@ -1453,10 +1391,7 @@
 
             setTimeout(() => {
                 if (boundaryExtent && boundaryExtent.length === 4) {
-                    map.getView().fit(boundaryExtent, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
+                    map.getView().fit(boundaryExtent, { padding: [50, 50, 50, 50], duration: 1000 });
                 }
             }, 500);
 
@@ -1467,93 +1402,114 @@
             refreshLayers();
         }
 
+        // Add layer switcher control
         function addLayerSwitcher(hasDroneImage) {
-            const switcher = document.createElement('div');
-            switcher.className = 'layer-switcher';
-            switcher.id = 'layerSwitcher';
-            switcher.innerHTML = `
-                <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                <div class="layer-group"><div class="group-title">Base Maps</div>
-                    <label><input type="radio" name="baseLayer" value="osm" ${currentBaseLayer === 'osm' ? 'checked' : ''}> <i class="fas fa-map"></i> OpenStreetMap</label>
-                    <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-                </div>
-                <div class="layer-group"><div class="group-title">Overlays</div>
-                    <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                    <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                    <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                    ${hasDroneImage ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
+            const switcherHtml = `
+                <div class="layer-switcher" id="layerSwitcher">
+                    <h5><i class="fas fa-layer-group"></i> Layers</h5>
+                    <div class="layer-group">
+                        <div class="group-title">Base Maps</div>
+                        <label><input type="radio" name="baseLayer" value="osm" ${currentBaseLayer === 'osm' ? 'checked' : ''}> <i class="fas fa-map"></i> OpenStreetMap</label>
+                        <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
+                    </div>
+                    <div class="layer-group">
+                        <div class="group-title">Overlays</div>
+                        <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
+                        <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
+                        <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
+                        ${hasDroneImage ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
+                    </div>
                 </div>
             `;
-            document.body.appendChild(switcher);
+            $('body').append(switcherHtml);
 
-            document.querySelectorAll('input[name="baseLayer"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    currentBaseLayer = e.target.value;
-                    osmLayer.setVisible(currentBaseLayer === 'osm');
-                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
-                });
+            // Base layer radio buttons
+            $('input[name="baseLayer"]').on('change', function() {
+                currentBaseLayer = $(this).val();
+                osmLayer.setVisible(currentBaseLayer === 'osm');
+                satelliteLayer.setVisible(currentBaseLayer === 'satellite');
             });
 
-            document.getElementById('toggleBuildings')?.addEventListener('change', (e) => {
-                if (polygonLayer) polygonLayer.setVisible(e.target.checked);
+            // Overlay checkboxes
+            $('#toggleBuildings').on('change', function() {
+                if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
             });
-            document.getElementById('toggleRoads')?.addEventListener('change', (e) => {
-                if (lineLayer) lineLayer.setVisible(e.target.checked);
+            $('#toggleRoads').on('change', function() {
+                if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
             });
-            document.getElementById('toggleBoundary')?.addEventListener('change', (e) => {
-                if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
+            $('#toggleBoundary').on('change', function() {
+                if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
             });
-            const droneToggle = document.getElementById('toggleDrone');
-            if (droneToggle && imageLayer) droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target
-                .checked));
+            $('#toggleDrone').on('change', function() {
+                if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+            });
         }
 
+        // Add legend control
         function addLegend(hasDroneImage) {
-            const legend = document.createElement('div');
-            legend.className = 'map-legend';
-            legend.id = 'mapLegend';
-            legend.innerHTML = `
-                <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
-                <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
-                <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                ${hasDroneImage ? '<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>' : ''}
+            const legendHtml = `
+                <div class="map-legend" id="mapLegend">
+                    <h5><i class="fas fa-info-circle"></i> Legend</h5>
+                    <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
+                    <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
+                    <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
+                    ${hasDroneImage ? '<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>' : ''}
+                </div>
             `;
-            document.body.appendChild(legend);
+            $('body').append(legendHtml);
         }
 
+        // Add zoom controls
         function addZoomControls() {
-            const controls = document.createElement('div');
-            controls.className = 'zoom-controls';
-            controls.innerHTML =
-                `<button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>`;
-            document.body.appendChild(controls);
-            document.getElementById('zoomInBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
-                .getZoom() + 1));
-            document.getElementById('zoomOutBtn').addEventListener('click', () => map.getView().setZoom(map.getView()
-                .getZoom() - 1));
+            const controlsHtml = `
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                    <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                </div>
+            `;
+            $('body').append(controlsHtml);
+
+            $('#zoomInBtn').on('click', function() {
+                const view = map.getView();
+                view.setZoom(view.getZoom() + 1);
+            });
+            $('#zoomOutBtn').on('click', function() {
+                const view = map.getView();
+                view.setZoom(view.getZoom() - 1);
+            });
         }
 
+        // Add mobile controls (menu and legend buttons)
         function addMobileControls() {
-            const menuBtn = document.getElementById('mobileMenuBtn');
-            const legendBtn = document.getElementById('mobileLegendBtn');
-            const layerSwitcher = document.getElementById('layerSwitcher');
-            const mapLegend = document.getElementById('mapLegend');
+            const menuBtn = $('#mobileMenuBtn');
+            const legendBtn = $('#mobileLegendBtn');
+            const layerSwitcher = $('#layerSwitcher');
+            const mapLegend = $('#mapLegend');
 
-            if (menuBtn && layerSwitcher) {
-                menuBtn.addEventListener('click', () => {
-                    layerSwitcher.classList.toggle('open');
-                    if (mapLegend) mapLegend.classList.remove('open');
-                });
-            }
-            if (legendBtn && mapLegend) {
-                legendBtn.addEventListener('click', () => {
-                    mapLegend.classList.toggle('open');
-                    if (layerSwitcher) layerSwitcher.classList.remove('open');
-                });
-            }
+            menuBtn.on('click', function() {
+                layerSwitcher.toggleClass('open');
+                mapLegend.removeClass('open');
+            });
+
+            legendBtn.on('click', function() {
+                mapLegend.toggleClass('open');
+                layerSwitcher.removeClass('open');
+            });
+
+            // Close panels when clicking outside on mobile
+            $(document).on('click', function(e) {
+                if ($(window).width() <= 768) {
+                    if (!layerSwitcher.is(e.target) && !layerSwitcher.has(e.target).length && !menuBtn.is(e.target) && !menuBtn.has(e.target).length) {
+                        layerSwitcher.removeClass('open');
+                    }
+                    if (!mapLegend.is(e.target) && !mapLegend.has(e.target).length && !legendBtn.is(e.target) && !legendBtn.has(e.target).length) {
+                        mapLegend.removeClass('open');
+                    }
+                }
+            });
         }
 
+        // Polygon style function
         function polygonStyleFunction(feature) {
             const gisid = feature.get('gisid');
             const sqfeet = feature.get('sqfeet');
@@ -1570,116 +1526,71 @@
                 center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
             }
             return [
-                new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff4444',
-                        width: 2
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255, 68, 68, 0.15)'
-                    })
-                }),
-                new ol.style.Style({
-                    geometry: center,
-                    text: new ol.style.Text({
-                        text: `${gisid}\n${sqfeet} sqft`,
-                        font: 'bold 10px Arial',
-                        fill: new ol.style.Fill({
-                            color: '#ffffff'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#000000',
-                            width: 2
-                        }),
-                        backgroundFill: new ol.style.Fill({
-                            color: 'rgba(0, 0, 0, 0.7)'
-                        }),
-                        padding: [4, 8, 4, 8]
-                    })
-                })
+                new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }), fill: new ol.style.Fill({ color: 'rgba(255, 68, 68, 0.15)' }) }),
+                new ol.style.Style({ geometry: center, text: new ol.style.Text({ text: `${gisid}\n${sqfeet} sqft`, font: 'bold 10px Arial', fill: new ol.style.Fill({ color: '#ffffff' }), stroke: new ol.style.Stroke({ color: '#000000', width: 2 }), backgroundFill: new ol.style.Fill({ color: 'rgba(0, 0, 0, 0.7)' }), padding: [4, 8, 4, 8] }) })
             ];
         }
 
+        // Refresh layers (add polygons and lines to map)
         function refreshLayers() {
             if (polygonLayer) map.removeLayer(polygonLayer);
             if (lineLayer) map.removeLayer(lineLayer);
 
             const polygonSource = new ol.source.Vector();
-            polygons.forEach(poly => {
+            $.each(polygons, function(i, poly) {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                        .coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                     if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.Polygon(coords),
-                            gisid: poly.gisid,
-                            sqfeet: poly.sqfeet
-                        }));
+                        polygonSource.addFeature(new ol.Feature({ geometry: new ol.geom.Polygon(coords), gisid: poly.gisid, sqfeet: poly.sqfeet }));
                     }
-                } catch (e) {
-                    console.log('Polygon error:', e);
-                }
+                } catch (e) { console.log('Polygon error:', e); }
             });
 
-            polygonLayer = new ol.layer.Vector({
-                source: polygonSource,
-                style: polygonStyleFunction,
-                visible: true
-            });
+            polygonLayer = new ol.layer.Vector({ source: polygonSource, style: polygonStyleFunction, visible: true });
 
             const lineSource = new ol.source.Vector();
-            lines.forEach(line => {
+            $.each(lines, function(i, line) {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                        .coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.LineString(coords),
-                            gisid: line.gisid
-                        }));
+                        lineSource.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords), gisid: line.gisid }));
                     }
-                } catch (e) {
-                    console.log('Line error:', e);
-                }
+                } catch (e) { console.log('Line error:', e); }
             });
 
-            lineLayer = new ol.layer.Vector({
-                source: lineSource,
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ffc107',
-                        width: 3
-                    })
-                }),
-                visible: true
-            });
+            lineLayer = new ol.layer.Vector({ source: lineSource, style: new ol.style.Style({ stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 }) }), visible: true });
 
             map.addLayer(polygonLayer);
             map.addLayer(lineLayer);
 
-            map.on('click', (evt) => {
+            // Click handler for polygons
+            map.on('click', function(evt) {
                 const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
                 if (feature && feature.get('gisid')) {
                     showPopup(feature.get('gisid'), evt.coordinate);
                 } else if (popupElement) {
-                    popupElement.style.display = 'none';
+                    $(popupElement).hide();
                 }
             });
 
-            map.on('pointermove', (evt) => {
+            // Hover cursor
+            map.on('pointermove', function(evt) {
                 const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-                map.getTargetElement().style.cursor = feature && feature.get('gisid') ? 'pointer' : '';
+                $('#map').css('cursor', feature && feature.get('gisid') ? 'pointer' : '');
             });
 
             showLoading(false);
         }
 
-        // Start the application
+        // Start the application when document is ready
         $(document).ready(function() {
             initMap();
         });
 
-        window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
+        // Handle window resize
+        $(window).on('resize', function() {
+            setTimeout(() => map?.updateSize(), 100);
+        });
     </script>
 @endpush
