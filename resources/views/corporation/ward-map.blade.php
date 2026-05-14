@@ -7,10 +7,10 @@
         <div id="map"></div>
 
         <!-- Mobile Menu Buttons -->
-        <button class="mobile-menu-btn" id="mobileMenuBtn" type="button">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
             <i class="fas fa-layer-group"></i>
         </button>
-        <button class="mobile-legend-btn" id="mobileLegendBtn" type="button">
+        <button class="mobile-legend-btn" id="mobileLegendBtn">
             <i class="fas fa-info-circle"></i>
         </button>
     </div>
@@ -45,6 +45,7 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
+        /* Mobile Menu Buttons */
         .mobile-menu-btn,
         .mobile-legend-btn {
             position: fixed;
@@ -85,6 +86,7 @@
             }
         }
 
+        /* Layer Switcher - Desktop */
         .layer-switcher {
             position: absolute;
             top: 20px;
@@ -104,6 +106,7 @@
             transition: transform 0.3s ease;
         }
 
+        /* Layer Switcher - Mobile */
         @media (max-width: 768px) {
             .layer-switcher {
                 position: fixed;
@@ -161,6 +164,7 @@
             text-transform: uppercase;
         }
 
+        /* Legend - Desktop */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -179,6 +183,7 @@
             transition: transform 0.3s ease;
         }
 
+        /* Legend - Mobile */
         @media (max-width: 768px) {
             .map-legend {
                 position: fixed;
@@ -241,6 +246,7 @@
             border: 1px solid #fff;
         }
 
+        /* Zoom Controls */
         .zoom-controls {
             position: fixed;
             bottom: 20px;
@@ -290,6 +296,7 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
+        /* Loading indicator */
         .map-loading {
             position: fixed;
             top: 50%;
@@ -306,6 +313,7 @@
             backdrop-filter: blur(10px);
         }
 
+        /* Mobile Responsive Popup - FIXED */
         .ol-popup {
             position: absolute;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
@@ -315,42 +323,62 @@
             min-width: 300px;
             max-width: 350px;
             max-height: 80vh;
-            overflow: hidden;
+            overflow-y: auto;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            z-index: 3000;
+            z-index: 1100;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             border: 1px solid rgba(255, 68, 68, 0.4);
             backdrop-filter: blur(5px);
-            display: none;
         }
 
-        .ol-popup.show {
-            display: block;
-        }
-
+        /* Mobile popup - Bottom sheet style */
         @media (max-width: 768px) {
             .ol-popup {
                 position: fixed !important;
-                left: 12px !important;
-                right: 12px !important;
-                bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
                 top: auto !important;
-                width: auto !important;
-                max-width: none !important;
-                min-width: 0 !important;
-                max-height: 70dvh !important;
-                border-radius: 18px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 100% !important;
+                max-height: 70vh !important;
+                border-radius: 20px 20px 0 0 !important;
                 transform: none !important;
-                overflow: hidden !important;
-                z-index: 4000 !important;
+                z-index: 9999 !important;
+                margin: 0 !important;
+                animation: slideUp 0.3s ease-out !important;
             }
 
-            .ol-popup:after,
-            .ol-popup:before {
+            @keyframes slideUp {
+                from {
+                    transform: translateY(100%);
+                }
+                to {
+                    transform: translateY(0);
+                }
+            }
+
+            .ol-popup:after {
                 display: none !important;
+            }
+
+            /* Add a drag handle at the top */
+            .ol-popup::before {
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 50px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                z-index: 1;
             }
         }
 
+        /* Tablet responsive */
         @media (min-width: 769px) and (max-width: 1024px) {
             .ol-popup {
                 max-width: 450px !important;
@@ -369,6 +397,13 @@
             position: sticky;
             top: 0;
             z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            .popup-header {
+                padding: 20px 18px 16px 18px;
+                border-radius: 20px 20px 0 0;
+            }
         }
 
         .popup-header h4 {
@@ -406,6 +441,7 @@
             transform: scale(1.05);
         }
 
+        /* Tab Navigation */
         .popup-tabs {
             display: flex;
             background: #141424;
@@ -419,12 +455,12 @@
             }
 
             .popup-tab {
-                font-size: 11px !important;
-                padding: 10px 4px !important;
+                font-size: 12px !important;
+                padding: 12px 4px !important;
             }
 
             .popup-tab i {
-                font-size: 12px !important;
+                font-size: 14px !important;
             }
         }
 
@@ -467,18 +503,18 @@
             background: rgba(255, 68, 68, 0.1);
         }
 
+        /* Tab Content */
         .popup-tab-content {
             display: none;
             padding: 16px;
             max-height: 55vh;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         @media (max-width: 768px) {
             .popup-tab-content {
-                max-height: calc(70dvh - 120px);
-                padding: 12px;
+                max-height: 55vh;
+                padding: 16px;
             }
         }
 
@@ -486,6 +522,7 @@
             display: block;
         }
 
+        /* Scrollbar Styling */
         .popup-tab-content::-webkit-scrollbar {
             width: 4px;
         }
@@ -500,6 +537,7 @@
             border-radius: 4px;
         }
 
+        /* Building Details Section */
         .detail-row {
             display: flex;
             margin-bottom: 12px;
@@ -512,16 +550,18 @@
         @media (max-width: 768px) {
             .detail-row {
                 flex-direction: column;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
             }
 
             .detail-label {
                 width: 100% !important;
-                margin-bottom: 4px;
+                margin-bottom: 5px;
+                font-size: 12px;
             }
 
             .detail-value {
                 width: 100%;
+                font-size: 13px;
             }
         }
 
@@ -574,6 +614,7 @@
             color: white;
         }
 
+        /* Assessment Cards */
         .assessment-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -627,7 +668,7 @@
 
             .assessment-label {
                 width: 100% !important;
-                margin-bottom: 3px;
+                margin-bottom: 4px;
             }
 
             .assessment-value {
@@ -646,6 +687,7 @@
             flex: 1;
         }
 
+        /* Shop Items */
         .shop-item {
             background: rgba(255, 68, 68, 0.1);
             border-radius: 10px;
@@ -675,7 +717,7 @@
 
             .shop-detail-label {
                 width: 100% !important;
-                margin-bottom: 2px;
+                margin-bottom: 3px;
             }
         }
 
@@ -696,6 +738,7 @@
             text-align: center;
         }
 
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 30px 20px;
@@ -708,6 +751,7 @@
             opacity: 0.5;
         }
 
+        /* Assessment Form Container - Mobile Responsive */
         .assessment-form-container {
             margin-top: 10px;
             padding: 15px;
@@ -718,8 +762,8 @@
 
         @media (max-width: 768px) {
             .assessment-form-container {
-                margin: 10px -5px;
-                padding: 12px;
+                margin: 10px 0;
+                padding: 15px;
             }
 
             .assessment-form-container h4 {
@@ -750,36 +794,25 @@
         .close-form-btn:active {
             color: #ff4444;
         }
-
-        #map canvas {
-            pointer-events: auto;
-        }
     </style>
 @endpush
 
 @push('scripts')
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        // Simple touch handling - don't block page refresh
+        document.addEventListener('touchmove', function(e) {
+            // Allow all touch moves by default for pull-to-refresh
+            // No preventDefault here
+        }, { passive: false });
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
     <script>
-        (function() {
-            document.addEventListener('touchmove', function(e) {
-                const isMap = e.target.closest('#map');
-                const isPopup = e.target.closest('.ol-popup');
-                const isForm = e.target.closest('.assessment-form-container');
-
-                if (isMap && e.touches.length > 1) {
-                    return;
-                }
-
-                if (isPopup || isForm) {
-                    return;
-                }
-            }, {
-                passive: false
-            });
-        })();
-
+        // Global map variables
         let map;
         let polygonLayer;
         let lineLayer;
@@ -791,13 +824,13 @@
         let popupOverlay;
         let popupElement;
         let currentActiveTab = 'building';
-        let lastPopupCoordinate = null;
-        let lastPopupGisId = null;
 
+        // Data passed from server
         let polygonDatas = @json($polygonDatas ?? []);
         let polygons = @json($polygons ?? []);
         let lines = @json($lines ?? []);
 
+        // Ward data from server
         let wardData = {
             ward_no: @json($ward->ward_no ?? ''),
             drone_image: @json($ward->drone_image ?? null),
@@ -807,10 +840,6 @@
             extent_top: @json($ward->extent_top ?? null),
             boundary: @json($ward->boundary ?? null)
         };
-
-        function isMobileView() {
-            return window.innerWidth <= 768;
-        }
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -830,6 +859,7 @@
             }
         }
 
+        // Create popup overlay
         function createPopup() {
             popupElement = document.createElement('div');
             popupElement.className = 'ol-popup';
@@ -851,68 +881,35 @@
             return popupOverlay;
         }
 
-        function applyPopupMode(coordinate = null) {
-            if (!popupElement) return;
-
-            if (isMobileView()) {
-                if (popupOverlay) popupOverlay.setPosition(undefined);
-
-                popupElement.style.position = 'fixed';
-                popupElement.style.left = '12px';
-                popupElement.style.right = '12px';
-                popupElement.style.bottom = '12px';
-                popupElement.style.top = 'auto';
-            } else {
-                popupElement.style.position = 'absolute';
-                popupElement.style.left = '';
-                popupElement.style.right = '';
-                popupElement.style.bottom = '';
-                popupElement.style.top = '';
-
-                if (popupOverlay && coordinate) {
-                    popupOverlay.setPosition(coordinate);
-                }
-            }
-        }
-
+        // Switch between tabs
         window.switchTab = function(tabId) {
             document.querySelectorAll('.popup-tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-
             document.querySelectorAll('.popup-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-
             const selectedContent = document.getElementById(`tab-${tabId}`);
             if (selectedContent) {
                 selectedContent.classList.add('active');
             }
-
             const selectedTab = document.querySelector(`.popup-tab[data-tab="${tabId}"]`);
             if (selectedTab) {
                 selectedTab.classList.add('active');
             }
-
             currentActiveTab = tabId;
         };
 
+        // Close popup function
         window.closePopup = function() {
-            if (!popupElement) return;
-
-            popupElement.classList.remove('show');
-            popupElement.style.display = 'none';
-            popupElement.style.left = '';
-            popupElement.style.right = '';
-            popupElement.style.top = '';
-            popupElement.style.bottom = '';
-            popupElement.style.position = '';
-
-            if (popupOverlay) {
-                popupOverlay.setPosition(undefined);
+            if (popupElement) {
+                popupElement.style.display = 'none';
+                // Also remove any open forms
+                $('.assessment-form-container').remove();
             }
         };
 
+        // Show popup with three tabbed sections
         function showPopup(gisid, coordinate) {
             const polyData = polygonDatas.find(p => p.gisid == gisid);
 
@@ -921,12 +918,8 @@
                 return;
             }
 
-            lastPopupCoordinate = coordinate;
-            lastPopupGisId = gisid;
-
             const assessments = polyData.pointdata || [];
             const allShops = [];
-
             assessments.forEach((assessment, idx) => {
                 if (assessment.shops && assessment.shops.length > 0) {
                     assessment.shops.forEach(shop => {
@@ -939,6 +932,7 @@
                 }
             });
 
+            // Build Building Details HTML
             let buildingHtml = `
                 <div class="detail-row">
                     <div class="detail-label"><i class="fas fa-fingerprint section-icon"></i> GIS ID:</div>
@@ -1003,9 +997,11 @@
                 `;
             }
 
+            // Build Assessments HTML
             let assessmentsHtml = '';
             if (assessments.length === 0) {
-                assessmentsHtml = `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
+                assessmentsHtml =
+                    `<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>`;
             } else {
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
@@ -1054,6 +1050,7 @@
                 });
             }
 
+            // Build Shops HTML
             let shopsHtml = '';
             if (allShops.length === 0) {
                 shopsHtml = `<div class="empty-state"><i class="fas fa-store"></i><p>No shop records found</p></div>`;
@@ -1083,19 +1080,20 @@
                 });
             }
 
+            // Complete Popup HTML
             const html = `
                 <div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
-                    <button class="popup-close" type="button" onclick="closePopup()">&times;</button>
+                    <button class="popup-close" onclick="closePopup()">&times;</button>
                 </div>
                 <div class="popup-tabs">
-                    <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" type="button" onclick="switchTab('building')">
+                    <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')">
                         <i class="fas fa-info-circle"></i> Building
                     </button>
-                    <button class="popup-tab ${currentActiveTab === 'assessments' ? 'active' : ''}" data-tab="assessments" type="button" onclick="switchTab('assessments')">
+                    <button class="popup-tab ${currentActiveTab === 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')">
                         <i class="fas fa-receipt"></i> Assessments ${assessments.length > 0 ? `<span class="badge badge-info">${assessments.length}</span>` : ''}
                     </button>
-                    <button class="popup-tab ${currentActiveTab === 'shops' ? 'active' : ''}" data-tab="shops" type="button" onclick="switchTab('shops')">
+                    <button class="popup-tab ${currentActiveTab === 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')">
                         <i class="fas fa-store"></i> Shops ${allShops.length > 0 ? `<span class="badge badge-info">${allShops.length}</span>` : ''}
                     </button>
                 </div>
@@ -1112,15 +1110,34 @@
 
             popupElement.innerHTML = html;
             popupElement.style.display = 'block';
-            popupElement.classList.add('show');
 
-            applyPopupMode(coordinate);
+            // Handle popup positioning based on device
+            if (window.innerWidth <= 768) {
+                // Mobile: Bottom sheet style
+                if (popupOverlay) {
+                    popupOverlay.setPosition(undefined);
+                }
+                popupElement.style.position = 'fixed';
+                popupElement.style.bottom = '0';
+                popupElement.style.left = '0';
+                popupElement.style.right = '0';
+                popupElement.style.top = 'auto';
+                popupElement.style.width = '100%';
+            } else {
+                // Desktop: Position near clicked building
+                popupElement.style.position = 'absolute';
+                if (popupOverlay) {
+                    popupOverlay.setPosition(coordinate);
+                }
+            }
 
+            // Assessment card click handler
             $('.assessment-card').off('click').on('click', function(e) {
                 e.stopPropagation();
-
                 const assessmentId = $(this).data('id');
                 const assessmentNumber = $(this).data('assessment');
+
+                console.log('Assessment clicked:', assessmentId, assessmentNumber);
 
                 $('.assessment-form-container').remove();
 
@@ -1128,7 +1145,7 @@
                     <div class="assessment-form-container">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                             <h4 style="color: #ffc107; margin: 0;">QC Form - ${assessmentNumber}</h4>
-                            <button class="close-form-btn" type="button" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+                            <button class="close-form-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         <form id="simpleQCForm_${assessmentId}">
                             <input type="hidden" name="assessment_id" value="${assessmentId}">
@@ -1161,7 +1178,6 @@
 
                 $(`#simpleQCForm_${assessmentId}`).on('submit', function(e) {
                     e.preventDefault();
-
                     const qcSqfeet = $(this).find('input[name="qc_sqfeet"]').val();
                     const qcUsage = $(this).find('select[name="qc_usage"]').val();
                     const taxAmount = $(this).find('input[name="tax_amount"]').val();
@@ -1193,7 +1209,7 @@
                     });
                 });
 
-                $('.close-form-btn, .cancel-form-btn').off('click').on('click', function() {
+                $('.close-form-btn, .cancel-form-btn').on('click', function() {
                     $('.assessment-form-container').remove();
                 });
             });
@@ -1239,7 +1255,6 @@
                         parseFloat(extentRight),
                         parseFloat(extentTop)
                     ];
-
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
                             url: imageUrl,
@@ -1280,6 +1295,14 @@
                         }),
                         visible: true
                     });
+                    const lons = boundary[0].map(p => p[0]);
+                    const lats = boundary[0].map(p => p[1]);
+                    boundaryExtent = ol.proj.fromLonLat([
+                        Math.min(...lons),
+                        Math.min(...lats),
+                        Math.max(...lons),
+                        Math.max(...lats)
+                    ]);
                 } catch (e) {
                     console.error('Error creating boundary:', e);
                 }
@@ -1292,7 +1315,6 @@
                 try {
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
-
                     center = ol.proj.fromLonLat([
                         (Math.min(...lons) + Math.max(...lons)) / 2,
                         (Math.min(...lats) + Math.max(...lats)) / 2
@@ -1302,7 +1324,6 @@
             }
 
             let layers = [osmLayer, satelliteLayer];
-
             map = new ol.Map({
                 target: 'map',
                 layers: layers,
@@ -1366,15 +1387,12 @@
             document.getElementById('toggleBuildings')?.addEventListener('change', (e) => {
                 if (polygonLayer) polygonLayer.setVisible(e.target.checked);
             });
-
             document.getElementById('toggleRoads')?.addEventListener('change', (e) => {
                 if (lineLayer) lineLayer.setVisible(e.target.checked);
             });
-
             document.getElementById('toggleBoundary')?.addEventListener('change', (e) => {
                 if (boundaryLayer) boundaryLayer.setVisible(e.target.checked);
             });
-
             const droneToggle = document.getElementById('toggleDrone');
             if (droneToggle && imageLayer) {
                 droneToggle.addEventListener('change', (e) => imageLayer.setVisible(e.target.checked));
@@ -1399,8 +1417,8 @@
             const controls = document.createElement('div');
             controls.className = 'zoom-controls';
             controls.innerHTML = `
-                <button class="zoom-btn" id="zoomInBtn" type="button"><i class="fas fa-plus"></i></button>
-                <button class="zoom-btn" id="zoomOutBtn" type="button"><i class="fas fa-minus"></i></button>
+                <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
             `;
             document.body.appendChild(controls);
 
@@ -1408,7 +1426,6 @@
                 const view = map.getView();
                 view.setZoom(view.getZoom() + 1);
             });
-
             document.getElementById('zoomOutBtn').addEventListener('click', () => {
                 const view = map.getView();
                 view.setZoom(view.getZoom() - 1);
@@ -1427,7 +1444,6 @@
                     if (mapLegend) mapLegend.classList.remove('open');
                 });
             }
-
             if (legendBtn && mapLegend) {
                 legendBtn.addEventListener('click', () => {
                     mapLegend.classList.toggle('open');
@@ -1441,7 +1457,6 @@
             const sqfeet = feature.get('sqfeet');
             const geometry = feature.getGeometry();
             let center;
-
             try {
                 center = geometry.getInteriorPoint();
                 if (!center) {
@@ -1452,7 +1467,6 @@
                 const extent = geometry.getExtent();
                 center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
             }
-
             return [
                 new ol.style.Style({
                     stroke: new ol.style.Stroke({
@@ -1496,7 +1510,8 @@
             const polygonSource = new ol.source.Vector();
             polygons.forEach(poly => {
                 try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
+                        .coordinates;
                     if (coords && coords.length) {
                         polygonSource.addFeature(new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
@@ -1518,7 +1533,8 @@
             const lineSource = new ol.source.Vector();
             lines.forEach(line => {
                 try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line.coordinates;
+                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
+                        .coordinates;
                     if (coords && coords.length) {
                         if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
                         lineSource.addFeature(new ol.Feature({
@@ -1560,15 +1576,7 @@
             showLoading(false);
         }
 
-        window.addEventListener('resize', () => {
-            setTimeout(() => {
-                map?.updateSize();
-
-                if (popupElement && popupElement.classList.contains('show')) {
-                    applyPopupMode(lastPopupCoordinate);
-                }
-            }, 100);
-        });
+        window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initMap);
