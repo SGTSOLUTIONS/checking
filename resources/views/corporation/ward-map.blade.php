@@ -873,6 +873,9 @@
     <!-- OpenLayers -->
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
+    <!-- CSRF Token for AJAX -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <script>
         // Global map variables
         let map;
@@ -892,21 +895,18 @@
         let currentFilter = 'all';
         let currentSearchTerm = '';
 
-        // Data from server
-        let polygonDatas = @json($polygonDatas ?? []);
-        let polygons = @json($polygons ?? []);
-        let lines = @json($lines ?? []);
+        // Data variables (will be populated via AJAX)
+        let polygonDatas = [];
+        let polygons = [];
+        let lines = [];
+        let wardData = {};
 
-        // Ward data
-        let wardData = {
-            ward_no: @json($ward->ward_no ?? ''),
-            drone_image: @json($ward->drone_image ?? null),
-            extent_left: @json($ward->extent_left ?? null),
-            extent_bottom: @json($ward->extent_bottom ?? null),
-            extent_right: @json($ward->extent_right ?? null),
-            extent_top: @json($ward->extent_top ?? null),
-            boundary: @json($ward->boundary ?? null)
-        };
+        // Set CSRF token for all AJAX requests
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -915,7 +915,7 @@
                     loadingEl = document.createElement('div');
                     loadingEl.id = 'mapLoading';
                     loadingEl.className = 'map-loading';
-                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map...';
+                    loadingEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading map data...';
                     document.body.appendChild(loadingEl);
                 }
                 loadingEl.style.display = 'block';
@@ -924,6 +924,77 @@
                     loadingEl.style.display = 'none';
                 }
             }
+        }
+
+        // Load all map data via AJAX
+        function loadMapData(callback) {
+            showLoading(true);
+
+            const wardNo = '{{ $ward->ward_no ?? "" }}';
+
+            // Load all data in parallel
+            $.ajax({
+                url: '/api/ward-map-data/' + wardNo,
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        polygonDatas = response.polygonDatas || [];
+                        polygons = response.polygons || [];
+                        lines = response.lines || [];
+                        wardData = response.wardData || {};
+
+                        console.log('Data loaded via AJAX:', {
+                            polygonDatas: polygonDatas.length,
+                            polygons: polygons.length,
+                            lines: lines.length,
+                            hasWardData: !!wardData.ward_no
+                        });
+
+                        if (callback) callback(true);
+                    } else {
+                        console.error('API error:', response.message);
+                        if (callback) callback(false);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX error:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    if (callback) callback(false);
+                },
+                complete: function() {
+                    showLoading(false);
+                }
+            });
+        }
+
+        // Save QC data via AJAX
+        function saveQCData(assessmentId, qcData, callback) {
+            $.ajax({
+                url: '/api/save-qc-data',
+                method: 'POST',
+                data: {
+                    assessment_id: assessmentId,
+                    qc_sqfeet: qcData.qc_sqfeet,
+                    qc_usage: qcData.qc_usage,
+                    tax_amount: qcData.tax_amount,
+                    qc_complete: qcData.isComplete
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log('QC data saved successfully');
+                        if (callback) callback(true, response);
+                    } else {
+                        console.error('Save error:', response.message);
+                        if (callback) callback(false, response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX save error:', error);
+                    if (callback) callback(false, null);
+                }
+            });
         }
 
         // Create popup
@@ -987,7 +1058,6 @@
                 let matchesSearch = true;
                 let matchesFilter = true;
 
-                // Search filter
                 if (searchTerm) {
                     matchesSearch = assessmentNumber.toLowerCase().includes(searchTerm) ||
                                    ownerName.includes(searchTerm) ||
@@ -996,7 +1066,6 @@
                                    usage.includes(searchTerm);
                 }
 
-                // Status filter
                 if (filterType === 'completed') {
                     matchesFilter = hasQC;
                 } else if (filterType === 'pending') {
@@ -1010,12 +1079,10 @@
                 }
             });
 
-            // Update visible count
             const visibleCount = $('.assessment-card:not(.hidden)').length;
             const totalCount = $('.assessment-card').length;
             $('.assessment-count').text(`Showing ${visibleCount} of ${totalCount} assessments`);
 
-            // Show empty state if no results
             if (visibleCount === 0) {
                 if ($('.no-results-message').length === 0) {
                     $('.assessments-list').append('<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>');
@@ -1271,24 +1338,40 @@
                     const taxAmount = $(this).find('input[name="tax_amount"]').val();
                     const isComplete = qcSqfeet && qcUsage && taxAmount;
 
-                    if (isComplete) {
-                        $(this).closest('.assessment-card').find('.badge')
-                            .removeClass('badge-warning').addClass('badge-success')
-                            .html('<i class="fas fa-check-circle"></i> QC Complete');
-                        // Update the card's status data attribute
-                        $(this).closest('.assessment-card').data('status', 'completed');
-                    } else {
-                        $(this).closest('.assessment-card').find('.badge')
-                            .removeClass('badge-success').addClass('badge-warning')
-                            .html('<i class="fas fa-clock"></i> QC Pending');
-                        $(this).closest('.assessment-card').data('status', 'pending');
-                    }
+                    // Show saving indicator
+                    const submitBtn = $(this).find('button[type="submit"]');
+                    const originalText = submitBtn.html();
+                    submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
 
-                    alert('QC Saved! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
-                    $('.assessment-form-container').remove();
+                    // Save via AJAX
+                    saveQCData(assessmentId, {
+                        qc_sqfeet: qcSqfeet,
+                        qc_usage: qcUsage,
+                        tax_amount: taxAmount,
+                        isComplete: isComplete
+                    }, function(success, response) {
+                        submitBtn.html(originalText).prop('disabled', false);
 
-                    // Re-filter to update view
-                    filterAssessments();
+                        if (success) {
+                            if (isComplete) {
+                                $(this).closest('.assessment-card').find('.badge')
+                                    .removeClass('badge-warning').addClass('badge-success')
+                                    .html('<i class="fas fa-check-circle"></i> QC Complete');
+                                $(this).closest('.assessment-card').data('status', 'completed');
+                            } else {
+                                $(this).closest('.assessment-card').find('.badge')
+                                    .removeClass('badge-success').addClass('badge-warning')
+                                    .html('<i class="fas fa-clock"></i> QC Pending');
+                                $(this).closest('.assessment-card').data('status', 'pending');
+                            }
+
+                            alert('QC Saved Successfully! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
+                            $('.assessment-form-container').remove();
+                            filterAssessments();
+                        } else {
+                            alert('Error saving QC data. Please try again.');
+                        }
+                    }.bind(this));
                 });
 
                 $('.close-form-btn, .cancel-form-btn').on('click', function() {
@@ -1299,11 +1382,10 @@
 
         // Initialize assessment filters
         function initAssessmentFilters() {
-            // Search input handler
             const searchInput = $('#assessmentSearchInput');
             const clearBtn = $('#clearSearchBtn');
 
-            searchInput.on('input', function() {
+            searchInput.off('input').on('input', function() {
                 currentSearchTerm = $(this).val();
                 if (currentSearchTerm.length > 0) {
                     clearBtn.addClass('visible');
@@ -1313,15 +1395,14 @@
                 filterAssessments();
             });
 
-            clearBtn.on('click', function() {
+            clearBtn.off('click').on('click', function() {
                 searchInput.val('');
                 currentSearchTerm = '';
                 clearBtn.removeClass('visible');
                 filterAssessments();
             });
 
-            // Filter chips handler
-            $('.filter-chip').on('click', function() {
+            $('.filter-chip').off('click').on('click', function() {
                 $('.filter-chip').removeClass('active');
                 $(this).addClass('active');
                 currentFilter = $(this).data('filter');
@@ -1350,10 +1431,16 @@
 
             if (droneImage && extentLeft && extentBottom && extentRight && extentTop) {
                 try {
+                    const imageExtent = [
+                        parseFloat(extentLeft),
+                        parseFloat(extentBottom),
+                        parseFloat(extentRight),
+                        parseFloat(extentTop)
+                    ];
                     imageLayer = new ol.layer.Image({
                         source: new ol.source.ImageStatic({
-                            url: "{{ asset('') }}" + droneImage.replace(/^\/+/, ''),
-                            imageExtent: [parseFloat(extentLeft), parseFloat(extentBottom), parseFloat(extentRight), parseFloat(extentTop)],
+                            url: droneImage,
+                            imageExtent: imageExtent,
                             projection: 'EPSG:3857'
                         }),
                         opacity: 1.0,
@@ -1376,7 +1463,12 @@
                     });
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
-                    boundaryExtent = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
+                    boundaryExtent = ol.proj.fromLonLat([
+                        Math.min(...lons),
+                        Math.min(...lats),
+                        Math.max(...lons),
+                        Math.max(...lats)
+                    ]);
                 } catch (e) { console.error('Boundary error:', e); }
             }
 
@@ -1387,7 +1479,10 @@
                 try {
                     const lons = boundary[0].map(p => p[0]);
                     const lats = boundary[0].map(p => p[1]);
-                    center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
+                    center = ol.proj.fromLonLat([
+                        (Math.min(...lons) + Math.max(...lons)) / 2,
+                        (Math.min(...lats) + Math.max(...lats)) / 2
+                    ]);
                     zoom = 18;
                 } catch (e) {}
             }
@@ -1558,7 +1653,19 @@
             showLoading(false);
         }
 
+        // Start the application
+        $(document).ready(function() {
+            loadMapData(function(success) {
+                if (success) {
+                    initMap();
+                } else {
+                    console.error('Failed to load map data');
+                    showLoading(false);
+                    alert('Error loading map data. Please refresh the page.');
+                }
+            });
+        });
+
         window.addEventListener('resize', () => setTimeout(() => map?.updateSize(), 100));
-        document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initMap) : initMap();
     </script>
 @endpush

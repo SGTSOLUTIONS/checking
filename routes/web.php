@@ -39,6 +39,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
         Route::post('/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
         Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
+        Route::post('/save-qc-data', [CorporationAuthController::class, 'saveQCData']);
     });
 });
 Route::get('/', function () {
