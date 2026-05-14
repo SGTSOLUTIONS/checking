@@ -6,22 +6,11 @@
     <div class="container-fluid p-0">
         <div id="map"></div>
 
-        <!-- Mobile Menu Buttons -->
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
-            <i class="fas fa-layer-group"></i>
-        </button>
-        <button class="mobile-legend-btn" id="mobileLegendBtn">
-            <i class="fas fa-info-circle"></i>
-        </button>
-        <!-- Search Button -->
-        <button class="mobile-search-btn" id="mobileSearchBtn">
-            <i class="fas fa-search"></i>
-        </button>
-
-        <!-- Filter Button -->
-        <button class="mobile-filter-btn" id="mobileFilterBtn">
-            <i class="fas fa-filter"></i>
-        </button>
+        <!-- Mobile Buttons -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-layer-group"></i></button>
+        <button class="mobile-legend-btn" id="mobileLegendBtn"><i class="fas fa-info-circle"></i></button>
+        <button class="mobile-search-btn" id="mobileSearchBtn"><i class="fas fa-search"></i></button>
+        <button class="mobile-filter-btn" id="mobileFilterBtn"><i class="fas fa-filter"></i></button>
     </div>
 @endsection
 
@@ -49,17 +38,16 @@
         #map {
             width: 100%;
             height: 100vh;
-            height: 100dvh;
             position: relative;
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Mobile Menu Buttons */
+        /* Mobile Buttons */
         .mobile-menu-btn,
-        .mobile-legend-btn {
+        .mobile-legend-btn,
+        .mobile-search-btn,
+        .mobile-filter-btn {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
             z-index: 1002;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
@@ -73,24 +61,38 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.2s;
             font-size: 20px;
         }
 
+        .mobile-menu-btn {
+            bottom: 20px;
+            right: 20px;
+        }
+
         .mobile-legend-btn {
+            bottom: 20px;
             right: 80px;
             background: rgba(255, 193, 7, 0.9);
         }
 
-        .mobile-menu-btn:active,
-        .mobile-legend-btn:active {
-            transform: scale(0.95);
+        .mobile-search-btn {
+            bottom: 20px;
+            right: 140px;
+            background: rgba(23, 162, 184, 0.9);
+        }
+
+        .mobile-filter-btn {
+            bottom: 20px;
+            right: 200px;
+            background: rgba(40, 167, 69, 0.9);
         }
 
         @media (max-width: 768px) {
 
             .mobile-menu-btn,
-            .mobile-legend-btn {
+            .mobile-legend-btn,
+            .mobile-search-btn,
+            .mobile-filter-btn {
                 display: flex;
             }
         }
@@ -103,15 +105,10 @@
             background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            font-size: 12px;
             min-width: 160px;
             backdrop-filter: blur(10px);
-            touch-action: auto;
-            pointer-events: auto;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
+            z-index: 1000;
             transition: transform 0.3s ease;
         }
 
@@ -122,8 +119,6 @@
                 right: 20px;
                 top: auto;
                 transform: translateX(120%);
-                transition: transform 0.3s ease;
-                max-width: calc(100% - 40px);
                 min-width: 200px;
                 z-index: 1003;
             }
@@ -134,10 +129,8 @@
         }
 
         .layer-switcher h5 {
-            margin: 0 0 10px 0;
+            margin-bottom: 10px;
             font-size: 14px;
-            font-weight: 600;
-            color: white;
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
             padding-bottom: 5px;
         }
@@ -150,26 +143,16 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
             margin: 8px 0;
             font-size: 12px;
-            color: #eee;
-            touch-action: manipulation;
-        }
-
-        .layer-group input {
             cursor: pointer;
-            margin: 0;
-            width: 16px;
-            height: 16px;
         }
 
-        .layer-group .group-title {
+        .group-title {
             font-weight: 600;
             color: #ffc107;
-            margin-bottom: 5px;
             font-size: 11px;
-            text-transform: uppercase;
+            margin-bottom: 5px;
         }
 
         /* Legend */
@@ -180,14 +163,11 @@
             background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
             padding: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-            font-size: 12px;
             min-width: 140px;
             backdrop-filter: blur(10px);
-            pointer-events: none;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: white;
+            z-index: 1000;
+            pointer-events: none;
             transition: transform 0.3s ease;
         }
 
@@ -198,24 +178,13 @@
                 right: 20px;
                 top: auto;
                 transform: translateX(120%);
-                transition: transform 0.3s ease;
-                min-width: 160px;
                 pointer-events: auto;
                 z-index: 1003;
             }
 
             .map-legend.open {
                 transform: translateX(0);
-                pointer-events: auto;
             }
-        }
-
-        .map-legend h5 {
-            margin: 0 0 8px 0;
-            font-size: 13px;
-            font-weight: 600;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            padding-bottom: 5px;
         }
 
         .legend-item {
@@ -248,9 +217,193 @@
             border: 2px dashed #ff0000;
         }
 
-        .legend-color.drone {
-            background: rgba(255, 255, 255, 0.3);
-            border: 1px solid #fff;
+        /* Search Panel */
+        .search-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 300px;
+            backdrop-filter: blur(10px);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .search-panel {
+                position: fixed;
+                bottom: 200px;
+                left: 20px;
+                right: 20px;
+                top: auto;
+                transform: translateY(120%);
+                min-width: auto;
+                z-index: 1003;
+            }
+
+            .search-panel.open {
+                transform: translateY(0);
+            }
+        }
+
+        .search-panel h5 {
+            margin-bottom: 10px;
+            color: #ffc107;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        .search-box button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: #ff4444;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: rgba(255, 68, 68, 0.3);
+        }
+
+        .result-gisid {
+            font-weight: bold;
+            color: #ffc107;
+            font-size: 12px;
+        }
+
+        .result-owner {
+            font-size: 11px;
+            color: #ddd;
+            margin-top: 4px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 250px;
+            backdrop-filter: blur(10px);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .filter-panel {
+                position: fixed;
+                bottom: 200px;
+                right: 20px;
+                left: auto;
+                top: auto;
+                transform: translateX(120%);
+                min-width: 220px;
+                z-index: 1003;
+            }
+
+            .filter-panel.open {
+                transform: translateX(0);
+            }
+        }
+
+        .filter-panel h5 {
+            margin-bottom: 10px;
+            color: #ffc107;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 5px;
+        }
+
+        .filter-group {
+            margin-bottom: 12px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .filter-actions button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .apply-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .filter-count {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #ffc107;
+            text-align: center;
         }
 
         /* Zoom Controls */
@@ -260,17 +413,8 @@
             left: 20px;
             background: rgba(0, 0, 0, 0.85);
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        @media (max-width: 768px) {
-            .zoom-controls {
-                bottom: 20px;
-                left: 20px;
-            }
         }
 
         .zoom-btn {
@@ -278,32 +422,20 @@
             height: 40px;
             border: none;
             background: transparent;
-            cursor: pointer;
+            color: white;
             font-size: 18px;
-            transition: all 0.2s;
-            touch-action: manipulation;
-            color: white;
-        }
-
-        .zoom-btn:active {
-            background: #1679AB;
-            color: white;
-            transform: scale(0.95);
+            cursor: pointer;
         }
 
         .zoom-btn:first-child {
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .ol-viewport {
-            touch-action: pan-x pan-y pinch-zoom;
+        .zoom-btn:active {
+            background: #1679AB;
         }
 
-        .ol-viewport canvas {
-            touch-action: pan-x pan-y pinch-zoom;
-        }
-
-        /* Loading indicator */
+        /* Loading */
         .map-loading {
             position: fixed;
             top: 50%;
@@ -314,33 +446,22 @@
             padding: 12px 24px;
             border-radius: 8px;
             z-index: 2000;
-            font-size: 14px;
-            pointer-events: none;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            backdrop-filter: blur(10px);
         }
 
-        /* Popup Styles - Mobile First */
+        /* Popup */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            top: auto !important;
-            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
             color: white;
             border-radius: 20px 20px 0 0 !important;
             padding: 0;
             width: 100% !important;
-            max-width: 100% !important;
-            min-width: 100% !important;
             max-height: 75vh !important;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
             z-index: 9999 !important;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            border: none !important;
             overflow-y: auto;
-            transform: none !important;
             animation: slideUp 0.3s ease-out !important;
         }
 
@@ -354,20 +475,15 @@
             }
         }
 
-        /* Desktop Popup */
         @media (min-width: 769px) {
             .ol-popup {
                 position: absolute !important;
                 bottom: auto !important;
-                left: auto !important;
-                right: auto !important;
-                top: auto !important;
                 width: auto !important;
                 min-width: 380px !important;
                 max-width: 450px !important;
                 border-radius: 16px !important;
                 animation: none !important;
-                max-height: 80vh !important;
             }
 
             .ol-popup:after {
@@ -383,76 +499,36 @@
         }
 
         .popup-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
             padding: 16px 18px;
             border-bottom: 2px solid #ff4444;
-            border-radius: 20px 20px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            z-index: 10;
-        }
-
-        @media (min-width: 769px) {
-            .popup-header {
-                border-radius: 16px 16px 0 0;
-            }
         }
 
         .popup-header h4 {
             margin: 0;
             font-size: 16px;
-            font-weight: 700;
             color: #ff4444;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .popup-close {
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: white;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0;
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            cursor: pointer;
         }
 
-        .popup-close:active {
-            background: #ff4444;
-            transform: scale(1.05);
-        }
-
-        /* Tab Navigation */
         .popup-tabs {
             display: flex;
             background: #141424;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 0 12px;
-        }
-
-        @media (max-width: 768px) {
-            .popup-tabs {
-                padding: 0 8px;
-            }
-
-            .popup-tab {
-                font-size: 12px !important;
-                padding: 12px 4px !important;
-            }
-
-            .popup-tab i {
-                font-size: 14px !important;
-            }
         }
 
         .popup-tab {
@@ -460,184 +536,43 @@
             background: none;
             border: none;
             color: #aaa;
-            font-size: 13px;
-            font-weight: 600;
-            padding: 12px 8px;
+            padding: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            position: relative;
+            font-weight: 600;
         }
 
         .popup-tab.active {
             color: #ff4444;
+            border-bottom: 2px solid #ff4444;
         }
 
-        .popup-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #ff4444;
-        }
-
-        /* Search Filter Styles */
-        .assessment-search-container {
-            padding: 12px;
-            background: #141424;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 5;
-        }
-
-        .assessment-search-box {
-            display: flex;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 8px 12px;
-            border: 1px solid rgba(255, 68, 68, 0.3);
-        }
-
-        .assessment-search-box i {
-            color: #ffc107;
-            margin-right: 8px;
-        }
-
-        .assessment-search-box input {
-            flex: 1;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .assessment-search-box input::placeholder {
-            color: #888;
-        }
-
-        .assessment-search-box .clear-search {
-            background: none;
-            border: none;
-            color: #ff4444;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0 4px;
-            display: none;
-        }
-
-        .assessment-search-box .clear-search.visible {
-            display: block;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .filter-chip {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #aaa;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .filter-chip.active {
-            background: #ff4444;
-            color: white;
-        }
-
-        .filter-chip:active {
-            transform: scale(0.95);
-        }
-
-        .assessment-count {
-            font-size: 11px;
-            color: #ffc107;
-            padding: 8px 12px 0;
-            margin-bottom: -8px;
-        }
-
-        /* Tab Content */
         .popup-tab-content {
             display: none;
-            padding: 0;
+            padding: 16px;
             max-height: 60vh;
             overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .popup-tab-content {
-                max-height: 55vh;
-            }
         }
 
         .popup-tab-content.active {
             display: block;
         }
 
-        /* Scrollbar */
-        .popup-tab-content::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .popup-tab-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-
-        .popup-tab-content::-webkit-scrollbar-thumb {
-            background: #ff4444;
-            border-radius: 4px;
-        }
-
-        /* Assessments List */
-        .assessments-list {
-            padding: 12px;
-        }
-
-        /* Building Details */
-        .building-details-content {
-            padding: 16px;
-        }
-
         .detail-row {
             display: flex;
             margin-bottom: 12px;
-            font-size: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             flex-wrap: wrap;
         }
 
         @media (max-width: 768px) {
             .detail-row {
                 flex-direction: column;
-                margin-bottom: 12px;
             }
 
             .detail-label {
                 width: 100% !important;
                 margin-bottom: 5px;
-                font-size: 12px;
-            }
-
-            .detail-value {
-                width: 100%;
-                font-size: 13px;
             }
         }
 
@@ -645,20 +580,13 @@
             font-weight: 600;
             color: #ffc107;
             width: 110px;
-            flex-shrink: 0;
             font-size: 11px;
-            letter-spacing: 0.5px;
         }
 
         .detail-value {
             color: #eee;
             flex: 1;
-            word-break: break-word;
             font-size: 12px;
-        }
-
-        .detail-value strong {
-            color: #ff4444;
         }
 
         .badge {
@@ -685,29 +613,12 @@
             color: white;
         }
 
-        .badge-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        /* Assessment Cards */
         .assessment-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             margin-bottom: 12px;
-            overflow: hidden;
             border-left: 3px solid #ffc107;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .assessment-card.hidden {
-            display: none;
-        }
-
-        .assessment-card:active {
-            transform: translateX(5px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .assessment-header {
@@ -715,19 +626,12 @@
             padding: 10px 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
         }
 
         .assessment-number {
             font-weight: 700;
             font-size: 12px;
             color: #ffc107;
-        }
-
-        .assessment-status {
-            font-size: 10px;
         }
 
         .assessment-body {
@@ -750,16 +654,11 @@
                 width: 100% !important;
                 margin-bottom: 4px;
             }
-
-            .assessment-value {
-                width: 100%;
-            }
         }
 
         .assessment-label {
             width: 80px;
             color: #aaa;
-            flex-shrink: 0;
         }
 
         .assessment-value {
@@ -767,13 +666,11 @@
             flex: 1;
         }
 
-        /* Shop Items */
         .shop-item {
             background: rgba(255, 68, 68, 0.1);
             border-radius: 10px;
-            padding: 10px 12px;
+            padding: 10px;
             margin-top: 8px;
-            border: 1px solid rgba(255, 68, 68, 0.2);
         }
 
         .shop-name {
@@ -781,41 +678,6 @@
             color: #ff4444;
             font-size: 12px;
             margin-bottom: 6px;
-        }
-
-        .shop-detail {
-            font-size: 10px;
-            display: flex;
-            margin-bottom: 4px;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-            .shop-detail {
-                flex-direction: column;
-            }
-
-            .shop-detail-label {
-                width: 100% !important;
-                margin-bottom: 3px;
-            }
-        }
-
-        .shop-detail-label {
-            width: 50px;
-            color: #aaa;
-            flex-shrink: 0;
-        }
-
-        .shop-detail-value {
-            color: #ddd;
-            flex: 1;
-        }
-
-        .section-icon {
-            margin-right: 8px;
-            width: 24px;
-            text-align: center;
         }
 
         .empty-state {
@@ -830,967 +692,774 @@
             opacity: 0.5;
         }
 
-        /* Assessment Form Container */
         .assessment-form-container {
-            margin: 10px 12px;
+            margin: 10px;
             padding: 15px;
             background: #1a1a2e;
             border-radius: 12px;
             border-left: 3px solid #ff4444;
         }
 
-        @media (max-width: 768px) {
-            .assessment-form-container {
-                margin: 10px 12px;
-                padding: 15px;
-            }
-
-            .assessment-form-container h4 {
-                font-size: 14px !important;
-            }
-
-            .assessment-form-container input,
-            .assessment-form-container select {
-                font-size: 14px !important;
-                padding: 10px !important;
-            }
-
-            .assessment-form-container button {
-                padding: 12px !important;
-                font-size: 14px !important;
-            }
-        }
-
         .close-form-btn {
             background: none;
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
-            padding: 0 8px;
-        }
-
-        .close-form-btn:active {
-            color: #ff4444;
+            float: right;
         }
     </style>
 @endpush
 
 @push('scripts')
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- OpenLayers -->
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
     <script>
-        // Global map variables
-        let map;
-        let polygonLayer;
-        let lineLayer;
-        let imageLayer;
-        let boundaryLayer;
-        let osmLayer;
-        let satelliteLayer;
-        let currentBaseLayer = 'osm';
-        let popupOverlay;
-        let popupElement;
-        let currentActiveTab = 'building';
+        $(document).ready(function() {
+            // ==================== DATA FROM SERVER ====================
+            let polygonDatas = @json($polygonDatas ?? []);
+            let polygons = @json($polygons ?? []);
+            let lines = @json($lines ?? []);
+            let wardData = {
+                ward_no: @json($ward->ward_no ?? ''),
+                drone_image: @json($ward->drone_image ?? null),
+                extent_left: @json($ward->extent_left ?? null),
+                extent_bottom: @json($ward->extent_bottom ?? null),
+                extent_right: @json($ward->extent_right ?? null),
+                extent_top: @json($ward->extent_top ?? null),
+                boundary: @json($ward->boundary ?? null)
+            };
 
-        // Store current assessments for filtering
-        let currentAssessments = [];
-        let currentFilter = 'all';
-        let currentSearchTerm = '';
+            // ==================== MAP VARIABLES ====================
+            let map, polygonLayer, lineLayer, imageLayer, boundaryLayer, osmLayer, satelliteLayer;
+            let currentBaseLayer = 'osm';
+            let popupOverlay, popupElement;
+            let currentActiveTab = 'building';
 
-        // Data passed directly from server (no AJAX needed!)
-        let polygonDatas = @json($polygonDatas ?? []);
-        let polygons = @json($polygons ?? []);
-        let lines = @json($lines ?? []);
+            // ==================== SEARCH & FILTER VARIABLES ====================
+            let allBuildings = [];
 
-        // Ward data from server
-        let wardData = {
-            ward_no: @json($ward->ward_no ?? ''),
-            drone_image: @json($ward->drone_image ?? null),
-            extent_left: @json($ward->extent_left ?? null),
-            extent_bottom: @json($ward->extent_bottom ?? null),
-            extent_right: @json($ward->extent_right ?? null),
-            extent_top: @json($ward->extent_top ?? null),
-            boundary: @json($ward->boundary ?? null)
-        };
-
-        // Show/hide loading indicator
-        function showLoading(show) {
-            if (show) {
-                if ($('#mapLoading').length === 0) {
-                    $('body').append(
-                        '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                    );
-                }
-                $('#mapLoading').show();
-            } else {
-                $('#mapLoading').hide();
-            }
-        }
-
-        // Create popup
-        function createPopup() {
-            popupElement = $('<div>', {
-                class: 'ol-popup',
-                style: 'display:none'
-            })[0];
-            $('body').append(popupElement);
-
-            popupOverlay = new ol.Overlay({
-                element: popupElement,
-                positioning: 'bottom-center',
-                stopEvent: true,
-                offset: [0, -10],
-                autoPan: {
-                    animation: {
-                        duration: 250
+            // ==================== BUILD SEARCH INDEX ====================
+            function buildSearchIndex() {
+                allBuildings = [];
+                $.each(polygonDatas, function(i, building) {
+                    let buildingInfo = {
+                        gisid: building.gisid,
+                        building_usage: building.building_usage,
+                        building_type: building.building_type,
+                        road_name: building.road_name,
+                        zone: building.zone,
+                        number_floor: building.number_floor,
+                        assessments: []
+                    };
+                    if (building.pointdata) {
+                        $.each(building.pointdata, function(j, assessment) {
+                            buildingInfo.assessments.push({
+                                assessment_no: assessment.assessment,
+                                owner_name: assessment.owner_name || assessment
+                                    .present_owner_name,
+                                phone: assessment.phone_number
+                            });
+                        });
                     }
-                }
-            });
-
-            return popupOverlay;
-        }
-
-        // Close popup
-        window.closePopup = function() {
-            $('.ol-popup').hide();
-        };
-
-        // Switch tabs
-        window.switchTab = function(tabId) {
-            $('.popup-tab-content').removeClass('active');
-            $('.popup-tab').removeClass('active');
-            $('#tab-' + tabId).addClass('active');
-            $('.popup-tab[data-tab="' + tabId + '"]').addClass('active');
-            currentActiveTab = tabId;
-        };
-
-        // Filter assessments function
-        function filterAssessments() {
-            const searchTerm = currentSearchTerm.toLowerCase();
-            const filterType = currentFilter;
-
-            $('.assessment-card').each(function() {
-                const $card = $(this);
-                const assessmentNumber = $card.data('assessment') || '';
-                const ownerName = $card.data('owner') || '';
-                const phoneNumber = $card.find('.assessment-row').eq(1).find('.assessment-value').text()
-                    .toLowerCase();
-                const floor = $card.find('.assessment-row').eq(2).find('.assessment-value').text().toLowerCase();
-                const usage = $card.find('.assessment-row').eq(3).find('.assessment-value').text().toLowerCase();
-                const hasQC = $card.find('.badge-success').length > 0;
-
-                let matchesSearch = true;
-                let matchesFilter = true;
-
-                if (searchTerm) {
-                    matchesSearch = assessmentNumber.toLowerCase().includes(searchTerm) ||
-                        ownerName.includes(searchTerm) ||
-                        phoneNumber.includes(searchTerm) ||
-                        floor.includes(searchTerm) ||
-                        usage.includes(searchTerm);
-                }
-
-                if (filterType === 'completed') {
-                    matchesFilter = hasQC;
-                } else if (filterType === 'pending') {
-                    matchesFilter = !hasQC;
-                }
-
-                if (matchesSearch && matchesFilter) {
-                    $card.removeClass('hidden');
-                } else {
-                    $card.addClass('hidden');
-                }
-            });
-
-            const visibleCount = $('.assessment-card:not(.hidden)').length;
-            const totalCount = $('.assessment-card').length;
-            $('.assessment-count').text(`Showing ${visibleCount} of ${totalCount} assessments`);
-
-            if (visibleCount === 0 && $('.no-results-message').length === 0) {
-                $('.assessments-list').append(
-                    '<div class="empty-state no-results-message"><i class="fas fa-search"></i><p>No assessments match your search</p></div>'
-                );
-            } else if (visibleCount > 0) {
-                $('.no-results-message').remove();
+                    allBuildings.push(buildingInfo);
+                });
             }
-        }
 
-        // Render assessments with filter UI
-        function renderAssessmentsWithFilter(assessments) {
-            let assessmentsHtml = '';
+            // ==================== SEARCH FUNCTION ====================
+            function searchBuildings(searchText) {
+                if (!searchText || searchText.trim() === '') {
+                    $('#searchResults').html(
+                        '<div class="no-results"><i class="fas fa-search"></i><p>Enter search term</p></div>');
+                    return;
+                }
+                let term = searchText.toLowerCase().trim();
+                let results = [];
+                $.each(allBuildings, function(i, building) {
+                    let matchFound = false;
+                    let matchType = '';
+                    let matchValue = '';
+                    if (building.gisid && building.gisid.toLowerCase().includes(term)) {
+                        matchFound = true;
+                        matchType = 'GIS ID';
+                        matchValue = building.gisid;
+                    } else if (building.building_usage && building.building_usage.toLowerCase().includes(
+                            term)) {
+                        matchFound = true;
+                        matchType = 'Building Usage';
+                        matchValue = building.building_usage;
+                    } else if (building.road_name && building.road_name.toLowerCase().includes(term)) {
+                        matchFound = true;
+                        matchType = 'Road Name';
+                        matchValue = building.road_name;
+                    } else {
+                        $.each(building.assessments, function(j, a) {
+                            if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
+                                matchFound = true;
+                                matchType = 'Assessment No';
+                                matchValue = a.assessment_no;
+                                return false;
+                            }
+                            if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
+                                matchFound = true;
+                                matchType = 'Owner Name';
+                                matchValue = a.owner_name;
+                                return false;
+                            }
+                            if (a.phone && a.phone.toLowerCase().includes(term)) {
+                                matchFound = true;
+                                matchType = 'Phone';
+                                matchValue = a.phone;
+                                return false;
+                            }
+                        });
+                    }
+                    if (matchFound) {
+                        results.push({
+                            gisid: building.gisid,
+                            matchType: matchType,
+                            matchValue: matchValue,
+                            building: building
+                        });
+                    }
+                });
+                displaySearchResults(results);
+            }
 
-            if (assessments.length === 0) {
-                assessmentsHtml =
-                    '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessment records found</p></div>';
-            } else {
-                $.each(assessments, function(idx, assessment) {
-                    const hasQC = assessment.qcsqfeet || assessment.qcusage;
-                    const ownerName = (assessment.owner_name || assessment.present_owner_name || 'N/A')
-                        .toLowerCase();
-                    assessmentsHtml += `
-                        <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}" data-owner="${ownerName}" data-status="${hasQC ? 'completed' : 'pending'}">
+            // ==================== DISPLAY SEARCH RESULTS ====================
+            function displaySearchResults(results) {
+                let $results = $('#searchResults');
+                $results.empty();
+                if (results.length === 0) {
+                    $results.html(
+                        '<div class="no-results"><i class="fas fa-search"></i><p>No buildings found</p></div>');
+                    return;
+                }
+                $.each(results, function(i, result) {
+                    let html = `
+                        <div class="search-result-item" data-gisid="${result.gisid}">
+                            <div class="result-gisid"><i class="fas fa-building"></i> ${result.gisid}</div>
+                            <div class="result-owner"><i class="fas fa-tag"></i> Match: ${result.matchType} - ${result.matchValue}</div>
+                            <div class="result-owner"><i class="fas fa-location-dot"></i> ${result.building.road_name || 'No road'} | ${result.building.zone || 'No zone'}</div>
+                        </div>
+                    `;
+                    $results.append(html);
+                });
+                $('.search-result-item').off('click').on('click', function() {
+                    let gisid = $(this).data('gisid');
+                    zoomToBuilding(gisid);
+                    $('#searchPanel').removeClass('open');
+                });
+            }
+
+            // ==================== ZOOM TO BUILDING ====================
+            function zoomToBuilding(gisid) {
+                let source = polygonLayer.getSource();
+                let features = source.getFeatures();
+                let targetFeature = null;
+                $.each(features, function(i, feature) {
+                    if (feature.get('gisid') == gisid) {
+                        targetFeature = feature;
+                        return false;
+                    }
+                });
+                if (targetFeature) {
+                    let extent = targetFeature.getGeometry().getExtent();
+                    map.getView().fit(extent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                    let center = ol.extent.getCenter(extent);
+                    showPopup(gisid, center);
+                }
+            }
+
+            // ==================== APPLY FILTERS ====================
+            function applyFilters() {
+                let filterType = $('#filterType').val();
+                let filterMinFloors = $('#filterMinFloors').val();
+                let filterMaxFloors = $('#filterMaxFloors').val();
+                let source = polygonLayer.getSource();
+                let features = source.getFeatures();
+                let visibleCount = 0;
+                $.each(features, function(i, feature) {
+                    let gisid = feature.get('gisid');
+                    let buildingData = null;
+                    $.each(polygonDatas, function(j, b) {
+                        if (b.gisid == gisid) buildingData = b;
+                    });
+                    let show = true;
+                    if (filterType === 'completed' && buildingData) {
+                        let hasQC = false;
+                        if (buildingData.pointdata) {
+                            $.each(buildingData.pointdata, function(k, a) {
+                                if (a.qcsqfeet || a.qcusage) {
+                                    hasQC = true;
+                                    return false;
+                                }
+                            });
+                        }
+                        if (!hasQC) show = false;
+                    } else if (filterType === 'pending' && buildingData) {
+                        let hasQC = false;
+                        if (buildingData.pointdata) {
+                            $.each(buildingData.pointdata, function(k, a) {
+                                if (a.qcsqfeet || a.qcusage) {
+                                    hasQC = true;
+                                    return false;
+                                }
+                            });
+                        }
+                        if (hasQC) show = false;
+                    }
+                    if (show && buildingData && (filterMinFloors || filterMaxFloors)) {
+                        let floors = parseInt(buildingData.number_floor) || 0;
+                        if (filterMinFloors && floors < parseInt(filterMinFloors)) show = false;
+                        if (filterMaxFloors && floors > parseInt(filterMaxFloors)) show = false;
+                    }
+                    feature.set('visible', show);
+                    if (show) visibleCount++;
+                });
+                polygonLayer.setStyle(function(feature) {
+                    if (feature.get('visible') === false) return null;
+                    return polygonStyleFunction(feature);
+                });
+                $('#filterCount').text(`Showing ${visibleCount} of ${features.length} buildings`);
+                $('#filterPanel').removeClass('open');
+            }
+
+            // ==================== RESET FILTERS ====================
+            function resetFilters() {
+                $('#filterType').val('all');
+                $('#filterMinFloors').val('');
+                $('#filterMaxFloors').val('');
+                let source = polygonLayer.getSource();
+                let features = source.getFeatures();
+                $.each(features, function(i, feature) {
+                    feature.set('visible', true);
+                });
+                polygonLayer.setStyle(polygonStyleFunction);
+                $('#filterCount').text(`Showing ${features.length} of ${features.length} buildings`);
+                $('#filterPanel').removeClass('open');
+            }
+
+            // ==================== POPUP FUNCTIONS ====================
+            function createPopup() {
+                popupElement = $('<div>', {
+                    class: 'ol-popup',
+                    style: 'display:none'
+                })[0];
+                $('body').append(popupElement);
+                popupOverlay = new ol.Overlay({
+                    element: popupElement,
+                    positioning: 'bottom-center',
+                    stopEvent: true,
+                    offset: [0, -10],
+                    autoPan: {
+                        animation: {
+                            duration: 250
+                        }
+                    }
+                });
+                return popupOverlay;
+            }
+            window.closePopup = function() {
+                $('.ol-popup').hide();
+            };
+            window.switchTab = function(tabId) {
+                $('.popup-tab-content').removeClass('active');
+                $('.popup-tab').removeClass('active');
+                $('#tab-' + tabId).addClass('active');
+                $('.popup-tab[data-tab="' + tabId + '"]').addClass('active');
+                currentActiveTab = tabId;
+            };
+
+            function showPopup(gisid, coordinate) {
+                let polyData = null;
+                $.each(polygonDatas, function(i, p) {
+                    if (p.gisid == gisid) polyData = p;
+                });
+                if (!polyData) return;
+                let assessments = polyData.pointdata || [];
+                let allShops = [];
+                $.each(assessments, function(i, a) {
+                    if (a.shops && a.shops.length) {
+                        $.each(a.shops, function(j, s) {
+                            allShops.push({
+                                ...s,
+                                assessmentNumber: a.assessment || 'Bill ' + (i + 1)
+                            });
+                        });
+                    }
+                });
+
+                let buildingHtml = `<div class="building-details-content">
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-fingerprint"></i> GIS ID:</div><div class="detail-value"><strong>${polyData.gisid || 'N/A'}</strong></div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-building"></i> Building Usage:</div><div class="detail-value">${polyData.building_usage || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-home"></i> Building Type:</div><div class="detail-value">${polyData.building_type || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-layer-group"></i> Floors:</div><div class="detail-value">${polyData.number_floor || '0'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-receipt"></i> Total Bills:</div><div class="detail-value">${polyData.number_bill || '0'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-store"></i> Total Shops:</div><div class="detail-value">${polyData.total_shops || '0'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-road"></i> Road Name:</div><div class="detail-value">${polyData.road_name || 'N/A'}</div></div>
+                    <div class="detail-row"><div class="detail-label"><i class="fas fa-map-pin"></i> Zone:</div><div class="detail-value">${polyData.zone || 'N/A'}</div></div>
+                </div>`;
+
+                let assessmentsHtml = '';
+                if (assessments.length === 0) {
+                    assessmentsHtml =
+                        '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments found</p></div>';
+                } else {
+                    $.each(assessments, function(i, a) {
+                        let hasQC = a.qcsqfeet || a.qcusage;
+                        assessmentsHtml += `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
                             <div class="assessment-header">
-                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
-                                <span class="assessment-status">
-                                    <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">
-                                        ${hasQC ? '<i class="fas fa-check-circle"></i> QC Done' : '<i class="fas fa-clock"></i> QC Pending'}
-                                    </span>
-                                </span>
+                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span>
+                                <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">${hasQC ? 'QC Done' : 'QC Pending'}</span>
                             </div>
                             <div class="assessment-body">
-                                <div class="assessment-row"><div class="assessment-label">Owner:</div><div class="assessment-value"><strong>${assessment.owner_name || assessment.present_owner_name || 'N/A'}</strong></div></div>
-                                <div class="assessment-row"><div class="assessment-label">Phone:</div><div class="assessment-value">${assessment.phone_number || 'N/A'}</div></div>
-                                <div class="assessment-row"><div class="assessment-label">Floor:</div><div class="assessment-value">${assessment.floor || 'N/A'}</div></div>
-                                <div class="assessment-row"><div class="assessment-label">Usage:</div><div class="assessment-value">${assessment.bill_usage || 'N/A'}</div></div>
-                                <div class="assessment-row"><div class="assessment-label">QC Sqft:</div><div class="assessment-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</div></div>
-                                <div class="assessment-row"><div class="assessment-label">QC Usage:</div><div class="assessment-value">${assessment.qcusage || assessment.usage || 'N/A'}</div></div>
-                                <div class="assessment-row"><div class="assessment-label">Shops:</div><div class="assessment-value">${(assessment.shops || []).length}</div></div>
+                                <div class="assessment-row"><div class="assessment-label">Owner:</div><div class="assessment-value"><strong>${a.owner_name || a.present_owner_name || 'N/A'}</strong></div></div>
+                                <div class="assessment-row"><div class="assessment-label">Phone:</div><div class="assessment-value">${a.phone_number || 'N/A'}</div></div>
+                                <div class="assessment-row"><div class="assessment-label">Floor:</div><div class="assessment-value">${a.floor || 'N/A'}</div></div>
+                                <div class="assessment-row"><div class="assessment-label">Usage:</div><div class="assessment-value">${a.bill_usage || 'N/A'}</div></div>
+                                <div class="assessment-row"><div class="assessment-label">Shops:</div><div class="assessment-value">${(a.shops || []).length}</div></div>
                             </div>
-                        </div>
-                    `;
-                });
-            }
-
-            return assessmentsHtml;
-        }
-
-        // Show popup
-        function showPopup(gisid, coordinate) {
-            const polyData = polygonDatas.find(p => p.gisid == gisid);
-
-            if (!polyData) {
-                console.log('No data found for GIS ID:', gisid);
-                return;
-            }
-
-            const assessments = polyData.pointdata || [];
-            currentAssessments = assessments;
-
-            const allShops = [];
-            $.each(assessments, function(idx, assessment) {
-                if (assessment.shops && assessment.shops.length > 0) {
-                    $.each(assessment.shops, function(shopIdx, shop) {
-                        allShops.push({
-                            ...shop,
-                            assessmentNumber: assessment.assessment || `Bill ${idx + 1}`,
-                            assessmentId: idx
-                        });
+                        </div>`;
                     });
                 }
-            });
 
-            // Building Details HTML
-            let buildingHtml = `
-                <div class="building-details-content">
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-fingerprint section-icon"></i> GIS ID:</div>
-                        <div class="detail-value"><strong>${polyData.gisid || 'N/A'}</strong></div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-building section-icon"></i> Building Usage:</div>
-                        <div class="detail-value">${polyData.building_usage || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-home section-icon"></i> Building Type:</div>
-                        <div class="detail-value">${polyData.building_type || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-hard-hat section-icon"></i> Construction:</div>
-                        <div class="detail-value">${polyData.construction_type || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-layer-group section-icon"></i> Floors:</div>
-                        <div class="detail-value">${polyData.number_floor || '0'} (${polyData.floor_percentage || '100'}% area)</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-arrow-down section-icon"></i> Basement:</div>
-                        <div class="detail-value">${polyData.basement || '0'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-receipt section-icon"></i> Total Bills:</div>
-                        <div class="detail-value">${polyData.number_bill || '0'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-chart-line section-icon"></i> Total Points:</div>
-                        <div class="detail-value">${polyData.total_points || '0'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-store section-icon"></i> Total Shops:</div>
-                        <div class="detail-value">${polyData.total_shops || '0'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-road section-icon"></i> Road Name:</div>
-                        <div class="detail-value">${polyData.road_name || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-map-pin section-icon"></i> Zone:</div>
-                        <div class="detail-value">${polyData.zone || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-tint section-icon"></i> Water Connection:</div>
-                        <div class="detail-value">${polyData.water_connection || 'N/A'}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label"><i class="fas fa-trash-alt section-icon"></i> UGD:</div>
-                        <div class="detail-value">${polyData.ugd || 'N/A'}</div>
-                    </div>
-            `;
+                let shopsHtml = '';
+                if (allShops.length === 0) {
+                    shopsHtml = '<div class="empty-state"><i class="fas fa-store"></i><p>No shops found</p></div>';
+                } else {
+                    $.each(allShops, function(i, s) {
+                        shopsHtml += `<div class="shop-item">
+                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop ' + (i+1)}</div>
+                            <div class="assessment-row"><div class="assessment-label">Category:</div><div class="assessment-value">${s.shop_category || 'N/A'}</div></div>
+                            <div class="assessment-row"><div class="assessment-label">Owner:</div><div class="assessment-value">${s.shop_owner_name || 'N/A'}</div></div>
+                            <div class="assessment-row"><div class="assessment-label">Mobile:</div><div class="assessment-value">${s.shop_mobile || 'N/A'}</div></div>
+                        </div>`;
+                    });
+                }
 
-            if (polyData.remarks) {
-                buildingHtml +=
-                    `<div class="detail-row"><div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div><div class="detail-value">${polyData.remarks}</div></div>`;
-            }
-            buildingHtml += `</div>`;
-
-            // Assessments HTML with Filter UI
-            const assessmentsListHtml = renderAssessmentsWithFilter(assessments);
-
-            let assessmentsHtml = `
-                <div class="assessment-search-container">
-                    <div class="assessment-search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="assessmentSearchInput" placeholder="Search by Assessment No, Owner, Phone, Floor, Usage...">
-                        <button class="clear-search" id="clearSearchBtn">&times;</button>
-                    </div>
-                    <div class="filter-buttons">
-                        <button class="filter-chip ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">All (${assessments.length})</button>
-                        <button class="filter-chip ${currentFilter === 'completed' ? 'active' : ''}" data-filter="completed">QC Complete</button>
-                        <button class="filter-chip ${currentFilter === 'pending' ? 'active' : ''}" data-filter="pending">QC Pending</button>
-                    </div>
-                </div>
-                <div class="assessment-count">Showing ${assessments.length} of ${assessments.length} assessments</div>
-                <div class="assessments-list">
-                    ${assessmentsListHtml}
-                </div>
-            `;
-
-            // Shops HTML
-            let shopsHtml = '';
-            if (allShops.length === 0) {
-                shopsHtml = '<div class="empty-state"><i class="fas fa-store"></i><p>No shop records found</p></div>';
-            } else {
-                $.each(allShops, function(idx, shop) {
-                    shopsHtml += `
-                        <div class="shop-item">
-                            <div class="shop-name"><i class="fas fa-store"></i> ${shop.shop_name || `Shop ${idx + 1}`}</div>
-                            <div class="shop-detail"><div class="shop-detail-label">Category:</div><div class="shop-detail-value">${shop.shop_category || 'N/A'}</div></div>
-                            <div class="shop-detail"><div class="shop-detail-label">Owner:</div><div class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</div></div>
-                            <div class="shop-detail"><div class="shop-detail-label">Mobile:</div><div class="shop-detail-value">${shop.shop_mobile || 'N/A'}</div></div>
-                            <div class="shop-detail"><div class="shop-detail-label">Assessment:</div><div class="shop-detail-value">${shop.assessmentNumber || 'N/A'}</div></div>
-                        </div>
-                    `;
-                });
-            }
-
-            // Final Popup HTML
-            const html = `
-                <div class="popup-header">
+                let html =
+                    `<div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
                     <button class="popup-close" onclick="closePopup()">&times;</button>
                 </div>
                 <div class="popup-tabs">
                     <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
-                    <button class="popup-tab ${currentActiveTab === 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments ${assessments.length > 0 ? `<span class="badge badge-info">${assessments.length}</span>` : ''}</button>
-                    <button class="popup-tab ${currentActiveTab === 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops ${allShops.length > 0 ? `<span class="badge badge-info">${allShops.length}</span>` : ''}</button>
+                    <button class="popup-tab ${currentActiveTab === 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
+                    <button class="popup-tab ${currentActiveTab === 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${allShops.length})</button>
                 </div>
-                <div id="tab-building" class="popup-tab-content ${currentActiveTab === 'building' ? 'active' : ''}">
-                    ${buildingHtml}
-                </div>
-                <div id="tab-assessments" class="popup-tab-content ${currentActiveTab === 'assessments' ? 'active' : ''}">
-                    ${assessmentsHtml}
-                </div>
-                <div id="tab-shops" class="popup-tab-content ${currentActiveTab === 'shops' ? 'active' : ''}">
-                    <div style="padding: 16px;">${shopsHtml}</div>
-                </div>
-            `;
+                <div id="tab-building" class="popup-tab-content ${currentActiveTab === 'building' ? 'active' : ''}">${buildingHtml}</div>
+                <div id="tab-assessments" class="popup-tab-content ${currentActiveTab === 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
+                <div id="tab-shops" class="popup-tab-content ${currentActiveTab === 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>`;
 
-            $(popupElement).html(html).show();
+                $(popupElement).html(html).show();
+                if ($(window).width() > 768 && popupOverlay) popupOverlay.setPosition(coordinate);
 
-            // For desktop, set position
-            if ($(window).width() > 768 && popupOverlay) {
-                popupOverlay.setPosition(coordinate);
-            }
-
-            // Initialize search and filter functionality
-            initAssessmentFilters();
-
-            // Assessment card click handler
-            $('.assessment-card').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const assessmentId = $(this).data('id');
-                const assessmentNumber = $(this).data('assessment');
-
-                $('.assessment-form-container').remove();
-
-                const formHtml = `
-                    <div class="assessment-form-container">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                            <h4 style="color: #ffc107; margin: 0;">QC Form - ${assessmentNumber}</h4>
-                            <button class="close-form-btn">&times;</button>
-                        </div>
+                $('.assessment-card').off('click').on('click', function() {
+                    let assessmentId = $(this).data('id');
+                    let assessmentNumber = $(this).data('assessment');
+                    $('.assessment-form-container').remove();
+                    $(this).after(`<div class="assessment-form-container">
+                        <button class="close-form-btn">&times;</button>
+                        <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${assessmentNumber}</h4>
                         <form class="qc-form">
                             <input type="hidden" name="assessment_id" value="${assessmentId}">
-                            <div style="margin-bottom: 12px;">
-                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Square Feet:</label>
-                                <input type="number" name="qc_sqfeet" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                            </div>
-                            <div style="margin-bottom: 12px;">
-                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Usage:</label>
-                                <select name="qc_usage" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                                    <option value="">Select</option>
-                                    <option value="Residential">Residential</option>
-                                    <option value="Commercial">Commercial</option>
-                                    <option value="Industrial">Industrial</option>
-                                </select>
-                            </div>
-                            <div style="margin-bottom: 12px;">
-                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">Tax Amount (₹):</label>
-                                <input type="number" name="tax_amount" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <button type="submit" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Save</button>
-                                <button type="button" class="cancel-form-btn" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cancel</button>
-                            </div>
+                            <div style="margin-bottom:12px;"><label style="color:#ffc107">QC Square Feet:</label>
+                            <input type="number" name="qc_sqfeet" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
+                            <div style="margin-bottom:12px;"><label style="color:#ffc107">QC Usage:</label>
+                            <select name="qc_usage" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                <option value="">Select</option><option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option><option value="Industrial">Industrial</option>
+                            </select></div>
+                            <div style="margin-bottom:12px;"><label style="color:#ffc107">Tax Amount (₹):</label>
+                            <input type="number" name="tax_amount" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
+                            <div style="display:flex; gap:10px;"><button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:5px;">Save</button>
+                            <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:5px;">Cancel</button></div>
                         </form>
-                    </div>
-                `;
-
-                $(this).after(formHtml);
-
-                $('.qc-form').on('submit', function(e) {
-                    e.preventDefault();
-                    const qcSqfeet = $(this).find('input[name="qc_sqfeet"]').val();
-                    const qcUsage = $(this).find('select[name="qc_usage"]').val();
-                    const taxAmount = $(this).find('input[name="tax_amount"]').val();
-                    const isComplete = qcSqfeet && qcUsage && taxAmount;
-
-                    if (isComplete) {
-                        $(this).closest('.assessment-card').find('.badge')
-                            .removeClass('badge-warning').addClass('badge-success')
-                            .html('<i class="fas fa-check-circle"></i> QC Complete');
-                        $(this).closest('.assessment-card').data('status', 'completed');
-                    } else {
-                        $(this).closest('.assessment-card').find('.badge')
-                            .removeClass('badge-success').addClass('badge-warning')
-                            .html('<i class="fas fa-clock"></i> QC Pending');
-                        $(this).closest('.assessment-card').data('status', 'pending');
-                    }
-
-                    alert('QC Saved! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
-                    $('.assessment-form-container').remove();
-                    filterAssessments();
+                    </div>`);
+                    $('.qc-form').on('submit', function(e) {
+                        e.preventDefault();
+                        let isComplete = $(this).find('input[name="qc_sqfeet"]').val() && $(this)
+                            .find('select[name="qc_usage"]').val() && $(this).find(
+                                'input[name="tax_amount"]').val();
+                        if (isComplete) {
+                            $(this).closest('.assessment-card').find('.badge').removeClass(
+                                'badge-warning').addClass('badge-success').html(
+                                '<i class="fas fa-check-circle"></i> QC Complete');
+                        } else {
+                            $(this).closest('.assessment-card').find('.badge').removeClass(
+                                'badge-success').addClass('badge-warning').html(
+                                '<i class="fas fa-clock"></i> QC Pending');
+                        }
+                        alert('QC Saved! Status: ' + (isComplete ? 'QC Complete' : 'QC Pending'));
+                        $('.assessment-form-container').remove();
+                    });
+                    $('.close-form-btn, .cancel-form-btn').on('click', function() {
+                        $('.assessment-form-container').remove();
+                    });
                 });
+            }
 
-                $('.close-form-btn, .cancel-form-btn').on('click', function() {
-                    $('.assessment-form-container').remove();
-                });
-            });
-        }
-
-        // Initialize assessment filters
-        function initAssessmentFilters() {
-            const searchInput = $('#assessmentSearchInput');
-            const clearBtn = $('#clearSearchBtn');
-
-            if (searchInput.length === 0) return;
-
-            searchInput.off('input').on('input', function() {
-                currentSearchTerm = $(this).val();
-                if (currentSearchTerm.length > 0) {
-                    clearBtn.addClass('visible');
+            // ==================== MAP FUNCTIONS ====================
+            function showLoading(show) {
+                if (show) {
+                    if ($('#mapLoading').length === 0) $('body').append(
+                        '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
+                        );
+                    $('#mapLoading').show();
                 } else {
-                    clearBtn.removeClass('visible');
-                }
-                filterAssessments();
-            });
-
-            clearBtn.off('click').on('click', function() {
-                searchInput.val('');
-                currentSearchTerm = '';
-                clearBtn.removeClass('visible');
-                filterAssessments();
-            });
-
-            $('.filter-chip').off('click').on('click', function() {
-                $('.filter-chip').removeClass('active');
-                $(this).addClass('active');
-                currentFilter = $(this).data('filter');
-                filterAssessments();
-            });
-        }
-
-        // Initialize Map
-        function initMap() {
-            showLoading(true);
-
-            // Base layers
-            osmLayer = new ol.layer.Tile({
-                source: new ol.source.OSM(),
-                visible: true
-            });
-            satelliteLayer = new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                    attributions: 'Tiles &copy; Esri'
-                }),
-                visible: false
-            });
-
-            // Drone image layer
-            let droneImage = wardData.drone_image;
-            let extentLeft = wardData.extent_left;
-            let extentBottom = wardData.extent_bottom;
-            let extentRight = wardData.extent_right;
-            let extentTop = wardData.extent_top;
-            let hasDroneImage = false;
-
-            if (droneImage && extentLeft && extentBottom && extentRight && extentTop) {
-                try {
-                    const imageExtent = [
-                        parseFloat(extentLeft),
-                        parseFloat(extentBottom),
-                        parseFloat(extentRight),
-                        parseFloat(extentTop)
-                    ];
-                    imageLayer = new ol.layer.Image({
-                        source: new ol.source.ImageStatic({
-                            url: "{{ asset('') }}" + droneImage.replace(/^\/+/, ''),
-                            imageExtent: imageExtent,
-                            projection: 'EPSG:3857'
-                        }),
-                        opacity: 1.0,
-                        visible: true
-                    });
-                    hasDroneImage = true;
-                } catch (e) {
-                    console.error('Drone image error:', e);
+                    $('#mapLoading').hide();
                 }
             }
 
-            // Boundary layer
-            let boundary = wardData.boundary;
-            let boundaryExtent = null;
-            if (boundary && boundary.length > 0 && boundary[0] && boundary[0].length) {
-                try {
-                    const boundaryCoords = boundary[0].map(coord => ol.proj.fromLonLat(coord));
-                    boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Polygon([boundaryCoords])
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#ff0000',
-                                width: 3,
-                                lineDash: [10, 5]
+            function initMap() {
+                showLoading(true);
+                osmLayer = new ol.layer.Tile({
+                    source: new ol.source.OSM(),
+                    visible: true
+                });
+                satelliteLayer = new ol.layer.Tile({
+                    source: new ol.source.XYZ({
+                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        attributions: 'Tiles &copy; Esri'
+                    }),
+                    visible: false
+                });
+
+                let droneImage = wardData.drone_image,
+                    hasDroneImage = false;
+                if (droneImage && wardData.extent_left) {
+                    try {
+                        imageLayer = new ol.layer.Image({
+                            source: new ol.source.ImageStatic({
+                                url: "{{ asset('') }}" + droneImage.replace(/^\/+/, ''),
+                                imageExtent: [parseFloat(wardData.extent_left), parseFloat(wardData
+                                        .extent_bottom), parseFloat(wardData.extent_right),
+                                    parseFloat(wardData.extent_top)
+                                ],
+                                projection: 'EPSG:3857'
                             }),
-                            fill: new ol.style.Fill({
-                                color: 'rgba(255, 0, 0, 0.05)'
-                            })
-                        }),
-                        visible: true
-                    });
-                    const lons = boundary[0].map(p => p[0]);
-                    const lats = boundary[0].map(p => p[1]);
-                    boundaryExtent = ol.proj.fromLonLat([
-                        Math.min(...lons),
-                        Math.min(...lats),
-                        Math.max(...lons),
-                        Math.max(...lats)
-                    ]);
-                } catch (e) {
-                    console.error('Boundary error:', e);
+                            opacity: 1.0,
+                            visible: true
+                        });
+                        hasDroneImage = true;
+                    } catch (e) {
+                        console.error('Drone error:', e);
+                    }
                 }
-            }
 
-            // Map center
-            let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-            let zoom = 24;
-            if (boundary && boundary[0] && boundary[0].length) {
-                try {
-                    const lons = boundary[0].map(p => p[0]);
-                    const lats = boundary[0].map(p => p[1]);
-                    center = ol.proj.fromLonLat([
-                        (Math.min(...lons) + Math.max(...lons)) / 2,
-                        (Math.min(...lats) + Math.max(...lats)) / 2
-                    ]);
-                    zoom = 18;
-                } catch (e) {}
-            }
+                let boundary = wardData.boundary,
+                    boundaryExtent = null;
+                if (boundary && boundary.length && boundary[0].length) {
+                    try {
+                        let boundaryCoords = boundary[0].map(c => ol.proj.fromLonLat(c));
+                        boundaryLayer = new ol.layer.Vector({
+                            source: new ol.source.Vector({
+                                features: [new ol.Feature({
+                                    geometry: new ol.geom.Polygon([boundaryCoords])
+                                })]
+                            }),
+                            style: new ol.style.Style({
+                                stroke: new ol.style.Stroke({
+                                    color: '#ff0000',
+                                    width: 3,
+                                    lineDash: [10, 5]
+                                }),
+                                fill: new ol.style.Fill({
+                                    color: 'rgba(255,0,0,0.05)'
+                                })
+                            }),
+                            visible: true
+                        });
+                        let lons = boundary[0].map(p => p[0]),
+                            lats = boundary[0].map(p => p[1]);
+                        boundaryExtent = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...
+                            lons), Math.max(...lats)
+                        ]);
+                    } catch (e) {
+                        console.error('Boundary error:', e);
+                    }
+                }
 
-            // Create map
-            map = new ol.Map({
-                target: 'map',
-                layers: [osmLayer, satelliteLayer],
-                view: new ol.View({
-                    center: center,
-                    zoom: zoom
-                })
-            });
+                let center = ol.proj.fromLonLat([80.2707, 13.0827]),
+                    zoom = 24;
+                if (boundary && boundary[0] && boundary[0].length) {
+                    try {
+                        let lons = boundary[0].map(p => p[0]),
+                            lats = boundary[0].map(p => p[1]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
+                            lats) + Math.max(...lats)) / 2]);
+                        zoom = 18;
+                    } catch (e) {}
+                }
 
-            const popup = createPopup();
-            map.addOverlay(popup);
-            if (imageLayer) map.addLayer(imageLayer);
-            if (boundaryLayer) map.addLayer(boundaryLayer);
-
-            setTimeout(() => {
-                if (boundaryExtent && boundaryExtent.length === 4) {
-                    map.getView().fit(boundaryExtent, {
+                map = new ol.Map({
+                    target: 'map',
+                    layers: [osmLayer, satelliteLayer],
+                    view: new ol.View({
+                        center: center,
+                        zoom: zoom
+                    })
+                });
+                const popup = createPopup();
+                map.addOverlay(popup);
+                if (imageLayer) map.addLayer(imageLayer);
+                if (boundaryLayer) map.addLayer(boundaryLayer);
+                setTimeout(() => {
+                    if (boundaryExtent) map.getView().fit(boundaryExtent, {
                         padding: [50, 50, 50, 50],
                         duration: 1000
                     });
-                }
-            }, 500);
+                }, 500);
 
-            addLayerSwitcher(hasDroneImage);
-            addLegend(hasDroneImage);
-            addSearchLegend();
-            addZoomControls();
-            addMobileControls();
-            refreshLayers();
-        }
+                addLayerSwitcher(hasDroneImage);
+                addLegend(hasDroneImage);
+                addSearchPanel();
+                addFilterPanel();
+                addZoomControls();
+                addMobileControls();
+                refreshLayers();
+                buildSearchIndex();
+            }
 
-        // Add layer switcher control
-        function addLayerSwitcher(hasDroneImage) {
-            const switcherHtml = `
-                <div class="layer-switcher" id="layerSwitcher">
+            function addLayerSwitcher(hasDroneImage) {
+                $('body').append(`<div class="layer-switcher" id="layerSwitcher">
                     <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                    <div class="layer-group">
-                        <div class="group-title">Base Maps</div>
-                        <label><input type="radio" name="baseLayer" value="osm" ${currentBaseLayer === 'osm' ? 'checked' : ''}> <i class="fas fa-map"></i> OpenStreetMap</label>
+                    <div class="layer-group"><div class="group-title">Base Maps</div>
+                        <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
                         <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
                     </div>
-                    <div class="layer-group">
-                        <div class="group-title">Overlays</div>
+                    <div class="layer-group"><div class="group-title">Overlays</div>
                         <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
                         <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
                         <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
                         ${hasDroneImage ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
                     </div>
-                </div>
-            `;
-            $('body').append(switcherHtml);
+                </div>`);
+                $('input[name="baseLayer"]').on('change', function() {
+                    currentBaseLayer = $(this).val();
+                    osmLayer.setVisible(currentBaseLayer === 'osm');
+                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
+                });
+                $('#toggleBuildings').on('change', function() {
+                    if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
+                });
+                $('#toggleRoads').on('change', function() {
+                    if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
+                });
+                $('#toggleBoundary').on('change', function() {
+                    if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
+                });
+                if (hasDroneImage) $('#toggleDrone').on('change', function() {
+                    if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+                });
+            }
 
-            // Base layer radio buttons
-            $('input[name="baseLayer"]').on('change', function() {
-                currentBaseLayer = $(this).val();
-                osmLayer.setVisible(currentBaseLayer === 'osm');
-                satelliteLayer.setVisible(currentBaseLayer === 'satellite');
-            });
-
-            // Overlay checkboxes
-            $('#toggleBuildings').on('change', function() {
-                if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
-            });
-            $('#toggleRoads').on('change', function() {
-                if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
-            });
-            $('#toggleBoundary').on('change', function() {
-                if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
-            });
-            $('#toggleDrone').on('change', function() {
-                if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
-            });
-        }
-
-        // Add legend control
-        function addLegend(hasDroneImage) {
-            const legendHtml = `
-                <div class="map-legend" id="mapLegend">
+            function addLegend(hasDroneImage) {
+                $('body').append(`<div class="map-legend" id="mapLegend">
                     <h5><i class="fas fa-info-circle"></i> Legend</h5>
                     <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
                     <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
                     <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
                     ${hasDroneImage ? '<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>' : ''}
-                </div>
-            `;
-            $('body').append(legendHtml);
-        }
-        // Add Search Panel
-        function addSearchLegend() {
-
-            const searchHtml = `
-                <div class="search-legend" id="searchPanel">
-                    <h5>
-                        <i class="fas fa-search"></i> Search
-                    </h5>
-
-                    <div class="search-group">
-                        <input type="text"
-                            id="searchInput"
-                            class="form-control"
-                            placeholder="Search GIS ID / Assessment / Owner">
-                    </div>
-
-                    <div class="search-group mt-2">
-                        <button class="btn btn-primary w-100" id="searchSubmitBtn">
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            $('body').append(searchHtml);
-
-        }
-
-        function addFilterLegend() {
-
-            const searchHtml = `
-                <div class="search-legend" id="filterPanel">
-                    <h5>
-                        <i class="fas fa-search"></i> Search
-                    </h5>
-
-                    <div class="search-group">
-                        <input type="text"
-                            id="searchInput"
-                            class="form-control"
-                            placeholder="Search GIS ID / Assessment / Owner">
-                    </div>
-
-                    <div class="search-group mt-2">
-                        <button class="btn btn-primary w-100" id="searchSubmitBtn">
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                    </div>
-                </div>
-            `;
-
-            $('body').append(searchHtml);
-
-        }
-        // Add zoom controls
-        function addZoomControls() {
-            const controlsHtml = `
-                <div class="zoom-controls">
-                    <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                    <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
-                </div>
-            `;
-            $('body').append(controlsHtml);
-
-            $('#zoomInBtn').on('click', function() {
-                const view = map.getView();
-                view.setZoom(view.getZoom() + 1);
-            });
-            $('#zoomOutBtn').on('click', function() {
-                const view = map.getView();
-                view.setZoom(view.getZoom() - 1);
-            });
-        }
-
-        // Add mobile controls (menu and legend buttons)
-        function addMobileControls() {
-            const menuBtn = $('#mobileMenuBtn');
-            const legendBtn = $('#mobileLegendBtn');
-            const layerSwitcher = $('#layerSwitcher');
-            const mapLegend = $('#mapLegend');
-            const searchBtn = $('#mobileSearchBtn');
-            const filterBtn = $('#mobileFilterBtn');
-            const searchPanel = $('#searchPanel');
-            const filterPanel = $('#filterPanel');
-
-            menuBtn.on('click', function() {
-                layerSwitcher.toggleClass('open');
-                mapLegend.removeClass('open');
-                searchPanel.removeClass('open');
-                filterPanel.removeClass('open');
-            });
-
-            legendBtn.on('click', function() {
-                mapLegend.toggleClass('open');
-                layerSwitcher.removeClass('open');
-                searchPanel.removeClass('open');
-                filterPanel.removeClass('open');
-            });
-
-            searchBtn.on('click', function(e) {
-                e.stopPropagation();
-                searchPanel.toggleClass('open');
-                filterPanel.removeClass('open');
-                layerSwitcher.removeClass('open');
-                mapLegend.removeClass('open');
-            });
-
-            filterBtn.on('click', function(e) {
-                e.stopPropagation();
-                filterPanel.toggleClass('open');
-                searchPanel.removeClass('open');
-                layerSwitcher.removeClass('open');
-                mapLegend.removeClass('open');
-            });
-
-            // Close panels when clicking outside on mobile
-            $(document).on('click', function(e) {
-                if ($(window).width() <= 768) {
-                    // Close layer switcher if clicking outside
-                    if (!layerSwitcher.is(e.target) && !layerSwitcher.has(e.target).length &&
-                        !menuBtn.is(e.target) && !menuBtn.has(e.target).length) {
-                        layerSwitcher.removeClass('open');
-                    }
-
-                    // Close legend if clicking outside
-                    if (!mapLegend.is(e.target) && !mapLegend.has(e.target).length &&
-                        !legendBtn.is(e.target) && !legendBtn.has(e.target).length) {
-                        mapLegend.removeClass('open');
-                    }
-
-                    // Close search panel if clicking outside
-                    if (!searchPanel.is(e.target) && !searchPanel.has(e.target).length &&
-                        !searchBtn.is(e.target) && !searchBtn.has(e.target).length) {
-                        searchPanel.removeClass('open');
-                    }
-
-                    // Close filter panel if clicking outside
-                    if (!filterPanel.is(e.target) && !filterPanel.has(e.target).length &&
-                        !filterBtn.is(e.target) && !filterBtn.has(e.target).length) {
-                        filterPanel.removeClass('open');
-                    }
-                }
-            });
-        }
-
-        // Polygon style function
-        function polygonStyleFunction(feature) {
-            const gisid = feature.get('gisid');
-            const sqfeet = feature.get('sqfeet');
-            const geometry = feature.getGeometry();
-            let center;
-            try {
-                center = geometry.getInteriorPoint();
-                if (!center) {
-                    const extent = geometry.getExtent();
-                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                }
-            } catch (e) {
-                const extent = geometry.getExtent();
-                center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+                </div>`);
             }
-            return [
-                new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff4444',
-                        width: 2
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255, 68, 68, 0.15)'
-                    })
-                }),
-                new ol.style.Style({
-                    geometry: center,
-                    text: new ol.style.Text({
-                        text: `${gisid}\n${sqfeet} sqft`,
-                        font: 'bold 10px Arial',
-                        fill: new ol.style.Fill({
-                            color: '#ffffff'
-                        }),
+
+            function addSearchPanel() {
+                $('body').append(`<div class="search-panel" id="searchPanel">
+                    <h5><i class="fas fa-search"></i> Search Building</h5>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search by GIS ID, Owner, Assessment No...">
+                        <button id="searchBtn"><i class="fas fa-search"></i> Go</button>
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
+                </div>`);
+                $('#searchBtn').on('click', function() {
+                    searchBuildings($('#searchInput').val());
+                });
+                $('#searchInput').on('keypress', function(e) {
+                    if (e.which === 13) searchBuildings($(this).val());
+                });
+            }
+
+            function addFilterPanel() {
+                $('body').append(`<div class="filter-panel" id="filterPanel">
+                    <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
+                    <div class="filter-group"><label>QC Status</label>
+                        <select id="filterType"><option value="all">All Buildings</option><option value="completed">QC Complete</option><option value="pending">QC Pending</option></select>
+                    </div>
+                    <div class="filter-group"><label>Floors (Min)</label><input type="number" id="filterMinFloors" placeholder="Min floors"></div>
+                    <div class="filter-group"><label>Floors (Max)</label><input type="number" id="filterMaxFloors" placeholder="Max floors"></div>
+                    <div class="filter-actions"><button class="apply-btn" id="applyFilterBtn">Apply Filter</button><button class="reset-btn" id="resetFilterBtn">Reset</button></div>
+                    <div class="filter-count" id="filterCount"></div>
+                </div>`);
+                $('#applyFilterBtn').on('click', applyFilters);
+                $('#resetFilterBtn').on('click', resetFilters);
+            }
+
+            function addZoomControls() {
+                $('body').append(
+                    `<div class="zoom-controls"><button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button></div>`
+                    );
+                $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
+                $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
+            }
+
+            function addMobileControls() {
+                $('#mobileMenuBtn').on('click', function() {
+                    $('#layerSwitcher').toggleClass('open');
+                    $('#mapLegend').removeClass('open');
+                    $('#searchPanel').removeClass('open');
+                    $('#filterPanel').removeClass('open');
+                });
+                $('#mobileLegendBtn').on('click', function() {
+                    $('#mapLegend').toggleClass('open');
+                    $('#layerSwitcher').removeClass('open');
+                    $('#searchPanel').removeClass('open');
+                    $('#filterPanel').removeClass('open');
+                });
+                $('#mobileSearchBtn').on('click', function(e) {
+                    e.stopPropagation();
+                    $('#searchPanel').toggleClass('open');
+                    $('#filterPanel').removeClass('open');
+                    $('#layerSwitcher').removeClass('open');
+                    $('#mapLegend').removeClass('open');
+                });
+                $('#mobileFilterBtn').on('click', function(e) {
+                    e.stopPropagation();
+                    $('#filterPanel').toggleClass('open');
+                    $('#searchPanel').removeClass('open');
+                    $('#layerSwitcher').removeClass('open');
+                    $('#mapLegend').removeClass('open');
+                });
+                $(document).on('click', function(e) {
+                    if ($(window).width() <= 768) {
+                        if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target)
+                            .length && !$('#mobileMenuBtn').is(e.target)) $('#layerSwitcher').removeClass(
+                            'open');
+                        if (!$('#mapLegend').is(e.target) && !$('#mapLegend').has(e.target).length && !$(
+                                '#mobileLegendBtn').is(e.target)) $('#mapLegend').removeClass('open');
+                        if (!$('#searchPanel').is(e.target) && !$('#searchPanel').has(e.target).length && !
+                            $('#mobileSearchBtn').is(e.target)) $('#searchPanel').removeClass('open');
+                        if (!$('#filterPanel').is(e.target) && !$('#filterPanel').has(e.target).length && !
+                            $('#mobileFilterBtn').is(e.target)) $('#filterPanel').removeClass('open');
+                    }
+                });
+            }
+
+            function polygonStyleFunction(feature) {
+                let gisid = feature.get('gisid'),
+                    sqfeet = feature.get('sqfeet'),
+                    geom = feature.getGeometry();
+                let center;
+                try {
+                    center = geom.getInteriorPoint();
+                    if (!center) {
+                        let ex = geom.getExtent();
+                        center = new ol.geom.Point([(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]);
+                    }
+                } catch (e) {
+                    let ex = geom.getExtent();
+                    center = new ol.geom.Point([(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]);
+                }
+                return [new ol.style.Style({
                         stroke: new ol.style.Stroke({
-                            color: '#000000',
+                            color: '#ff4444',
                             width: 2
                         }),
-                        backgroundFill: new ol.style.Fill({
-                            color: 'rgba(0, 0, 0, 0.7)'
-                        }),
-                        padding: [4, 8, 4, 8]
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255,68,68,0.15)'
+                        })
+                    }),
+                    new ol.style.Style({
+                        geometry: center,
+                        text: new ol.style.Text({
+                            text: `${gisid}\n${sqfeet} sqft`,
+                            font: 'bold 10px Arial',
+                            fill: new ol.style.Fill({
+                                color: '#fff'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            backgroundFill: new ol.style.Fill({
+                                color: 'rgba(0,0,0,0.7)'
+                            }),
+                            padding: [4, 8, 4, 8]
+                        })
                     })
-                })
-            ];
-        }
+                ];
+            }
 
-        // Refresh layers (add polygons and lines to map)
-        function refreshLayers() {
-            if (polygonLayer) map.removeLayer(polygonLayer);
-            if (lineLayer) map.removeLayer(lineLayer);
-
-            const polygonSource = new ol.source.Vector();
-            $.each(polygons, function(i, poly) {
-                try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly
-                        .coordinates;
-                    if (coords && coords.length) {
-                        polygonSource.addFeature(new ol.Feature({
+            function refreshLayers() {
+                if (polygonLayer) map.removeLayer(polygonLayer);
+                if (lineLayer) map.removeLayer(lineLayer);
+                let polygonSource = new ol.source.Vector();
+                $.each(polygons, function(i, poly) {
+                    try {
+                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) :
+                            poly.coordinates;
+                        if (coords && coords.length) polygonSource.addFeature(new ol.Feature({
                             geometry: new ol.geom.Polygon(coords),
                             gisid: poly.gisid,
                             sqfeet: poly.sqfeet
                         }));
+                    } catch (e) {
+                        console.log('Polygon error:', e);
                     }
-                } catch (e) {
-                    console.log('Polygon error:', e);
-                }
-            });
-
-            polygonLayer = new ol.layer.Vector({
-                source: polygonSource,
-                style: polygonStyleFunction,
-                visible: true
-            });
-
-            const lineSource = new ol.source.Vector();
-            $.each(lines, function(i, line) {
-                try {
-                    let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) : line
-                        .coordinates;
-                    if (coords && coords.length) {
-                        if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
-                        lineSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.LineString(coords),
-                            gisid: line.gisid
-                        }));
+                });
+                polygonLayer = new ol.layer.Vector({
+                    source: polygonSource,
+                    style: polygonStyleFunction,
+                    visible: true
+                });
+                let lineSource = new ol.source.Vector();
+                $.each(lines, function(i, line) {
+                    try {
+                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) :
+                            line.coordinates;
+                        if (coords && coords.length) {
+                            if (coords.length === 1 && Array.isArray(coords[0][0])) coords = coords[0];
+                            lineSource.addFeature(new ol.Feature({
+                                geometry: new ol.geom.LineString(coords),
+                                gisid: line.gisid
+                            }));
+                        }
+                    } catch (e) {
+                        console.log('Line error:', e);
                     }
-                } catch (e) {
-                    console.log('Line error:', e);
-                }
-            });
+                });
+                lineLayer = new ol.layer.Vector({
+                    source: lineSource,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#ffc107',
+                            width: 3
+                        })
+                    }),
+                    visible: true
+                });
+                map.addLayer(polygonLayer);
+                map.addLayer(lineLayer);
+                map.on('click', (evt) => {
+                    let f = map.forEachFeatureAtPixel(evt.pixel, f => f);
+                    if (f && f.get('gisid')) showPopup(f.get('gisid'), evt.coordinate);
+                    else if (popupElement) $(popupElement).hide();
+                });
+                map.on('pointermove', (evt) => {
+                    let f = map.forEachFeatureAtPixel(evt.pixel, f => f);
+                    $('#map').css('cursor', f && f.get('gisid') ? 'pointer' : '');
+                });
+                showLoading(false);
+            }
 
-            lineLayer = new ol.layer.Vector({
-                source: lineSource,
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ffc107',
-                        width: 3
-                    })
-                }),
-                visible: true
-            });
-
-            map.addLayer(polygonLayer);
-            map.addLayer(lineLayer);
-
-            // Click handler for polygons
-            map.on('click', function(evt) {
-                const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-                if (feature && feature.get('gisid')) {
-                    showPopup(feature.get('gisid'), evt.coordinate);
-                } else if (popupElement) {
-                    $(popupElement).hide();
-                }
-            });
-
-            // Hover cursor
-            map.on('pointermove', function(evt) {
-                const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-                $('#map').css('cursor', feature && feature.get('gisid') ? 'pointer' : '');
-            });
-
-            showLoading(false);
-        }
-
-        // Start the application when document is ready
-        $(document).ready(function() {
             initMap();
-        });
-
-        // Handle window resize
-        $(window).on('resize', function() {
-            setTimeout(() => map?.updateSize(), 100);
+            $(window).on('resize', () => setTimeout(() => map?.updateSize(), 100));
         });
     </script>
 @endpush
