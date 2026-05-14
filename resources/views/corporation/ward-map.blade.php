@@ -35,7 +35,8 @@
             height: 100%;
             overflow: hidden;
             position: fixed;
-            touch-action: none;
+            touch-action: pan-x pan-y pinch-zoom;
+            /* Changed from 'none' to allow panning but prevent pull-to-refresh */
         }
 
         #map {
@@ -314,7 +315,7 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Mobile Responsive Popup Styles */
+        /* Mobile Responsive Popup Styles - FIXED */
         .ol-popup {
             position: absolute;
             background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
@@ -332,7 +333,7 @@
             backdrop-filter: blur(5px);
         }
 
-        /* Mobile responsive popup */
+        /* Mobile responsive popup - FIXED POSITIONING */
         @media (max-width: 768px) {
             .ol-popup {
                 position: fixed !important;
@@ -340,13 +341,12 @@
                 left: 10px !important;
                 right: 10px !important;
                 top: auto !important;
-                transform: none !important;
-                width: calc(100% - 20px) !important;
+                width: auto !important;
                 max-width: none !important;
                 min-width: auto !important;
-                max-height: 60vh !important;
+                max-height: 55vh !important;
                 border-radius: 20px !important;
-                margin: 0 !important;
+                transform: none !important;
             }
 
             .ol-popup:after {
@@ -357,7 +357,7 @@
         /* Tablet responsive */
         @media (min-width: 769px) and (max-width: 1024px) {
             .ol-popup {
-                max-width: 400px !important;
+                max-width: 450px !important;
                 max-height: 70vh !important;
             }
         }
@@ -482,7 +482,7 @@
 
         @media (max-width: 768px) {
             .popup-tab-content {
-                max-height: 45vh;
+                max-height: 40vh;
                 padding: 12px;
             }
         }
@@ -769,29 +769,54 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Prevent default touch zoom on entire page
+        // Prevent pull-to-refresh on mobile while allowing map panning
         (function() {
-            document.addEventListener('touchmove', function(e) {
-                const isMap = e.target.closest('#map');
-                const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls') ||
-                    e.target.closest('.mobile-menu-btn') || e.target.closest('.mobile-legend-btn') ||
-                    e.target.closest('.ol-popup');
-                if (!isMap && !isControl) {
-                    e.preventDefault();
-                }
-            }, {
-                passive: false
-            });
+            let startY = 0;
+            let isScrolling = false;
 
             document.addEventListener('touchstart', function(e) {
-                if (e.touches.length > 1) {
-                    if (!e.target.closest('#map')) {
+                startY = e.touches[0].clientY;
+                const target = e.target;
+                const isPopupScroll = target.closest('.popup-tab-content') || target.closest('.assessment-form-container');
+                const isMap = target.closest('#map');
+                const isControl = target.closest('.layer-switcher') || target.closest('.zoom-controls') ||
+                    target.closest('.mobile-menu-btn') || target.closest('.mobile-legend-btn');
+
+                if (isPopupScroll) {
+                    isScrolling = true;
+                } else if (!isMap && !isControl) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchmove', function(e) {
+                const currentY = e.touches[0].clientY;
+                const isPopupScroll = e.target.closest('.popup-tab-content') || e.target.closest('.assessment-form-container');
+                const isMap = e.target.closest('#map');
+
+                // Prevent pull-to-refresh when at top of scrollable content
+                if (isPopupScroll) {
+                    const scrollable = e.target.closest('.popup-tab-content') || e.target.closest('.assessment-form-container');
+                    if (scrollable) {
+                        const isAtTop = scrollable.scrollTop === 0;
+                        if (isAtTop && currentY > startY) {
+                            e.preventDefault();
+                        }
+                    }
+                }
+                // Prevent page refresh on map
+                else if (isMap) {
+                    // Allow map panning but prevent pull-to-refresh
+                    if (currentY > startY && window.scrollY === 0) {
                         e.preventDefault();
                     }
                 }
-            }, {
-                passive: false
-            });
+                // Prevent touch on other elements
+                else if (!e.target.closest('.layer-switcher') && !e.target.closest('.zoom-controls') &&
+                    !e.target.closest('.mobile-menu-btn') && !e.target.closest('.mobile-legend-btn')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         })();
     </script>
 
@@ -856,7 +881,12 @@
                 element: popupElement,
                 positioning: 'bottom-center',
                 stopEvent: true,
-                offset: [0, -10]
+                offset: [0, -10],
+                autoPan: {
+                    animation: {
+                        duration: 250
+                    }
+                }
             });
 
             return popupOverlay;
@@ -1056,7 +1086,7 @@
             const html = `
                 <div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
-                    <button class="popup-close" onclick="document.querySelector('.ol-popup').style.display='none'">&times;</button>
+                    <button class="popup-close" onclick="closePopup()">&times;</button>
                 </div>
                 <div class="popup-tabs">
                     <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')">
@@ -1083,24 +1113,25 @@
             popupElement.innerHTML = html;
             popupElement.style.display = 'block';
 
-            // Adjust popup position for mobile
+            // Handle popup positioning based on device
             if (window.innerWidth <= 768) {
+                // Mobile: Fixed position at bottom
                 popupOverlay.setPosition(undefined);
+                popupElement.style.position = 'fixed';
                 popupElement.style.bottom = '20px';
                 popupElement.style.left = '10px';
                 popupElement.style.right = '10px';
                 popupElement.style.top = 'auto';
             } else {
+                // Desktop: Position near clicked building
+                popupElement.style.position = 'absolute';
                 popupOverlay.setPosition(coordinate);
             }
 
             // Close button event
-            const closeBtn = popupElement.querySelector('.popup-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
-                    popupElement.style.display = 'none';
-                });
-            }
+            window.closePopup = function() {
+                popupElement.style.display = 'none';
+            };
 
             // Assessment card click handler
             $('.assessment-card').off('click').on('click', function(e) {
