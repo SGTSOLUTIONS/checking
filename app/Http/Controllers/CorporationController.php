@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\MisImport;
+use App\Imports\ProfImport;
 use App\Imports\UgdImport;
 use App\Imports\WatertaxImport;
 use App\Models\Corporation;
@@ -34,6 +35,7 @@ class CorporationController extends Controller
                 'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
                 'mis' => 'nullable|file|mimes:xls,xlsx,csv',
+                'prof' => 'nullable|file|mimes:xls,xlsx,csv',
                 'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
                 'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
             ]);
@@ -63,6 +65,9 @@ class CorporationController extends Controller
             // ✅ Excel imports
             if ($request->hasFile('mis')) {
                 Excel::import(new MisImport('mis_corporation_' . $corporation->id, $corporation->id), $request->file('mis'));
+            }
+             if ($request->hasFile('prof')) {
+                Excel::import(new ProfImport('shop_corporation_' . $corporation->id, $corporation->id), $request->file('prof'));
             }
             if ($request->hasFile('watertax')) {
                 Excel::import(new WatertaxImport('watertax_corporation_' . $corporation->id, $corporation->id), $request->file('watertax'));
@@ -132,6 +137,7 @@ class CorporationController extends Controller
         $misTable = 'mis_corporation_' . $corporationId;
         $waterTable = 'watertax_corporation_' . $corporationId;
         $ugdTable = 'ugd_corporation_' . $corporationId;
+        $shopTable = 'shop_corporation_' . $corporationId;
         $assinedRoadsTable = 'assigned_roads_corporation_' . $corporationId;
 
         // ✅ Assigned Roads table
@@ -224,7 +230,30 @@ class CorporationController extends Controller
                 $table->timestamps();
                 $table->softDeletes();
             });
+
         }
+         if (!Schema::hasTable($shopTable)) {
+                Schema::create($shopTable, function (Blueprint $table) {
+                    $table->id();
+                    $table->string('ward_no')->nullable();
+                    $table->string('road_name')->nullable();
+                    $table->string('assessment')->nullable();
+                    $table->string('prof_tax_assessment')->nullable();
+                    $table->string('old_prof_tax_assessment')->nullable();
+                    $table->string('name')->nullable();
+                    $table->string('door_no')->nullable();
+                    $table->string('phone')->nullable();
+                    $table->string('category')->nullable();
+                    $table->string('bussiness_name')->nullable();
+                    $table->string('hlafyear_tax')->nullable();
+                    $table->string('blalance')->nullable();
+                    $table->timestamps();
+                    $table->softDeletes();
+                });
+
+                Log::info("✅ Shop table created: {$shopTable}");
+            }
+
     }
 
     /** ✅ Get corporation list */
@@ -265,6 +294,7 @@ class CorporationController extends Controller
                 'logo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
                 'boundary' => 'nullable|file|mimes:geojson,json|max:5120',
                 'mis' => 'nullable|file|mimes:xls,xlsx,csv',
+                'prof' => 'nullable|file|mimes:xls,xlsx,csv',
                 'watertax' => 'nullable|file|mimes:xls,xlsx,csv',
                 'ugd' => 'nullable|file|mimes:xls,xlsx,csv'
             ]);
@@ -308,6 +338,12 @@ class CorporationController extends Controller
                 $misImport = new MisImport('mis_corporation_' . $corporation->id, $corporation->id);
                 Excel::import($misImport, $request->file('mis'));
                 $importStats['mis'] = $misImport->getImportStats();
+            }
+  // ================= MIS IMPORT =================
+            if ($request->hasFile('prof')) {
+                $profImport = new ProfImport('shop_corporation_' . $corporation->id, $corporation->id);
+                Excel::import($profImport, $request->file('prof'));
+                $importStats['prof'] = $profImport->getImportStats();
             }
 
             // ================= WATER TAX =================
@@ -384,6 +420,7 @@ class CorporationController extends Controller
             $tables = [
                 'mis_corporation_' . $id,
                 'watertax_corporation_' . $id,
+                'shop_corporation_' . $id,
                 'ugd_corporation_' . $id,
                 'assigned_roads_corporation_' . $id
             ];

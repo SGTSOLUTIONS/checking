@@ -74,6 +74,12 @@
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label fw-bold">Professional tax</label>
+                            <input type="file" class="form-control" name="prof">
+                            <div class="form-text">Leave empty to keep current professionaltax</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label fw-bold">Watertax</label>
                             <input type="file" class="form-control" name="watertax">
                             <div class="form-text">Upload Watertax Excel file</div>
@@ -155,6 +161,12 @@
                             <label class="form-label fw-bold">MIS</label>
                             <input type="file" class="form-control" name="mis">
                             <div class="form-text">Leave empty to keep current MIS</div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Professional tax</label>
+                            <input type="file" class="form-control" name="prof">
+                            <div class="form-text">Leave empty to keep current professionaltax</div>
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6">
