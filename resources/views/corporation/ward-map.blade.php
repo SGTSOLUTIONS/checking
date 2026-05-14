@@ -350,7 +350,7 @@
             content: '';
             position: absolute;
             bottom: -10px;
-            left: 50%;
+            /* left: ; */
             transform: translateX(-50%);
             border-width: 10px 10px 0;
             border-style: solid;
@@ -1020,42 +1020,42 @@
 
                 // Simple form HTML
                 const formHtml = `
-        <div class="assessment-form-container" style="margin-top: 10px; padding: 15px; background: #1a1a2e; border-radius: 8px; border-left: 3px solid #ff4444;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                <h4 style="color: #ffc107; margin: 0;">QC Form - ${assessmentNumber}</h4>
-                <button class="close-form-btn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
-            </div>
+                    <div class="assessment-form-container" style="margin-top: 10px; padding: 15px; background: #1a1a2e; border-radius: 8px; border-left: 3px solid #ff4444;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <h4 style="color: #ffc107; margin: 0;">QC Form - ${assessmentNumber}</h4>
+                            <button class="close-form-btn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+                        </div>
 
-            <form id="simpleQCForm">
-                <input type="hidden" name="assessment_id" value="${assessmentId}">
+                        <form id="simpleQCForm">
+                            <input type="hidden" name="assessment_id" value="${assessmentId}">
 
-                <div style="margin-bottom: 12px;">
-                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Square Feet:</label>
-                    <input type="number" name="qc_sqfeet" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Square Feet:</label>
+                                <input type="number" name="qc_sqfeet" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                            </div>
 
-                <div style="margin-bottom: 12px;">
-                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Usage:</label>
-                    <select name="qc_usage" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                        <option value="">Select</option>
-                        <option value="Residential">Residential</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Industrial">Industrial</option>
-                    </select>
-                </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Usage:</label>
+                                <select name="qc_usage" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                                    <option value="">Select</option>
+                                    <option value="Residential">Residential</option>
+                                    <option value="Commercial">Commercial</option>
+                                    <option value="Industrial">Industrial</option>
+                                </select>
+                            </div>
 
-                <div style="margin-bottom: 12px;">
-                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">Tax Amount (₹):</label>
-                    <input type="number" name="tax_amount" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
-                </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="color: #ffc107; display: block; margin-bottom: 5px;">Tax Amount (₹):</label>
+                                <input type="number" name="tax_amount" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                            </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="submit" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Save</button>
-                    <button type="button" class="cancel-form-btn" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cancel</button>
-                </div>
-            </form>
-        </div>
-    `;
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <button type="submit" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Save</button>
+                                <button type="button" class="cancel-form-btn" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                `;
 
                 // Insert form after clicked card
                 $(this).after(formHtml);
