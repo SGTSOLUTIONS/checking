@@ -856,7 +856,7 @@
                 if (show) {
                     if ($('#mapLoading').length === 0) $('body').append(
                         '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                        );
+                    );
                     $('#mapLoading').show();
                 } else {
                     $('#mapLoading').hide();
@@ -1069,7 +1069,7 @@
             function searchBuildings(text) {
                 if (!text || !text.trim()) {
                     $('#searchResults').html(
-                        '<div class="no-results"><i class="fas fa-search"></i><p>Enter search term</p></div>');
+                        '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
                     return;
                 }
                 let term = text.toLowerCase().trim(),
@@ -1123,7 +1123,7 @@
                 let $res = $('#searchResults').empty();
                 if (!results.length) {
                     $res.html(
-                        '<div class="no-results"><i class="fas fa-search"></i><p>No buildings found</p></div>');
+                        '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
                     return;
                 }
                 $.each(results, function(i, r) {
@@ -1143,8 +1143,12 @@
                 $('.direction-btn').off('click').on('click', function(e) {
                     e.stopPropagation();
                     let p = $(this).closest('.search-result-item');
-                    showDirectionToBuilding(p.data('gisid'), [parseFloat(p.data('lon')), parseFloat(p.data(
-                        'lat'))]);
+                    if (p.data('lon') && p.data('lat')) {
+                        showDirectionToBuilding(p.data('gisid'), [parseFloat(p.data('lon')), parseFloat(p
+                            .data('lat'))]);
+                    } else {
+                        alert("Coordinates not available for this building");
+                    }
                     $('#searchPanel').removeClass('open');
                 });
             }
@@ -1158,6 +1162,8 @@
                         duration: 1000
                     });
                     showPopup(gisid, ol.extent.getCenter(e));
+                } else {
+                    alert("Building not found on map");
                 }
             }
 
@@ -1200,19 +1206,38 @@
                 });
                 let buildingHtml =
                     `<div class="building-details-content">${[
-                    ['fingerprint', 'GIS ID', pd.gisid], ['building', 'Building Usage', pd.building_usage], ['home', 'Building Type', pd.building_type],
-                    ['layer-group', 'Floors', pd.number_floor], ['receipt', 'Total Bills', pd.number_bill], ['store', 'Total Shops', pd.total_shops],
-                    ['road', 'Road Name', pd.road_name], ['map-pin', 'Zone', pd.zone]
+                    ['fingerprint', 'GIS ID', pd.gisid],
+                    ['building', 'Building Usage', pd.building_usage],
+                    ['home', 'Building Type', pd.building_type],
+                    ['layer-group', 'Floors', pd.number_floor],
+                    ['receipt', 'Total Bills', pd.number_bill],
+                    ['store', 'Total Shops', pd.total_shops],
+                    ['road', 'Road Name', pd.road_name],
+                    ['map-pin', 'Zone', pd.zone]
                 ].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
+
                 let assessmentsHtml = !assessments.length ?
                     '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments</p></div>' :
                     assessments.map((a, i) =>
-                        `<div class="assessment-card" data-id="${a.id||''}" data-assessment="${a.assessment||''}"><div class="assessment-header"><span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment||'Assessment '+(i+1)}</span><span class="badge ${a.qcsqfeet||a.qcusage?'badge-success':'badge-warning'}">${a.qcsqfeet||a.qcusage?'QC Done':'QC Pending'}</span></div><div class="assessment-body">${[['Owner', a.owner_name||a.present_owner_name],['Phone', a.phone_number],['Floor', a.floor],['Usage', a.bill_usage],['Shops', (a.shops||[]).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v||'N/A'}</div></div>`).join('')}</div></div>`
-                        ).join('');
+                        `<div class="assessment-card" data-id="${a.id||''}" data-assessment="${a.assessment||''}">
+                            <div class="assessment-header">
+                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment||'Assessment '+(i+1)}</span>
+                                <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
+                            </div>
+                            <div class="assessment-body">
+                                ${[['Owner', a.owner_name || a.present_owner_name],['Phone', a.phone_number],['Floor', a.floor],['Usage', a.bill_usage],['Shops', (a.shops||[]).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v||'N/A'}</div></div>`).join('')}
+                            </div>
+                        </div>`
+                    ).join('');
+
                 let shopsHtml = !shops.length ?
                     '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' : shops.map(s =>
-                        `<div class="shop-item"><div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name||'Shop'}</div>${[['Category', s.shop_category],['Owner', s.shop_owner_name],['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v||'N/A'}</div></div>`).join('')}</div>`
-                        ).join('');
+                        `<div class="shop-item">
+                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
+                            ${[['Category', s.shop_category],['Owner', s.shop_owner_name],['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v||'N/A'}</div></div>`).join('')}
+                        </div>`
+                    ).join('');
+
                 let html =
                     `<div class="popup-header"><h4><i class="fas fa-building"></i> Building Details</h4><button class="popup-close" onclick="closePopup()">&times;</button></div>
                     <div class="popup-tabs"><button class="popup-tab ${currentActiveTab=='building'?'active':''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
@@ -1223,33 +1248,111 @@
                     <div id="tab-shops" class="popup-tab-content ${currentActiveTab=='shops'?'active':''}"><div style="padding:16px">${shopsHtml}</div></div>`;
                 $(popupElement).html(html).show();
                 if ($(window).width() > 768 && popupOverlay) popupOverlay.setPosition(coord);
+
                 $('.assessment-card').off('click').on('click', function() {
                     let id = $(this).data('id'),
                         num = $(this).data('assessment');
                     $(this).after(
-                        `<div class="assessment-form-container"><button class="close-form-btn">&times;</button><h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                        <form class="qc-form"><input type="hidden" name="assessment_id" value="${id}">
-                        <div style="margin-bottom:12px;"><label style="color:#ffc107">QC Square Feet:</label><input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
-                        <div style="margin-bottom:12px;"><label style="color:#ffc107">QC Usage:</label><select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"><option value="">Select</option><option value="Residential">Residential</option><option value="Commercial">Commercial</option><option value="Industrial">Industrial</option></select></div>
-                        <div style="margin-bottom:12px;"><label style="color:#ffc107">Tax Amount (₹):</label><input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
-                        <div style="display:flex; gap:10px;"><button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button><button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button></div></form></div>`
-                        );
+                        `<div class="assessment-form-container">
+                            <button class="close-form-btn">&times;</button>
+                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
+                            <form class="qc-form">
+                                <input type="hidden" name="assessment_id" value="${id}">
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">QC Square Feet:</label>
+                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                </div>
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">QC Usage:</label>
+                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                        <option value="">Select</option>
+                                        <option value="Residential">Residential</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Industrial">Industrial</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">Tax Amount (₹):</label>
+                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                </div>
+                                <div style="display:flex; gap:10px;">
+                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
+                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>`
+                    );
                     $('.qc-form').on('submit', function(e) {
                         e.preventDefault();
-                        let c = $(this).find('input[name="qc_sqfeet"]').val() && $(this).find(
-                            'select[name="qc_usage"]').val() && $(this).find(
-                            'input[name="tax_amount"]').val();
-                        $(this).closest('.assessment-card').find('.badge').toggleClass(
-                            'badge-success badge-warning').html(c ?
-                            '<i class="fas fa-check-circle"></i> QC Complete' :
-                            '<i class="fas fa-clock"></i> QC Pending');
-                        alert('QC Saved! Status: ' + (c ? 'QC Complete' : 'QC Pending'));
+                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
+                            $(this).find('select[name="qc_usage"]').val() &&
+                            $(this).find('input[name="tax_amount"]').val();
+                        let $badge = $(this).closest('.assessment-card').find('.badge');
+                        if (hasValues) {
+                            $badge.removeClass('badge-warning').addClass('badge-success').html(
+                                '<i class="fas fa-check-circle"></i> QC Complete');
+                        } else {
+                            $badge.removeClass('badge-success').addClass('badge-warning').html(
+                                '<i class="fas fa-clock"></i> QC Pending');
+                        }
+                        alert('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'));
                         $('.assessment-form-container').remove();
                     });
                     $('.close-form-btn, .cancel-form-btn').on('click', function() {
                         $('.assessment-form-container').remove();
                     });
                 });
+            }
+
+            // ==================== POLYGON STYLE FUNCTION ====================
+            function polygonStyleFunction(feature) {
+                let gisid = feature.get('gisid');
+                let sqfeet = feature.get('sqfeet');
+                let geometry = feature.getGeometry();
+                let center;
+                try {
+                    center = geometry.getInteriorPoint();
+                    if (!center) {
+                        let extent = geometry.getExtent();
+                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+                    }
+                } catch (e) {
+                    let extent = geometry.getExtent();
+                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+                }
+
+                let isVisible = feature.get('visible');
+                if (isVisible === false) return null;
+
+                return [
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255,68,68,0.15)'
+                        })
+                    }),
+                    new ol.style.Style({
+                        geometry: center,
+                        text: new ol.style.Text({
+                            text: `${gisid}\n${sqfeet || 0} sqft`,
+                            font: 'bold 11px Arial',
+                            fill: new ol.style.Fill({
+                                color: '#fff'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            backgroundFill: new ol.style.Fill({
+                                color: 'rgba(0,0,0,0.7)'
+                            }),
+                            padding: [4, 8, 4, 8]
+                        })
+                    })
+                ];
             }
 
             // ==================== MAP INITIALIZATION ====================
@@ -1265,59 +1368,79 @@
                     }),
                     visible: false
                 });
+
                 let droneImg = wardData.drone_image,
                     hasDrone = false;
-                if (droneImg && wardData.extent_left) try {
-                    imageLayer = new ol.layer.Image({
-                        source: new ol.source.ImageStatic({
-                            url: "{{ asset('') }}" + droneImg.replace(/^\/+/, ''),
-                            imageExtent: [parseFloat(wardData.extent_left), parseFloat(wardData
-                                    .extent_bottom), parseFloat(wardData.extent_right),
-                                parseFloat(wardData.extent_top)
-                            ],
-                            projection: 'EPSG:3857'
-                        }),
-                        visible: true
-                    });
-                    hasDrone = true;
-                } catch (e) {}
+                if (droneImg && wardData.extent_left) {
+                    try {
+                        let imageUrl = droneImg.replace(/^\/+/, '');
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+                            imageUrl = '/' + imageUrl;
+                        }
+                        imageLayer = new ol.layer.Image({
+                            source: new ol.source.ImageStatic({
+                                url: imageUrl,
+                                imageExtent: [
+                                    parseFloat(wardData.extent_left),
+                                    parseFloat(wardData.extent_bottom),
+                                    parseFloat(wardData.extent_right),
+                                    parseFloat(wardData.extent_top)
+                                ],
+                                projection: 'EPSG:3857'
+                            }),
+                            visible: true
+                        });
+                        hasDrone = true;
+                    } catch (e) {
+                        console.error("Error loading drone image:", e);
+                    }
+                }
+
                 let bound = wardData.boundary,
                     boundExt = null;
-                if (bound && bound.length && bound[0].length) try {
-                    let bc = bound[0].map(c => ol.proj.fromLonLat(c));
-                    boundaryLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Polygon([bc])
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#ff0000',
-                                width: 3,
-                                lineDash: [10, 5]
+                if (bound && bound.length && bound[0].length) {
+                    try {
+                        let bc = bound[0].map(c => ol.proj.fromLonLat(c));
+                        boundaryLayer = new ol.layer.Vector({
+                            source: new ol.source.Vector({
+                                features: [new ol.Feature({
+                                    geometry: new ol.geom.Polygon([bc])
+                                })]
                             }),
-                            fill: new ol.style.Fill({
-                                color: 'rgba(255,0,0,0.05)'
-                            })
-                        }),
-                        visible: true
-                    });
-                    let lons = bound[0].map(p => p[0]),
-                        lats = bound[0].map(p => p[1]);
-                    boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
-                        .max(...lats)
-                    ]);
-                } catch (e) {}
+                            style: new ol.style.Style({
+                                stroke: new ol.style.Stroke({
+                                    color: '#ff0000',
+                                    width: 3,
+                                    lineDash: [10, 5]
+                                }),
+                                fill: new ol.style.Fill({
+                                    color: 'rgba(255,0,0,0.05)'
+                                })
+                            }),
+                            visible: true
+                        });
+                        let lons = bound[0].map(p => p[0]),
+                            lats = bound[0].map(p => p[1]);
+                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
+                            .max(...lats)
+                        ]);
+                    } catch (e) {
+                        console.error("Error parsing boundary:", e);
+                    }
+                }
+
                 let center = ol.proj.fromLonLat([80.2707, 13.0827]),
-                    zoom = 24;
-                if (bound && bound[0] && bound[0].length) try {
-                    let lons = bound[0].map(p => p[0]),
-                        lats = bound[0].map(p => p[1]);
-                    center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
-                        lats) + Math.max(...lats)) / 2]);
                     zoom = 18;
-                } catch (e) {}
+                if (bound && bound[0] && bound[0].length) {
+                    try {
+                        let lons = bound[0].map(p => p[0]),
+                            lats = bound[0].map(p => p[1]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
+                            lats) + Math.max(...lats)) / 2]);
+                        zoom = 18;
+                    } catch (e) {}
+                }
+
                 map = new ol.Map({
                     target: 'map',
                     layers: [osmLayer, satelliteLayer],
@@ -1326,52 +1449,125 @@
                         zoom: zoom
                     })
                 });
+
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
+
                 if (imageLayer) map.addLayer(imageLayer);
                 if (boundaryLayer) map.addLayer(boundaryLayer);
+
                 setTimeout(() => {
-                    if (boundExt) map.getView().fit(boundExt, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
+                    if (boundExt) {
+                        map.getView().fit(boundExt, {
+                            padding: [50, 50, 50, 50],
+                            duration: 1000
+                        });
+                    }
                 }, 500);
+
+                // Add panels to DOM
                 $('body').append(
-                    `<div class="layer-switcher panel" id="layerSwitcher"><h5><i class="fas fa-layer-group"></i> Layers</h5><div class="layer-group"><div class="group-title">Base Maps</div><label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label><label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label></div><div class="layer-group"><div class="group-title">Overlays</div><label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label><label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label><label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}</div></div>`
-                    );
+                    `<div class="layer-switcher panel" id="layerSwitcher">
+                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
+                        <div class="layer-group">
+                            <div class="group-title">Base Maps</div>
+                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
+                        </div>
+                        <div class="layer-group">
+                            <div class="group-title">Overlays</div>
+                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
+                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
+                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
+                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
+                        </div>
+                    </div>`
+                );
+
                 $('body').append(
-                    `<div class="map-legend panel" id="mapLegend"><h5><i class="fas fa-info-circle"></i> Legend</h5><div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div><div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div><div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>${hasDrone ? '<div class="legend-item"><div class="legend-color drone"></div><span>Drone Imagery</span></div>' : ''}</div>`
-                    );
+                    `<div class="map-legend panel" id="mapLegend">
+                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
+                        <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
+                        <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
+                        <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
+                    </div>`
+                );
+
                 $('body').append(
-                    `<div class="search-panel panel" id="searchPanel"><h5><i class="fas fa-search"></i> Search Building</h5><div class="search-box"><input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment..."><button id="searchBtn"><i class="fas fa-search"></i> Go</button></div><div id="searchResults" class="search-results"></div></div>`
-                    );
+                    `<div class="search-panel panel" id="searchPanel">
+                        <h5><i class="fas fa-search"></i> Search Building</h5>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
+                            <button id="searchBtn"><i class="fas fa-search"></i> Go</button>
+                        </div>
+                        <div id="searchResults" class="search-results"></div>
+                    </div>`
+                );
+
                 $('body').append(
-                    `<div class="filter-panel panel" id="filterPanel"><h5><i class="fas fa-filter"></i> Filter Buildings</h5><div class="filter-group"><label>QC Status</label><select id="filterType"><option value="all">All Buildings</option><option value="completed">QC Complete</option><option value="pending">QC Pending</option></select></div><div class="filter-group"><label>Min Floors</label><input type="number" id="filterMinFloors" placeholder="Min"></div><div class="filter-group"><label>Max Floors</label><input type="number" id="filterMaxFloors" placeholder="Max"></div><div class="filter-actions"><button class="apply-btn" id="applyFilterBtn">Apply</button><button class="reset-btn" id="resetFilterBtn">Reset</button></div><div class="filter-count" id="filterCount"></div></div>`
-                    );
+                    `<div class="filter-panel panel" id="filterPanel">
+                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
+                        <div class="filter-group">
+                            <label>QC Status</label>
+                            <select id="filterType">
+                                <option value="all">All Buildings</option>
+                                <option value="completed">QC Complete</option>
+                                <option value="pending">QC Pending</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Min Floors</label>
+                            <input type="number" id="filterMinFloors" placeholder="Min">
+                        </div>
+                        <div class="filter-group">
+                            <label>Max Floors</label>
+                            <input type="number" id="filterMaxFloors" placeholder="Max">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
+                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
+                        </div>
+                        <div class="filter-count" id="filterCount"></div>
+                    </div>`
+                );
+
                 $('body').append(
-                    `<div class="zoom-controls"><button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button></div>`
-                    );
+                    `<div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                    </div>`
+                );
+
+                // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
                     currentBaseLayer = $(this).val();
                     osmLayer.setVisible(currentBaseLayer === 'osm');
                     satelliteLayer.setVisible(currentBaseLayer === 'satellite');
                 });
+
                 $('#toggleBuildings').on('change', function() {
                     if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
                 });
+
                 $('#toggleRoads').on('change', function() {
                     if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
                 });
+
                 $('#toggleBoundary').on('change', function() {
                     if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
                 });
-                if (hasDrone) $('#toggleDrone').on('change', function() {
-                    if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
-                });
+
+                if (hasDrone) {
+                    $('#toggleDrone').on('change', function() {
+                        if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+                    });
+                }
+
                 $('#searchBtn').on('click', () => searchBuildings($('#searchInput').val()));
-                $('#searchInput').on('keypress', e => {
+                $('#searchInput').on('keypress', function(e) {
                     if (e.which === 13) searchBuildings($(this).val());
                 });
+
                 $('#applyFilterBtn').on('click', function() {
                     let type = $('#filterType').val(),
                         minF = $('#filterMinFloors').val(),
@@ -1385,21 +1581,25 @@
                             show = true;
                         if (type === 'completed' && b) {
                             let has = false;
-                            if (b.pointdata) $.each(b.pointdata, (k, a) => {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    has = true;
-                                    return false;
-                                }
-                            });
+                            if (b.pointdata) {
+                                $.each(b.pointdata, (k, a) => {
+                                    if (a.qcsqfeet || a.qcusage) {
+                                        has = true;
+                                        return false;
+                                    }
+                                });
+                            }
                             if (!has) show = false;
                         } else if (type === 'pending' && b) {
                             let has = false;
-                            if (b.pointdata) $.each(b.pointdata, (k, a) => {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    has = true;
-                                    return false;
-                                }
-                            });
+                            if (b.pointdata) {
+                                $.each(b.pointdata, (k, a) => {
+                                    if (a.qcsqfeet || a.qcusage) {
+                                        has = true;
+                                        return false;
+                                    }
+                                });
+                            }
                             if (has) show = false;
                         }
                         if (show && b && (minF || maxF)) {
@@ -1410,125 +1610,115 @@
                         f.set('visible', show);
                         if (show) cnt++;
                     });
-                    polygonLayer.setStyle(f => f.get('visible') === false ? null : polygonStyleFunction(f));
+                    polygonLayer.setStyle(polygonStyleFunction);
+                    polygonLayer.changed();
                     $('#filterCount').text(`Showing ${cnt} of ${fts.length} buildings`);
                     $('#filterPanel').removeClass('open');
                 });
+
                 $('#resetFilterBtn').on('click', function() {
                     $('#filterType').val('all');
                     $('#filterMinFloors,#filterMaxFloors').val('');
                     let src = polygonLayer.getSource();
                     $.each(src.getFeatures(), (i, f) => f.set('visible', true));
                     polygonLayer.setStyle(polygonStyleFunction);
+                    polygonLayer.changed();
                     $('#filterCount').text(
                         `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
                     $('#filterPanel').removeClass('open');
                 });
+
                 $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
                 $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
+
                 $('#mobileMenuBtn').on('click', () => {
                     $('#layerSwitcher').toggleClass('open');
                     $('#mapLegend,#searchPanel,#filterPanel').removeClass('open');
                 });
+
                 $('#mobileLegendBtn').on('click', () => {
                     $('#mapLegend').toggleClass('open');
                     $('#layerSwitcher,#searchPanel,#filterPanel').removeClass('open');
                 });
+
                 $('#mobileSearchBtn').on('click', e => {
                     e.stopPropagation();
                     $('#searchPanel').toggleClass('open');
                     $('#filterPanel,#layerSwitcher,#mapLegend').removeClass('open');
                 });
+
                 $('#mobileFilterBtn').on('click', e => {
                     e.stopPropagation();
                     $('#filterPanel').toggleClass('open');
                     $('#searchPanel,#layerSwitcher,#mapLegend').removeClass('open');
                 });
+
                 $('#mobileLocationBtn').on('click', function() {
-                    locationTracking ? stopLocationTracking() : (startLocationTracking(), setTimeout(() => {
-                        if (currentPosition) map.getView().setCenter(ol.proj.fromLonLat(
-                            currentPosition));
-                    }, 1000));
+                    if (locationTracking) {
+                        stopLocationTracking();
+                    } else {
+                        startLocationTracking();
+                        setTimeout(() => {
+                            if (currentPosition) {
+                                map.getView().setCenter(ol.proj.fromLonLat(currentPosition));
+                            }
+                        }, 1000);
+                    }
                 });
+
+                // Close mobile panels when clicking outside
                 $(document).on('click', function(e) {
                     if ($(window).width() <= 768) {
                         if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target)
-                            .length && !$('#mobileMenuBtn').is(e.target)) $('#layerSwitcher').removeClass(
-                            'open');
+                            .length && !$('#mobileMenuBtn').is(e.target)) {
+                            $('#layerSwitcher').removeClass('open');
+                        }
                         if (!$('#mapLegend').is(e.target) && !$('#mapLegend').has(e.target).length && !$(
-                                '#mobileLegendBtn').is(e.target)) $('#mapLegend').removeClass('open');
+                                '#mobileLegendBtn').is(e.target)) {
+                            $('#mapLegend').removeClass('open');
+                        }
                         if (!$('#searchPanel').is(e.target) && !$('#searchPanel').has(e.target).length && !
-                            $('#mobileSearchBtn').is(e.target)) $('#searchPanel').removeClass('open');
+                            $('#mobileSearchBtn').is(e.target)) {
+                            $('#searchPanel').removeClass('open');
+                        }
                         if (!$('#filterPanel').is(e.target) && !$('#filterPanel').has(e.target).length && !
-                            $('#mobileFilterBtn').is(e.target)) $('#filterPanel').removeClass('open');
+                            $('#mobileFilterBtn').is(e.target)) {
+                            $('#filterPanel').removeClass('open');
+                        }
                     }
                 });
-                refreshLayers();
-            }
 
-            function polygonStyleFunction(f) {
-                let g = f.get('gisid'),
-                    s = f.get('sqfeet'),
-                    geom = f.getGeometry(),
-                    c;
-                try {
-                    c = geom.getInteriorPoint();
-                    if (!c) {
-                        let e = geom.getExtent();
-                        c = new ol.geom.Point([(e[0] + e[2]) / 2, (e[1] + e[3]) / 2]);
-                    }
-                } catch (e) {
-                    let ex = geom.getExtent();
-                    c = new ol.geom.Point([(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]);
-                }
-                return [new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff4444',
-                        width: 2
-                    }),
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255,68,68,0.15)'
-                    })
-                }), new ol.style.Style({
-                    geometry: c,
-                    text: new ol.style.Text({
-                        text: `${g}\n${s} sqft`,
-                        font: 'bold 11px Arial',
-                        fill: new ol.style.Fill({
-                            color: '#fff'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#000',
-                            width: 2
-                        }),
-                        backgroundFill: new ol.style.Fill({
-                            color: 'rgba(0,0,0,0.7)'
-                        }),
-                        padding: [4, 8, 4, 8]
-                    })
-                })];
+                refreshLayers();
             }
 
             function refreshLayers() {
                 if (polygonLayer) map.removeLayer(polygonLayer);
                 if (lineLayer) map.removeLayer(lineLayer);
+
                 let ps = new ol.source.Vector();
                 $.each(polygons, function(i, p) {
                     try {
                         let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
                             .coordinates;
-                        if (c && c.length) ps.addFeature(new ol.Feature({
-                            geometry: new ol.geom.Polygon(c),
-                            gisid: p.gisid,
-                            sqfeet: p.sqfeet
-                        }));
-                    } catch (e) {}
+                        if (c && c.length) {
+                            ps.addFeature(new ol.Feature({
+                                geometry: new ol.geom.Polygon(c),
+                                gisid: p.gisid,
+                                sqfeet: p.sqfeet,
+                                visible: true
+                            }));
+                        }
+                    } catch (e) {
+                        console.error("Error parsing polygon:", e);
+                    }
                 });
+
                 polygonLayer = new ol.layer.Vector({
                     source: ps,
                     style: polygonStyleFunction,
                     visible: true
                 });
+
                 let ls = new ol.source.Vector();
                 $.each(lines, function(i, l) {
                     try {
@@ -1541,8 +1731,11 @@
                                 gisid: l.gisid
                             }));
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("Error parsing line:", e);
+                    }
                 });
+
                 lineLayer = new ol.layer.Vector({
                     source: ls,
                     style: new ol.style.Style({
@@ -1553,16 +1746,24 @@
                     }),
                     visible: true
                 });
+
                 map.addLayer(polygonLayer);
                 map.addLayer(lineLayer);
+
                 map.on('click', e => {
-                    let f = map.forEachFeatureAtPixel(e.pixel, f => f);
-                    if (f && f.get('gisid')) showPopup(f.get('gisid'), e.coordinate);
-                    else if (popupElement) $(popupElement).hide();
+                    let feature = map.forEachFeatureAtPixel(e.pixel, f => f);
+                    if (feature && feature.get('gisid')) {
+                        showPopup(feature.get('gisid'), e.coordinate);
+                    } else if (popupElement) {
+                        $(popupElement).hide();
+                    }
                 });
+
                 map.on('pointermove', e => {
-                    $('#map').css('cursor', map.forEachFeatureAtPixel(e.pixel, f => f) ? 'pointer' : '');
+                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, f => f);
+                    $('#map').css('cursor', hasFeature ? 'pointer' : '');
                 });
+
                 showLoading(false);
             }
 
