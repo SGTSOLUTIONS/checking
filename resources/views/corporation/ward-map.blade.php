@@ -546,6 +546,14 @@
             margin-bottom: 16px;
             overflow: hidden;
             border-left: 3px solid #ffc107;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .assessment-card:hover,
+        .assessment-card:active {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .assessment-header {
@@ -654,6 +662,9 @@
 @endpush
 
 @push('scripts')
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
         // Prevent default touch zoom on entire page
         (function() {
@@ -684,6 +695,7 @@
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
     <script>
+        // Global map variables
         let map;
         let polygonLayer;
         let lineLayer;
@@ -696,8 +708,21 @@
         let popupElement;
         let currentActiveTab = 'building';
 
-        // Polygon data from server
+        // Data passed from server (already available, no AJAX needed!)
         let polygonDatas = @json($polygonDatas ?? []);
+        let polygons = @json($polygons ?? []);
+        let lines = @json($lines ?? []);
+
+        // Ward data from server
+        let wardData = {
+            ward_no: @json($ward->ward_no ?? ''),
+            drone_image: @json($ward->drone_image ?? null),
+            extent_left: @json($ward->extent_left ?? null),
+            extent_bottom: @json($ward->extent_bottom ?? null),
+            extent_right: @json($ward->extent_right ?? null),
+            extent_top: @json($ward->extent_top ?? null),
+            boundary: @json($ward->boundary ?? null)
+        };
 
         function showLoading(show) {
             let loadingEl = document.getElementById('mapLoading');
@@ -735,7 +760,7 @@
         }
 
         // Switch between tabs
-        function switchTab(tabId) {
+        window.switchTab = function(tabId) {
             // Hide all tab contents
             document.querySelectorAll('.popup-tab-content').forEach(content => {
                 content.classList.remove('active');
@@ -755,7 +780,7 @@
                 selectedTab.classList.add('active');
             }
             currentActiveTab = tabId;
-        }
+        };
 
         // Show popup with three tabbed sections: Building Details, Assessments, Shops
         function showPopup(gisid, coordinate) {
@@ -859,7 +884,7 @@
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
                     assessmentsHtml += `
-                        <div class="assessment-card" id="assessment-card" data-id= ${assessment.id} data-assessment= ${assessment.assessment}>
+                        <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}">
                             <div class="assessment-header">
                                 <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
                                 <span class="assessment-status">
@@ -979,10 +1004,17 @@
                     popupElement.style.display = 'none';
                 });
             }
+
+            // Re-attach assessment card click events using jQuery (only needed once)
+            $('.assessment-card').off('click').on('click', function() {
+                const assessmentId = $(this).data('id');
+                const assessmentNumber = $(this).data('assessment');
+                console.log('Assessment clicked:', assessmentId, assessmentNumber);
+                // You can redirect to assessment details page here
+                // window.location.href = `/assessment/${assessmentId}`;
+                alert('Assessment clicked: ' + assessmentNumber);
+            });
         }
-        $('#assessment-card').on('click', function() {
-            alert('assessment');
-        });
 
         function initMap() {
             showLoading(true);
@@ -1002,11 +1034,11 @@
             });
 
             // Drone Image Layer
-            let droneImage = @json($ward->drone_image ?? null);
-            let extentLeft = @json($ward->extent_left ?? null);
-            let extentBottom = @json($ward->extent_bottom ?? null);
-            let extentRight = @json($ward->extent_right ?? null);
-            let extentTop = @json($ward->extent_top ?? null);
+            let droneImage = wardData.drone_image;
+            let extentLeft = wardData.extent_left;
+            let extentBottom = wardData.extent_bottom;
+            let extentRight = wardData.extent_right;
+            let extentTop = wardData.extent_top;
 
             let imageUrl = null;
             if (droneImage) {
@@ -1051,7 +1083,7 @@
             }
 
             // Boundary Layer
-            let boundary = @json($ward->boundary ?? null);
+            let boundary = wardData.boundary;
             let boundaryExtent = null;
 
             if (boundary && boundary.length > 0 && boundary[0] && boundary[0].length) {
@@ -1144,9 +1176,8 @@
             addZoomControls();
             addMobileControls();
 
+            // Directly refresh layers with the already available data
             refreshLayers();
-
-            showLoading(false);
         }
 
         function addLayerSwitcher(hasDroneImage) {
@@ -1261,22 +1292,78 @@
             // Close panels when clicking outside on mobile
             document.addEventListener('click', (e) => {
                 if (window.innerWidth <= 768) {
-                    if (layerSwitcher && !layerSwitcher.contains(e.target) && !menuBtn.contains(e.target)) {
+                    if (layerSwitcher && !layerSwitcher.contains(e.target) && menuBtn && !menuBtn.contains(e
+                        .target)) {
                         layerSwitcher.classList.remove('open');
                     }
-                    if (mapLegend && !mapLegend.contains(e.target) && !legendBtn.contains(e.target)) {
+                    if (mapLegend && !mapLegend.contains(e.target) && legendBtn && !legendBtn.contains(e.target)) {
                         mapLegend.classList.remove('open');
                     }
                 }
             });
         }
 
+        function polygonStyleFunction(feature) {
+            const gisid = feature.get('gisid');
+            const sqfeet = feature.get('sqfeet');
+            const geometry = feature.getGeometry();
+
+            let center;
+            try {
+                center = geometry.getInteriorPoint();
+                if (!center) {
+                    const extent = geometry.getExtent();
+                    const x = (extent[0] + extent[2]) / 2;
+                    const y = (extent[1] + extent[3]) / 2;
+                    center = new ol.geom.Point([x, y]);
+                }
+            } catch (e) {
+                const extent = geometry.getExtent();
+                const x = (extent[0] + extent[2]) / 2;
+                const y = (extent[1] + extent[3]) / 2;
+                center = new ol.geom.Point([x, y]);
+            }
+
+            return [
+                new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ff4444',
+                        width: 2
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 68, 68, 0.15)'
+                    })
+                }),
+                new ol.style.Style({
+                    geometry: center,
+                    text: new ol.style.Text({
+                        text: `${gisid}\n${sqfeet} sqft`,
+                        font: 'bold 10px Arial, sans-serif',
+                        fill: new ol.style.Fill({
+                            color: '#ffffff'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 2
+                        }),
+                        textAlign: 'center',
+                        offsetY: 0,
+                        backgroundFill: new ol.style.Fill({
+                            color: 'rgba(0, 0, 0, 0.7)'
+                        }),
+                        backgroundStroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 1
+                        }),
+                        padding: [4, 8, 4, 8]
+                    })
+                })
+            ];
+        }
+
         function refreshLayers() {
             if (polygonLayer) map.removeLayer(polygonLayer);
             if (lineLayer) map.removeLayer(lineLayer);
-
-            let polygons = @json($polygons ?? []);
-            let lines = @json($lines ?? []);
 
             console.log(`Loading: ${polygons.length} polygons, ${lines.length} lines`);
 
@@ -1297,64 +1384,6 @@
                     console.log('Error parsing polygon:', e);
                 }
             });
-
-            function polygonStyleFunction(feature) {
-                const gisid = feature.get('gisid');
-                const sqfeet = feature.get('sqfeet');
-                const geometry = feature.getGeometry();
-
-                let center;
-                try {
-                    center = geometry.getInteriorPoint();
-                    if (!center) {
-                        const extent = geometry.getExtent();
-                        const x = (extent[0] + extent[2]) / 2;
-                        const y = (extent[1] + extent[3]) / 2;
-                        center = new ol.geom.Point([x, y]);
-                    }
-                } catch (e) {
-                    const extent = geometry.getExtent();
-                    const x = (extent[0] + extent[2]) / 2;
-                    const y = (extent[1] + extent[3]) / 2;
-                    center = new ol.geom.Point([x, y]);
-                }
-
-                return [
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 2
-                        }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255, 68, 68, 0.15)'
-                        })
-                    }),
-                    new ol.style.Style({
-                        geometry: center,
-                        text: new ol.style.Text({
-                            text: `${gisid}\n${sqfeet} sqft`,
-                            font: 'bold 10px Arial, sans-serif',
-                            fill: new ol.style.Fill({
-                                color: '#ffffff'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#000000',
-                                width: 2
-                            }),
-                            textAlign: 'center',
-                            offsetY: 0,
-                            backgroundFill: new ol.style.Fill({
-                                color: 'rgba(0, 0, 0, 0.7)'
-                            }),
-                            backgroundStroke: new ol.style.Stroke({
-                                color: '#ff4444',
-                                width: 1
-                            }),
-                            padding: [4, 8, 4, 8]
-                        })
-                    })
-                ];
-            }
 
             polygonLayer = new ol.layer.Vector({
                 source: polygonSource,
@@ -1427,22 +1456,8 @@
                 }
             });
 
-            if (!boundaryLayer && polygonSource.getFeatures().length > 0) {
-                try {
-                    const extent = polygonSource.getExtent();
-                    if (extent && !isNaN(extent[0]) && !isNaN(extent[1]) &&
-                        extent[0] !== Infinity && extent[1] !== -Infinity) {
-                        map.getView().fit(extent, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                    }
-                } catch (e) {
-                    console.log('Error fitting to polygons:', e);
-                }
-            }
-
             console.log('Layers Refreshed Successfully');
+            showLoading(false);
         }
 
         window.addEventListener('orientationchange', function() {
