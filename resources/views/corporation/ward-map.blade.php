@@ -884,43 +884,45 @@
                 assessments.forEach((assessment, idx) => {
                     const hasQC = assessment.qcsqfeet || assessment.qcusage;
                     assessmentsHtml += `
-                        <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}">
-                            <div class="assessment-header">
-                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
-                                <span class="assessment-status">
-                                    <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">
-                                        ${hasQC ? '<i class="fas fa-check-circle"></i> QC Done' : '<i class="fas fa-clock"></i> QC Pending'}
+                        <div class="assessment-class">
+                            <div class="assessment-card" data-id="${assessment.id || ''}" data-assessment="${assessment.assessment || ''}">
+                                <div class="assessment-header">
+                                    <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
+                                    <span class="assessment-status">
+                                        <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">
+                                            ${hasQC ? '<i class="fas fa-check-circle"></i> QC Done' : '<i class="fas fa-clock"></i> QC Pending'}
+                                        </span>
                                     </span>
-                                </span>
-                            </div>
-                            <div class="assessment-body">
-                                <div class="assessment-row">
-                                    <div class="assessment-label">Owner:</div>
-                                    <div class="assessment-value"><strong>${assessment.owner_name || assessment.present_owner_name || 'N/A'}</strong></div>
                                 </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">Phone:</div>
-                                    <div class="assessment-value">${assessment.phone_number || 'N/A'}</div>
-                                </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">Floor:</div>
-                                    <div class="assessment-value">${assessment.floor || 'N/A'}</div>
-                                </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">Usage:</div>
-                                    <div class="assessment-value">${assessment.bill_usage || 'N/A'}</div>
-                                </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">QC Sqft:</div>
-                                    <div class="assessment-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</div>
-                                </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">QC Usage:</div>
-                                    <div class="assessment-value">${assessment.qcusage || assessment.usage || 'N/A'}</div>
-                                </div>
-                                <div class="assessment-row">
-                                    <div class="assessment-label">Shops:</div>
-                                    <div class="assessment-value">${(assessment.shops || []).length}</div>
+                                <div class="assessment-body">
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">Owner:</div>
+                                        <div class="assessment-value"><strong>${assessment.owner_name || assessment.present_owner_name || 'N/A'}</strong></div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">Phone:</div>
+                                        <div class="assessment-value">${assessment.phone_number || 'N/A'}</div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">Floor:</div>
+                                        <div class="assessment-value">${assessment.floor || 'N/A'}</div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">Usage:</div>
+                                        <div class="assessment-value">${assessment.bill_usage || 'N/A'}</div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">QC Sqft:</div>
+                                        <div class="assessment-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">QC Usage:</div>
+                                        <div class="assessment-value">${assessment.qcusage || assessment.usage || 'N/A'}</div>
+                                    </div>
+                                    <div class="assessment-row">
+                                        <div class="assessment-label">Shops:</div>
+                                        <div class="assessment-value">${(assessment.shops || []).length}</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1005,14 +1007,111 @@
                 });
             }
 
-            // Re-attach assessment card click events using jQuery (only needed once)
-            $('.assessment-card').off('click').on('click', function() {
+            // Re-attach assessment card click events using jQuery
+            $('.assessment-card').off('click').on('click', function(e) {
+                e.stopPropagation();
                 const assessmentId = $(this).data('id');
                 const assessmentNumber = $(this).data('assessment');
+
                 console.log('Assessment clicked:', assessmentId, assessmentNumber);
-                // You can redirect to assessment details page here
-                // window.location.href = `/assessment/${assessmentId}`;
-                alert('Assessment clicked: ' + assessmentNumber);
+
+                // Close any other open forms
+                $('.assessment-form-container').remove();
+
+                // Simple form HTML
+                const formHtml = `
+        <div class="assessment-form-container" style="margin-top: 10px; padding: 15px; background: #1a1a2e; border-radius: 8px; border-left: 3px solid #ff4444;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h4 style="color: #ffc107; margin: 0;">QC Form - ${assessmentNumber}</h4>
+                <button class="close-form-btn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+
+            <form id="simpleQCForm">
+                <input type="hidden" name="assessment_id" value="${assessmentId}">
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Square Feet:</label>
+                    <input type="number" name="qc_sqfeet" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">QC Usage:</label>
+                    <select name="qc_usage" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                        <option value="">Select</option>
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Industrial">Industrial</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <label style="color: #ffc107; display: block; margin-bottom: 5px;">Tax Amount (₹):</label>
+                    <input type="number" name="tax_amount" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ff4444; background: #0f0f1a; color: white;">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="submit" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Save</button>
+                    <button type="button" class="cancel-form-btn" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+                // Insert form after clicked card
+                $(this).after(formHtml);
+
+                // Handle form submission
+                $('#simpleQCForm').on('submit', function(e) {
+                    e.preventDefault();
+
+                    const qcSqfeet = $('input[name="qc_sqfeet"]').val();
+                    const qcUsage = $('select[name="qc_usage"]').val();
+                    const taxAmount = $('input[name="tax_amount"]').val();
+
+                    // Check if QC is complete
+                    let isComplete = false;
+                    let statusText = '';
+
+                    if (qcSqfeet && qcUsage && taxAmount) {
+                        isComplete = true;
+                        statusText = 'QC Complete';
+                    } else {
+                        isComplete = false;
+                        statusText = 'QC Pending';
+                    }
+
+                    // Update the badge immediately
+                    if (isComplete) {
+                        $(this).closest('.assessment-card').find('.badge')
+                            .removeClass('badge-warning')
+                            .addClass('badge-success')
+                            .html('<i class="fas fa-check-circle"></i> QC Complete');
+                    } else {
+                        $(this).closest('.assessment-card').find('.badge')
+                            .removeClass('badge-success')
+                            .addClass('badge-warning')
+                            .html('<i class="fas fa-clock"></i> QC Pending');
+                    }
+
+                    alert('QC Saved! Status: ' + statusText);
+
+                    // Close form
+                    $('.assessment-form-container').remove();
+
+                    // Here you can save to database via AJAX
+                    console.log({
+                        assessment_id: assessmentId,
+                        qc_sqfeet: qcSqfeet,
+                        qc_usage: qcUsage,
+                        tax_amount: taxAmount,
+                        qc_complete: isComplete
+                    });
+                });
+
+                // Close form buttons
+                $('.close-form-btn, .cancel-form-btn').on('click', function() {
+                    $('.assessment-form-container').remove();
+                });
             });
         }
 
@@ -1293,7 +1392,7 @@
             document.addEventListener('click', (e) => {
                 if (window.innerWidth <= 768) {
                     if (layerSwitcher && !layerSwitcher.contains(e.target) && menuBtn && !menuBtn.contains(e
-                        .target)) {
+                            .target)) {
                         layerSwitcher.classList.remove('open');
                     }
                     if (mapLegend && !mapLegend.contains(e.target) && legendBtn && !legendBtn.contains(e.target)) {
