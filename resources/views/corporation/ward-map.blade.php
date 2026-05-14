@@ -16,10 +16,10 @@
 @endsection
 
 @push('styles')
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <style>
         * {
             margin: 0;
@@ -101,7 +101,7 @@
             }
         }
 
-        /* Panels */
+        /* Panels Base Style */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -126,7 +126,11 @@
             gap: 8px;
         }
 
-        /* Layer Switcher */
+        .panel h5 i {
+            font-size: 18px;
+        }
+
+        /* Layer Switcher - Desktop */
         .layer-switcher {
             position: absolute;
             top: 100px;
@@ -134,6 +138,7 @@
             min-width: 180px;
         }
 
+        /* Layer Switcher - Mobile */
         @media (max-width: 768px) {
             .layer-switcher {
                 position: fixed;
@@ -141,6 +146,7 @@
                 right: 20px;
                 top: auto;
                 transform: translateX(120%);
+                min-width: 200px;
                 opacity: 0;
                 visibility: hidden;
                 transition: all 0.3s ease;
@@ -153,265 +159,8 @@
             }
         }
 
-        /* Legend */
-        .map-legend {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            min-width: 150px;
-            pointer-events: none;
-        }
-
-        @media (max-width: 768px) {
-            .map-legend {
-                position: fixed;
-                bottom: 140px;
-                right: 20px;
-                top: auto;
-                transform: translateX(120%);
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-                pointer-events: auto;
-            }
-
-            .map-legend.open {
-                transform: translateX(0);
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-
-        /* Search Panel */
-        .search-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 350px;
-            max-width: calc(100% - 40px);
-        }
-
-        @media (max-width: 768px) {
-            .search-panel {
-                position: fixed;
-                top: auto;
-                bottom: 100px;
-                left: 20px;
-                right: 20px;
-                width: auto;
-                transform: translateY(150%);
-                opacity: 0;
-                visibility: hidden;
-            }
-
-            .search-panel.open {
-                transform: translateY(0);
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-
-        /* Filter Panel */
-        .filter-panel {
-            position: absolute;
-            top: 100px;
-            right: 20px;
-            width: 280px;
-        }
-
-        @media (max-width: 768px) {
-            .filter-panel {
-                position: fixed;
-                bottom: 100px;
-                right: 20px;
-                top: auto;
-                transform: translateX(120%);
-                opacity: 0;
-                visibility: hidden;
-            }
-
-            .filter-panel.open {
-                transform: translateX(0);
-                opacity: 1;
-                visibility: visible;
-            }
-        }
-
-        /* Direction Panel */
-        .direction-panel {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            max-width: 400px;
-            display: none;
-            z-index: 1003;
-        }
-
-        @media (max-width: 768px) {
-            .direction-panel {
-                bottom: 100px;
-                left: 10px;
-                right: 10px;
-            }
-        }
-
-        .direction-panel.show {
-            display: block;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .search-box {
-            display: flex;
-            gap: 12px;
+        .layer-group {
             margin-bottom: 15px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #ff4444;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .search-box button {
-            padding: 12px 24px;
-            border-radius: 10px;
-            border: none;
-            background: #ff4444;
-            color: white;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .search-results {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .search-result-item {
-            padding: 12px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            cursor: pointer;
-            border-left: 3px solid #ffc107;
-        }
-
-        .result-gisid {
-            font-weight: bold;
-            color: #ffc107;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .direction-btn {
-            margin-top: 8px;
-            padding: 6px 12px;
-            background: #28a745;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 11px;
-        }
-
-        .filter-group {
-            margin-bottom: 15px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            color: #ffc107;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ff4444;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .apply-btn,
-        .reset-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .apply-btn {
-            background: #28a745;
-            color: white;
-        }
-
-        .reset-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .filter-count {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #ffc107;
-            text-align: center;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-        }
-
-        .zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 80px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 1000;
-        }
-
-        .zoom-btn {
-            width: 45px;
-            height: 45px;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .zoom-btn:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .layer-group label {
@@ -421,6 +170,13 @@
             margin: 10px 0;
             font-size: 13px;
             cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .layer-group label:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .group-title {
@@ -429,6 +185,37 @@
             font-size: 12px;
             margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Legend - Desktop */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            min-width: 150px;
+            pointer-events: none;
+        }
+
+        /* Legend - Mobile */
+        @media (max-width: 768px) {
+            .map-legend {
+                position: fixed;
+                bottom: 140px;
+                right: 20px;
+                top: auto;
+                transform: translateX(120%);
+                pointer-events: auto;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .map-legend.open {
+                transform: translateX(0);
+                opacity: 1;
+                visibility: visible;
+            }
         }
 
         .legend-item {
@@ -463,11 +250,314 @@
             border: 2px dashed #ff0000;
         }
 
-        .legend-color.route {
-            background: #28a745;
-            border: 2px solid #28a745;
+        /* Search Panel - Desktop */
+        .search-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
         }
 
+        /* Search Panel - Mobile */
+        @media (max-width: 768px) {
+            .search-panel {
+                position: fixed;
+                top: auto;
+                bottom: 100px;
+                left: 20px;
+                right: 20px;
+                width: auto;
+                transform: translateY(150%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .search-panel.open {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: #ffc107;
+        }
+
+        .search-box button {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            background: #ff4444;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .search-box button:active {
+            transform: scale(0.98);
+        }
+
+        .search-results {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid #ffc107;
+        }
+
+        .search-result-item:active {
+            background: rgba(255, 68, 68, 0.3);
+        }
+
+        .result-gisid {
+            font-weight: bold;
+            color: #ffc107;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .result-owner {
+            font-size: 11px;
+            color: #ddd;
+            margin: 3px 0;
+        }
+
+        .direction-btn {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #28a745;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .direction-btn:active {
+            background: #1e7e34;
+        }
+
+        /* Filter Panel - Desktop */
+        .filter-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 280px;
+        }
+
+        /* Filter Panel - Mobile */
+        @media (max-width: 768px) {
+            .filter-panel {
+                position: fixed;
+                bottom: 100px;
+                right: 20px;
+                top: auto;
+                transform: translateX(120%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+
+            .filter-panel.open {
+                transform: translateX(0);
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #ffc107;
+            font-weight: 500;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: #ffc107;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .apply-btn,
+        .reset-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .apply-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .apply-btn:active {
+            background: #1e7e34;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .reset-btn:active {
+            background: #c82333;
+        }
+
+        .filter-count {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #ffc107;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        /* Direction Panel */
+        .direction-panel {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            max-width: 400px;
+            display: none;
+            z-index: 1003;
+        }
+
+        @media (max-width: 768px) {
+            .direction-panel {
+                bottom: 100px;
+                left: 10px;
+                right: 10px;
+            }
+        }
+
+        .direction-panel.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .direction-info {
+            font-size: 13px;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        .direction-info p {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .close-direction {
+            float: right;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 80px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .zoom-btn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .zoom-btn:first-child {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Loading */
         .map-loading {
             position: fixed;
             top: 50%;
@@ -478,6 +568,10 @@
             padding: 15px 30px;
             border-radius: 50px;
             z-index: 2000;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* Popup */
@@ -501,7 +595,6 @@
             from {
                 transform: translateY(100%);
             }
-
             to {
                 transform: translateY(0);
             }
@@ -517,7 +610,6 @@
                 border-radius: 20px !important;
                 animation: none !important;
             }
-
             .ol-popup:after {
                 content: '';
                 position: absolute;
@@ -541,6 +633,15 @@
             top: 0;
         }
 
+        .popup-header h4 {
+            margin: 0;
+            font-size: 18px;
+            color: #ff4444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .popup-close {
             background: rgba(255, 255, 255, 0.1);
             border: none;
@@ -549,6 +650,12 @@
             height: 35px;
             border-radius: 50%;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .popup-close:active {
+            background: #ff4444;
+            transform: rotate(90deg);
         }
 
         .popup-tabs {
@@ -565,6 +672,11 @@
             padding: 14px;
             cursor: pointer;
             font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .popup-tab:active {
+            background: rgba(255, 68, 68, 0.2);
         }
 
         .popup-tab.active {
@@ -628,6 +740,12 @@
             margin-bottom: 12px;
             border-left: 3px solid #ffc107;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .assessment-card:active {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .assessment-header {
@@ -673,10 +791,23 @@
             border: 1px solid rgba(255, 68, 68, 0.2);
         }
 
+        .shop-name {
+            font-weight: 700;
+            color: #ff4444;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: #888;
+        }
+
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            opacity: 0.5;
         }
 
         .assessment-form-container {
@@ -696,12 +827,22 @@
             float: right;
         }
 
-        .route-info {
-            background: #28a745;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 10px;
-            text-align: center;
+        /* Scrollbar Styling */
+        .search-results::-webkit-scrollbar,
+        .popup-tab-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .search-results::-webkit-scrollbar-track,
+        .popup-tab-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .search-results::-webkit-scrollbar-thumb,
+        .popup-tab-content::-webkit-scrollbar-thumb {
+            background: #ff4444;
+            border-radius: 10px;
         }
     </style>
 @endpush
@@ -739,26 +880,16 @@
             let locationTracking = false,
                 watchId = null;
 
-            // ==================== ROUTE VARIABLES ====================
-            let routeLayer = null,
-                startMarker = null,
-                endMarker = null;
-            let routeCoordinates = [];
-
-            // ==================== SEARCH VARIABLES ====================
-            let allBuildings = [];
-
-            // ==================== OPENROUTESERVICE API KEY ====================
-            // Get your free API key from https://openrouteservice.org/sign-up/
-            const ORS_API_KEY = '5b3ce3597851110001cf6248b5b3c9a9d9c84e6a9c4b5a8b3e7f2d1c'; // Replace with your key
+            // ==================== SEARCH & DIRECTION VARIABLES ====================
+            let allBuildings = [],
+                directionLineLayer = null,
+                destinationMarkerLayer = null;
 
             // ==================== HELPER FUNCTIONS ====================
             function showLoading(show) {
                 if (show) {
                     if ($('#mapLoading').length === 0) {
-                        $('body').append(
-                            '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                            );
+                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
                     }
                     $('#mapLoading').show();
                 } else {
@@ -766,6 +897,7 @@
                 }
             }
 
+            // Close all mobile panels - only one panel open at a time
             function closeAllMobilePanels(exceptPanel = null) {
                 if (exceptPanel !== 'layer') $('#layerSwitcher').removeClass('open');
                 if (exceptPanel !== 'legend') $('#mapLegend').removeClass('open');
@@ -790,17 +922,14 @@
                     $.each(polygons, function(j, poly) {
                         if (poly.gisid == building.gisid) {
                             try {
-                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly
-                                    .coordinates) : poly.coordinates;
+                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                                 if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0,
-                                        cy = 0;
+                                    let cx = 0, cy = 0;
                                     $.each(coords[0], function(k, c) {
                                         cx += c[0];
                                         cy += c[1];
                                     });
-                                    info.coordinates = [cx / coords[0].length, cy / coords[0]
-                                        .length];
+                                    info.coordinates = [cx / coords[0].length, cy / coords[0].length];
                                 }
                             } catch (e) {}
                             return false;
@@ -830,7 +959,7 @@
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
                 }, function(err) {
-                    alert("Unable to get location");
+                    alert("Unable to get location: " + err.message);
                     locationTracking = false;
                     $('#mobileLocationBtn').css('background', 'rgba(220,53,69,0.9)');
                 });
@@ -856,6 +985,7 @@
                 currentPosition = [lon, lat];
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
+
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -873,6 +1003,7 @@
                     })
                 });
                 map.addLayer(accuracyLayer);
+
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -893,6 +1024,7 @@
                     })
                 });
                 map.addLayer(currentLocationLayer);
+
                 if (!localStorage.getItem('mapCentered')) {
                     map.getView().setCenter(coords);
                     map.getView().setZoom(18);
@@ -900,82 +1032,54 @@
                 }
             }
 
-            // ==================== REAL ROAD DIRECTION USING OPENROUTESERVICE ====================
-            async function getRoadRoute(startLonLat, endLonLat, profile = 'driving-car') {
-                showLoading(true);
-                let url = `https://api.openrouteservice.org/v2/directions/${profile}/geojson`;
-
-                try {
-                    let response = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': ORS_API_KEY
-                        },
-                        body: JSON.stringify({
-                            coordinates: [startLonLat, endLonLat],
-                            format: 'geojson'
-                        })
-                    });
-
-                    let data = await response.json();
-                    showLoading(false);
-                    return data;
-                } catch (error) {
-                    console.error("Route error:", error);
-                    showLoading(false);
-                    return null;
-                }
+            // ==================== DIRECTION FUNCTIONS ====================
+            function calculateDistance(lon1, lat1, lon2, lat2) {
+                let R = 6371;
+                let dLat = (lat2 - lat1) * Math.PI / 180;
+                let dLon = (lon2 - lon1) * Math.PI / 180;
+                let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             }
 
-            function displayRoadRoute(routeData, startCoords, endCoords, buildingGisid) {
-                // Remove existing route layers
-                if (routeLayer) map.removeLayer(routeLayer);
-                if (startMarker) map.removeLayer(startMarker);
-                if (endMarker) map.removeLayer(endMarker);
-
-                if (!routeData || !routeData.features || !routeData.features[0]) {
-                    alert("Could not find a valid route. Please try again.");
+            function showDirectionToBuilding(gisid, coords) {
+                if (!currentPosition) {
+                    alert("Please enable location tracking first");
+                    startLocationTracking();
                     return;
                 }
+                if (directionLineLayer) map.removeLayer(directionLineLayer);
+                if (destinationMarkerLayer) map.removeLayer(destinationMarkerLayer);
 
-                let feature = routeData.features[0];
-                let geometry = feature.geometry;
-                let properties = feature.properties;
-                let distance = properties.summary.distance / 1000; // km
-                let duration = properties.summary.duration / 60; // minutes
+                let from = ol.proj.fromLonLat(currentPosition);
+                let to = ol.proj.fromLonLat(coords);
 
-                // Convert route coordinates to OpenLayers format
-                let routeCoords = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-
-                // Create route line layer
-                routeLayer = new ol.layer.Vector({
+                directionLineLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
-                            geometry: new ol.geom.LineString(routeCoords)
+                            geometry: new ol.geom.LineString([from, to])
                         })]
                     }),
                     style: new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: '#28a745',
-                            width: 6,
+                            width: 4,
                             lineDash: [10, 10]
                         })
                     })
                 });
-                map.addLayer(routeLayer);
+                map.addLayer(directionLineLayer);
 
-                // Create start marker (green)
-                let startPoint = ol.proj.fromLonLat(startCoords);
-                startMarker = new ol.layer.Vector({
+                destinationMarkerLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
-                            geometry: new ol.geom.Point(startPoint)
+                            geometry: new ol.geom.Point(to)
                         })]
                     }),
                     style: new ol.style.Style({
                         image: new ol.style.Circle({
-                            radius: 12,
+                            radius: 15,
                             fill: new ol.style.Fill({
                                 color: '#28a745'
                             }),
@@ -986,133 +1090,50 @@
                         })
                     })
                 });
-                map.addLayer(startMarker);
+                map.addLayer(destinationMarkerLayer);
 
-                // Create end marker (red)
-                let endPoint = ol.proj.fromLonLat(endCoords);
-                endMarker = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(endPoint)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({
-                                color: '#dc3545'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#fff',
-                                width: 3
-                            })
-                        })
-                    })
-                });
-                map.addLayer(endMarker);
-
-                // Show direction panel with detailed info
-                let travelModes = {
-                    'driving-car': '🚗 Driving',
-                    'cycling-regular': '🚲 Cycling',
-                    'foot-walking': '🚶 Walking'
-                };
-
+                let distance = calculateDistance(currentPosition[0], currentPosition[1], coords[0], coords[1]);
                 let html = `
                     <div class="direction-panel panel show" id="directionPanel">
                         <button class="close-direction" onclick="$('#directionPanel').remove();">&times;</button>
-                        <h5><i class="fas fa-route"></i> Road Direction</h5>
+                        <h5><i class="fas fa-directions"></i> Direction to Building</h5>
                         <div class="direction-info">
-                            <p><strong>📍 From:</strong> Your Location</p>
-                            <p><strong>🏢 To:</strong> ${buildingGisid}</p>
-                            <p><strong>📏 Distance:</strong> ${distance.toFixed(2)} km (${(distance * 0.621371).toFixed(2)} miles)</p>
-                            <p><strong>⏱️ Duration:</strong> ${Math.floor(duration)} min (${(duration / 60).toFixed(1)} hours)</p>
-                            <p><strong>🛣️ Mode:</strong> Car (Fastest route)</p>
+                            <p><strong>GIS ID:</strong> ${gisid}</p>
+                            <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
+                            <p><strong>Walking:</strong> ${Math.round(distance / 5 * 60)} min</p>
+                            <p><strong>Driving:</strong> ${Math.round(distance / 40 * 60)} min</p>
                         </div>
-                        <div class="route-actions" style="display: flex; gap: 10px; margin-top: 15px;">
-                            <button id="showFullRouteBtn" style="flex:1; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
-                                <i class="fas fa-map-marked-alt"></i> Show Full Route
-                            </button>
-                            <button id="startNavigationBtn" style="flex:1; padding:10px; background:#28a745; border:none; border-radius:8px; color:white; cursor:pointer;">
-                                <i class="fas fa-play"></i> Start Navigation
-                            </button>
-                        </div>
+                        <button id="fitBothBtn" style="width:100%; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
+                            <i class="fas fa-map-marked-alt"></i> Show Full Route
+                        </button>
                     </div>`;
-
                 $('#directionPanel').remove();
                 $('body').append(html);
 
-                // Fit route in view
-                let extent = ol.extent.boundingExtent(routeCoords);
-                map.getView().fit(extent, {
-                    padding: [50, 50, 50, 50],
-                    duration: 1000
-                });
-
-                // Show full route button
-                $('#showFullRouteBtn').on('click', function() {
-                    map.getView().fit(extent, {
+                $('#fitBothBtn').on('click', function() {
+                    map.getView().fit(ol.extent.boundingExtent([from, to]), {
                         padding: [50, 50, 50, 50],
                         duration: 1000
                     });
                 });
 
-                // Start navigation mode - animate along route
-                let navigationActive = false;
-                let currentIndex = 0;
-                let navigationInterval = null;
-
-                $('#startNavigationBtn').on('click', function() {
-                    if (navigationActive) {
-                        // Stop navigation
-                        navigationActive = false;
-                        if (navigationInterval) clearInterval(navigationInterval);
-                        $(this).html('<i class="fas fa-play"></i> Start Navigation');
-                        $(this).css('background', '#28a745');
-
-                        // Reset view
-                        map.getView().setCenter(startPoint);
-                        map.getView().setZoom(18);
-                    } else {
-                        // Start navigation
-                        navigationActive = true;
-                        currentIndex = 0;
-                        $(this).html('<i class="fas fa-stop"></i> Stop Navigation');
-                        $(this).css('background', '#dc3545');
-
-                        // Animate along route
-                        navigationInterval = setInterval(function() {
-                            if (!navigationActive) return;
-                            if (currentIndex >= routeCoords.length) {
-                                clearInterval(navigationInterval);
-                                navigationActive = false;
-                                $('#startNavigationBtn').html(
-                                    '<i class="fas fa-play"></i> Start Navigation').css(
-                                    'background', '#28a745');
-                                alert("You have reached your destination!");
-                                return;
-                            }
-                            map.getView().setCenter(routeCoords[currentIndex]);
-                            map.getView().setZoom(17);
-                            currentIndex += 5;
-                        }, 500);
-                    }
+                map.getView().fit(ol.extent.boundingExtent([from, to]), {
+                    padding: [50, 50, 50, 50],
+                    duration: 1000
                 });
             }
 
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
                 if (!text || !text.trim()) {
-                    $('#searchResults').html(
-                        '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
+                    $('#searchResults').html('<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
                     return;
                 }
                 let term = text.toLowerCase().trim();
                 let results = [];
+
                 $.each(allBuildings, function(i, b) {
-                    let match = false,
-                        type = '',
-                        val = '';
+                    let match = false, type = '', val = '';
                     if (b.gisid && b.gisid.toLowerCase().includes(term)) {
                         match = true;
                         type = 'GIS ID';
@@ -1147,29 +1168,31 @@
                             }
                         });
                     }
-                    if (match) results.push({
-                        gisid: b.gisid,
-                        matchType: type,
-                        matchValue: val,
-                        building: b,
-                        coordinates: b.coordinates
-                    });
+                    if (match) {
+                        results.push({
+                            gisid: b.gisid,
+                            matchType: type,
+                            matchValue: val,
+                            building: b,
+                            coordinates: b.coordinates
+                        });
+                    }
                 });
 
                 let $res = $('#searchResults').empty();
                 if (!results.length) {
-                    $res.html(
-                        '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
+                    $res.html('<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
                     return;
                 }
+
                 $.each(results, function(i, r) {
-                    let lon = r.coordinates ? r.coordinates[0] : '';
-                    let lat = r.coordinates ? r.coordinates[1] : '';
+                    let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
+                    let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
                     $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
                         <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
                         <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
                         <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Road Directions</button>
+                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
                     </div>`);
                 });
 
@@ -1180,43 +1203,16 @@
                     }
                 });
 
-                $('.direction-btn').off('click').on('click', async function(e) {
+                $('.direction-btn').off('click').on('click', function(e) {
                     e.stopPropagation();
                     let p = $(this).closest('.search-result-item');
-                    let gisid = p.data('gisid');
                     let lon = p.data('lon');
                     let lat = p.data('lat');
-
-                    if (!lon || !lat) {
-                        alert("Coordinates not available for this building");
-                        return;
-                    }
-                    if (!currentPosition) {
-                        alert("Please enable location tracking first");
-                        startLocationTracking();
-                        return;
-                    }
-
-                    // Show loading indicator
-                    let btn = $(this);
-                    let originalText = btn.html();
-                    btn.html('<i class="fas fa-spinner fa-spin"></i> Getting route...').prop('disabled',
-                        true);
-
-                    // Get road route
-                    let routeData = await getRoadRoute([currentPosition[0], currentPosition[1]], [
-                        parseFloat(lon), parseFloat(lat)
-                    ], 'driving-car');
-
-                    btn.html(originalText).prop('disabled', false);
-
-                    if (routeData) {
-                        displayRoadRoute(routeData, [currentPosition[0], currentPosition[1]], [
-                            parseFloat(lon), parseFloat(lat)
-                        ], gisid);
+                    if (lon && lat) {
+                        showDirectionToBuilding(p.data('gisid'), [parseFloat(lon), parseFloat(lat)]);
                         closeAllMobilePanels();
                     } else {
-                        alert("Could not find a road route. Please try again.");
+                        alert("Coordinates not available for this building");
                     }
                 });
             }
@@ -1224,16 +1220,22 @@
             function zoomToBuilding(gisid) {
                 if (!polygonLayer) return;
                 let features = polygonLayer.getSource().getFeatures();
+                let f = null;
                 for (let i = 0; i < features.length; i++) {
                     if (features[i].get('gisid') == gisid) {
-                        let e = features[i].getGeometry().getExtent();
-                        map.getView().fit(e, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                        showPopup(gisid, ol.extent.getCenter(e));
+                        f = features[i];
                         break;
                     }
+                }
+                if (f) {
+                    let e = f.getGeometry().getExtent();
+                    map.getView().fit(e, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                    showPopup(gisid, ol.extent.getCenter(e));
+                } else {
+                    alert("Building not found on map");
                 }
             }
 
@@ -1255,6 +1257,7 @@
             window.closePopup = function() {
                 $('.ol-popup').hide();
             };
+
             window.switchTab = function(t) {
                 $('.popup-tab-content, .popup-tab').removeClass('active');
                 $('#tab-' + t).addClass('active');
@@ -1265,6 +1268,7 @@
             function showPopup(gisid, coord) {
                 let pd = polygonDatas.find(p => p.gisid == gisid);
                 if (!pd) return;
+
                 let assessments = pd.pointdata || [];
                 let shops = [];
                 $.each(assessments, function(i, a) {
@@ -1278,81 +1282,137 @@
                     }
                 });
 
-                let buildingHtml =
-                    `<div class="building-details-content">${[['fingerprint','GIS ID',pd.gisid],['building','Building Usage',pd.building_usage],['home','Building Type',pd.building_type],['layer-group','Floors',pd.number_floor],['receipt','Total Bills',pd.number_bill],['store','Total Shops',pd.total_shops],['road','Road Name',pd.road_name],['map-pin','Zone',pd.zone]].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
+                let buildingHtml = `<div class="building-details-content">${[
+                    ['fingerprint', 'GIS ID', pd.gisid],
+                    ['building', 'Building Usage', pd.building_usage],
+                    ['home', 'Building Type', pd.building_type],
+                    ['layer-group', 'Floors', pd.number_floor],
+                    ['receipt', 'Total Bills', pd.number_bill],
+                    ['store', 'Total Shops', pd.total_shops],
+                    ['road', 'Road Name', pd.road_name],
+                    ['map-pin', 'Zone', pd.zone]
+                ].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
 
                 let assessmentsHtml = !assessments.length ?
                     '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments</p></div>' :
                     assessments.map((a, i) =>
-                        `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}"><div class="assessment-header"><span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span><span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span></div><div class="assessment-body">${[['Owner', a.owner_name || a.present_owner_name],['Phone', a.phone_number],['Floor', a.floor],['Usage', a.bill_usage],['Shops', (a.shops || []).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}</div></div>`
-                        ).join('');
+                        `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
+                            <div class="assessment-header">
+                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span>
+                                <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
+                            </div>
+                            <div class="assessment-body">
+                                ${[['Owner', a.owner_name || a.present_owner_name], ['Phone', a.phone_number], ['Floor', a.floor], ['Usage', a.bill_usage], ['Shops', (a.shops || []).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
+                            </div>
+                        </div>`
+                    ).join('');
 
                 let shopsHtml = !shops.length ?
-                    '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' : shops.map(s =>
-                        `<div class="shop-item"><div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>${[['Category', s.shop_category],['Owner', s.shop_owner_name],['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}</div>`
-                        ).join('');
+                    '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' :
+                    shops.map(s => `
+                        <div class="shop-item">
+                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
+                            ${[['Category', s.shop_category], ['Owner', s.shop_owner_name], ['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
+                        </div>
+                    `).join('');
 
-                let html =
-                    `<div class="popup-header"><h4><i class="fas fa-building"></i> Building Details</h4><button class="popup-close" onclick="closePopup()">&times;</button></div>
-                    <div class="popup-tabs"><button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
-                    <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
-                    <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button></div>
+                let html = `
+                    <div class="popup-header">
+                        <h4><i class="fas fa-building"></i> Building Details</h4>
+                        <button class="popup-close" onclick="closePopup()">&times;</button>
+                    </div>
+                    <div class="popup-tabs">
+                        <button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
+                        <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
+                        <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button>
+                    </div>
                     <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
                     <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
                     <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>`;
 
                 $(popupElement).html(html).show();
-                if ($(window).width() > 768 && popupOverlay) popupOverlay.setPosition(coord);
+                if ($(window).width() > 768 && popupOverlay) {
+                    popupOverlay.setPosition(coord);
+                }
 
                 $('.assessment-card').off('click').on('click', function() {
-                    let id = $(this).data('id'),
-                        num = $(this).data('assessment');
-                    $(this).after(
-                        `<div class="assessment-form-container"><button class="close-form-btn">&times;</button><h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                        <form class="qc-form"><input type="hidden" name="assessment_id" value="${id}">
-                        <div><label>QC Square Feet:</label><input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
-                        <div><label>QC Usage:</label><select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"><option value="">Select</option><option value="Residential">Residential</option><option value="Commercial">Commercial</option><option value="Industrial">Industrial</option></select></div>
-                        <div><label>Tax Amount (₹):</label><input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;"></div>
-                        <div style="display:flex; gap:10px;"><button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px;">Save</button><button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white;">Cancel</button></div></form></div>`
-                        );
+                    let id = $(this).data('id');
+                    let num = $(this).data('assessment');
+                    $(this).after(`
+                        <div class="assessment-form-container">
+                            <button class="close-form-btn">&times;</button>
+                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
+                            <form class="qc-form">
+                                <input type="hidden" name="assessment_id" value="${id}">
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">QC Square Feet:</label>
+                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                </div>
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">QC Usage:</label>
+                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                        <option value="">Select</option>
+                                        <option value="Residential">Residential</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Industrial">Industrial</option>
+                                    </select>
+                                </div>
+                                <div style="margin-bottom:12px;">
+                                    <label style="color:#ffc107">Tax Amount (₹):</label>
+                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                </div>
+                                <div style="display:flex; gap:10px;">
+                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
+                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    `);
 
                     $('.qc-form').on('submit', function(e) {
                         e.preventDefault();
-                        let has = $(this).find('input[name="qc_sqfeet"]').val() && $(this).find(
-                            'select[name="qc_usage"]').val() && $(this).find(
-                            'input[name="tax_amount"]').val();
+                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
+                                      $(this).find('select[name="qc_usage"]').val() &&
+                                      $(this).find('input[name="tax_amount"]').val();
                         let $badge = $(this).closest('.assessment-card').find('.badge');
-                        if (has) $badge.removeClass('badge-warning').addClass('badge-success').html(
-                            '<i class="fas fa-check-circle"></i> QC Complete');
-                        else $badge.removeClass('badge-success').addClass('badge-warning').html(
-                            '<i class="fas fa-clock"></i> QC Pending');
-                        alert('QC Saved!');
+                        if (hasValues) {
+                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
+                        } else {
+                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
+                        }
+                        alert('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'));
                         $('.assessment-form-container').remove();
                     });
+
                     $('.close-form-btn, .cancel-form-btn').on('click', function() {
                         $('.assessment-form-container').remove();
                     });
                 });
             }
 
-            // ==================== POLYGON STYLE ====================
+            // ==================== POLYGON STYLE FUNCTION ====================
             function polygonStyleFunction(feature) {
-                let gisid = feature.get('gisid'),
-                    sqfeet = feature.get('sqfeet'),
-                    geom = feature.getGeometry();
+                let gisid = feature.get('gisid');
+                let sqfeet = feature.get('sqfeet');
+                let geometry = feature.getGeometry();
                 let center;
+
                 try {
-                    center = geom.getInteriorPoint();
+                    center = geometry.getInteriorPoint();
                     if (!center) {
-                        let e = geom.getExtent();
-                        center = new ol.geom.Point([(e[0] + e[2]) / 2, (e[1] + e[3]) / 2]);
+                        let extent = geometry.getExtent();
+                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                     }
-                } catch (e) {
-                    let ex = geom.getExtent();
-                    center = new ol.geom.Point([(ex[0] + ex[2]) / 2, (ex[1] + ex[3]) / 2]);
+                } catch(e) {
+                    let extent = geometry.getExtent();
+                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                 }
-                if (feature.get('visible') === false) return null;
-                return [new ol.style.Style({
+
+                let isVisible = feature.get('visible');
+                if (isVisible === false) return null;
+
+                return [
+                    new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: '#ff4444',
                             width: 2
@@ -1386,38 +1446,48 @@
             function refreshLayers() {
                 if (polygonLayer) map.removeLayer(polygonLayer);
                 if (lineLayer) map.removeLayer(lineLayer);
+
                 let ps = new ol.source.Vector();
                 $.each(polygons, function(i, p) {
                     try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
-                            .coordinates;
-                        if (c && c.length) ps.addFeature(new ol.Feature({
-                            geometry: new ol.geom.Polygon(c),
-                            gisid: p.gisid,
-                            sqfeet: p.sqfeet,
-                            visible: true
-                        }));
-                    } catch (e) {}
+                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
+                        if (c && c.length) {
+                            ps.addFeature(new ol.Feature({
+                                geometry: new ol.geom.Polygon(c),
+                                gisid: p.gisid,
+                                sqfeet: p.sqfeet,
+                                visible: true
+                            }));
+                        }
+                    } catch(e) {
+                        console.error("Error parsing polygon:", e);
+                    }
                 });
+
                 polygonLayer = new ol.layer.Vector({
                     source: ps,
                     style: polygonStyleFunction,
                     visible: true
                 });
+
                 let ls = new ol.source.Vector();
                 $.each(lines, function(i, l) {
                     try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
-                            .coordinates;
+                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
                         if (c && c.length) {
-                            if (c.length === 1 && Array.isArray(c[0][0])) c = c[0];
+                            if (c.length === 1 && Array.isArray(c[0][0])) {
+                                c = c[0];
+                            }
                             ls.addFeature(new ol.Feature({
                                 geometry: new ol.geom.LineString(c),
                                 gisid: l.gisid
                             }));
                         }
-                    } catch (e) {}
+                    } catch(e) {
+                        console.error("Error parsing line:", e);
+                    }
                 });
+
                 lineLayer = new ol.layer.Vector({
                     source: ls,
                     style: new ol.style.Style({
@@ -1428,41 +1498,63 @@
                     }),
                     visible: true
                 });
+
                 map.addLayer(polygonLayer);
                 map.addLayer(lineLayer);
+
                 map.on('click', function(e) {
-                    let f = map.forEachFeatureAtPixel(e.pixel, f => f);
-                    if (f && f.get('gisid')) showPopup(f.get('gisid'), e.coordinate);
-                    else if (popupElement) $(popupElement).hide();
+                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) {
+                        return f;
+                    });
+                    if (feature && feature.get('gisid')) {
+                        showPopup(feature.get('gisid'), e.coordinate);
+                    } else if (popupElement) {
+                        $(popupElement).hide();
+                    }
                 });
+
                 map.on('pointermove', function(e) {
-                    $('#map').css('cursor', map.forEachFeatureAtPixel(e.pixel, f => f) ? 'pointer' : '');
+                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) {
+                        return f;
+                    });
+                    $('#map').css('cursor', hasFeature ? 'pointer' : '');
                 });
+
                 showLoading(false);
             }
 
             // ==================== MAP INITIALIZATION ====================
             function initMap() {
                 showLoading(true);
+
                 osmLayer = new ol.layer.Tile({
                     source: new ol.source.OSM(),
                     visible: true
                 });
+
                 satelliteLayer = new ol.layer.Tile({
                     source: new ol.source.XYZ({
                         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     }),
                     visible: false
                 });
-                let droneImg = wardData.drone_image,
-                    hasDrone = false;
+
+                let droneImg = wardData.drone_image;
+                let hasDrone = false;
+
                 if (droneImg && wardData.extent_left) {
                     try {
+                        let imageUrl = droneImg.replace(/^\/+/, '');
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+                            imageUrl = '/' + imageUrl;
+                        }
                         imageLayer = new ol.layer.Image({
                             source: new ol.source.ImageStatic({
-                                url: droneImg,
-                                imageExtent: [parseFloat(wardData.extent_left), parseFloat(wardData
-                                        .extent_bottom), parseFloat(wardData.extent_right),
+                                url: imageUrl,
+                                imageExtent: [
+                                    parseFloat(wardData.extent_left),
+                                    parseFloat(wardData.extent_bottom),
+                                    parseFloat(wardData.extent_right),
                                     parseFloat(wardData.extent_top)
                                 ],
                                 projection: 'EPSG:3857'
@@ -1470,10 +1562,14 @@
                             visible: true
                         });
                         hasDrone = true;
-                    } catch (e) {}
+                    } catch(e) {
+                        console.error("Error loading drone image:", e);
+                    }
                 }
-                let bound = wardData.boundary,
-                    boundExt = null;
+
+                let bound = wardData.boundary;
+                let boundExt = null;
+
                 if (bound && bound.length && bound[0].length) {
                     try {
                         let bc = bound[0].map(c => ol.proj.fromLonLat(c));
@@ -1495,23 +1591,26 @@
                             }),
                             visible: true
                         });
-                        let lons = bound[0].map(p => p[0]),
-                            lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
-                            .max(...lats)
-                        ]);
-                    } catch (e) {}
+                        let lons = bound[0].map(p => p[0]);
+                        let lats = bound[0].map(p => p[1]);
+                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
+                    } catch(e) {
+                        console.error("Error parsing boundary:", e);
+                    }
                 }
-                let center = ol.proj.fromLonLat([80.2707, 13.0827]),
-                    zoom = 18;
+
+                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
+                let zoom = 18;
+
                 if (bound && bound[0] && bound[0].length) {
                     try {
-                        let lons = bound[0].map(p => p[0]),
-                            lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
-                            lats) + Math.max(...lats)) / 2]);
-                    } catch (e) {}
+                        let lons = bound[0].map(p => p[0]);
+                        let lats = bound[0].map(p => p[1]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
+                        zoom = 18;
+                    } catch(e) {}
                 }
+
                 map = new ol.Map({
                     target: 'map',
                     layers: [osmLayer, satelliteLayer],
@@ -1520,172 +1619,292 @@
                         zoom: zoom
                     })
                 });
+
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
+
                 if (imageLayer) map.addLayer(imageLayer);
                 if (boundaryLayer) map.addLayer(boundaryLayer);
+
                 setTimeout(() => {
-                    if (boundExt) map.getView().fit(boundExt, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
+                    if (boundExt) {
+                        map.getView().fit(boundExt, {
+                            padding: [50, 50, 50, 50],
+                            duration: 1000
+                        });
+                    }
                 }, 500);
 
-                // Add UI panels
-                $('body').append(
-                    `<div class="layer-switcher panel" id="layerSwitcher"><h5><i class="fas fa-layer-group"></i> Layers</h5><div class="layer-group"><div class="group-title">Base Maps</div><label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label><label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label></div><div class="layer-group"><div class="group-title">Overlays</div><label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label><label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label><label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}</div></div>`
-                    );
-                $('body').append(
-                    `<div class="map-legend panel" id="mapLegend"><h5><i class="fas fa-info-circle"></i> Legend</h5><div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div><div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div><div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div><div class="legend-item"><div class="legend-color route"></div><span>Road Route (Green)</span></div></div>`
-                    );
-                $('body').append(
-                    `<div class="search-panel panel" id="searchPanel"><h5><i class="fas fa-search"></i> Search Building</h5><div class="search-box"><input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment..."><button id="searchBtn"><i class="fas fa-search"></i> Go</button></div><div id="searchResults" class="search-results"></div></div>`
-                    );
-                $('body').append(
-                    `<div class="filter-panel panel" id="filterPanel"><h5><i class="fas fa-filter"></i> Filter Buildings</h5><div class="filter-group"><label>QC Status</label><select id="filterType"><option value="all">All Buildings</option><option value="completed">QC Complete</option><option value="pending">QC Pending</option></select></div><div class="filter-group"><label>Min Floors</label><input type="number" id="filterMinFloors" placeholder="Min"></div><div class="filter-group"><label>Max Floors</label><input type="number" id="filterMaxFloors" placeholder="Max"></div><div class="filter-actions"><button class="apply-btn" id="applyFilterBtn">Apply</button><button class="reset-btn" id="resetFilterBtn">Reset</button></div><div class="filter-count" id="filterCount"></div></div>`
-                    );
-                $('body').append(
-                    `<div class="zoom-controls"><button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button></div>`
-                    );
+                // Add panels to DOM
+                $('body').append(`
+                    <div class="layer-switcher panel" id="layerSwitcher">
+                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
+                        <div class="layer-group">
+                            <div class="group-title">Base Maps</div>
+                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
+                        </div>
+                        <div class="layer-group">
+                            <div class="group-title">Overlays</div>
+                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
+                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
+                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
+                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
+                        </div>
+                    </div>
+                `);
 
-                // Event handlers
+                $('body').append(`
+                    <div class="map-legend panel" id="mapLegend">
+                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
+                        <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
+                        <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
+                        <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
+                    </div>
+                `);
+
+                $('body').append(`
+                    <div class="search-panel panel" id="searchPanel">
+                        <h5><i class="fas fa-search"></i> Search Building</h5>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
+                            <button id="searchBtn"><i class="fas fa-search"></i> Go</button>
+                        </div>
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                `);
+
+                $('body').append(`
+                    <div class="filter-panel panel" id="filterPanel">
+                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
+                        <div class="filter-group">
+                            <label>QC Status</label>
+                            <select id="filterType">
+                                <option value="all">All Buildings</option>
+                                <option value="completed">QC Complete</option>
+                                <option value="pending">QC Pending</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Min Floors</label>
+                            <input type="number" id="filterMinFloors" placeholder="Min">
+                        </div>
+                        <div class="filter-group">
+                            <label>Max Floors</label>
+                            <input type="number" id="filterMaxFloors" placeholder="Max">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
+                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
+                        </div>
+                        <div class="filter-count" id="filterCount"></div>
+                    </div>
+                `);
+
+                $('body').append(`
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                    </div>
+                `);
+
+                // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
                     currentBaseLayer = $(this).val();
                     osmLayer.setVisible(currentBaseLayer === 'osm');
                     satelliteLayer.setVisible(currentBaseLayer === 'satellite');
                 });
+
                 $('#toggleBuildings').on('change', function() {
                     if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
                 });
+
                 $('#toggleRoads').on('change', function() {
                     if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
                 });
+
                 $('#toggleBoundary').on('change', function() {
                     if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
                 });
-                if (hasDrone) $('#toggleDrone').on('change', function() {
-                    if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+
+                if (hasDrone) {
+                    $('#toggleDrone').on('change', function() {
+                        if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+                    });
+                }
+
+                $('#searchBtn').on('click', function() {
+                    searchBuildings($('#searchInput').val());
                 });
-                $('#searchBtn').on('click', () => searchBuildings($('#searchInput').val()));
-                $('#searchInput').on('keypress', e => {
-                    if (e.which === 13) searchBuildings($(this).val());
+
+                $('#searchInput').on('keypress', function(e) {
+                    if (e.which === 13) {
+                        searchBuildings($(this).val());
+                    }
                 });
+
                 $('#applyFilterBtn').on('click', function() {
-                    let type = $('#filterType').val(),
-                        minF = $('#filterMinFloors').val(),
-                        maxF = $('#filterMaxFloors').val(),
-                        src = polygonLayer.getSource(),
-                        fts = src.getFeatures(),
-                        cnt = 0;
+                    let type = $('#filterType').val();
+                    let minF = $('#filterMinFloors').val();
+                    let maxF = $('#filterMaxFloors').val();
+                    let src = polygonLayer.getSource();
+                    let fts = src.getFeatures();
+                    let cnt = 0;
+
                     $.each(fts, function(i, f) {
-                        let g = f.get('gisid'),
-                            b = polygonDatas.find(p => p.gisid == g),
-                            show = true;
+                        let g = f.get('gisid');
+                        let b = polygonDatas.find(p => p.gisid == g);
+                        let show = true;
+
                         if (type === 'completed' && b) {
                             let has = false;
-                            if (b.pointdata) $.each(b.pointdata, (k, a) => {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    has = true;
-                                    return false;
-                                }
-                            });
+                            if (b.pointdata) {
+                                $.each(b.pointdata, function(k, a) {
+                                    if (a.qcsqfeet || a.qcusage) {
+                                        has = true;
+                                        return false;
+                                    }
+                                });
+                            }
                             if (!has) show = false;
                         } else if (type === 'pending' && b) {
                             let has = false;
-                            if (b.pointdata) $.each(b.pointdata, (k, a) => {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    has = true;
-                                    return false;
-                                }
-                            });
+                            if (b.pointdata) {
+                                $.each(b.pointdata, function(k, a) {
+                                    if (a.qcsqfeet || a.qcusage) {
+                                        has = true;
+                                        return false;
+                                    }
+                                });
+                            }
                             if (has) show = false;
                         }
+
                         if (show && b && (minF || maxF)) {
                             let fl = parseInt(b.number_floor) || 0;
                             if (minF && fl < parseInt(minF)) show = false;
                             if (maxF && fl > parseInt(maxF)) show = false;
                         }
+
                         f.set('visible', show);
                         if (show) cnt++;
                     });
+
                     polygonLayer.setStyle(polygonStyleFunction);
                     polygonLayer.changed();
                     $('#filterCount').text(`Showing ${cnt} of ${fts.length} buildings`);
                     closeAllMobilePanels();
                 });
+
                 $('#resetFilterBtn').on('click', function() {
-                    $('#filterType, #filterMinFloors, #filterMaxFloors').val('');
+                    $('#filterType').val('all');
+                    $('#filterMinFloors, #filterMaxFloors').val('');
                     let src = polygonLayer.getSource();
-                    $.each(src.getFeatures(), (i, f) => f.set('visible', true));
+                    $.each(src.getFeatures(), function(i, f) {
+                        f.set('visible', true);
+                    });
                     polygonLayer.setStyle(polygonStyleFunction);
                     polygonLayer.changed();
-                    $('#filterCount').text(
-                        `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
+                    $('#filterCount').text(`Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
                     closeAllMobilePanels();
                 });
-                $('#zoomInBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() + 1));
-                $('#zoomOutBtn').on('click', () => map.getView().setZoom(map.getView().getZoom() - 1));
 
-                // Mobile button handlers
+                $('#zoomInBtn').on('click', function() {
+                    map.getView().setZoom(map.getView().getZoom() + 1);
+                });
+
+                $('#zoomOutBtn').on('click', function() {
+                    map.getView().setZoom(map.getView().getZoom() - 1);
+                });
+
+                // Mobile button handlers - Only ONE panel opens at a time
                 $('#mobileMenuBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#layerSwitcher').hasClass('open');
                     closeAllMobilePanels();
-                    if (!isOpen) $('#layerSwitcher').addClass('open');
+                    if (!isOpen) {
+                        $('#layerSwitcher').addClass('open');
+                    }
                 });
+
                 $('#mobileLegendBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#mapLegend').hasClass('open');
                     closeAllMobilePanels();
-                    if (!isOpen) $('#mapLegend').addClass('open');
+                    if (!isOpen) {
+                        $('#mapLegend').addClass('open');
+                    }
                 });
+
                 $('#mobileSearchBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#searchPanel').hasClass('open');
                     closeAllMobilePanels();
                     if (!isOpen) {
                         $('#searchPanel').addClass('open');
-                        setTimeout(() => $('#searchInput').focus(), 300);
+                        setTimeout(function() {
+                            $('#searchInput').focus();
+                        }, 300);
                     }
                 });
+
                 $('#mobileFilterBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#filterPanel').hasClass('open');
                     closeAllMobilePanels();
-                    if (!isOpen) $('#filterPanel').addClass('open');
+                    if (!isOpen) {
+                        $('#filterPanel').addClass('open');
+                    }
                 });
+
                 $('#mobileLocationBtn').on('click', function() {
                     if (locationTracking) {
                         stopLocationTracking();
                     } else {
                         startLocationTracking();
-                        setTimeout(() => {
-                            if (currentPosition) map.getView().setCenter(ol.proj.fromLonLat(
-                                currentPosition));
+                        setTimeout(function() {
+                            if (currentPosition) {
+                                map.getView().setCenter(ol.proj.fromLonLat(currentPosition));
+                            }
                         }, 1000);
                     }
                 });
 
+                // Close panels when tapping outside on mobile
                 $(document).on('click touchstart', function(e) {
                     if ($(window).width() <= 768) {
-                        if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target)
-                            .length && !$('#mobileMenuBtn').is(e.target)) $('#layerSwitcher').removeClass(
-                            'open');
-                        if (!$('#mapLegend').is(e.target) && !$('#mapLegend').has(e.target).length && !$(
-                                '#mobileLegendBtn').is(e.target)) $('#mapLegend').removeClass('open');
-                        if (!$('#searchPanel').is(e.target) && !$('#searchPanel').has(e.target).length && !
-                            $('#mobileSearchBtn').is(e.target)) $('#searchPanel').removeClass('open');
-                        if (!$('#filterPanel').is(e.target) && !$('#filterPanel').has(e.target).length && !
-                            $('#mobileFilterBtn').is(e.target)) $('#filterPanel').removeClass('open');
+                        // Close layer switcher if clicking outside
+                        if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target).length && !$('#mobileMenuBtn').is(e.target) && !$('#mobileMenuBtn').has(e.target).length) {
+                            $('#layerSwitcher').removeClass('open');
+                        }
+                        // Close legend if clicking outside
+                        if (!$('#mapLegend').is(e.target) && !$('#mapLegend').has(e.target).length && !$('#mobileLegendBtn').is(e.target) && !$('#mobileLegendBtn').has(e.target).length) {
+                            $('#mapLegend').removeClass('open');
+                        }
+                        // Close search panel if clicking outside
+                        if (!$('#searchPanel').is(e.target) && !$('#searchPanel').has(e.target).length && !$('#mobileSearchBtn').is(e.target) && !$('#mobileSearchBtn').has(e.target).length) {
+                            $('#searchPanel').removeClass('open');
+                        }
+                        // Close filter panel if clicking outside
+                        if (!$('#filterPanel').is(e.target) && !$('#filterPanel').has(e.target).length && !$('#mobileFilterBtn').is(e.target) && !$('#mobileFilterBtn').has(e.target).length) {
+                            $('#filterPanel').removeClass('open');
+                        }
                     }
                 });
 
                 refreshLayers();
             }
 
+            // Start the application
             initMap();
             buildSearchIndex();
-            $(window).on('resize', () => setTimeout(() => map?.updateSize(), 100));
+
+            // Handle window resize
+            $(window).on('resize', function() {
+                setTimeout(function() {
+                    if (map) map.updateSize();
+                }, 100);
+            });
         });
     </script>
 @endpush
