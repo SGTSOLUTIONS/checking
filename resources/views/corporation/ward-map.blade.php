@@ -80,6 +80,7 @@
         }
 
         @media (max-width: 768px) {
+
             .mobile-menu-btn,
             .mobile-legend-btn {
                 display: flex;
@@ -318,27 +319,30 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Popup Styles */
+        /* Improved Popup Styles - Three Section Design */
         .ol-popup {
             position: absolute;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
             color: white;
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 0;
-            min-width: 280px;
-            max-width: 380px;
-            max-height: 500px;
+            min-width: 320px;
+            max-width: 400px;
+            max-height: 85vh;
             overflow-y: auto;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             z-index: 1100;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            border: 1px solid rgba(255, 68, 68, 0.3);
+            border: 1px solid rgba(255, 68, 68, 0.4);
+            backdrop-filter: blur(5px);
         }
 
         @media (max-width: 768px) {
             .ol-popup {
-                max-width: 280px;
-                max-height: 60vh;
+                min-width: 280px;
+                max-width: 90vw;
+                max-height: 70vh;
+                border-radius: 20px;
             }
         }
 
@@ -353,120 +357,166 @@
             border-color: #1a1a2e transparent transparent;
         }
 
+        /* Popup Header */
         .popup-header {
-            background: rgba(255, 68, 68, 0.2);
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 68, 68, 0.3);
-            border-radius: 12px 12px 0 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            padding: 16px 18px;
+            border-bottom: 2px solid #ff4444;
+            border-radius: 16px 16px 0 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            z-index: 1;
+            z-index: 10;
         }
 
         .popup-header h4 {
             margin: 0;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 700;
             color: #ff4444;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .popup-header h4 i {
+            font-size: 18px;
         }
 
         .popup-close {
-            background: none;
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             color: white;
             font-size: 20px;
             cursor: pointer;
             padding: 0;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .popup-close:hover,
         .popup-close:active {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
+            background: #ff4444;
+            transform: scale(1.05);
         }
 
-        .popup-content {
-            padding: 15px;
-        }
-
-        .popup-section {
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 10px;
-        }
-
-        .popup-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .popup-section-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffc107;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .popup-row {
+        /* Tab Navigation */
+        .popup-tabs {
             display: flex;
-            margin-bottom: 6px;
-            font-size: 11px;
+            background: #141424;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0 12px;
         }
 
-        .popup-label {
-            font-weight: 600;
-            color: #aaa;
-            width: 100px;
-            flex-shrink: 0;
-        }
-
-        .popup-value {
-            color: white;
+        .popup-tab {
             flex: 1;
-            word-break: break-word;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
         }
 
-        .popup-value strong {
+        .popup-tab i {
+            font-size: 14px;
+        }
+
+        .popup-tab.active {
             color: #ff4444;
         }
 
-        .assessment-item {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 8px;
-            margin-bottom: 8px;
+        .popup-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #ff4444;
         }
 
-        .assessment-item:last-child {
-            margin-bottom: 0;
+        .popup-tab:active {
+            background: rgba(255, 68, 68, 0.1);
         }
 
-        .shop-item {
-            background: rgba(255, 193, 7, 0.1);
-            border-radius: 6px;
-            padding: 6px 8px;
-            margin-top: 5px;
-            font-size: 10px;
+        /* Tab Content */
+        .popup-tab-content {
+            display: none;
+            padding: 16px;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        .popup-tab-content.active {
+            display: block;
+        }
+
+        /* Scrollbar Styling */
+        .popup-tab-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .popup-tab-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .popup-tab-content::-webkit-scrollbar-thumb {
+            background: #ff4444;
+            border-radius: 4px;
+        }
+
+        /* Building Details Section */
+        .detail-row {
+            display: flex;
+            margin-bottom: 12px;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #ffc107;
+            width: 110px;
+            flex-shrink: 0;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: #eee;
+            flex: 1;
+            word-break: break-word;
+            font-size: 12px;
+        }
+
+        .detail-value strong {
+            color: #ff4444;
         }
 
         .badge {
             display: inline-block;
             padding: 2px 8px;
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 9px;
             font-weight: 600;
-            margin-left: 5px;
+            margin-left: 6px;
         }
 
         .badge-success {
@@ -483,6 +533,123 @@
             background: #17a2b8;
             color: white;
         }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Assessment Cards */
+        .assessment-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border-left: 3px solid #ffc107;
+        }
+
+        .assessment-header {
+            background: rgba(255, 193, 7, 0.15);
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .assessment-number {
+            font-weight: 700;
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        .assessment-status {
+            font-size: 10px;
+        }
+
+        .assessment-body {
+            padding: 12px;
+        }
+
+        .assessment-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .assessment-label {
+            width: 80px;
+            color: #aaa;
+            flex-shrink: 0;
+        }
+
+        .assessment-value {
+            color: #fff;
+            flex: 1;
+        }
+
+        /* Shop Items */
+        .shops-container {
+            margin-top: 8px;
+        }
+
+        .shop-item {
+            background: rgba(255, 68, 68, 0.1);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            border: 1px solid rgba(255, 68, 68, 0.2);
+        }
+
+        .shop-name {
+            font-weight: 700;
+            color: #ff4444;
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .shop-detail {
+            font-size: 10px;
+            display: flex;
+            margin-bottom: 4px;
+        }
+
+        .shop-detail-label {
+            width: 50px;
+            color: #aaa;
+        }
+
+        .shop-detail-value {
+            color: #ddd;
+            flex: 1;
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 30px 20px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .section-icon {
+            margin-right: 8px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #888;
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
     </style>
 @endpush
 
@@ -493,8 +660,8 @@
             document.addEventListener('touchmove', function(e) {
                 const isMap = e.target.closest('#map');
                 const isControl = e.target.closest('.layer-switcher') || e.target.closest('.zoom-controls') ||
-                                 e.target.closest('.mobile-menu-btn') || e.target.closest('.mobile-legend-btn') ||
-                                 e.target.closest('.ol-popup');
+                    e.target.closest('.mobile-menu-btn') || e.target.closest('.mobile-legend-btn') ||
+                    e.target.closest('.ol-popup');
                 if (!isMap && !isControl) {
                     e.preventDefault();
                 }
@@ -527,6 +694,7 @@
         let currentBaseLayer = 'osm';
         let popupOverlay;
         let popupElement;
+        let currentActiveTab = 'building';
 
         // Polygon data from server
         let polygonDatas = @json($polygonDatas ?? []);
@@ -566,7 +734,30 @@
             return popupOverlay;
         }
 
-        // Show popup with building details
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.popup-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // Remove active class from all tabs
+            document.querySelectorAll('.popup-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Show selected tab content
+            const selectedContent = document.getElementById(`tab-${tabId}`);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+            // Add active class to selected tab
+            const selectedTab = document.querySelector(`.popup-tab[data-tab="${tabId}"]`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            currentActiveTab = tabId;
+        }
+
+        // Show popup with three tabbed sections: Building Details, Assessments, Shops
         function showPopup(gisid, coordinate) {
             const polyData = polygonDatas.find(p => p.gisid == gisid);
 
@@ -575,161 +766,213 @@
                 return;
             }
 
-            let html = `
+            // Collect all assessments and all shops across assessments
+            const assessments = polyData.pointdata || [];
+            const allShops = [];
+            assessments.forEach((assessment, idx) => {
+                if (assessment.shops && assessment.shops.length > 0) {
+                    assessment.shops.forEach(shop => {
+                        allShops.push({
+                            ...shop,
+                            assessmentNumber: assessment.assessment || `Bill ${idx + 1}`,
+                            assessmentId: idx
+                        });
+                    });
+                }
+            });
+
+            // Build Building Details HTML
+            let buildingHtml = `
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-fingerprint section-icon"></i> GIS ID:</div>
+                    <div class="detail-value"><strong>${polyData.gisid || 'N/A'}</strong></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-building section-icon"></i> Building Usage:</div>
+                    <div class="detail-value">${polyData.building_usage || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-home section-icon"></i> Building Type:</div>
+                    <div class="detail-value">${polyData.building_type || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-hard-hat section-icon"></i> Construction:</div>
+                    <div class="detail-value">${polyData.construction_type || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-layer-group section-icon"></i> Floors:</div>
+                    <div class="detail-value">${polyData.number_floor || '0'} (${polyData.floor_percentage || '100'}% area)</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-arrow-down section-icon"></i> Basement:</div>
+                    <div class="detail-value">${polyData.basement || '0'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-receipt section-icon"></i> Total Bills:</div>
+                    <div class="detail-value">${polyData.number_bill || '0'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-chart-line section-icon"></i> Total Points:</div>
+                    <div class="detail-value">${polyData.total_points || '0'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-store section-icon"></i> Total Shops:</div>
+                    <div class="detail-value">${polyData.total_shops || '0'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-road section-icon"></i> Road Name:</div>
+                    <div class="detail-value">${polyData.road_name || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-map-pin section-icon"></i> Zone:</div>
+                    <div class="detail-value">${polyData.zone || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-tint section-icon"></i> Water Connection:</div>
+                    <div class="detail-value">${polyData.water_connection || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label"><i class="fas fa-trash-alt section-icon"></i> UGD:</div>
+                    <div class="detail-value">${polyData.ugd || 'N/A'}</div>
+                </div>
+            `;
+
+            if (polyData.remarks) {
+                buildingHtml += `
+                    <div class="detail-row">
+                        <div class="detail-label"><i class="fas fa-comment section-icon"></i> Remarks:</div>
+                        <div class="detail-value">${polyData.remarks}</div>
+                    </div>
+                `;
+            }
+
+            // Build Assessments HTML
+            let assessmentsHtml = '';
+            if (assessments.length === 0) {
+                assessmentsHtml = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>No assessment records found</p>
+                    </div>
+                `;
+            } else {
+                assessments.forEach((assessment, idx) => {
+                    const hasQC = assessment.qcsqfeet || assessment.qcusage;
+                    assessmentsHtml += `
+                        <div class="assessment-card">
+                            <div class="assessment-header">
+                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${assessment.assessment || `Assessment ${idx + 1}`}</span>
+                                <span class="assessment-status">
+                                    <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">
+                                        ${hasQC ? '<i class="fas fa-check-circle"></i> QC Done' : '<i class="fas fa-clock"></i> QC Pending'}
+                                    </span>
+                                </span>
+                            </div>
+                            <div class="assessment-body">
+                                <div class="assessment-row">
+                                    <div class="assessment-label">Owner:</div>
+                                    <div class="assessment-value"><strong>${assessment.owner_name || assessment.present_owner_name || 'N/A'}</strong></div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">Phone:</div>
+                                    <div class="assessment-value">${assessment.phone_number || 'N/A'}</div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">Floor:</div>
+                                    <div class="assessment-value">${assessment.floor || 'N/A'}</div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">Usage:</div>
+                                    <div class="assessment-value">${assessment.bill_usage || 'N/A'}</div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">QC Sqft:</div>
+                                    <div class="assessment-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">QC Usage:</div>
+                                    <div class="assessment-value">${assessment.qcusage || assessment.usage || 'N/A'}</div>
+                                </div>
+                                <div class="assessment-row">
+                                    <div class="assessment-label">Shops:</div>
+                                    <div class="assessment-value">${(assessment.shops || []).length}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Build Shops HTML
+            let shopsHtml = '';
+            if (allShops.length === 0) {
+                shopsHtml = `
+                    <div class="empty-state">
+                        <i class="fas fa-store"></i>
+                        <p>No shop records found</p>
+                    </div>
+                `;
+            } else {
+                allShops.forEach((shop, idx) => {
+                    shopsHtml += `
+                        <div class="shop-item">
+                            <div class="shop-name">
+                                <i class="fas fa-store"></i> ${shop.shop_name || `Shop ${idx + 1}`}
+                            </div>
+                            <div class="shop-detail">
+                                <div class="shop-detail-label">Category:</div>
+                                <div class="shop-detail-value">${shop.shop_category || 'N/A'}</div>
+                            </div>
+                            <div class="shop-detail">
+                                <div class="shop-detail-label">Owner:</div>
+                                <div class="shop-detail-value">${shop.shop_owner_name || 'N/A'}</div>
+                            </div>
+                            <div class="shop-detail">
+                                <div class="shop-detail-label">Mobile:</div>
+                                <div class="shop-detail-value">${shop.shop_mobile || 'N/A'}</div>
+                            </div>
+                            <div class="shop-detail">
+                                <div class="shop-detail-label">Assessment:</div>
+                                <div class="shop-detail-value">${shop.assessmentNumber || 'N/A'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Complete Popup HTML
+            const html = `
                 <div class="popup-header">
                     <h4><i class="fas fa-building"></i> Building Details</h4>
                     <button class="popup-close" onclick="document.querySelector('.ol-popup').style.display='none'">&times;</button>
                 </div>
-                <div class="popup-content">
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-info-circle"></i> Basic Information</div>
-                        <div class="popup-row">
-                            <span class="popup-label">GIS ID:</span>
-                            <span class="popup-value"><strong>${polyData.gisid || 'N/A'}</strong></span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Building Usage:</span>
-                            <span class="popup-value">${polyData.building_usage || 'N/A'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Building Type:</span>
-                            <span class="popup-value">${polyData.building_type || 'N/A'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Construction Type:</span>
-                            <span class="popup-value">${polyData.construction_type || 'N/A'}</span>
-                        </div>
-                    </div>
-
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-chart-simple"></i> Statistics</div>
-                        <div class="popup-row">
-                            <span class="popup-label">Number of Floors:</span>
-                            <span class="popup-value">${polyData.number_floor || '0'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Floor Percentage:</span>
-                            <span class="popup-value">${polyData.floor_percentage || '100'}%</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Basement:</span>
-                            <span class="popup-value">${polyData.basement || '0'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Number of Bills:</span>
-                            <span class="popup-value">${polyData.number_bill || '0'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Total Points:</span>
-                            <span class="popup-value">${polyData.total_points || '0'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Total Shops:</span>
-                            <span class="popup-value">${polyData.total_shops || '0'}</span>
-                        </div>
-                    </div>
-
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-map-marker-alt"></i> Location</div>
-                        <div class="popup-row">
-                            <span class="popup-label">Road Name:</span>
-                            <span class="popup-value">${polyData.road_name || 'N/A'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">Zone:</span>
-                            <span class="popup-value">${polyData.zone || 'N/A'}</span>
-                        </div>
-                    </div>
-
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-tint"></i> Utilities</div>
-                        <div class="popup-row">
-                            <span class="popup-label">Water Connection:</span>
-                            <span class="popup-value">${polyData.water_connection || 'N/A'}</span>
-                        </div>
-                        <div class="popup-row">
-                            <span class="popup-label">UGD:</span>
-                            <span class="popup-value">${polyData.ugd || 'N/A'}</span>
-                        </div>
-                    </div>
+                <div class="popup-tabs">
+                    <button class="popup-tab ${currentActiveTab === 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')">
+                        <i class="fas fa-info-circle"></i> Building
+                    </button>
+                    <button class="popup-tab ${currentActiveTab === 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')">
+                        <i class="fas fa-receipt"></i> Assessments ${assessments.length > 0 ? `<span class="badge badge-info" style="margin-left:4px">${assessments.length}</span>` : ''}
+                    </button>
+                    <button class="popup-tab ${currentActiveTab === 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')">
+                        <i class="fas fa-store"></i> Shops ${allShops.length > 0 ? `<span class="badge badge-info" style="margin-left:4px">${allShops.length}</span>` : ''}
+                    </button>
+                </div>
+                <div id="tab-building" class="popup-tab-content ${currentActiveTab === 'building' ? 'active' : ''}">
+                    ${buildingHtml}
+                </div>
+                <div id="tab-assessments" class="popup-tab-content ${currentActiveTab === 'assessments' ? 'active' : ''}">
+                    ${assessmentsHtml}
+                </div>
+                <div id="tab-shops" class="popup-tab-content ${currentActiveTab === 'shops' ? 'active' : ''}">
+                    ${shopsHtml}
+                </div>
             `;
-
-            if (polyData.pointdata && polyData.pointdata.length > 0) {
-                html += `
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-receipt"></i> Assessments / Bills (${polyData.pointdata.length})</div>
-                `;
-
-                polyData.pointdata.forEach((assessment, idx) => {
-                    const hasQC = assessment.qcsqfeet || assessment.qcusage;
-                    html += `
-                        <div class="assessment-item">
-                            <div class="popup-row">
-                                <span class="popup-label">Assessment ${idx + 1}:</span>
-                                <span class="popup-value"><strong>${assessment.assessment || 'N/A'}</strong> <span class="badge ${hasQC ? 'badge-success' : 'badge-warning'}">${hasQC ? 'QC Done' : 'QC Pending'}</span></span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">Owner:</span>
-                                <span class="popup-value">${assessment.owner_name || assessment.present_owner_name || 'N/A'}</span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">Phone:</span>
-                                <span class="popup-value">${assessment.phone_number || 'N/A'}</span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">Floor:</span>
-                                <span class="popup-value">${assessment.floor || 'N/A'}</span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">Usage:</span>
-                                <span class="popup-value">${assessment.bill_usage || 'N/A'}</span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">QC Sqft:</span>
-                                <span class="popup-value">${assessment.qcsqfeet || assessment.sqfeet || 'N/A'} sqft</span>
-                            </div>
-                            <div class="popup-row">
-                                <span class="popup-label">QC Usage:</span>
-                                <span class="popup-value">${assessment.qcusage || assessment.usage || 'N/A'}</span>
-                            </div>
-                    `;
-
-                    if (assessment.shops && assessment.shops.length > 0) {
-                        html += `<div class="popup-row"><span class="popup-label">Shops (${assessment.shops.length}):</span></div>`;
-                        assessment.shops.forEach(shop => {
-                            html += `
-                                <div class="shop-item">
-                                    <div><strong>${shop.shop_name || 'Shop'}</strong> - ${shop.shop_category || 'N/A'}</div>
-                                    <div>Owner: ${shop.shop_owner_name || 'N/A'}</div>
-                                    <div>Mobile: ${shop.shop_mobile || 'N/A'}</div>
-                                </div>
-                            `;
-                        });
-                    }
-
-                    html += `</div>`;
-                });
-
-                html += `</div>`;
-            }
-
-            if (polyData.remarks) {
-                html += `
-                    <div class="popup-section">
-                        <div class="popup-section-title"><i class="fas fa-comment"></i> Remarks</div>
-                        <div class="popup-row">
-                            <span class="popup-value">${polyData.remarks}</span>
-                        </div>
-                    </div>
-                `;
-            }
-
-            html += `</div>`;
 
             popupElement.innerHTML = html;
             popupElement.style.display = 'block';
             popupOverlay.setPosition(coordinate);
 
+            // Re-attach close button event
             const closeBtn = popupElement.querySelector('.popup-close');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
