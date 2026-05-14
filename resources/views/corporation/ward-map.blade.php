@@ -55,7 +55,7 @@
     </div>
 
     <div class="loading-spinner" id="loadingSpinner">
-        <div class="spinner-border text-primary mb-2"></div>
+        <div class="spinner-border text-primary"></div>
         <div>Calculating route...</div>
     </div>
 @endsection
@@ -88,7 +88,6 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Mobile Buttons */
         .mobile-btn {
             position: fixed;
             z-index: 1002;
@@ -153,7 +152,6 @@
             }
         }
 
-        /* Panels */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -893,8 +891,8 @@
             let currentActiveTab = 'building';
 
             // ==================== LOCATION & ROUTE VARIABLES ====================
-            let currentLocationMarker = null,
-                accuracyCircle = null,
+            let currentLocationLayer = null,
+                accuracyLayer = null,
                 currentPosition = null;
             let locationTracking = false,
                 watchId = null;
@@ -926,17 +924,10 @@
             function showFlashMessage(message, type = 'info') {
                 let bgColor = type === 'success' ? '#28a745' : (type === 'error' ? '#dc3545' : '#ffc107');
                 let flash = $(
-                    `<div class="alert" style="position:fixed; top:20px; right:20px; z-index:9999; background:${bgColor}; color:white; padding:12px 20px; border-radius:8px;">${message}</div>`
+                    `<div style="position:fixed; top:20px; right:20px; z-index:9999; background:${bgColor}; color:white; padding:12px 20px; border-radius:8px;">${message}</div>`
                     );
                 $('body').append(flash);
                 setTimeout(() => flash.fadeOut(300, () => flash.remove()), 3000);
-            }
-
-            function closeAllMobilePanels(exceptPanel = null) {
-                if (exceptPanel !== 'layer') $('#layerSwitcher').removeClass('open');
-                if (exceptPanel !== 'legend') $('#mapLegend').removeClass('open');
-                if (exceptPanel !== 'search') $('#searchPanel').removeClass('open');
-                if (exceptPanel !== 'filter') $('#filterPanel').removeClass('open');
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -994,13 +985,19 @@
                 }
                 $('#mobileLocationBtn').css('background', '#28a745');
                 locationTracking = true;
+
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                    showFlashMessage("Location tracking started", "success");
                 }, function(err) {
-                    alert("Unable to get location");
+                    alert("Unable to get location: " + err.message);
                     locationTracking = false;
                     $('#mobileLocationBtn').css('background', 'rgba(220,53,69,0.9)');
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000
                 });
+
                 watchId = navigator.geolocation.watchPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
                 }, function(err) {}, {
@@ -1012,8 +1009,8 @@
 
             function stopLocationTracking() {
                 if (watchId) navigator.geolocation.clearWatch(watchId);
-                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
-                if (accuracyCircle) map.removeLayer(accuracyCircle);
+                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
+                if (accuracyLayer) map.removeLayer(accuracyLayer);
                 locationTracking = false;
                 $('#mobileLocationBtn').css('background', 'rgba(220,53,69,0.9)');
             }
@@ -1021,28 +1018,31 @@
             function updateLocationOnMap(lon, lat, accuracy) {
                 let coords = ol.proj.fromLonLat([lon, lat]);
                 currentPosition = [lon, lat];
-                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
-                if (accuracyCircle) map.removeLayer(accuracyCircle);
 
-                accuracyCircle = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 2
+                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
+                if (accuracyLayer) map.removeLayer(accuracyLayer);
+
+                if (accuracy && accuracy < 500) {
+                    accuracyLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Circle(coords, accuracy)
+                            })]
                         }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255,68,68,0.15)'
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff4444',
+                                width: 2
+                            }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255,68,68,0.15)'
+                            })
                         })
-                    })
-                });
-                map.addLayer(accuracyCircle);
+                    });
+                    map.addLayer(accuracyLayer);
+                }
 
-                currentLocationMarker = new ol.layer.Vector({
+                currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
                             geometry: new ol.geom.Point(coords)
@@ -1061,7 +1061,7 @@
                         })
                     })
                 });
-                map.addLayer(currentLocationMarker);
+                map.addLayer(currentLocationLayer);
 
                 if (!localStorage.getItem('mapCentered')) {
                     map.getView().setCenter(coords);
@@ -1070,59 +1070,140 @@
                 }
             }
 
-            function centerToCurrentLocation() {
-                if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(18);
-                }
-            }
-
             // ==================== ROUTE FUNCTIONS ====================
             function formatDistance(meters) {
-                return meters < 1000 ? meters.toFixed(0) + ' m' : (meters / 1000).toFixed(2) + ' km';
+                if (meters < 100) return meters.toFixed(0) + ' m';
+                if (meters < 1000) return meters.toFixed(0) + ' m';
+                return (meters / 1000).toFixed(2) + ' km';
             }
 
             function formatDuration(seconds) {
                 let minutes = Math.floor(seconds / 60);
-                return minutes < 60 ? minutes + ' min' : Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm';
+                if (minutes < 60) return minutes + ' min';
+                let hours = Math.floor(minutes / 60);
+                let remainingMinutes = minutes % 60;
+                return hours + 'h ' + remainingMinutes + 'm';
             }
 
             async function calculateRoute(startLonLat, endLonLat) {
                 try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
                     let url =
                         `https://router.project-osrm.org/route/v1/driving/${startLonLat[0]},${startLonLat[1]};${endLonLat[0]},${endLonLat[1]}?overview=full&geometries=geojson&steps=true`;
-                    let response = await fetch(url);
+                    let response = await fetch(url, {
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
                     let data = await response.json();
-                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) throw new Error(
-                        'No route found');
+                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                        throw new Error('No route found');
+                    }
                     return data.routes[0];
                 } catch (error) {
                     console.error('OSRM error:', error);
-                    return null;
+                    return getStraightLineRoute(startLonLat, endLonLat);
                 }
             }
 
+            function getStraightLineRoute(startCoord, endCoord) {
+                const R = 6371000;
+                const toRad = (deg) => deg * Math.PI / 180;
+                const φ1 = toRad(startCoord[1]);
+                const φ2 = toRad(endCoord[1]);
+                const Δφ = toRad(endCoord[1] - startCoord[1]);
+                const Δλ = toRad(endCoord[0] - startCoord[0]);
+                const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) *
+                    Math.sin(Δλ / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                const distance = R * c;
+                let duration = distance / 1.39;
+                return {
+                    distance: distance,
+                    duration: duration,
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [startCoord, endCoord]
+                    }
+                };
+            }
+
             function drawRouteOnMap(geometry) {
-                if (routeLayer) map.removeLayer(routeLayer);
-                let coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                let routeSource = new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.LineString(coordinates)
-                    })]
-                });
-                routeLayer = new ol.layer.Vector({
-                    source: routeSource,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff6600',
-                            width: 5,
-                            lineDash: [10, 10]
+                try {
+                    if (routeLayer) map.removeLayer(routeLayer);
+
+                    let coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                    let routeSource = new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.LineString(coordinates)
+                        })]
+                    });
+
+                    routeLayer = new ol.layer.Vector({
+                        source: routeSource,
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff6600',
+                                width: 6,
+                                lineDash: [10, 8]
+                            })
+                        }),
+                        zIndex: 1000
+                    });
+                    map.addLayer(routeLayer);
+
+                    // Add markers at start and end
+                    let startCoord = ol.proj.fromLonLat(geometry.coordinates[0]);
+                    let endCoord = ol.proj.fromLonLat(geometry.coordinates[geometry.coordinates.length - 1]);
+
+                    let startMarker = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Point(startCoord)
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: 10,
+                                fill: new ol.style.Fill({
+                                    color: '#28a745'
+                                }),
+                                stroke: new ol.style.Stroke({
+                                    color: '#fff',
+                                    width: 2
+                                })
+                            })
                         })
-                    })
-                });
-                map.addLayer(routeLayer);
-                return routeSource;
+                    });
+                    let endMarker = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Point(endCoord)
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: 10,
+                                fill: new ol.style.Fill({
+                                    color: '#dc3545'
+                                }),
+                                stroke: new ol.style.Stroke({
+                                    color: '#fff',
+                                    width: 2
+                                })
+                            })
+                        })
+                    });
+                    map.addLayer(startMarker);
+                    map.addLayer(endMarker);
+
+                    return routeSource;
+                } catch (error) {
+                    console.error('Error drawing route:', error);
+                    return null;
+                }
             }
 
             async function getRouteAndDisplay() {
@@ -1161,9 +1242,7 @@
                             routeSteps.push({
                                 instruction: instruction,
                                 distance: formatDistance(accumulatedDistance),
-                                icon: icon,
-                                stepDistance: step.distance,
-                                stepDuration: step.duration
+                                icon: icon
                             });
                         });
                     }
@@ -1175,7 +1254,6 @@
                         placeName: selectedBuildingGisid
                     };
 
-                    // Display route info
                     let summaryHtml =
                         `<div><strong>📏 Distance:</strong> ${formatDistance(distance)}</div><div><strong>⏱️ Duration:</strong> ${formatDuration(duration)}</div><div><strong>📍 Destination:</strong> ${selectedBuildingGisid}</div>`;
 
@@ -1189,7 +1267,7 @@
                         $('#routeInfo').show();
                     }
 
-                    // Fit route in view - FIXED: Properly fit the route extent
+                    // Fit route in view
                     if (routeSource) {
                         let extent = routeSource.getExtent();
                         if (extent && !ol.extent.isEmpty(extent)) {
@@ -1199,7 +1277,6 @@
                             });
                         }
                     }
-
                     showFlashMessage("Route calculated successfully!", "success");
 
                 } catch (error) {
@@ -1351,7 +1428,6 @@
                     if (!$(e.target).hasClass('direction-btn')) {
                         zoomToBuilding($(this).data('gisid'));
                         if (isMobileFlag) $('#mobileSearchOverlay').hide();
-                        closeAllMobilePanels();
                     }
                 });
 
@@ -1365,7 +1441,6 @@
                         selectedBuildingCoords = [parseFloat(lon), parseFloat(lat)];
                         await getRouteAndDisplay();
                         if (isMobileFlag) $('#mobileSearchOverlay').hide();
-                        closeAllMobilePanels();
                     } else {
                         showFlashMessage("Coordinates not available", "error");
                     }
@@ -1494,72 +1569,6 @@
                 });
             }
 
-            // ==================== FILTER FUNCTIONS ====================
-            function applyFilters() {
-                let filterType = $('#filterType').val();
-                let minFloors = $('#filterMinFloors').val();
-                let maxFloors = $('#filterMaxFloors').val();
-                let src = polygonLayer.getSource();
-                let features = src.getFeatures();
-                let visibleCount = 0;
-
-                $.each(features, function(i, f) {
-                    let gisid = f.get('gisid');
-                    let building = polygonDatas.find(p => p.gisid == gisid);
-                    let show = true;
-
-                    if (filterType === 'completed' && building) {
-                        let hasQC = false;
-                        if (building.pointdata) {
-                            $.each(building.pointdata, function(k, a) {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    hasQC = true;
-                                    return false;
-                                }
-                            });
-                        }
-                        if (!hasQC) show = false;
-                    } else if (filterType === 'pending' && building) {
-                        let hasQC = false;
-                        if (building.pointdata) {
-                            $.each(building.pointdata, function(k, a) {
-                                if (a.qcsqfeet || a.qcusage) {
-                                    hasQC = true;
-                                    return false;
-                                }
-                            });
-                        }
-                        if (hasQC) show = false;
-                    }
-
-                    if (show && building && (minFloors || maxFloors)) {
-                        let floors = parseInt(building.number_floor) || 0;
-                        if (minFloors && floors < parseInt(minFloors)) show = false;
-                        if (maxFloors && floors > parseInt(maxFloors)) show = false;
-                    }
-
-                    f.set('visible', show);
-                    if (show) visibleCount++;
-                });
-
-                polygonLayer.setStyle(polygonStyleFunction);
-                polygonLayer.changed();
-                $('#filterCount').text(`Showing ${visibleCount} of ${features.length} buildings`);
-                closeAllMobilePanels();
-            }
-
-            function resetFilters() {
-                $('#filterType').val('all');
-                $('#filterMinFloors, #filterMaxFloors').val('');
-                let src = polygonLayer.getSource();
-                $.each(src.getFeatures(), (i, f) => f.set('visible', true));
-                polygonLayer.setStyle(polygonStyleFunction);
-                polygonLayer.changed();
-                $('#filterCount').text(
-                    `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
-                closeAllMobilePanels();
-            }
-
             // ==================== MAP STYLES ====================
             function polygonStyleFunction(feature) {
                 let gisid = feature.get('gisid'),
@@ -1682,50 +1691,6 @@
                 showLoading(false);
             }
 
-            // ==================== IMAGE URL HELPER ====================
-            function getImageUrl(path) {
-                if (!path) return '';
-                if (path.startsWith('http')) return path;
-                let baseUrl = "{{ asset('') }}";
-                let cleanPath = path.replace(/^\/+/, '');
-                return baseUrl + cleanPath;
-            }
-
-            // ==================== DRONE IMAGE LAYER ====================
-            function addDroneImageLayer() {
-                let droneImage = wardData.drone_image;
-                let extentLeft = wardData.extent_left;
-                let extentBottom = wardData.extent_bottom;
-                let extentRight = wardData.extent_right;
-                let extentTop = wardData.extent_top;
-
-                if (droneImage && extentLeft && extentBottom && extentRight && extentTop) {
-                    try {
-                        let imageUrl = getImageUrl(droneImage);
-                        let imageExtent = [
-                            parseFloat(extentLeft),
-                            parseFloat(extentBottom),
-                            parseFloat(extentRight),
-                            parseFloat(extentTop)
-                        ];
-                        imageLayer = new ol.layer.Image({
-                            source: new ol.source.ImageStatic({
-                                url: imageUrl,
-                                imageExtent: imageExtent,
-                                projection: 'EPSG:3857'
-                            }),
-                            opacity: 0.9,
-                            visible: true
-                        });
-                        map.addLayer(imageLayer);
-                        return true;
-                    } catch (e) {
-                        console.error('Drone image error:', e);
-                    }
-                }
-                return false;
-            }
-
             // ==================== INIT MAP ====================
             function initMap() {
                 showLoading(true);
@@ -1741,8 +1706,32 @@
                     visible: false
                 });
 
-                // Add drone image
-                let hasDrone = addDroneImageLayer();
+                // Drone image layer
+                let hasDrone = false;
+                if (wardData.drone_image && wardData.extent_left && wardData.extent_right) {
+                    try {
+                        let imageUrl = wardData.drone_image;
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
+                            imageUrl = "{{ asset('') }}" + wardData.drone_image.replace(/^\/+/, '');
+                        }
+                        imageLayer = new ol.layer.Image({
+                            source: new ol.source.ImageStatic({
+                                url: imageUrl,
+                                imageExtent: [parseFloat(wardData.extent_left), parseFloat(wardData
+                                        .extent_bottom), parseFloat(wardData.extent_right),
+                                    parseFloat(wardData.extent_top)
+                                ],
+                                projection: 'EPSG:3857'
+                            }),
+                            visible: true,
+                            opacity: 0.8
+                        });
+                        map.addLayer(imageLayer);
+                        hasDrone = true;
+                    } catch (e) {
+                        console.error('Drone image error:', e);
+                    }
+                }
 
                 // Boundary layer
                 let boundary = wardData.boundary;
@@ -1773,12 +1762,12 @@
                         boundaryExtent = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...
                             lons), Math.max(...lats)
                         ]);
+                        map.addLayer(boundaryLayer);
                     } catch (e) {
                         console.error('Boundary error:', e);
                     }
                 }
 
-                // Map center
                 let center = ol.proj.fromLonLat([80.2707, 13.0827]);
                 let zoom = 18;
                 if (boundaryExtent) {
@@ -1795,7 +1784,6 @@
                 });
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
-                if (boundaryLayer) map.addLayer(boundaryLayer);
 
                 setTimeout(() => {
                     if (boundaryExtent) map.getView().fit(boundaryExtent, {
@@ -1841,7 +1829,7 @@
                 $('body').append(
                     `<div class="zoom-controls"><button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button><button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button></div>`
                     );
-                $('body').append(`<div class="route-info panel" id="routeInfo" style="position:absolute; bottom:100px; left:20px; width:320px; display:none; z-index:1001;">
+                $('body').append(`<div class="route-info panel" id="routeInfo" style="position:absolute; bottom:100px; left:20px; width:320px; display:none;">
                     <h5><i class="fas fa-route"></i> Route Information</h5><div id="desktopRouteSummary"></div>
                     <div id="desktopDirectionsList" style="max-height:300px; overflow-y:auto;"></div>
                     <button class="btn btn-primary w-100 mt-2" id="startNavigationDesktop">Start Navigation</button>
@@ -1909,6 +1897,78 @@
 
                 refreshLayers();
                 buildSearchIndex();
+            }
+
+            function applyFilters() {
+                let filterType = $('#filterType').val();
+                let minFloors = $('#filterMinFloors').val();
+                let maxFloors = $('#filterMaxFloors').val();
+                let src = polygonLayer.getSource();
+                let features = src.getFeatures();
+                let visibleCount = 0;
+
+                $.each(features, function(i, f) {
+                    let gisid = f.get('gisid');
+                    let building = polygonDatas.find(p => p.gisid == gisid);
+                    let show = true;
+
+                    if (filterType === 'completed' && building) {
+                        let hasQC = false;
+                        if (building.pointdata) {
+                            $.each(building.pointdata, function(k, a) {
+                                if (a.qcsqfeet || a.qcusage) {
+                                    hasQC = true;
+                                    return false;
+                                }
+                            });
+                        }
+                        if (!hasQC) show = false;
+                    } else if (filterType === 'pending' && building) {
+                        let hasQC = false;
+                        if (building.pointdata) {
+                            $.each(building.pointdata, function(k, a) {
+                                if (a.qcsqfeet || a.qcusage) {
+                                    hasQC = true;
+                                    return false;
+                                }
+                            });
+                        }
+                        if (hasQC) show = false;
+                    }
+
+                    if (show && building && (minFloors || maxFloors)) {
+                        let floors = parseInt(building.number_floor) || 0;
+                        if (minFloors && floors < parseInt(minFloors)) show = false;
+                        if (maxFloors && floors > parseInt(maxFloors)) show = false;
+                    }
+
+                    f.set('visible', show);
+                    if (show) visibleCount++;
+                });
+
+                polygonLayer.setStyle(polygonStyleFunction);
+                polygonLayer.changed();
+                $('#filterCount').text(`Showing ${visibleCount} of ${features.length} buildings`);
+                closeAllMobilePanels();
+            }
+
+            function resetFilters() {
+                $('#filterType').val('all');
+                $('#filterMinFloors, #filterMaxFloors').val('');
+                let src = polygonLayer.getSource();
+                $.each(src.getFeatures(), (i, f) => f.set('visible', true));
+                polygonLayer.setStyle(polygonStyleFunction);
+                polygonLayer.changed();
+                $('#filterCount').text(
+                    `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
+                closeAllMobilePanels();
+            }
+
+            function closeAllMobilePanels(exceptPanel = null) {
+                if (exceptPanel !== 'layer') $('#layerSwitcher').removeClass('open');
+                if (exceptPanel !== 'legend') $('#mapLegend').removeClass('open');
+                if (exceptPanel !== 'search') $('#searchPanel').removeClass('open');
+                if (exceptPanel !== 'filter') $('#filterPanel').removeClass('open');
             }
 
             initMap();
