@@ -192,7 +192,14 @@ class CommissionerController extends Controller
         $ward_datas = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->get();
-        return response()->json($ward_datas);
+
+            $wards_per_zones = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->select('zone', DB::raw('count(*) as total'))
+            ->groupBy('zone')
+            ->get();
+
+        return response()->json($wards_per_zones);
     }
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
