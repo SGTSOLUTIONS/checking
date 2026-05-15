@@ -11,16 +11,11 @@ use App\Models\Ward;
 
 class CommissionerController extends Controller
 {
-    /**
+     /**
      * Display the commissioner dashboard with all data.
      */
     public function dashboard()
     {
-        // Increase execution limits to prevent timeout
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '1024M');
-        set_time_limit(300);
-
         $user = Auth::guard('corporation')->user();
 
         if (!$user) {
@@ -33,10 +28,10 @@ class CommissionerController extends Controller
             return back()->with('error', 'Corporation not found');
         }
 
-        // Get wards with limit to prevent timeout
+        // Get wards list for AJAX loading
         $wards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
-            ->limit(100) // Limit to 100 wards max
+            ->limit(100)
             ->get();
 
         $ward_count = $wards->count();
@@ -48,54 +43,50 @@ class CommissionerController extends Controller
             $mis_count = DB::table($misTable)->count();
         }
 
-        // Initialize totals
-        $total_buildings = 0;
-        $total_area_variation = 0;
-        $total_usage_variation = 0;
+        return view('corporation.dashboard', [
+            "corporation" => $corporation,
+            "ward_count" => $ward_count,
+            "mis_count" => $mis_count,
+            "wards" => $wards // Pass wards list for initial display
+        ]);
+    }
 
-        // Build collections
-        $collections = [];
-        $chartData = [];
+    /**
+     * Get ward data via AJAX
+     */
+    public function getWardData(Request $request)
+    {
+        try {
+            $user = Auth::guard('corporation')->user();
 
-        foreach ($wards as $wardlist) {
-            // Skip if table doesn't exist
-            $polygontable = $this->getPolygonTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
-
-            if (!$polygontable || !Schema::hasTable($polygontable)) {
-                continue;
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
             }
+
+            $wardNo = $request->ward_no;
+            $corporationId = $user->corporation_id;
+
+            $ward = Ward::where('corporation_id', $corporationId)
+                ->where('ward_no', $wardNo)
+                ->first();
+
+            if (!$ward) {
+                return response()->json(['error' => 'Ward not found'], 404);
+            }
+
+            // Calculate variations for this specific ward
+            $variationStats = $this->calculateWardVariations($corporationId, $ward->zone, $ward->ward_no);
 
             // Get building count
-            $buildingCount = DB::table($polygontable)->count();
-
-            if ($buildingCount == 0) {
-                continue;
+            $polygontable = $this->getPolygonTable($corporationId, $ward->ward_no, $ward->zone);
+            $buildingCount = 0;
+            if ($polygontable && Schema::hasTable($polygontable)) {
+                $buildingCount = DB::table($polygontable)->count();
             }
 
-            // Calculate variations for this ward
-            $variationStats = $this->calculateWardVariations($corporation->id, $wardlist->zone, $wardlist->ward_no);
-
-            // Accumulate totals
-            $total_buildings += $buildingCount;
-            $total_area_variation += $variationStats['area_variation_count'];
-            $total_usage_variation += $variationStats['usage_variation_count'];
-
-            // Prepare chart data
-            $chartData[] = [
-                'ward' => "Ward {$wardlist->ward_no}",
-                'ward_no' => $wardlist->ward_no,
-                'area_variation' => $variationStats['area_variation_count'],
-                'usage_variation' => $variationStats['usage_variation_count'],
-                'total_buildings' => $buildingCount,
-                'areaVariationCount' => $variationStats['area_variation_count'],
-                'usageVariationCount' => $variationStats['usage_variation_count'],
-                'areaVariationPercentage' => $variationStats['area_variation_percentage'],
-                'usageVariationPercentage' => $variationStats['usage_variation_percentage']
-            ];
-
             $data = [
-                "zone" => $wardlist->zone,
-                "ward_no" => $wardlist->ward_no,
+                "zone" => $ward->zone,
+                "ward_no" => $ward->ward_no,
                 "buildingCount" => $buildingCount,
                 "surveyedBuildingCount" => $variationStats['surveyed_count'],
                 "areaVariationCount" => $variationStats['area_variation_count'],
@@ -104,25 +95,127 @@ class CommissionerController extends Controller
                 "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
             ];
 
-            $collections[] = $data;
-        }
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'chartData' => [
+                    'ward' => "Ward {$ward->ward_no}",
+                    'ward_no' => $ward->ward_no,
+                    'area_variation' => $variationStats['area_variation_count'],
+                    'usage_variation' => $variationStats['usage_variation_count'],
+                    'total_buildings' => $buildingCount,
+                    'areaVariationCount' => $variationStats['area_variation_count'],
+                    'usageVariationCount' => $variationStats['usage_variation_count'],
+                    'areaVariationPercentage' => $variationStats['area_variation_percentage'],
+                    'usageVariationPercentage' => $variationStats['usage_variation_percentage']
+                ]
+            ]);
 
-        return view('corporation.dashboard', [
-            "corporation" => $corporation,
-            "ward_count" => $ward_count,
-            "mis_count" => $mis_count,
-            "collections" => $collections,
-            "total_buildings" => $total_buildings,
-            "total_area_variation" => $total_area_variation,
-            "total_usage_variation" => $total_usage_variation,
-            "area_variation_percentage" => $total_buildings > 0 ? round(($total_area_variation / $total_buildings) * 100, 1) : 0,
-            "usage_variation_percentage" => $total_buildings > 0 ? round(($total_usage_variation / $total_buildings) * 100, 1) : 0,
-            "chartData" => $chartData
-        ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching ward data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all wards data progressively
+     */
+    public function getAllWardsData(Request $request)
+    {
+        try {
+            $user = Auth::guard('corporation')->user();
+
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $corporationId = $user->corporation_id;
+
+            $wards = Ward::where('corporation_id', $corporationId)
+                ->where('status', 'active')
+                ->limit(100)
+                ->get();
+
+            $results = [];
+            $total_buildings = 0;
+            $total_area_variation = 0;
+            $total_usage_variation = 0;
+            $chartData = [];
+
+            foreach ($wards as $ward) {
+                // Skip if table doesn't exist
+                $polygontable = $this->getPolygonTable($corporationId, $ward->ward_no, $ward->zone);
+
+                if (!$polygontable || !Schema::hasTable($polygontable)) {
+                    continue;
+                }
+
+                // Get building count
+                $buildingCount = DB::table($polygontable)->count();
+
+                if ($buildingCount == 0) {
+                    continue;
+                }
+
+                // Calculate variations for this ward
+                $variationStats = $this->calculateWardVariations($corporationId, $ward->zone, $ward->ward_no);
+
+                // Accumulate totals
+                $total_buildings += $buildingCount;
+                $total_area_variation += $variationStats['area_variation_count'];
+                $total_usage_variation += $variationStats['usage_variation_count'];
+
+                // Prepare chart data
+                $chartData[] = [
+                    'ward' => "Ward {$ward->ward_no}",
+                    'ward_no' => $ward->ward_no,
+                    'area_variation' => $variationStats['area_variation_count'],
+                    'usage_variation' => $variationStats['usage_variation_count'],
+                    'total_buildings' => $buildingCount,
+                    'areaVariationCount' => $variationStats['area_variation_count'],
+                    'usageVariationCount' => $variationStats['usage_variation_count'],
+                    'areaVariationPercentage' => $variationStats['area_variation_percentage'],
+                    'usageVariationPercentage' => $variationStats['usage_variation_percentage']
+                ];
+
+                $results[] = [
+                    "zone" => $ward->zone,
+                    "ward_no" => $ward->ward_no,
+                    "buildingCount" => $buildingCount,
+                    "surveyedBuildingCount" => $variationStats['surveyed_count'],
+                    "areaVariationCount" => $variationStats['area_variation_count'],
+                    "usageVariationCount" => $variationStats['usage_variation_count'],
+                    "areaVariationPercentage" => $variationStats['area_variation_percentage'],
+                    "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'collections' => $results,
+                'total_buildings' => $total_buildings,
+                'total_area_variation' => $total_area_variation,
+                'total_usage_variation' => $total_usage_variation,
+                'area_variation_percentage' => $total_buildings > 0 ? round(($total_area_variation / $total_buildings) * 100, 1) : 0,
+                'usage_variation_percentage' => $total_buildings > 0 ? round(($total_usage_variation / $total_buildings) * 100, 1) : 0,
+                'chartData' => $chartData
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching all wards data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
+        // Your existing calculateWardVariations method remains the same
         $zone = strtolower(trim($zone));
         $wardNo = (int)$wardNo;
 
@@ -209,16 +302,14 @@ class CommissionerController extends Controller
                 }
 
                 // AREA VARIATION: Compare building sqfeet with assessment area
-                // Variation if difference is more than 5% or absolute difference > 10 sq ft
                 $areaDiff = abs($buildingArea - $assessmentArea);
-                $variationThreshold = max($buildingArea * 0.05, 10); // 5% or at least 10 sq ft
+                $variationThreshold = max($buildingArea * 0.05, 10);
 
                 if ($areaDiff > $variationThreshold && $assessmentArea > 0) {
                     $areaVariationCount++;
                 }
 
-                // USAGE VARIATION: Check if building has mixed usage or different from standard
-                // For now, we consider any non-residential as variation (customize as needed)
+                // USAGE VARIATION
                 if ($pointUsage && !in_array(strtoupper(trim($pointUsage)), ['RESIDENTIAL', 'R', 'RES'])) {
                     $usageVariationCount++;
                 }
@@ -233,7 +324,6 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-
     /**
      * Export ward data to Excel with building variations
      */
