@@ -204,55 +204,87 @@ class GeoDataService
      * @param array $coordinates - Polygon coordinates in EPSG:3857 projection
      * @return float - Area in square feet
      */
-    private function calculatePolygonAreaInSquareFeet($coordinates)
-    {
-        try {
-            // Validate input
-            if (!is_array($coordinates) || count($coordinates) === 0) {
-                Log::warning("Invalid coordinates array");
-                return 0;
-            }
+ private function calculatePolygonAreaInSquareFeet($coordinates)
+{
+    try {
 
-            // Get the outer ring
-            $ring = $coordinates[0] ?? null;
-            if (!$ring || !is_array($ring) || count($ring) < 3) {
-                Log::warning("Invalid polygon ring - need at least 3 points");
-                return 0;
-            }
-
-            // First, calculate area in square meters using the 3857 coordinates
-            $areaInSqMeters = $this->calculate3857AreaInMeters($ring);
-
-            // If area seems reasonable (not too large), use it directly
-            if ($areaInSqMeters > 0 && $areaInSqMeters < 1000000) { // Less than 1 million sq meters (reasonable for a building)
-                $areaInSqFeet = $areaInSqMeters * 10.7639;
-                $result = round($areaInSqFeet, 0);
-                Log::info("Calculated area: {$result} sq ft ({$areaInSqMeters} sq meters)");
-                return $result;
-            }
-
-            // If area seems too large, the coordinates might be in degrees or microdegrees
-            // Try converting from degrees
-            $samplePoint = $ring[0];
-            if (abs($samplePoint[0]) <= 180 && abs($samplePoint[1]) <= 90) {
-                // Coordinates appear to be in degrees
-                $areaInSqMeters = $this->calculateSphericalAreaInMeters($ring);
-                $areaInSqFeet = $areaInSqMeters * 10.7639;
-                $result = round($areaInSqFeet, 0);
-                Log::info("Calculated area from degrees: {$result} sq ft ({$areaInSqMeters} sq meters)");
-                return $result;
-            }
-
-            // If still not reasonable, return 0
-            Log::warning("Area calculation returned unreasonable value: {$areaInSqMeters} sq meters");
-            return 0;
-
-        } catch (\Exception $e) {
-            Log::error("Area calculation failed: " . $e->getMessage());
+        if (!is_array($coordinates) || empty($coordinates)) {
+            Log::warning("Invalid coordinates array");
             return 0;
         }
-    }
 
+        /**
+         * Handle both:
+         * Raw Polygon:
+         * [
+         *   [[x,y],[x,y]]
+         * ]
+         *
+         * Flattened:
+         * [
+         *   [x,y],[x,y]
+         * ]
+         */
+
+        if (
+            isset($coordinates[0][0]) &&
+            is_numeric($coordinates[0][0])
+        ) {
+            // Already flattened
+            $ring = $coordinates;
+        } else {
+            // GeoJSON polygon structure
+            $ring = $coordinates[0] ?? null;
+        }
+
+        if (!$ring || !is_array($ring) || count($ring) < 3) {
+            Log::warning("Invalid polygon ring - need at least 3 points");
+            return 0;
+        }
+
+        $areaInSqMeters = $this->calculate3857AreaInMeters($ring);
+
+        if ($areaInSqMeters > 0 && $areaInSqMeters < 1000000) {
+
+            $areaInSqFeet = $areaInSqMeters * 10.7639;
+
+            $result = round($areaInSqFeet, 0);
+
+            Log::info("Calculated area: {$result} sq ft");
+
+            return $result;
+        }
+
+        $samplePoint = $ring[0];
+
+        if (
+            isset($samplePoint[0], $samplePoint[1]) &&
+            abs($samplePoint[0]) <= 180 &&
+            abs($samplePoint[1]) <= 90
+        ) {
+
+            $areaInSqMeters = $this->calculateSphericalAreaInMeters($ring);
+
+            $areaInSqFeet = $areaInSqMeters * 10.7639;
+
+            $result = round($areaInSqFeet, 0);
+
+            Log::info("Calculated spherical area: {$result} sq ft");
+
+            return $result;
+        }
+
+        Log::warning("Area calculation returned unreasonable value");
+
+        return 0;
+
+    } catch (\Exception $e) {
+
+        Log::error("Area calculation failed: " . $e->getMessage());
+
+        return 0;
+    }
+}
     /**
      * Calculate area for EPSG:3857 (Web Mercator) coordinates
      * Web Mercator has significant distortion, so we need to correct for latitude
@@ -319,25 +351,6 @@ class GeoDataService
         }
 
         return abs($area * $earthRadius * $earthRadius / 2);
-    }
-
-    /**
-     * Calculate area using planar formula (for projected coordinates like UTM)
-     * Returns area in square meters
-     */
-    private function calculatePlanarAreaInMeters($ring)
-    {
-        $count = count($ring);
-        $area = 0;
-
-        for ($i = 0; $i < $count; $i++) {
-            $p1 = $ring[$i];
-            $p2 = $ring[($i + 1) % $count];
-
-            $area += ($p1[0] * $p2[1]) - ($p2[0] * $p1[1]);
-        }
-
-        return abs($area) / 2;
     }
 
     /**
