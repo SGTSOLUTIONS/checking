@@ -58,7 +58,7 @@ class CommissionerController extends Controller
         $collections = [];
         $zonesWithWards = [];
         $chartData = [];
-return response()->json($wards_per_zones);
+        return response()->json($wards_per_zones);
 
 
 
@@ -594,7 +594,8 @@ return response()->json($wards_per_zones);
                 'new_door_no',
                 'remarks',
                 'water_tax',
-                'zone','qcusage',
+                'zone',
+                'qcusage',
                 'qcsqfeet'
             )
             ->get();
@@ -664,7 +665,7 @@ return response()->json($wards_per_zones);
 
         $ward = $warddetail;
 
-        return view('corporation.ward-map', compact('ward', 'polygons', 'lines','polygonDatas'));
+        return view('corporation.ward-map', compact('ward', 'polygons', 'lines', 'polygonDatas'));
     }
 
     private function getPointDataTable($corporationId, $wardNo, $zone)
