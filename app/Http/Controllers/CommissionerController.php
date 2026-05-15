@@ -205,6 +205,10 @@ class CommissionerController extends Controller
         $totalBuilding = 0;
         $totalSurveyedBuilding = 0;
         $totalSurveyedAssessment = 0;
+        $totalShops = 0;
+        $totalShopDataCount = 0;
+        $totalShopDataInMis = 0;
+        $totalShopDataNotInMis = 0;
 
         $totalMis = Schema::hasTable($misTableName)
             ? DB::table($misTableName)->count()
@@ -241,11 +245,10 @@ class CommissionerController extends Controller
                 $zone = trim(strtolower($wardlist->zone));
 
                 $shopTableName = "shop_corporation_{$corporation->id}";
-
                 $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
 
                 // Polygon Count
-                if ($polygonsTableName) {
+                if ($polygonsTableName && Schema::hasTable($polygonsTableName)) {
                     $polygonCount = DB::table($polygonsTableName)->count();
                     $totalBuilding += $polygonCount;
                 } else {
@@ -253,7 +256,7 @@ class CommissionerController extends Controller
                 }
 
                 // PolygonData Count (Unique GISID)
-                if ($polygonDataTableName) {
+                if ($polygonDataTableName && Schema::hasTable($polygonDataTableName)) {
                     $polygonDataCount = DB::table($polygonDataTableName)
                         ->distinct('gisid')
                         ->count('gisid');
@@ -264,21 +267,26 @@ class CommissionerController extends Controller
                 }
 
                 // PointData Count
-                if ($pointDataTableName) {
+                if ($pointDataTableName && Schema::hasTable($pointDataTableName)) {
                     $pointDataCount = DB::table($pointDataTableName)->count();
-
                     $totalSurveyedAssessment += $pointDataCount;
                 } else {
                     $pointDataCount = 0;
                 }
-                // Shop Count
-                if (Schema::hasTable($shopTableName)) {
 
+                // Shop Count
+                $shopCount = 0;
+                $shopDataCount = 0;
+                $shopDataInMisCount = 0;
+                $shopDataNotinMisCount = 0;
+
+                if (Schema::hasTable($shopTableName)) {
                     $shopCount = DB::table($shopTableName)->count();
+                    $totalShops += $shopCount;
 
                     if (Schema::hasTable($shopDataTableName)) {
-
                         $shopDataCount = DB::table($shopDataTableName)->count();
+                        $totalShopDataCount += $shopDataCount;
 
                         $shopDataInMisCount = DB::table($shopDataTableName)
                             ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
@@ -288,46 +296,48 @@ class CommissionerController extends Controller
                             ->count();
 
                         $shopDataNotinMisCount = $shopDataCount - $shopDataInMisCount;
-                    } else {
 
-                        $shopDataCount = 0;
-                        $shopDataInMisCount = 0;
-                        $shopDataNotinMisCount = 0;
+                        $totalShopDataInMis += $shopDataInMisCount;
+                        $totalShopDataNotInMis += $shopDataNotinMisCount;
                     }
-                } else {
-
-                    $shopCount = 0;
-                    $shopDataCount = 0;
-                    $shopDataInMisCount = 0;
-                    $shopDataNotinMisCount = 0;
                 }
 
                 $wards[] = [
                     'ward_id' => $wardlist->id,
                     'ward_no' => $wardlist->ward_no,
                     'zone' => $wardlist->zone,
-
                     'total_buildings' => $polygonCount,
                     'surveyed_buildings' => $polygonDataCount,
                     'surveyed_assessment' => $pointDataCount,
-
                     'mis_count' => $totalMis,
-
                     'shop_count' => $shopCount,
                     'shop_data_count' => $shopDataCount,
-
                     'shop_data_in_mis_count' => $shopDataInMisCount,
                     'shop_data_not_in_mis_count' => $shopDataNotinMisCount,
                 ];
             }
         }
 
-        return response()->json([
+        // Calculate survey percentage
+        $survey_percentage = $totalBuilding > 0
+            ? round(($totalSurveyedBuilding / $totalBuilding) * 100, 1)
+            : 0;
+
+        // Return view with all data
+        return view('corporation.dashboard', [
+            'corporation' => $corporation,
+            'ward_count' => $ward_datas->count(),
             'total_building' => $totalBuilding,
             'total_surveyed_building' => $totalSurveyedBuilding,
-            'total_mis' => $totalMis,
             'total_surveyed_assessment' => $totalSurveyedAssessment,
+            'total_mis' => $totalMis,
+            'total_shops' => $totalShops,
+            'total_shop_data_count' => $totalShopDataCount,
+            'total_shop_data_in_mis' => $totalShopDataInMis,
+            'total_shop_data_not_in_mis' => $totalShopDataNotInMis,
+            'survey_percentage' => $survey_percentage,
             'wards' => $wards,
+            'wards_per_zones' => $wards_per_zones,
         ]);
     }
     private function calculateWardVariations($corporationId, $zone, $wardNo)
