@@ -189,10 +189,10 @@ class CommissionerController extends Controller
         if (!$corporation) {
             return back()->with('error', 'Corporation not found');
         }
-
-        $ward_datas = Ward::find($user->corporation_id);
+        $ward_datas = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->get();
         return response()->json($ward_datas);
-
     }
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
