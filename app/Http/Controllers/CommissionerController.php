@@ -240,64 +240,101 @@ class CommissionerController extends Controller
 
                 $zone = trim(strtolower($wardlist->zone));
 
-                $shopTableName = "shop__corporation_{$corporation->id}";
+                // FIXED SHOP TABLE NAME
+                $shopTableName = "shop_corporation_{$corporation->id}";
 
                 $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
 
-                // Polygon Count
+                /*
+            |--------------------------------------------------------------------------
+            | Polygon Count
+            |--------------------------------------------------------------------------
+            */
                 if ($polygonsTableName) {
+
                     $polygonCount = DB::table($polygonsTableName)->count();
+
                     $totalBuilding += $polygonCount;
                 } else {
+
                     $polygonCount = 0;
                 }
 
-                // PolygonData Count (Unique GISID)
+                /*
+            |--------------------------------------------------------------------------
+            | PolygonData Count
+            |--------------------------------------------------------------------------
+            */
                 if ($polygonDataTableName) {
+
                     $polygonDataCount = DB::table($polygonDataTableName)
                         ->distinct('gisid')
                         ->count('gisid');
 
                     $totalSurveyedBuilding += $polygonDataCount;
                 } else {
+
                     $polygonDataCount = 0;
                 }
 
-                // PointData Count
+                /*
+            |--------------------------------------------------------------------------
+            | PointData Count
+            |--------------------------------------------------------------------------
+            */
                 if ($pointDataTableName) {
+
                     $pointDataCount = DB::table($pointDataTableName)->count();
 
                     $totalSurveyedAssessment += $pointDataCount;
                 } else {
+
                     $pointDataCount = 0;
                 }
 
-                // Shop Count
+                /*
+            |--------------------------------------------------------------------------
+            | Shop Count
+            |--------------------------------------------------------------------------
+            */
                 if (Schema::hasTable($shopTableName)) {
 
                     $shopCount = DB::table($shopTableName)->count();
-
-                    if (Schema::hasTable($shopDataTableName)) {
-
-                        $shopDataCount = DB::table($shopDataTableName)->count();
-
-                        $shopDataInMisCount = DB::table($shopDataTableName)
-                            ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
-                                $query->select('prof_tax_assessment')
-                                    ->from($shopTableName);
-                            })
-                            ->count();
-
-                        $shopDataNotinMisCount = $shopDataCount - $shopDataInMisCount;
-                    } else {
-
-                        $shopDataCount = 0;
-                        $shopDataInMisCount = 0;
-                        $shopDataNotinMisCount = 0;
-                    }
                 } else {
 
                     $shopCount = 0;
+                }
+
+                /*
+            |--------------------------------------------------------------------------
+            | ShopData Count
+            |--------------------------------------------------------------------------
+            */
+                if (Schema::hasTable($shopDataTableName)) {
+
+                    $shopDataCount = DB::table($shopDataTableName)->count();
+
+                    /*
+                |--------------------------------------------------------------------------
+                | ShopData Present in MIS Shop Table
+                |--------------------------------------------------------------------------
+                */
+                    $shopDataInMisCount = DB::table($shopDataTableName)
+                        ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
+
+                            $query->select('prof_tax_assessment')
+                                ->from($shopTableName);
+                        })
+                        ->count();
+
+                    /*
+                |--------------------------------------------------------------------------
+                | ShopData Not Present in MIS Shop Table
+                |--------------------------------------------------------------------------
+                */
+                    $shopDataNotinMisCount = $shopDataCount - $shopDataInMisCount;
+                } else {
+
                     $shopDataCount = 0;
                     $shopDataInMisCount = 0;
                     $shopDataNotinMisCount = 0;
@@ -331,6 +368,7 @@ class CommissionerController extends Controller
             'wards' => $wards,
         ]);
     }
+
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
         $zone = strtolower(trim($zone));
