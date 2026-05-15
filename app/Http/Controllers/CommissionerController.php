@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Corporation;
 use App\Models\Ward;
+use SebastianBergmann\CodeCoverage\Util\Percentage;
 
 class CommissionerController extends Controller
 {
-     /**
+    /**
      * Display the commissioner dashboard with all data.
      */
     public function dashboard()
@@ -28,13 +29,18 @@ class CommissionerController extends Controller
             return back()->with('error', 'Corporation not found');
         }
 
-        // Get wards list for AJAX loading
+        // Get wards
         $wards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
-            ->limit(100)
             ->get();
 
         $ward_count = $wards->count();
+
+        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->select('zone', DB::raw('count(*) as total'))
+            ->groupBy('zone')
+            ->get();
 
         // Get MIS count
         $mis_count = 0;
@@ -43,204 +49,169 @@ class CommissionerController extends Controller
             $mis_count = DB::table($misTable)->count();
         }
 
-        return view('corporation.dashboard', [
-            "corporation" => $corporation,
-            "ward_count" => $ward_count,
-            "mis_count" => $mis_count,
-            "wards" => $wards // Pass wards list for initial display
-        ]);
-    }
+        // Initialize totals
+        $total_buildings = 0;
+        $total_area_variation = 0;
+        $total_usage_variation = 0;
 
-    /**
-     * Get ward data via AJAX
-     */
-    public function getWardData(Request $request)
-    {
-        try {
-            $user = Auth::guard('corporation')->user();
+        // Build collections
+        $collections = [];
+        $zonesWithWards = [];
+        $chartData = [];
 
-            if (!$user) {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
+        foreach ($wards_per_zones as $wards_per_zone) {
+            $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
 
-            $wardNo = $request->ward_no;
-            $corporationId = $user->corporation_id;
-
-            $ward = Ward::where('corporation_id', $corporationId)
-                ->where('ward_no', $wardNo)
-                ->first();
-
-            if (!$ward) {
-                return response()->json(['error' => 'Ward not found'], 404);
-            }
-
-            // Calculate variations for this specific ward
-            $variationStats = $this->calculateWardVariations($corporationId, $ward->zone, $ward->ward_no);
-
-            // Get building count
-            $polygontable = $this->getPolygonTable($corporationId, $ward->ward_no, $ward->zone);
-            $buildingCount = 0;
-            if ($polygontable && Schema::hasTable($polygontable)) {
-                $buildingCount = DB::table($polygontable)->count();
-            }
-
-            $data = [
-                "zone" => $ward->zone,
-                "ward_no" => $ward->ward_no,
-                "buildingCount" => $buildingCount,
-                "surveyedBuildingCount" => $variationStats['surveyed_count'],
-                "areaVariationCount" => $variationStats['area_variation_count'],
-                "usageVariationCount" => $variationStats['usage_variation_count'],
-                "areaVariationPercentage" => $variationStats['area_variation_percentage'],
-                "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
+            $zoneData = [
+                'zone' => $wards_per_zone->zone,
+                'wards' => []
             ];
 
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-                'chartData' => [
-                    'ward' => "Ward {$ward->ward_no}",
-                    'ward_no' => $ward->ward_no,
-                    'area_variation' => $variationStats['area_variation_count'],
-                    'usage_variation' => $variationStats['usage_variation_count'],
-                    'total_buildings' => $buildingCount,
-                    'areaVariationCount' => $variationStats['area_variation_count'],
-                    'usageVariationCount' => $variationStats['usage_variation_count'],
-                    'areaVariationPercentage' => $variationStats['area_variation_percentage'],
-                    'usageVariationPercentage' => $variationStats['usage_variation_percentage']
-                ]
-            ]);
+            foreach ($wardlists as $wardlist) {
+                $pointdatatable = $this->getPointDataTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $polygondatatable = $this->getPolygonDataTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $polygontable = $this->getPolygonTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
+                $roadtable = $this->getLineTable($corporation->id, $wardlist->ward_no, $wardlist->zone);
 
-        } catch (\Exception $e) {
-            \Log::error('Error fetching ward data: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get all wards data progressively
-     */
-    public function getAllWardsData(Request $request)
-    {
-        try {
-            $user = Auth::guard('corporation')->user();
-
-            if (!$user) {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-
-            $corporationId = $user->corporation_id;
-
-            $wards = Ward::where('corporation_id', $corporationId)
-                ->where('status', 'active')
-                ->limit(100)
-                ->get();
-
-            $results = [];
-            $total_buildings = 0;
-            $total_area_variation = 0;
-            $total_usage_variation = 0;
-            $chartData = [];
-
-            foreach ($wards as $ward) {
-                // Skip if table doesn't exist
-                $polygontable = $this->getPolygonTable($corporationId, $ward->ward_no, $ward->zone);
-
-                if (!$polygontable || !Schema::hasTable($polygontable)) {
-                    continue;
+                // Get counts
+                $buildingCount = 0;
+                if ($polygontable && Schema::hasTable($polygontable)) {
+                    $buildingCount = DB::table($polygontable)->count();
                 }
 
-                // Get building count
-                $buildingCount = DB::table($polygontable)->count();
-
-                if ($buildingCount == 0) {
-                    continue;
+                $surveyedBuildingCount = 0;
+                if ($polygondatatable && Schema::hasTable($polygondatatable)) {
+                    $surveyedBuildingCount = DB::table($polygondatatable)->count();
                 }
 
-                // Calculate variations for this ward
-                $variationStats = $this->calculateWardVariations($corporationId, $ward->zone, $ward->ward_no);
+                $pointCount = 0;
+                if ($pointdatatable && Schema::hasTable($pointdatatable)) {
+                    $pointCount = DB::table($pointdatatable)->count();
+                }
 
-                // Accumulate totals
-                $total_buildings += $buildingCount;
-                $total_area_variation += $variationStats['area_variation_count'];
-                $total_usage_variation += $variationStats['usage_variation_count'];
+                $roadCount = 0;
+                if ($roadtable && Schema::hasTable($roadtable)) {
+                    $roadCount = DB::table($roadtable)->count();
+                }
 
-                // Prepare chart data
-                $chartData[] = [
-                    'ward' => "Ward {$ward->ward_no}",
-                    'ward_no' => $ward->ward_no,
-                    'area_variation' => $variationStats['area_variation_count'],
-                    'usage_variation' => $variationStats['usage_variation_count'],
-                    'total_buildings' => $buildingCount,
-                    'areaVariationCount' => $variationStats['area_variation_count'],
-                    'usageVariationCount' => $variationStats['usage_variation_count'],
-                    'areaVariationPercentage' => $variationStats['area_variation_percentage'],
-                    'usageVariationPercentage' => $variationStats['usage_variation_percentage']
+                $misCount = 0;
+                $misWardTable = "mis_corporation_{$corporation->id}";
+                if (Schema::hasTable($misWardTable)) {
+                    $misCount = DB::table($misWardTable)
+                        ->where('ward_no', $wardlist->ward_no)
+                        ->count();
+                }
+
+                // ONLY calculate variations if pointdata count is greater than zero
+                $variationStats = [
+                    'area_variation_count' => 0,
+                    'usage_variation_count' => 0,
+                    'surveyed_count' => 0,
+                    'area_variation_percentage' => 0,
+                    'usage_variation_percentage' => 0
                 ];
 
-                $results[] = [
-                    "zone" => $ward->zone,
-                    "ward_no" => $ward->ward_no,
-                    "buildingCount" => $buildingCount,
-                    "surveyedBuildingCount" => $variationStats['surveyed_count'],
-                    "areaVariationCount" => $variationStats['area_variation_count'],
-                    "usageVariationCount" => $variationStats['usage_variation_count'],
-                    "areaVariationPercentage" => $variationStats['area_variation_percentage'],
+                if ($pointCount > 0) {
+                    // Calculate variations for this ward only if pointdata exists
+                    $variationStats = $this->calculateWardVariations($corporation->id, $wardlist->zone, $wardlist->ward_no);
+
+                    // Accumulate totals only if variations were calculated
+                    $total_buildings += $buildingCount;
+                    $total_area_variation += $variationStats['area_variation_count'];
+                    $total_usage_variation += $variationStats['usage_variation_count'];
+                }
+
+                // Prepare chart data (only include if there's data)
+                if ($pointCount > 0) {
+                    $chartData[] = [
+                        'ward' => "Ward {$wardlist->ward_no}",
+                        'ward_no' => $wardlist->ward_no,
+                        'area_variation' => $variationStats['area_variation_count'],
+                        'usage_variation' => $variationStats['usage_variation_count'],
+                        'total_buildings' => $buildingCount,
+                        'areaVariationCount' => $variationStats['area_variation_count'],
+                        'usageVariationCount' => $variationStats['usage_variation_count'],
+                        'areaVariationPercentage' => $variationStats['area_variation_percentage'],
+                        'usageVariationPercentage' => $variationStats['usage_variation_percentage']
+                    ];
+                }
+
+                $data = [
+                    "zone"                     => $wardlist->zone,
+                    "ward_no"                  => $wardlist->ward_no,
+                    "pointdatatable"           => $pointdatatable,
+                    "polygondatatable"         => $polygondatatable,
+                    "polygontable"             => $polygontable,
+                    "roadtable"                => $roadtable,
+                    "buildingCount"            => $buildingCount,
+                    "surveyedBuildingCount"    => $surveyedBuildingCount,
+                    "pointCount"               => $pointCount,
+                    "roadCount"                => $roadCount,
+                    "misCount"                 => $misCount,
+                    "areaVariationCount"       => $variationStats['area_variation_count'],
+                    "usageVariationCount"      => $variationStats['usage_variation_count'],
+                    "areaVariationPercentage"  => $variationStats['area_variation_percentage'],
                     "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
+                    "hasPointData"             => $pointCount > 0, // Flag to indicate if point data exists
+                ];
+
+                $collections[] = $data;
+
+                $zoneData['wards'][] = [
+                    'ward_no' => $wardlist->ward_no,
+                    'buildingCount' => $buildingCount,
+                    'surveyedCount' => $surveyedBuildingCount,
+                    'pointCount' => $pointCount,
+                    'roadCount' => $roadCount,
+                    'misCount' => $misCount,
+                    'areaVariationCount' => $variationStats['area_variation_count'],
+                    'usageVariationCount' => $variationStats['usage_variation_count'],
+                    'hasPointData' => $pointCount > 0,
                 ];
             }
 
-            return response()->json([
-                'success' => true,
-                'collections' => $results,
-                'total_buildings' => $total_buildings,
-                'total_area_variation' => $total_area_variation,
-                'total_usage_variation' => $total_usage_variation,
-                'area_variation_percentage' => $total_buildings > 0 ? round(($total_area_variation / $total_buildings) * 100, 1) : 0,
-                'usage_variation_percentage' => $total_buildings > 0 ? round(($total_usage_variation / $total_buildings) * 100, 1) : 0,
-                'chartData' => $chartData
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error fetching all wards data: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error' => $e->getMessage()
-            ], 500);
+            $zonesWithWards[] = $zoneData;
         }
+
+        return view('corporation.dashboard', [
+            "corporation" => $corporation,
+            "ward_count"  => $ward_count,
+            "mis_count"   => $mis_count,
+            "collections" => $collections,
+            "zonesWithWards" => $zonesWithWards,
+            "total_buildings" => $total_buildings,
+            "total_area_variation" => $total_area_variation,
+            "total_usage_variation" => $total_usage_variation,
+            "area_variation_percentage" => $total_buildings > 0 ? round(($total_area_variation / $total_buildings) * 100, 1) : 0,
+            "usage_variation_percentage" => $total_buildings > 0 ? round(($total_usage_variation / $total_buildings) * 100, 1) : 0,
+            "chartData" => $chartData
+        ]);
     }
 
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
-        // Your existing calculateWardVariations method remains the same
         $zone = strtolower(trim($zone));
         $wardNo = (int)$wardNo;
 
         $polygonsTableName = "polygon_{$corporationId}_{$zone}_{$wardNo}";
+        $polygonDataTableName = "polygondata_{$corporationId}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corporationId}_{$zone}_{$wardNo}";
         $misTableName = "mis_corporation_{$corporationId}";
 
-        // Check if required tables exist
         if (!Schema::hasTable($polygonsTableName) || !Schema::hasTable($pointDataTableName)) {
             return [
                 'area_variation_count' => 0,
                 'usage_variation_count' => 0,
-                'surveyed_count' => 0,
                 'area_variation_percentage' => 0,
                 'usage_variation_percentage' => 0
             ];
         }
 
-        // Get polygons with their sqfeet
-        $polygons = DB::table($polygonsTableName)
-            ->select('gisid', 'sqfeet')
-            ->get();
+        $polygons = DB::table($polygonsTableName)->get();
+        $polygonDatas = Schema::hasTable($polygonDataTableName) ?
+            DB::table($polygonDataTableName)->get()->keyBy('gisid') : collect();
 
-        // Get point data with assessment info
-        $pointDatas = DB::table($pointDataTableName . ' as pd')
+        $pointDataQuery = DB::table($pointDataTableName . ' as pd')
             ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
             ->select(
                 'pd.point_gisid',
@@ -248,10 +219,10 @@ class CommissionerController extends Controller
                 'pd.qcsqfeet',
                 'pd.bill_usage',
                 'mis.plot_area'
-            )
-            ->get();
+            );
 
-        // Group point data by GIS ID
+        $pointDatas = $pointDataQuery->get();
+
         $pointDataByGisid = [];
         foreach ($pointDatas as $pointData) {
             $gisid = $pointData->point_gisid;
@@ -264,28 +235,28 @@ class CommissionerController extends Controller
         $areaVariationCount = 0;
         $usageVariationCount = 0;
         $validBuildingsCount = 0;
-        $surveyedBuildingsCount = 0;
 
         foreach ($polygons as $polygon) {
             $gisid = $polygon->gisid;
-            $buildingArea = floatval($polygon->sqfeet ?? 0);
+            $polygonSqfeet = floatval($polygon->sqfeet ?? 0);
 
-            if ($buildingArea <= 0) {
-                continue;
+            $polyData = $polygonDatas->get($gisid);
+
+            if ($polyData) {
+                $numberFloor = floatval($polyData->number_floor ?? 0);
+                $basement = floatval($polyData->basement ?? 0);
+                $buildingArea = ($numberFloor + $basement) * $polygonSqfeet;
+                $buildingUsage = $polyData->building_usage ?? null;
+            } else {
+                $buildingArea = $polygonSqfeet;
+                $buildingUsage = null;
             }
 
-            $validBuildingsCount++;
+            $assessmentArea = 0;
+            $hasUsageMismatch = false;
 
-            // Check if this building has point data (surveyed)
             if (isset($pointDataByGisid[$gisid])) {
-                $surveyedBuildingsCount++;
-
-                $assessmentArea = 0;
-                $hasUsageMismatch = false;
-                $pointUsage = null;
-
                 foreach ($pointDataByGisid[$gisid] as $pointData) {
-                    // Calculate assessment area
                     $pointArea = 0;
                     if (isset($pointData->qcsqfeet) && $pointData->qcsqfeet > 0) {
                         $pointArea = floatval($pointData->qcsqfeet);
@@ -294,23 +265,22 @@ class CommissionerController extends Controller
                     }
                     $assessmentArea += $pointArea;
 
-                    // Get usage for comparison
-                    $currentUsage = $pointData->bill_usage ?? null;
-                    if ($currentUsage) {
-                        $pointUsage = $currentUsage;
+                    $pointUsage = $pointData->bill_usage ?? null;
+                    if ($buildingUsage && $pointUsage && strtoupper(trim($buildingUsage)) != strtoupper(trim($pointUsage))) {
+                        $hasUsageMismatch = true;
                     }
                 }
+            }
 
-                // AREA VARIATION: Compare building sqfeet with assessment area
+            if ($buildingArea > 0 && $assessmentArea > 0) {
+                $validBuildingsCount++;
+
                 $areaDiff = abs($buildingArea - $assessmentArea);
-                $variationThreshold = max($buildingArea * 0.05, 10);
-
-                if ($areaDiff > $variationThreshold && $assessmentArea > 0) {
+                if ($areaDiff > 1) {
                     $areaVariationCount++;
                 }
 
-                // USAGE VARIATION
-                if ($pointUsage && !in_array(strtoupper(trim($pointUsage)), ['RESIDENTIAL', 'R', 'RES'])) {
+                if ($hasUsageMismatch) {
                     $usageVariationCount++;
                 }
             }
@@ -319,19 +289,16 @@ class CommissionerController extends Controller
         return [
             'area_variation_count' => $areaVariationCount,
             'usage_variation_count' => $usageVariationCount,
-            'surveyed_count' => $surveyedBuildingsCount,
             'area_variation_percentage' => $validBuildingsCount > 0 ? round(($areaVariationCount / $validBuildingsCount) * 100, 1) : 0,
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
+
     /**
      * Export ward data to Excel with building variations
      */
     public function mapDownloadExcel($ward_no)
     {
-        ini_set('max_execution_time', 300);
-        ini_set('memory_limit', '512M');
-
         $user = Auth::guard('corporation')->user();
 
         if (!$user) {
@@ -351,6 +318,7 @@ class CommissionerController extends Controller
         $corp = (int)$warddetail->corporation_id;
 
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+        $polygonDataTableName = "polygondata_{$corp}_{$zone}_{$wardNo}";
         $pointDataTableName = "pointdata_{$corp}_{$zone}_{$wardNo}";
         $misTableName = "mis_corporation_{$corp}";
 
@@ -358,16 +326,16 @@ class CommissionerController extends Controller
             return back()->with('error', 'Building data not found for this ward');
         }
 
-        // Get polygons with their data
-        $polygons = DB::table($polygonsTableName)
-            ->select('gisid', 'sqfeet')
-            ->get();
+        $polygons = DB::table($polygonsTableName)->get();
+        $polygonDatas = Schema::hasTable($polygonDataTableName)
+            ? DB::table($polygonDataTableName)->get()->keyBy('gisid')
+            : collect();
 
-        // Get point data grouped by GIS ID
+        $pointDatas = collect();
         $pointDataByGisid = [];
 
         if (Schema::hasTable($pointDataTableName)) {
-            $pointDatas = DB::table($pointDataTableName . ' as pd')
+            $pointDataQuery = DB::table($pointDataTableName . ' as pd')
                 ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
                 ->select(
                     'pd.point_gisid',
@@ -377,10 +345,10 @@ class CommissionerController extends Controller
                     'pd.qcusage',
                     'mis.plot_area',
                     'mis.owner_name',
-                    'mis.address',
                     'mis.road_name'
-                )
-                ->get();
+                );
+
+            $pointDatas = $pointDataQuery->get();
 
             foreach ($pointDatas as $pointData) {
                 $gisid = $pointData->point_gisid;
@@ -397,40 +365,54 @@ class CommissionerController extends Controller
         $excelData[] = [
             'S.No',
             'GIS ID',
-            'Building Area (sq ft)',
-            'Assessment Area (sq ft)',
-            'Area Difference',
-            'Area Variation %',
-            'Area Status',
+            'Building Sq Feet',
+            'Number of Floors',
+            'Basement',
+            'Floor Percentage',
+            'Total Building Area',
             'Building Usage',
-            'Assessment Usage',
-            'Usage Status',
+            'Total Assessment Area',
+            'Area Variation',
+            'Area Variation Status',
+            'Number of Bills',
+            'Usage Variation Status',
+            'Negative Area Variation',
+            'Variation Percentage',
             'Owner Name',
             'Address',
-            'Road Name',
-            'Assessment ID'
+            'Road Name'
         ];
-
-        $buildingsWithAreaVariation = 0;
-        $buildingsWithUsageVariation = 0;
-        $totalBuildingArea = 0;
-        $totalAssessmentArea = 0;
 
         foreach ($polygons as $polygon) {
             $gisid = $polygon->gisid;
-            $buildingArea = floatval($polygon->sqfeet ?? 0);
-            $totalBuildingArea += $buildingArea;
+            $polygonSqfeet = floatval($polygon->sqfeet ?? 0);
+
+            $polyData = $polygonDatas->get($gisid);
+            $numberFloor = 0;
+            $basement = 0;
+            $floorPercentage = 100;
+            $buildingUsage = null;
+            $totalBuildingArea = $polygonSqfeet;
+
+            if ($polyData) {
+                $numberFloor = floatval($polyData->number_floor ?? 0);
+                $basement = floatval($polyData->basement ?? 0);
+                $floorPercentage = floatval($polyData->percentage ?? 100);
+                $buildingUsage = $polyData->building_usage ?? null;
+                $totalBuildingArea = $polygonSqfeet * ($numberFloor + ($floorPercentage / 100) + $basement);
+            }
 
             $assessmentArea = 0;
-            $assessmentIds = [];
-            $assessmentUsage = null;
+            $assessmentCount = 0;
+            $hasUsageMismatch = false;
             $ownerName = '';
             $address = '';
             $roadName = '';
 
             if (isset($pointDataByGisid[$gisid])) {
+                $assessmentCount = count($pointDataByGisid[$gisid]);
+
                 foreach ($pointDataByGisid[$gisid] as $pointData) {
-                    // Calculate assessment area
                     $pointArea = 0;
                     if (isset($pointData->qcsqfeet) && $pointData->qcsqfeet > 0) {
                         $pointArea = floatval($pointData->qcsqfeet);
@@ -439,77 +421,74 @@ class CommissionerController extends Controller
                     }
                     $assessmentArea += $pointArea;
 
-                    // Get assessment ID
-                    if (isset($pointData->assessment)) {
-                        $assessmentIds[] = $pointData->assessment;
+                    $pointUsage = $pointData->bill_usage ?? $pointData->qcusage ?? null;
+                    if ($buildingUsage && $pointUsage && strtoupper(trim($buildingUsage)) != strtoupper(trim($pointUsage))) {
+                        $hasUsageMismatch = true;
                     }
 
-                    // Get usage
-                    $usage = $pointData->bill_usage ?? $pointData->qcusage ?? null;
-                    if ($usage && !$assessmentUsage) {
-                        $assessmentUsage = $usage;
-                    }
-
-                    // Get owner info
                     if (empty($ownerName) && isset($pointData->owner_name)) {
                         $ownerName = $pointData->owner_name;
-                        $address = $pointData->address ?? '';
+                        $address = $pointData->road_name ?? '';
                         $roadName = $pointData->road_name ?? '';
                     }
                 }
             }
 
-            $totalAssessmentArea += $assessmentArea;
+            $areaVariation = $totalBuildingArea - $assessmentArea;
+            $areaVariationAbs = abs($areaVariation);
+            $hasAreaVariation = $areaVariationAbs > 1;
+            $isNegativeVariation = $areaVariation < 0;
+            $variationPercentage = $totalBuildingArea > 0 ? round(($areaVariationAbs / $totalBuildingArea) * 100, 2) : 0;
 
-            // Calculate area variation
-            $areaDiff = $buildingArea - $assessmentArea;
-            $areaVariationPercent = $buildingArea > 0 ? round(($areaDiff / $buildingArea) * 100, 2) : 0;
-
-            // Determine area status (10% threshold)
-            $areaStatus = 'MATCH';
-            if (abs($areaVariationPercent) > 10) {
-                $areaStatus = abs($areaDiff) > $assessmentArea ? 'VARIATION (Higher)' : 'VARIATION (Lower)';
-                $buildingsWithAreaVariation++;
-            }
-
-            // Determine usage status
-            $usageStatus = 'N/A';
-            $buildingUsage = 'Residential'; // Default assumption
-
-            if ($assessmentUsage) {
-                $usageStatus = (strtoupper(trim($assessmentUsage)) == 'RESIDENTIAL' ||
-                    strtoupper(trim($assessmentUsage)) == 'R') ? 'MATCH' : 'VARIATION';
-                if ($usageStatus == 'VARIATION') {
-                    $buildingsWithUsageVariation++;
-                }
-            }
+            $areaStatus = $hasAreaVariation ? 'VARIATION' : 'MATCH';
+            $usageStatus = $hasUsageMismatch ? 'VARIATION' : 'MATCH';
+            $negativeStatus = $isNegativeVariation ? 'YES' : 'NO';
 
             $excelData[] = [
                 $rowNumber++,
                 $gisid,
-                number_format($buildingArea, 2),
-                number_format($assessmentArea, 2),
-                number_format($areaDiff, 2),
-                $areaVariationPercent . '%',
+                $polygonSqfeet,
+                $numberFloor,
+                $basement,
+                $floorPercentage . '%',
+                round($totalBuildingArea, 2),
+                $buildingUsage ?? 'N/A',
+                round($assessmentArea, 2),
+                round($areaVariation, 2),
                 $areaStatus,
-                $buildingUsage,
-                $assessmentUsage ?? 'Not Assessed',
+                $assessmentCount,
                 $usageStatus,
-                $ownerName ?: 'N/A',
-                $address ?: 'N/A',
-                $roadName ?: 'N/A',
-                implode(', ', $assessmentIds) ?: 'N/A'
+                $negativeStatus,
+                $variationPercentage . '%',
+                $ownerName,
+                $address,
+                $roadName
             ];
         }
 
         $totalBuildings = count($polygons);
+        $buildingsWithAreaVariation = 0;
+        $buildingsWithUsageVariation = 0;
+        $buildingsWithNegativeVariation = 0;
+        $totalBuildingAreaSum = 0;
+        $totalAssessmentAreaSum = 0;
+
+        foreach ($excelData as $index => $row) {
+            if ($index === 0) continue;
+            if ($row[10] === 'VARIATION') $buildingsWithAreaVariation++;
+            if ($row[12] === 'VARIATION') $buildingsWithUsageVariation++;
+            if ($row[13] === 'YES') $buildingsWithNegativeVariation++;
+            $totalBuildingAreaSum += floatval($row[6]);
+            $totalAssessmentAreaSum += floatval($row[8]);
+        }
 
         return $this->generateExcel($excelData, $warddetail, [
             'totalBuildings' => $totalBuildings,
             'areaVariationCount' => $buildingsWithAreaVariation,
             'usageVariationCount' => $buildingsWithUsageVariation,
-            'totalBuildingArea' => round($totalBuildingArea, 2),
-            'totalAssessmentArea' => round($totalAssessmentArea, 2),
+            'negativeVariationCount' => $buildingsWithNegativeVariation,
+            'totalBuildingArea' => round($totalBuildingAreaSum, 2),
+            'totalAssessmentArea' => round($totalAssessmentAreaSum, 2),
             'wardName' => "Ward {$warddetail->ward_no}",
             'zone' => $warddetail->zone,
             'corporationName' => $user->name ?? 'Corporation'
@@ -528,51 +507,48 @@ class CommissionerController extends Controller
         echo '<head><meta charset="UTF-8">';
         echo '<title>Ward ' . $ward->ward_no . ' Building Variations Report</title>';
         echo '<style>';
-        echo 'body { font-family: Arial, sans-serif; }';
-        echo 'th { background-color: #4472C4; color: white; border: 1px solid #000; padding: 8px; font-size: 12px; }';
-        echo 'td { border: 1px solid #ccc; padding: 6px; font-size: 11px; }';
+        echo 'th { background-color: #4472C4; color: white; border: 1px solid #000; padding: 8px; }';
+        echo 'td { border: 1px solid #ccc; padding: 6px; }';
         echo '.summary-table { margin-bottom: 20px; border-collapse: collapse; width: 100%; }';
-        echo '.summary-table td { padding: 8px; font-size: 12px; }';
+        echo '.summary-table td { padding: 8px; }';
         echo '.header { font-size: 18px; font-weight: bold; margin-bottom: 20px; }';
         echo '.subheader { font-size: 14px; margin-bottom: 20px; color: #666; }';
         echo '.variation-match { background-color: #C6EFCE; }';
         echo '.variation-mismatch { background-color: #FFC7CE; }';
-        echo '.title { background-color: #102C57; color: white; padding: 10px; }';
         echo '</style></head><body>';
 
         echo '<div class="header">';
         echo '<h2>' . htmlspecialchars($summary['corporationName']) . '</h2>';
         echo '<h3>Building Variation Report - ' . htmlspecialchars($summary['wardName']) . ' (' . htmlspecialchars($summary['zone']) . ' Zone)</h3>';
         echo '</div>';
-        echo '<div class="subheader">Generated on: ' . date('d-m-Y H:i:s') . '</div>';
+        echo '<div class="subheader">Generated on: ' . date('d-m-Y H:i:s') . '<br></div>';
 
         echo '<h3>Summary Statistics</h3>';
         echo '<table class="summary-table" border="1" cellpadding="5" cellspacing="0">';
-        echo '<tr style="background-color: #E6E6E6;"><td width="50%"><strong>Total Buildings:</strong></td><td>' . number_format($summary['totalBuildings']) . '</td></tr>';
+        echo '<tr style="background-color: #E6E6E6;"><td width="50%"><strong>Total Buildings:</strong></td><td>' . $summary['totalBuildings'] . '</td></tr>';
         echo '<tr><td><strong>Buildings with Area Variation:</strong></td><td>' . $summary['areaVariationCount'] . ' (' . round(($summary['areaVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
         echo '<tr style="background-color: #E6E6E6;"><td><strong>Buildings with Usage Variation:</strong></td><td>' . $summary['usageVariationCount'] . ' (' . round(($summary['usageVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
-        echo '<tr><td><strong>Total Building Area:</strong></td><td>' . number_format($summary['totalBuildingArea'], 2) . ' sq ft</td></tr>';
-        echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Assessment Area:</strong></td><td>' . number_format($summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
-        echo '<tr><td><strong>Total Area Variation:</strong></td><td>' . number_format($summary['totalBuildingArea'] - $summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
+        echo '<tr><td><strong>Buildings with Negative Variation:</strong></td><td>' . $summary['negativeVariationCount'] . ' (' . round(($summary['negativeVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
+        echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Building Area:</strong></td><td>' . number_format($summary['totalBuildingArea'], 2) . ' sq ft</td></tr>';
+        echo '<tr><td><strong>Total Assessment Area:</strong></td><td>' . number_format($summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
+        echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Area Variation:</strong></td><td>' . number_format($summary['totalBuildingArea'] - $summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
         echo '</table><br><br>';
 
         echo '<h3>Detailed Building Data</h3>';
-        echo '<table border="1" cellpadding="5" cellspacing="0" width="100%">';
+        echo '<table border="1" cellpadding="5" cellspacing="0">';
 
-        // Header
         echo '<tr>';
         foreach ($data[0] as $header) {
             echo '<th>' . htmlspecialchars($header) . '</th>';
         }
         echo '</tr>';
 
-        // Data rows
         for ($i = 1; $i < count($data); $i++) {
             $row = $data[$i];
             $rowClass = '';
-            if (strpos($row[6], 'VARIATION') !== false || $row[9] == 'VARIATION') {
+            if ($row[10] === 'VARIATION' || $row[12] === 'VARIATION') {
                 $rowClass = 'class="variation-mismatch"';
-            } elseif ($row[6] == 'MATCH' && $row[9] == 'MATCH') {
+            } elseif ($row[10] === 'MATCH' && $row[12] === 'MATCH') {
                 $rowClass = 'class="variation-match"';
             }
             echo '<tr ' . $rowClass . '>';
@@ -585,22 +561,15 @@ class CommissionerController extends Controller
 
         echo '<br><br>';
         echo '<table border="0" cellpadding="5">';
-        echo '<tr><td style="background-color: #C6EFCE; border:1px solid #000; width:20px;">&nbsp;</td><td><strong>Match:</strong> No significant variations found</td></tr>';
-        echo '<tr><td style="background-color: #FFC7CE; border:1px solid #000;">&nbsp;</td><td><strong>Variation:</strong> Area (>10%) or Usage mismatch detected</td></tr>';
-        echo '</table>';
-
-        echo '</body></html>';
+        echo '<tr><td style="background-color: #C6EFCE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Match:</strong> No variations found</td></tr>';
+        echo '<tr><td style="background-color: #FFC7CE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Variation:</strong> Area or Usage mismatch detected</td></tr>';
+        echo '</table></body></html>';
         exit;
     }
 
     public function mapView($ward_no)
     {
-        $userId = Auth::guard('corporation')->user();
-
-        if (!$userId) {
-            return redirect()->route('corporation.login');
-        }
-
+        $userId = Auth::user();
         $warddetail = Ward::where('corporation_id', $userId->corporation_id)
             ->where('ward_no', $ward_no)
             ->first();
@@ -619,93 +588,94 @@ class CommissionerController extends Controller
 
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-        // Get polygons (buildings)
-        $polygons = Schema::hasTable($polygonsTableName)
-            ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
-            : [];
+        // Point Data
+        $pointDatas = DB::table($pointDataTable)
+            ->select(
+                'id',
+                'building_data_id',
+                'point_gisid',
+                'assessment',
+                'old_assessment',
+                'owner_name',
+                'present_owner_name',
+                'floor',
+                'bill_usage',
+                'phone_number',
+                'old_door_no',
+                'new_door_no',
+                'remarks',
+                'water_tax',
+                'zone',
+                'qcusage',
+                'qcsqfeet'
+            )
+            ->get();
 
-        // Get lines (roads)
-        $lines = Schema::hasTable($linesTableName)
-            ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
-            : [];
+        // Polygon Data
+        $polygonDatas = DB::table($polygonDataTable)
+            ->select(
+                'id',
+                'gisid',
+                'number_bill',
+                'number_floor',
+                DB::raw('Percentage as floor_percentage'),
+                'building_usage',
+                'construction_type',
+                'road_name',
+                'ugd',
+                'basement',
+                'water_connection',
+                'image',
+                'building_type',
+                'image2',
+                'remarks'
+            )
+            ->get();
 
-        // Get polygon data if table exists
-        $polygonDatas = collect();
-        if ($polygonDataTable && Schema::hasTable($polygonDataTable)) {
-            $polygonDatas = DB::table($polygonDataTable)
-                ->select(
-                    'id',
-                    'gisid',
-                    'number_bill',
-                    'number_floor',
-                    DB::raw('Percentage as floor_percentage'),
-                    'building_usage',
-                    'construction_type',
-                    'road_name',
-                    'ugd',
-                    'basement',
-                    'water_connection',
-                    'image',
-                    'building_type',
-                    'image2',
-                    'remarks'
-                )
-                ->get();
-        }
-
-        // Get point data if table exists
-        $pointDatas = collect();
-        if ($pointDataTable && Schema::hasTable($pointDataTable)) {
-            $pointDatas = DB::table($pointDataTable)
-                ->select(
-                    'id',
-                    'building_data_id',
-                    'point_gisid',
-                    'assessment',
-                    'old_assessment',
-                    'owner_name',
-                    'present_owner_name',
-                    'floor',
-                    'bill_usage',
-                    'phone_number',
-                    'old_door_no',
-                    'new_door_no',
-                    'remarks',
-                    'water_tax',
-                    'zone',
-                    'qcusage',
-                    'qcsqfeet'
-                )
-                ->get();
-        }
-
-        // Get shop data if table exists
-        $shopDatas = collect();
-        if (Schema::hasTable($shopTableName)) {
-            $shopDatas = DB::table($shopTableName)->get();
-        }
+        // Shop Data
+        $shopDatas = DB::table($shopTableName)->get();
 
         // Group shops by point_data_id
         $shopsGrouped = $shopDatas->groupBy('point_data_id');
 
-        // Attach shops to pointdata
+        // Attach shops into pointdata
         foreach ($pointDatas as $pointdata) {
+
             $pointdata->shops = $shopsGrouped[$pointdata->id] ?? collect();
         }
 
         // Group pointdata by point_gisid
-        $pointGrouped = $pointDatas->groupBy('point_gisid');
+        $pointGrouped = collect($pointDatas)->groupBy('point_gisid');
 
-        // Attach pointdata to polygondata
+        // Attach pointdata into polygondata
         foreach ($polygonDatas as $polygondata) {
+
             $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
+
+            // Optional statistics
             $polygondata->total_points = count($polygondata->pointdata);
-            $polygondata->total_shops = $polygondata->pointdata->sum(function ($point) {
-                return count($point->shops);
-            });
+
+            $polygondata->total_shops = collect($polygondata->pointdata)
+                ->sum(function ($point) {
+                    return count($point->shops);
+                });
         }
+
+
+
+        // Get polygons (buildings) - only needed fields
+        $polygons = Schema::hasTable($polygonsTableName)
+            ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
+            : [];
+
+        // Get lines (roads) - only needed fields
+        $lines = Schema::hasTable($linesTableName)
+            ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
+            : [];
+
 
         $ward = $warddetail;
 
