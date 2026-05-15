@@ -271,10 +271,10 @@ class CommissionerController extends Controller
                 } else {
                     $pointDataCount = 0;
                 }
-
+$shopCount = DB::table($shopTableName)->count();
                 // Shop Count
                 if (Schema::hasTable($shopTableName)) {
-return response()->json("hi");
+
                     $shopCount = DB::table($shopTableName)->count();
 
                     if (Schema::hasTable($shopDataTableName)) {
