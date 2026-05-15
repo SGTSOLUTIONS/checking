@@ -1781,12 +1781,7 @@
                     </div>
                 `);
 
-                $('body').append(`
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
-                    </div>
-                `);
+
 
                 // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
