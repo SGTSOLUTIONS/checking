@@ -2122,7 +2122,7 @@
                 refreshLayers();
             }
 
-            // Start the application
+            // Start the applications
             initMap();
             buildSearchIndex();
 
