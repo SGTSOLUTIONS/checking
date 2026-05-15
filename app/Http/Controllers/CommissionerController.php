@@ -240,7 +240,7 @@ class CommissionerController extends Controller
 
                 $zone = trim(strtolower($wardlist->zone));
 
-                $shopTableName = "shop__corporation_{$corporation->id}";
+                $shopTableName = "shop_corporation_{$corporation->id}";
 
                 $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
 
@@ -271,7 +271,7 @@ class CommissionerController extends Controller
                 } else {
                     $pointDataCount = 0;
                 }
-$shopCount = DB::table($shopTableName)->count();
+// $shopCount = DB::table($shopTableName)->count();
                 // Shop Count
                 if (Schema::hasTable($shopTableName)) {
 
