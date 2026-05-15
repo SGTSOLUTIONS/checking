@@ -281,7 +281,7 @@ class CommissionerController extends Controller
                 $shopDataNotinMisCount = 0;
 
                 if (Schema::hasTable($shopTableName)) {
-                    $shopCount = DB::table($shopTableName)->count();
+                    $shopCount = DB::table($shopTableName)->where('ward_no',$wardlist->ward_no)->count();
                     $totalShops += $shopCount;
 
                     if (Schema::hasTable($shopDataTableName)) {
