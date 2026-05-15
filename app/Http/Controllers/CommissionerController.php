@@ -58,7 +58,7 @@ class CommissionerController extends Controller
         $collections = [];
         $zonesWithWards = [];
         $chartData = [];
-        return response()->json($wards_per_zones);
+
 
 
 
@@ -106,43 +106,43 @@ class CommissionerController extends Controller
                 }
 
                 // Calculate variations for this ward
-                $variationStats = $this->calculateWardVariations($corporation->id, $wardlist->zone, $wardlist->ward_no);
+                // $variationStats = $this->calculateWardVariations($corporation->id, $wardlist->zone, $wardlist->ward_no);
 
                 // Accumulate totals
                 $total_buildings += $buildingCount;
-                $total_area_variation += $variationStats['area_variation_count'];
-                $total_usage_variation += $variationStats['usage_variation_count'];
+                // $total_area_variation += $variationStats['area_variation_count'];
+                // $total_usage_variation += $variationStats['usage_variation_count'];
 
-                // Prepare chart data
-                $chartData[] = [
-                    'ward' => "Ward {$wardlist->ward_no}",
-                    'ward_no' => $wardlist->ward_no,
-                    'area_variation' => $variationStats['area_variation_count'],
-                    'usage_variation' => $variationStats['usage_variation_count'],
-                    'total_buildings' => $buildingCount,
-                    'areaVariationCount' => $variationStats['area_variation_count'],
-                    'usageVariationCount' => $variationStats['usage_variation_count']
-                ];
+                // // Prepare chart data
+                // $chartData[] = [
+                //     'ward' => "Ward {$wardlist->ward_no}",
+                //     'ward_no' => $wardlist->ward_no,
+                //     'area_variation' => $variationStats['area_variation_count'],
+                //     'usage_variation' => $variationStats['usage_variation_count'],
+                //     'total_buildings' => $buildingCount,
+                //     'areaVariationCount' => $variationStats['area_variation_count'],
+                //     'usageVariationCount' => $variationStats['usage_variation_count']
+                // ];
 
-                $data = [
-                    "zone"                     => $wardlist->zone,
-                    "ward_no"                  => $wardlist->ward_no,
-                    "pointdatatable"           => $pointdatatable,
-                    "polygondatatable"         => $polygondatatable,
-                    "polygontable"             => $polygontable,
-                    "roadtable"                => $roadtable,
-                    "buildingCount"            => $buildingCount,
-                    "surveyedBuildingCount"    => $surveyedBuildingCount,
-                    "pointCount"               => $pointCount,
-                    "roadCount"                => $roadCount,
-                    "misCount"                 => $misCount,
-                    "areaVariationCount"       => $variationStats['area_variation_count'],
-                    "usageVariationCount"      => $variationStats['usage_variation_count'],
-                    "areaVariationPercentage"  => $variationStats['area_variation_percentage'],
-                    "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
-                ];
+                // $data = [
+                //     "zone"                     => $wardlist->zone,
+                //     "ward_no"                  => $wardlist->ward_no,
+                //     "pointdatatable"           => $pointdatatable,
+                //     "polygondatatable"         => $polygondatatable,
+                //     "polygontable"             => $polygontable,
+                //     "roadtable"                => $roadtable,
+                //     "buildingCount"            => $buildingCount,
+                //     "surveyedBuildingCount"    => $surveyedBuildingCount,
+                //     "pointCount"               => $pointCount,
+                //     "roadCount"                => $roadCount,
+                //     "misCount"                 => $misCount,
+                //     "areaVariationCount"       => $variationStats['area_variation_count'],
+                //     "usageVariationCount"      => $variationStats['usage_variation_count'],
+                //     "areaVariationPercentage"  => $variationStats['area_variation_percentage'],
+                //     "usageVariationPercentage" => $variationStats['usage_variation_percentage'],
+                // ];
 
-                $collections[] = $data;
+                // $collections[] = $data;
 
                 $zoneData['wards'][] = [
                     'ward_no' => $wardlist->ward_no,
@@ -151,11 +151,11 @@ class CommissionerController extends Controller
                     'pointCount' => $pointCount,
                     'roadCount' => $roadCount,
                     'misCount' => $misCount,
-                    'areaVariationCount' => $variationStats['area_variation_count'],
-                    'usageVariationCount' => $variationStats['usage_variation_count'],
+                    // 'areaVariationCount' => $variationStats['area_variation_count'],
+                    // 'usageVariationCount' => $variationStats['usage_variation_count'],
                 ];
             }
-
+  return response()->json($zoneData);
             $zonesWithWards[] = $zoneData;
         }
 
