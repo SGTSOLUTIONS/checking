@@ -28,7 +28,45 @@
                 <i class="fas fa-location-dot"></i>
                 <span class="btn-label">Location</span>
             </button>
+            <button class="action-btn route-btn" id="routeBtn" title="Route">
+                <i class="fas fa-route"></i>
+                <span class="btn-label">Route</span>
+            </button>
         </div>
+    </div>
+
+    <!-- Route Info Panel -->
+    <div class="route-info panel" id="routeInfo">
+        <button class="panel-close" id="closeRouteInfo">&times;</button>
+        <h5><i class="fas fa-route"></i> Route Information</h5>
+        <div id="routeSummary" class="route-summary"></div>
+        <div id="directionsList" class="directions-list"></div>
+        <button class="btn-start-nav" id="startNavigationBtn">
+            <i class="fas fa-play"></i> Start Navigation
+        </button>
+    </div>
+
+    <!-- Navigation Header (Mobile Style) -->
+    <div class="navigation-header" id="navigationHeader">
+        <button class="nav-close" id="closeNavigation">&times;</button>
+        <div class="navigation-eta">
+            <div class="eta-time" id="etaTime">-- min</div>
+            <div class="eta-distance" id="etaDistance">-- km</div>
+        </div>
+        <div class="navigation-address" id="destinationAddress">Destination</div>
+    </div>
+
+    <div class="navigation-instruction" id="navigationInstruction">
+        <div class="instruction-icon">
+            <i class="fas fa-arrow-up" id="instructionIcon"></i>
+        </div>
+        <div class="instruction-text" id="instructionText">Continue straight</div>
+        <div class="instruction-distance" id="instructionDistance">in 500 m</div>
+    </div>
+
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary"></div>
+        <div>Calculating route...</div>
     </div>
 @endsection
 
@@ -60,7 +98,7 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* ==================== ACTION BUTTONS - VISIBLE ON ALL DEVICES ==================== */
+        /* Action Buttons */
         .action-buttons {
             position: fixed;
             bottom: 20px;
@@ -125,11 +163,14 @@
             background: rgba(220, 53, 69, 0.9);
         }
 
+        .action-btn.route-btn {
+            background: rgba(111, 66, 193, 0.9);
+        }
+
         .action-btn.location-btn.active {
             background: #28a745;
         }
 
-        /* Desktop adjustment - buttons on right side */
         @media (min-width: 769px) {
             .action-buttons {
                 position: absolute;
@@ -154,7 +195,7 @@
             }
         }
 
-        /* ==================== PANELS - COMMON STYLES ==================== */
+        /* Panels */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -181,11 +222,6 @@
             gap: 8px;
         }
 
-        .panel h5 i {
-            font-size: 18px;
-        }
-
-        /* Close button for panels */
         .panel-close {
             position: absolute;
             top: 15px;
@@ -199,7 +235,7 @@
             z-index: 10;
         }
 
-        /* ==================== LAYER SWITCHER PANEL ==================== */
+        /* Layer Switcher */
         .layer-switcher {
             position: absolute;
             top: 100px;
@@ -213,7 +249,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* ==================== LEGEND PANEL ==================== */
+        /* Legend */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -227,7 +263,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* ==================== SEARCH PANEL ==================== */
+        /* Search Panel */
         .search-panel {
             position: absolute;
             top: 20px;
@@ -242,7 +278,7 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* ==================== FILTER PANEL ==================== */
+        /* Filter Panel */
         .filter-panel {
             position: absolute;
             top: 100px;
@@ -256,13 +292,29 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* ==================== RESPONSIVE PANEL POSITIONS ==================== */
+        /* Route Info Panel */
+        .route-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
+            display: none;
+            max-height: 500px;
+        }
+
+        .route-info.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
         @media (max-width: 768px) {
 
             .layer-switcher,
             .map-legend,
             .search-panel,
-            .filter-panel {
+            .filter-panel,
+            .route-info {
                 position: fixed;
                 bottom: 100px;
                 right: 20px;
@@ -278,7 +330,8 @@
                 min-width: 180px;
             }
 
-            .search-panel {
+            .search-panel,
+            .route-info {
                 top: auto;
                 bottom: 100px;
             }
@@ -296,7 +349,216 @@
             }
         }
 
-        /* Panel content styles */
+        /* Route Styles */
+        .route-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .route-summary div {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .directions-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .direction-step {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .step-number {
+            background: #ff4444;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-instruction {
+            margin-bottom: 4px;
+        }
+
+        .step-distance {
+            font-size: 11px;
+            color: #ffc107;
+        }
+
+        .btn-start-nav {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-start-nav:active {
+            transform: scale(0.98);
+        }
+
+        /* Navigation Header */
+        .navigation-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            z-index: 1003;
+            display: none;
+            color: white;
+        }
+
+        .nav-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .navigation-eta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .eta-time {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffc107;
+        }
+
+        .eta-distance {
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        .navigation-address {
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        /* Navigation Instruction */
+        .navigation-instruction {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            z-index: 1003;
+            display: none;
+            color: white;
+            text-align: center;
+        }
+
+        .instruction-icon {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4444;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .instruction-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .instruction-distance {
+            font-size: 14px;
+            color: #ffc107;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            z-index: 2000;
+            display: none;
+            text-align: center;
+            color: white;
+            gap: 12px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loading-spinner .spinner-border {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Center Button */
+        .center-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 80px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        @media (min-width: 769px) {
+            .center-btn {
+                bottom: auto;
+                top: 160px;
+                left: 20px;
+            }
+        }
+
+        /* Other styles remain same as before */
         .layer-group {
             margin-bottom: 15px;
         }
@@ -310,7 +572,6 @@
             cursor: pointer;
             padding: 5px;
             border-radius: 8px;
-            transition: all 0.2s;
         }
 
         .layer-group label:hover {
@@ -323,7 +584,6 @@
             font-size: 12px;
             margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .legend-item {
@@ -375,10 +635,6 @@
             outline: none;
         }
 
-        .search-box input:focus {
-            border-color: #ffc107;
-        }
-
         .search-box button {
             padding: 12px 24px;
             border-radius: 10px;
@@ -387,11 +643,6 @@
             color: white;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .search-box button:active {
-            transform: scale(0.98);
         }
 
         .search-results {
@@ -405,12 +656,7 @@
             background: rgba(255, 255, 255, 0.08);
             border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
             border-left: 3px solid #ffc107;
-        }
-
-        .search-result-item:active {
-            background: rgba(255, 68, 68, 0.3);
         }
 
         .result-gisid {
@@ -435,11 +681,6 @@
             color: white;
             cursor: pointer;
             font-size: 11px;
-            transition: all 0.2s;
-        }
-
-        .direction-btn:active {
-            background: #1e7e34;
         }
 
         .filter-group {
@@ -451,7 +692,6 @@
             margin-bottom: 6px;
             font-size: 12px;
             color: #ffc107;
-            font-weight: 500;
         }
 
         .filter-group select,
@@ -462,13 +702,6 @@
             border: 1px solid #ff4444;
             background: rgba(0, 0, 0, 0.5);
             color: white;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .filter-group select:focus,
-        .filter-group input:focus {
-            border-color: #ffc107;
         }
 
         .filter-actions {
@@ -485,7 +718,6 @@
             border: none;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
         }
 
         .apply-btn {
@@ -493,17 +725,9 @@
             color: white;
         }
 
-        .apply-btn:active {
-            background: #1e7e34;
-        }
-
         .reset-btn {
             background: #dc3545;
             color: white;
-        }
-
-        .reset-btn:active {
-            background: #c82333;
         }
 
         .filter-count {
@@ -516,68 +740,6 @@
             border-radius: 8px;
         }
 
-        /* Direction Panel */
-        .direction-panel {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            max-width: 400px;
-            display: none;
-            z-index: 1003;
-        }
-
-        @media (min-width: 769px) {
-            .direction-panel {
-                bottom: auto;
-                top: 100px;
-                left: 20px;
-                right: auto;
-            }
-        }
-
-        .direction-panel.show {
-            display: block;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .direction-info {
-            font-size: 13px;
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-        }
-
-        .direction-info p {
-            margin: 8px 0;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .close-direction {
-            float: right;
-            background: none;
-            border: none;
-            color: #ff4444;
-            font-size: 22px;
-            cursor: pointer;
-            padding: 0 5px;
-        }
-
-        /* Zoom Controls */
         .zoom-controls {
             position: fixed;
             bottom: 20px;
@@ -605,18 +767,12 @@
             color: white;
             font-size: 18px;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .zoom-btn:active {
-            background: rgba(255, 255, 255, 0.2);
         }
 
         .zoom-btn:first-child {
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        /* Loading */
         .map-loading {
             position: fixed;
             top: 50%;
@@ -627,13 +783,12 @@
             padding: 15px 30px;
             border-radius: 50px;
             z-index: 2000;
-            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        /* Popup */
+        /* Popup styles */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
@@ -647,17 +802,6 @@
             max-height: 70vh !important;
             z-index: 9999 !important;
             overflow-y: auto;
-            animation: slideUpPopup 0.3s ease-out !important;
-        }
-
-        @keyframes slideUpPopup {
-            from {
-                transform: translateY(100%);
-            }
-
-            to {
-                transform: translateY(0);
-            }
         }
 
         @media (min-width: 769px) {
@@ -668,18 +812,6 @@
                 min-width: 400px !important;
                 max-width: 500px !important;
                 border-radius: 20px !important;
-                animation: none !important;
-            }
-
-            .ol-popup:after {
-                content: '';
-                position: absolute;
-                bottom: -10px;
-                left: 50%;
-                transform: translateX(-50%);
-                border-width: 10px 10px 0;
-                border-style: solid;
-                border-color: #1a1a2e transparent transparent;
             }
         }
 
@@ -690,17 +822,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
         }
 
         .popup-header h4 {
             margin: 0;
             font-size: 18px;
             color: #ff4444;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .popup-close {
@@ -711,18 +838,11 @@
             height: 35px;
             border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .popup-close:active {
-            background: #ff4444;
-            transform: rotate(90deg);
         }
 
         .popup-tabs {
             display: flex;
             background: #141424;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .popup-tab {
@@ -733,11 +853,6 @@
             padding: 14px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .popup-tab:active {
-            background: rgba(255, 68, 68, 0.2);
         }
 
         .popup-tab.active {
@@ -761,7 +876,6 @@
             margin-bottom: 12px;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            flex-wrap: wrap;
         }
 
         .detail-label {
@@ -801,12 +915,6 @@
             margin-bottom: 12px;
             border-left: 3px solid #ffc107;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .assessment-card:active {
-            transform: translateX(5px);
-            background: rgba(255, 255, 255, 0.1);
         }
 
         .assessment-header {
@@ -814,7 +922,6 @@
             padding: 12px 15px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
 
         .assessment-number {
@@ -831,7 +938,6 @@
             display: flex;
             margin-bottom: 8px;
             font-size: 12px;
-            flex-wrap: wrap;
         }
 
         .assessment-label {
@@ -849,7 +955,6 @@
             border-radius: 10px;
             padding: 12px;
             margin-top: 8px;
-            border: 1px solid rgba(255, 68, 68, 0.2);
         }
 
         .shop-name {
@@ -877,65 +982,6 @@
             background: #1a1a2e;
             border-radius: 12px;
             border-left: 3px solid #ff4444;
-        }
-
-        .close-form-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            float: right;
-        }
-
-        /* Scrollbar Styling */
-        .search-results::-webkit-scrollbar,
-        .popup-tab-content::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .search-results::-webkit-scrollbar-track,
-        .popup-tab-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .search-results::-webkit-scrollbar-thumb,
-        .popup-tab-content::-webkit-scrollbar-thumb {
-            background: #ff4444;
-            border-radius: 10px;
-        }
-
-        /* Custom Center Button */
-        .center-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 80px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            border: none;
-            border-radius: 12px;
-            padding: 12px 16px;
-            color: white;
-            cursor: pointer;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .center-btn:active {
-            transform: scale(0.95);
-        }
-
-        @media (min-width: 769px) {
-            .center-btn {
-                bottom: auto;
-                top: 160px;
-                left: 20px;
-            }
         }
     </style>
 @endpush
@@ -973,10 +1019,19 @@
             let locationTracking = false,
                 watchId = null;
 
-            // ==================== SEARCH & DIRECTION VARIABLES ====================
-            let allBuildings = [],
-                directionLineLayer = null,
-                destinationMarkerLayer = null;
+            // ==================== ROUTE VARIABLES ====================
+            let currentRoute = null;
+            let routeSteps = [];
+            let navigationMode = false;
+            let navigationInterval = null;
+            let currentStepIndex = 0;
+            let routeSource = null;
+            let routeLayer = null;
+            let destinationMarker = null;
+            let selectedBuilding = null;
+
+            // ==================== SEARCH VARIABLES ====================
+            let allBuildings = [];
 
             // ==================== HELPER FUNCTIONS ====================
             function showLoading(show) {
@@ -984,7 +1039,7 @@
                     if ($('#mapLoading').length === 0) {
                         $('body').append(
                             '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                        );
+                            );
                     }
                     $('#mapLoading').show();
                 } else {
@@ -992,47 +1047,369 @@
                 }
             }
 
-            // Close all panels
+            function showFlashMessage(message, type = 'info') {
+                const alertClass = {
+                    'success': '#28a745',
+                    'error': '#dc3545',
+                    'warning': '#ffc107',
+                    'info': '#17a2b8'
+                } [type] || '#17a2b8';
+
+                const flashHtml =
+                    `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
+                $('body').append(flashHtml);
+                setTimeout(() => $(flashHtml).fadeOut(300, function() {
+                    $(this).remove();
+                }), 4000);
+            }
+
             function closeAllPanels() {
-                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel').removeClass('open');
+                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfo').removeClass('open');
+            }
+
+            // ==================== ROUTE FUNCTIONS (Enhanced from reference) ====================
+
+            // Format distance for display
+            function formatDistance(meters) {
+                if (meters < 1000) return meters.toFixed(0) + ' m';
+                return (meters / 1000).toFixed(2) + ' km';
+            }
+
+            // Format duration for display
+            function formatDuration(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return minutes + ' min';
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                return hours + 'h ' + mins + 'm';
+            }
+
+            // Get route from OSRM (Open Source Routing Machine)
+            async function getRouteFromOSRM(startCoord, endCoord) {
+                try {
+                    const [startLon, startLat] = startCoord;
+                    const [endLon, endLat] = endCoord;
+                    const url =
+                        `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                        throw new Error('No route found');
+                    }
+
+                    return data.routes[0];
+                } catch (error) {
+                    console.warn('OSRM route failed, using straight line:', error);
+                    return getStraightLineRoute(startCoord, endCoord);
+                }
+            }
+
+            // Fallback straight line route
+            function getStraightLineRoute(startCoord, endCoord) {
+                const start = ol.proj.fromLonLat(startCoord);
+                const end = ol.proj.fromLonLat(endCoord);
+                const distance = ol.sphere.getDistance(start, end);
+                const duration = distance / 1.39; // Average walking speed ~5 km/h = 1.39 m/s
+
+                return {
+                    distance: distance,
+                    duration: duration,
+                    geometry: {
+                        type: "LineString",
+                        coordinates: [startCoord, endCoord]
+                    },
+                    legs: [{
+                        steps: [{
+                            maneuver: {
+                                type: "depart",
+                                instruction: "Start from your location"
+                            },
+                            distance: distance,
+                            duration: duration
+                        }, {
+                            maneuver: {
+                                type: "arrive",
+                                instruction: "Arrive at destination"
+                            },
+                            distance: 0,
+                            duration: 0
+                        }]
+                    }]
+                };
+            }
+
+            // Parse OSRM steps into readable instructions
+            function parseOSRMSteps(route) {
+                const steps = [];
+                let accumulatedDistance = 0;
+
+                if (route.legs && route.legs[0] && route.legs[0].steps) {
+                    route.legs[0].steps.forEach((step, index) => {
+                        accumulatedDistance += step.distance;
+
+                        let instruction = step.maneuver.instruction || step.maneuver.type;
+                        let icon = 'fas fa-arrow-right';
+
+                        // Determine icon based on maneuver type
+                        switch (step.maneuver.type) {
+                            case 'depart':
+                                icon = 'fas fa-play';
+                                break;
+                            case 'arrive':
+                                icon = 'fas fa-flag-checkered';
+                                break;
+                            case 'turn':
+                                if (step.maneuver.modifier === 'left') icon = 'fas fa-arrow-left';
+                                else if (step.maneuver.modifier === 'right') icon = 'fas fa-arrow-right';
+                                else if (step.maneuver.modifier === 'straight') icon = 'fas fa-arrow-up';
+                                else icon = 'fas fa-turn-up';
+                                break;
+                            default:
+                                icon = 'fas fa-arrow-right';
+                        }
+
+                        steps.push({
+                            instruction: instruction,
+                            distance: formatDistance(accumulatedDistance),
+                            icon: icon,
+                            type: step.maneuver.type
+                        });
+                    });
+                }
+
+                return steps;
+            }
+
+            // Draw route on map
+            function drawRouteOnMap(geometry) {
+                // Create route layer if not exists
+                if (!routeLayer) {
+                    routeSource = new ol.source.Vector();
+                    routeLayer = new ol.layer.Vector({
+                        source: routeSource,
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#0066cc',
+                                width: 5,
+                                lineDash: [10, 8]
+                            })
+                        })
+                    });
+                    map.addLayer(routeLayer);
+                }
+
+                routeSource.clear();
+
+                const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                routeSource.addFeature(new ol.Feature({
+                    geometry: new ol.geom.LineString(coordinates)
+                }));
+
+                // Fit view to route
+                if (routeSource.getFeatures().length > 0) {
+                    map.getView().fit(routeSource.getFeatures()[0].getGeometry().getExtent(), {
+                        padding: [80, 80, 80, 80],
+                        duration: 800,
+                        maxZoom: 18
+                    });
+                }
+            }
+
+            // Display route information
+            function displayRouteInfo(distance, duration, destinationName) {
+                const summaryHtml = `
+                    <div><strong>Total Distance:</strong> ${formatDistance(distance)}</div>
+                    <div><strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
+                    <div><strong>Destination:</strong> ${destinationName}</div>
+                `;
+                $('#routeSummary').html(summaryHtml);
+            }
+
+            // Display turn-by-turn directions
+            function displayTurnByTurnDirections() {
+                const directionsList = $('#directionsList');
+                directionsList.empty();
+
+                routeSteps.forEach((step, index) => {
+                    const stepElement = $(`
+                        <div class="direction-step">
+                            <div class="step-number">${index + 1}</div>
+                            <div class="step-content">
+                                <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
+                                <div class="step-distance">${step.distance}</div>
+                            </div>
+                        </div>
+                    `);
+                    directionsList.append(stepElement);
+                });
+            }
+
+            // Calculate and display route
+            async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
+                $('#loadingSpinner').css('display', 'flex');
+
+                try {
+                    const route = await getRouteFromOSRM(startCoord, endCoord);
+                    const totalDistance = route.distance;
+                    const totalDuration = route.duration;
+
+                    routeSteps = parseOSRMSteps(route);
+                    currentRoute = {
+                        distance: totalDistance,
+                        duration: totalDuration,
+                        geometry: route.geometry,
+                        endCoord: endCoord,
+                        placeName: destinationName,
+                        gisid: buildingGisid
+                    };
+
+                    drawRouteOnMap(route.geometry);
+                    displayRouteInfo(totalDistance, totalDuration, destinationName);
+                    displayTurnByTurnDirections();
+
+                    // Add destination marker
+                    if (destinationMarker) map.removeLayer(destinationMarker);
+                    const destLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Point(ol.proj.fromLonLat(
+                                    endCoord))
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: 14,
+                                fill: new ol.style.Fill({
+                                    color: '#ff4444'
+                                }),
+                                stroke: new ol.style.Stroke({
+                                    color: '#fff',
+                                    width: 3
+                                })
+                            })
+                        })
+                    });
+                    map.addLayer(destLayer);
+                    destinationMarker = destLayer;
+
+                    $('#routeInfo').addClass('open');
+                    showFlashMessage('Route calculated successfully!', 'success');
+
+                } catch (error) {
+                    console.error('Route calculation error:', error);
+                    showFlashMessage('Error calculating route: ' + error.message, 'error');
+                } finally {
+                    $('#loadingSpinner').hide();
+                }
+            }
+
+            // Get route to selected building
+            async function getRouteToBuilding(gisid, coords) {
+                if (!currentPosition) {
+                    showFlashMessage('Please enable location tracking first', 'warning');
+                    startLocationTracking();
+                    setTimeout(() => {
+                        if (currentPosition) getRouteToBuilding(gisid, coords);
+                    }, 2000);
+                    return;
+                }
+
+                await calculateAndDisplayRoute(currentPosition, coords, `Building: ${gisid}`, gisid);
+                closeAllPanels();
+            }
+
+            // Start navigation mode
+            function startNavigation() {
+                if (!currentRoute) {
+                    showFlashMessage('Please calculate a route first', 'warning');
+                    return;
+                }
+
+                if (!currentPosition) {
+                    showFlashMessage('Please enable live location first', 'warning');
+                    return;
+                }
+
+                navigationMode = true;
+                currentStepIndex = 0;
+
+                $('#navigationHeader').show();
+                $('#routeInfo').removeClass('open');
+
+                updateNavigationDisplay();
+
+                // Start navigation interval to update ETA
+                if (navigationInterval) clearInterval(navigationInterval);
+                navigationInterval = setInterval(updateNavigationStatus, 3000);
+
+                showFlashMessage('Navigation started! Follow the route instructions.', 'success');
+            }
+
+            // Update navigation display
+            function updateNavigationDisplay() {
+                if (!currentRoute) return;
+
+                const remainingDistance = currentRoute.distance * (1 - (currentStepIndex / Math.max(routeSteps
+                    .length, 1)));
+                const remainingTime = currentRoute.duration * (1 - (currentStepIndex / Math.max(routeSteps.length,
+                    1)));
+
+                $('#etaTime').text(formatDuration(remainingTime));
+                $('#etaDistance').text(formatDistance(remainingDistance));
+                $('#destinationAddress').text(currentRoute.placeName);
+
+                if (currentStepIndex < routeSteps.length) {
+                    $('#instructionText').text(routeSteps[currentStepIndex].instruction);
+                    $('#instructionDistance').text(routeSteps[currentStepIndex].distance);
+                    $('#instructionIcon').attr('class', routeSteps[currentStepIndex].icon);
+                    $('#navigationInstruction').show();
+                } else {
+                    $('#navigationInstruction').hide();
+                    if (navigationMode) {
+                        showFlashMessage('You have arrived at your destination!', 'success');
+                        stopNavigation();
+                    }
+                }
+            }
+
+            // Update navigation status (called periodically)
+            function updateNavigationStatus() {
+                if (!navigationMode || !currentRoute) return;
+
+                // Simulate progress (in real app, this would use actual location)
+                if (currentStepIndex < routeSteps.length - 1) {
+                    currentStepIndex++;
+                    updateNavigationDisplay();
+                } else if (currentStepIndex >= routeSteps.length - 1) {
+                    stopNavigation();
+                    showFlashMessage('You have arrived at your destination!', 'success');
+                }
+            }
+
+            // Stop navigation
+            function stopNavigation() {
+                navigationMode = false;
+                if (navigationInterval) {
+                    clearInterval(navigationInterval);
+                    navigationInterval = null;
+                }
+                $('#navigationHeader').hide();
+                $('#navigationInstruction').hide();
             }
 
             // Clear route
             function clearRoute() {
-                if (directionLineLayer) {
-                    map.removeLayer(directionLineLayer);
-                    directionLineLayer = null;
+                if (routeLayer) routeSource.clear();
+                if (destinationMarker) {
+                    map.removeLayer(destinationMarker);
+                    destinationMarker = null;
                 }
-                if (destinationMarkerLayer) {
-                    map.removeLayer(destinationMarkerLayer);
-                    destinationMarkerLayer = null;
-                }
-                $('#directionPanel').remove();
-            }
-
-            // Center map to current location
-            function centerToMyLocation() {
-                if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(19);
-                    // Flash animation for location marker
-                    if (currentLocationLayer) {
-                        currentLocationLayer.setVisible(false);
-                        setTimeout(() => {
-                            if (currentLocationLayer) currentLocationLayer.setVisible(true);
-                        }, 200);
-                        setTimeout(() => {
-                            if (currentLocationLayer) currentLocationLayer.setVisible(false);
-                        }, 400);
-                        setTimeout(() => {
-                            if (currentLocationLayer) currentLocationLayer.setVisible(true);
-                        }, 600);
-                    }
-                } else {
-                    alert("Location not available. Please enable location tracking first.");
-                    startLocationTracking();
-                }
+                currentRoute = null;
+                routeSteps = [];
+                stopNavigation();
+                $('#routeInfo').removeClass('open');
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -1049,6 +1426,7 @@
                         coordinates: null,
                         assessments: []
                     };
+
                     $.each(polygons, function(j, poly) {
                         if (poly.gisid == building.gisid) {
                             try {
@@ -1062,17 +1440,16 @@
                                         cy += c[1];
                                     });
                                     info.coordinates = [cx / coords[0].length, cy / coords[0]
-                                        .length
-                                    ];
+                                        .length];
                                 }
                             } catch (e) {}
                             return false;
                         }
                     });
+
                     if (building.pointdata) {
                         $.each(building.pointdata, function(j, a) {
                             info.assessments.push({
-                                id: a.id,
                                 assessment_no: a.assessment,
                                 owner_name: a.owner_name || a.present_owner_name,
                                 phone: a.phone_number
@@ -1081,7 +1458,6 @@
                     }
                     allBuildings.push(info);
                 });
-                console.log("Search index built with", allBuildings.length, "buildings");
             }
 
             // ==================== LOCATION TRACKING ====================
@@ -1090,14 +1466,15 @@
                     alert("Geolocation not supported");
                     return;
                 }
+
                 $('#locationBtn').addClass('active');
                 locationTracking = true;
 
-                // Add center button if not exists
+                // Add center button
                 if ($('#centerMyLocationBtn').length === 0) {
                     $('body').append(
                         '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
-                    );
+                        );
                     $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
@@ -1112,9 +1489,7 @@
 
                 watchId = navigator.geolocation.watchPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {
-                    console.warn("Watch position error:", err);
-                }, {
+                }, function(err) {}, {
                     enableHighAccuracy: true,
                     maximumAge: 5000,
                     timeout: 10000
@@ -1139,7 +1514,6 @@
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
 
-                // Accuracy circle
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -1158,98 +1532,10 @@
                 });
                 map.addLayer(accuracyLayer);
 
-                // Location marker
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
                             geometry: new ol.geom.Point(coords)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 10,
-                            fill: new ol.style.Fill({
-                                color: '#ff4444'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#fff',
-                                width: 3
-                            })
-                        })
-                    })
-                });
-                map.addLayer(currentLocationLayer);
-            }
-
-            // ==================== DIRECTION FUNCTIONS ====================
-            function calculateDistance(lon1, lat1, lon2, lat2) {
-                let R = 6371;
-                let dLat = (lat2 - lat1) * Math.PI / 180;
-                let dLon = (lon2 - lon1) * Math.PI / 180;
-                let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            }
-
-            function calculateBearing(lon1, lat1, lon2, lat2) {
-                let φ1 = lat1 * Math.PI / 180;
-                let φ2 = lat2 * Math.PI / 180;
-                let λ1 = lon1 * Math.PI / 180;
-                let λ2 = lon2 * Math.PI / 180;
-                let y = Math.sin(λ2 - λ1) * Math.cos(φ2);
-                let x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
-                let θ = Math.atan2(y, x);
-                let bearing = (θ * 180 / Math.PI + 360) % 360;
-                return bearing;
-            }
-
-            function getDirectionText(bearing) {
-                if (bearing >= 337.5 || bearing < 22.5) return "North ↑";
-                if (bearing >= 22.5 && bearing < 67.5) return "North-East ↗";
-                if (bearing >= 67.5 && bearing < 112.5) return "East →";
-                if (bearing >= 112.5 && bearing < 157.5) return "South-East ↘";
-                if (bearing >= 157.5 && bearing < 202.5) return "South ↓";
-                if (bearing >= 202.5 && bearing < 247.5) return "South-West ↙";
-                if (bearing >= 247.5 && bearing < 292.5) return "West ←";
-                return "North-West ↖";
-            }
-
-            function showDirectionToBuilding(gisid, coords) {
-                if (!currentPosition) {
-                    alert("Please enable location tracking first");
-                    startLocationTracking();
-                    return;
-                }
-
-                // Clear existing route
-                clearRoute();
-
-                let from = ol.proj.fromLonLat(currentPosition);
-                let to = ol.proj.fromLonLat(coords);
-
-                // Create line feature for route
-                directionLineLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.LineString([from, to])
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#28a745',
-                            width: 5,
-                            lineDash: [15, 10]
-                        })
-                    })
-                });
-                map.addLayer(directionLineLayer);
-
-                // Destination marker
-                destinationMarkerLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(to)
                         })]
                     }),
                     style: new ol.style.Style({
@@ -1265,69 +1551,29 @@
                         })
                     })
                 });
-                map.addLayer(destinationMarkerLayer);
+                map.addLayer(currentLocationLayer);
 
-                // Calculate route info
-                let distance = calculateDistance(currentPosition[0], currentPosition[1], coords[0], coords[1]);
-                let bearing = calculateBearing(currentPosition[0], currentPosition[1], coords[0], coords[1]);
-                let direction = getDirectionText(bearing);
-
-                let html = `
-                    <div class="direction-panel panel show" id="directionPanel">
-                        <button class="close-direction" onclick="clearRouteAndPanel()">&times;</button>
-                        <h5><i class="fas fa-directions"></i> Route to Building</h5>
-                        <div class="direction-info">
-                            <p><strong>📍 GIS ID:</strong> ${gisid}</p>
-                            <p><strong>📏 Distance:</strong> ${distance.toFixed(2)} km (${(distance * 1000).toFixed(0)} m)</p>
-                            <p><strong>🧭 Direction:</strong> ${direction}</p>
-                            <p><strong>🚶 Walking:</strong> ${Math.round(distance / 5 * 60)} min</p>
-                            <p><strong>🚗 Driving:</strong> ${Math.round(distance / 40 * 60)} min</p>
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-top: 12px;">
-                            <button id="fitRouteBtn" style="flex:1; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
-                                <i class="fas fa-map-marked-alt"></i> Fit Route
-                            </button>
-                            <button id="clearRouteBtn" style="flex:1; padding:10px; background:#dc3545; border:none; border-radius:8px; color:white; cursor:pointer;">
-                                <i class="fas fa-trash"></i> Clear Route
-                            </button>
-                        </div>
-                    </div>`;
-
-                $('#directionPanel').remove();
-                $('body').append(html);
-
-                $('#fitRouteBtn').on('click', function() {
-                    let extent = ol.extent.boundingExtent([from, to]);
-                    let paddedExtent = ol.extent.buffer(extent, 100);
-                    map.getView().fit(paddedExtent, {
-                        padding: [80, 80, 80, 80],
-                        duration: 800,
-                        maxZoom: 18
-                    });
-                });
-
-                $('#clearRouteBtn').on('click', function() {
-                    clearRoute();
-                });
-
-                // Auto-fit route
-                let extent = ol.extent.boundingExtent([from, to]);
-                let paddedExtent = ol.extent.buffer(extent, 100);
-                map.getView().fit(paddedExtent, {
-                    padding: [80, 80, 80, 80],
-                    duration: 600,
-                    maxZoom: 18
-                });
+                if (!localStorage.getItem('mapCentered')) {
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(18);
+                    localStorage.setItem('mapCentered', 'true');
+                }
             }
 
-            window.clearRouteAndPanel = function() {
-                clearRoute();
-            };
+            function centerToMyLocation() {
+                if (currentPosition) {
+                    let coords = ol.proj.fromLonLat(currentPosition);
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(19);
+                    showFlashMessage('Centered on your location', 'info');
+                } else {
+                    showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
+                    startLocationTracking();
+                }
+            }
 
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
-                console.log("Searching for:", text);
-
                 if (!text || !text.trim()) {
                     $('#searchResults').html(
                         '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
@@ -1354,10 +1600,6 @@
                         match = true;
                         type = 'Road Name';
                         val = b.road_name;
-                    } else if (b.zone && b.zone.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'Zone';
-                        val = b.zone;
                     } else {
                         $.each(b.assessments, function(j, a) {
                             if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
@@ -1392,10 +1634,7 @@
                     }
                 });
 
-                console.log("Found", results.length, "results");
-
                 let $res = $('#searchResults').empty();
-
                 if (!results.length) {
                     $res.html(
                         '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
@@ -1426,10 +1665,14 @@
                     let lon = p.data('lon');
                     let lat = p.data('lat');
                     if (lon && lat) {
-                        showDirectionToBuilding(p.data('gisid'), [parseFloat(lon), parseFloat(lat)]);
+                        selectedBuilding = {
+                            gisid: p.data('gisid'),
+                            coords: [parseFloat(lon), parseFloat(lat)]
+                        };
+                        getRouteToBuilding(p.data('gisid'), [parseFloat(lon), parseFloat(lat)]);
                         closeAllPanels();
                     } else {
-                        alert("Coordinates not available for this building");
+                        showFlashMessage("Coordinates not available for this building", 'error');
                     }
                 });
             }
@@ -1446,15 +1689,13 @@
                 }
                 if (f) {
                     let e = f.getGeometry().getExtent();
-                    let paddedExtent = ol.extent.buffer(e, 20);
-                    map.getView().fit(paddedExtent, {
+                    map.getView().fit(e, {
                         padding: [50, 50, 50, 50],
-                        duration: 800,
-                        maxZoom: 20
+                        duration: 800
                     });
                     showPopup(gisid, ol.extent.getCenter(e));
                 } else {
-                    alert("Building not found on map");
+                    showFlashMessage("Building not found on map", 'error');
                 }
             }
 
@@ -1536,8 +1777,7 @@
                         </div>
                     `).join('');
 
-                let html =
-                    `
+                let html = `
                     <div class="popup-header">
                         <h4><i class="fas fa-building"></i> Building Details</h4>
                         <button class="popup-close" onclick="closePopup()">&times;</button>
@@ -1549,19 +1789,27 @@
                     </div>
                     <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
                     <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
-                    <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>`;
+                    <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>
+                    <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <button class="btn-start-nav" id="routeFromPopupBtn"><i class="fas fa-route"></i> Get Directions to this Building</button>
+                    </div>`;
 
                 $(popupElement).html(html).show();
                 if ($(window).width() > 768 && popupOverlay) {
                     popupOverlay.setPosition(coord);
                 }
 
+                $('#routeFromPopupBtn').off('click').on('click', function() {
+                    closePopup();
+                    getRouteToBuilding(pd.gisid, [coord[0], coord[1]]);
+                });
+
                 $('.assessment-card').off('click').on('click', function() {
                     let id = $(this).data('id');
                     let num = $(this).data('assessment');
                     $(this).after(`
                         <div class="assessment-form-container">
-                            <button class="close-form-btn">&times;</button>
+                            <button class="close-form-btn" style="float:right; background:none; border:none; color:#ff4444; font-size:20px;">&times;</button>
                             <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
                             <form class="qc-form">
                                 <input type="hidden" name="assessment_id" value="${id}">
@@ -1603,7 +1851,8 @@
                             $badge.removeClass('badge-success').addClass('badge-warning').html(
                                 '<i class="fas fa-clock"></i> QC Pending');
                         }
-                        alert('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'));
+                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' :
+                            'QC Pending'), 'info');
                         $('.assessment-form-container').remove();
                     });
 
@@ -1774,8 +2023,6 @@
                             imageUrl = '/' + imageUrl.replace(/^\/+/, '');
                         }
 
-                        console.log("Loading drone image from:", imageUrl);
-
                         imageLayer = new ol.layer.Image({
                             source: new ol.source.ImageStatic({
                                 url: imageUrl,
@@ -1791,7 +2038,6 @@
                             opacity: 0.8
                         });
                         hasDrone = true;
-                        console.log("Drone image layer created successfully");
                     } catch (e) {
                         console.error("Error loading drone image:", e);
                     }
@@ -1856,12 +2102,8 @@
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
 
-                if (hasDrone && imageLayer) {
-                    map.addLayer(imageLayer);
-                }
-                if (boundaryLayer) {
-                    map.addLayer(boundaryLayer);
-                }
+                if (imageLayer) map.addLayer(imageLayer);
+                if (boundaryLayer) map.addLayer(boundaryLayer);
 
                 setTimeout(() => {
                     if (boundExt) {
@@ -1907,7 +2149,7 @@
                         <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
                         <h5><i class="fas fa-search"></i> Search Building</h5>
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment, Zone...">
+                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
                             <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
                         </div>
                         <div id="searchResults" class="search-results"></div>
@@ -1974,7 +2216,6 @@
                     });
                 }
 
-                // Search button inside panel
                 $('#doSearchBtn').on('click', function() {
                     searchBuildings($('#searchInput').val());
                 });
@@ -2053,13 +2294,11 @@
                 });
 
                 $('#zoomInBtn').on('click', function() {
-                    let currentZoom = map.getView().getZoom();
-                    map.getView().setZoom(currentZoom + 1);
+                    map.getView().setZoom(map.getView().getZoom() + 1);
                 });
 
                 $('#zoomOutBtn').on('click', function() {
-                    let currentZoom = map.getView().getZoom();
-                    map.getView().setZoom(currentZoom - 1);
+                    map.getView().setZoom(map.getView().getZoom() - 1);
                 });
 
                 // Button handlers
@@ -2067,18 +2306,14 @@
                     e.stopPropagation();
                     let isOpen = $('#layerSwitcher').hasClass('open');
                     closeAllPanels();
-                    if (!isOpen) {
-                        $('#layerSwitcher').addClass('open');
-                    }
+                    if (!isOpen) $('#layerSwitcher').addClass('open');
                 });
 
                 $('#legendBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#mapLegend').hasClass('open');
                     closeAllPanels();
-                    if (!isOpen) {
-                        $('#mapLegend').addClass('open');
-                    }
+                    if (!isOpen) $('#mapLegend').addClass('open');
                 });
 
                 $('#openSearchBtn').on('click', function(e) {
@@ -2087,9 +2322,7 @@
                     closeAllPanels();
                     if (!isOpen) {
                         $('#searchPanel').addClass('open');
-                        setTimeout(function() {
-                            $('#searchInput').focus();
-                        }, 300);
+                        setTimeout(() => $('#searchInput').focus(), 300);
                     }
                 });
 
@@ -2097,17 +2330,37 @@
                     e.stopPropagation();
                     let isOpen = $('#filterPanel').hasClass('open');
                     closeAllPanels();
-                    if (!isOpen) {
-                        $('#filterPanel').addClass('open');
-                    }
+                    if (!isOpen) $('#filterPanel').addClass('open');
                 });
 
                 $('#locationBtn').on('click', function() {
                     if (locationTracking) {
                         stopLocationTracking();
+                        clearRoute();
                     } else {
                         startLocationTracking();
                     }
+                });
+
+                $('#routeBtn').on('click', function() {
+                    if (selectedBuilding) {
+                        getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords);
+                    } else {
+                        showFlashMessage('Please search and select a building first', 'warning');
+                        $('#openSearchBtn').click();
+                    }
+                });
+
+                $('#closeRouteInfo').on('click', function() {
+                    clearRoute();
+                });
+
+                $('#startNavigationBtn').on('click', function() {
+                    startNavigation();
+                });
+
+                $('#closeNavigation').on('click', function() {
+                    stopNavigation();
                 });
 
                 // Close panels when clicking outside
@@ -2122,13 +2375,12 @@
                 refreshLayers();
             }
 
-            // Start the applications
+            // Start the application
             initMap();
             buildSearchIndex();
 
-            // Handle window resize
             $(window).on('resize', function() {
-                setTimeout(function() {
+                setTimeout(() => {
                     if (map) map.updateSize();
                 }, 100);
             });
