@@ -169,6 +169,8 @@ class GeoDataService
                         ->on($pointDataTable)
                         ->onUpdate('cascade')
                         ->onDelete('cascade');
+                        $table->string('prof_tax_assessment')->nullable();
+                    $table->string('old_prof_tax_assessment')->nullable();
                     $table->string('shop_floor')->nullable();
                     $table->string('shop_name')->nullable();
                     $table->string('shop_owner_name')->nullable();

@@ -6,7 +6,7 @@
     <div class="container-fluid p-0">
         <div id="map"></div>
 
-        <!-- Action Buttons - Visible on ALL devices -->
+        <!-- Action Buttons -->
         <div class="action-buttons">
             <button class="action-btn menu-btn" id="menuBtn" title="Layers">
                 <i class="fas fa-layer-group"></i>
@@ -28,10 +28,101 @@
                 <i class="fas fa-location-dot"></i>
                 <span class="btn-label">Location</span>
             </button>
-            <button class="action-btn route-btn" id="routeBtn" title="Route">
+            <button class="action-btn route-btn" id="routeBtn" title="Clear Route">
                 <i class="fas fa-route"></i>
                 <span class="btn-label">Route</span>
             </button>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+            <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+        </div>
+
+        <!-- Layer Switcher -->
+        <div class="layer-switcher panel" id="layerSwitcher">
+            <button class="panel-close" id="closeLayerPanel">&times;</button>
+            <h5><i class="fas fa-layer-group"></i> Layers</h5>
+
+            <div class="layer-group">
+                <div class="group-title">Base Map</div>
+                <label><input type="radio" name="baseLayer" value="osm" checked> OpenStreetMap</label>
+                <label><input type="radio" name="baseLayer" value="satellite"> Satellite</label>
+                <label><input type="radio" name="baseLayer" value="drone"> Drone Image</label>
+            </div>
+
+            <div class="layer-group">
+                <div class="group-title">Map Layers</div>
+                <label><input type="checkbox" id="toggleBuildings" checked> Buildings</label>
+                <label><input type="checkbox" id="toggleRoads" checked> Roads</label>
+                <label><input type="checkbox" id="toggleBoundary" checked> Ward Boundary</label>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="map-legend panel" id="mapLegend">
+            <button class="panel-close" id="closeLegendPanel">&times;</button>
+            <h5><i class="fas fa-info-circle"></i> Legend</h5>
+
+            <div class="legend-item">
+                <div class="legend-color building"></div>
+                <div>Building Polygon</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color road"></div>
+                <div>Road Line</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color boundary"></div>
+                <div>Ward Boundary</div>
+            </div>
+        </div>
+
+        <!-- Search Panel -->
+        <div class="search-panel panel" id="searchPanel">
+            <button class="panel-close" id="closeSearchPanel">&times;</button>
+            <h5><i class="fas fa-search"></i> Search Building</h5>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by GIS ID / Owner / Assessment / Phone / Road">
+                <button id="searchBtn">Search</button>
+            </div>
+
+            <div class="search-results" id="searchResults">
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>Search for a building</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="filter-panel panel" id="filterPanel">
+            <button class="panel-close" id="closeFilterPanel">&times;</button>
+            <h5><i class="fas fa-filter"></i> Filter</h5>
+
+            <div class="filter-group">
+                <label for="filterBuildingUsage">Building Usage</label>
+                <input type="text" id="filterBuildingUsage" placeholder="e.g. Residential">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterRoadName">Road Name</label>
+                <input type="text" id="filterRoadName" placeholder="e.g. Gandhi Road">
+            </div>
+
+            <div class="filter-group">
+                <label for="filterZone">Zone</label>
+                <input type="text" id="filterZone" placeholder="e.g. North">
+            </div>
+
+            <div class="filter-actions">
+                <button class="apply-btn" id="applyFilterBtn">Apply</button>
+                <button class="reset-btn" id="resetFilterBtn">Reset</button>
+            </div>
+
+            <div class="filter-count" id="filterCount">No filter applied</div>
         </div>
     </div>
 
@@ -46,7 +137,7 @@
         </button>
     </div>
 
-    <!-- Navigation Header (Mobile Style) -->
+    <!-- Navigation Header -->
     <div class="navigation-header" id="navigationHeader">
         <button class="nav-close" id="closeNavigation">&times;</button>
         <div class="navigation-eta">
@@ -98,7 +189,6 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Action Buttons */
         .action-buttons {
             position: fixed;
             bottom: 20px;
@@ -120,7 +210,7 @@
             gap: 4px;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(10px);
-            color: white;
+            color: #fff;
             border: none;
             border-radius: 12px;
             padding: 8px 14px;
@@ -195,7 +285,6 @@
             }
         }
 
-        /* Panels */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -235,7 +324,6 @@
             z-index: 10;
         }
 
-        /* Layer Switcher */
         .layer-switcher {
             position: absolute;
             top: 100px;
@@ -249,7 +337,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Legend */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -263,7 +350,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Search Panel */
         .search-panel {
             position: absolute;
             top: 20px;
@@ -278,7 +364,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Filter Panel */
         .filter-panel {
             position: absolute;
             top: 100px;
@@ -292,7 +377,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        /* Route Info Panel */
         .route-info {
             position: absolute;
             bottom: 20px;
@@ -329,12 +413,6 @@
                 right: auto;
                 min-width: 180px;
             }
-
-            .search-panel,
-            .route-info {
-                top: auto;
-                bottom: 100px;
-            }
         }
 
         @keyframes fadeIn {
@@ -349,7 +427,6 @@
             }
         }
 
-        /* Route Styles */
         .route-summary {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -418,7 +495,6 @@
             transform: scale(0.98);
         }
 
-        /* Navigation Header */
         .navigation-header {
             position: fixed;
             top: 0;
@@ -465,7 +541,6 @@
             color: #ddd;
         }
 
-        /* Navigation Instruction */
         .navigation-instruction {
             position: fixed;
             bottom: 100px;
@@ -507,7 +582,6 @@
             color: #ffc107;
         }
 
-        /* Loading Spinner */
         .loading-spinner {
             position: fixed;
             top: 50%;
@@ -531,7 +605,6 @@
             height: 40px;
         }
 
-        /* Center Button */
         .center-btn {
             position: fixed;
             bottom: 20px;
@@ -558,7 +631,6 @@
             }
         }
 
-        /* Other styles remain same as before */
         .layer-group {
             margin-bottom: 15px;
         }
@@ -788,7 +860,6 @@
             gap: 10px;
         }
 
-        /* Popup styles */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
@@ -983,6 +1054,10 @@
             border-radius: 12px;
             border-left: 3px solid #ff4444;
         }
+
+        .ol-control {
+            display: none !important;
+        }
     </style>
 @endpush
 
@@ -992,7 +1067,6 @@
 
     <script>
         $(document).ready(function() {
-            // ==================== DATA FROM SERVER ====================
             let polygonDatas = @json($polygonDatas ?? []);
             let polygons = @json($polygons ?? []);
             let lines = @json($lines ?? []);
@@ -1006,20 +1080,18 @@
                 boundary: @json($ward->boundary ?? null)
             };
 
-            // ==================== MAP VARIABLES ====================
             let map, polygonLayer, lineLayer, imageLayer, boundaryLayer, osmLayer, satelliteLayer;
             let currentBaseLayer = 'osm';
             let popupOverlay, popupElement;
             let currentActiveTab = 'building';
 
-            // ==================== LOCATION VARIABLES ====================
             let currentLocationLayer = null,
                 accuracyLayer = null,
                 currentPosition = null;
             let locationTracking = false,
-                watchId = null;
+                watchId = null,
+                mapCenteredOnce = false;
 
-            // ==================== ROUTE VARIABLES ====================
             let currentRoute = null;
             let routeSteps = [];
             let navigationMode = false;
@@ -1030,10 +1102,8 @@
             let destinationMarker = null;
             let selectedBuilding = null;
 
-            // ==================== SEARCH VARIABLES ====================
             let allBuildings = [];
 
-            // ==================== HELPER FUNCTIONS ====================
             function showLoading(show) {
                 if (show) {
                     if ($('#mapLoading').length === 0) {
@@ -1048,34 +1118,40 @@
             }
 
             function showFlashMessage(message, type = 'info') {
-                const alertClass = {
-                    'success': '#28a745',
-                    'error': '#dc3545',
-                    'warning': '#ffc107',
-                    'info': '#17a2b8'
-                } [type] || '#17a2b8';
-
-                const flashHtml =
-                    `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
-                $('body').append(flashHtml);
-                setTimeout(() => $(flashHtml).fadeOut(300, function() {
-                    $(this).remove();
-                }), 4000);
+                const colors = {
+                    success: '#28a745',
+                    error: '#dc3545',
+                    warning: '#ffc107',
+                    info: '#17a2b8'
+                };
+                const bg = colors[type] || colors.info;
+                const $flash = $(`
+            <div class="alert position-fixed flash-alert"
+                style="top:20px;right:20px;z-index:9999;background:${bg};color:white;padding:12px 20px;border-radius:10px;min-width:250px;">
+                <span>${message}</span>
+                <button type="button" class="btn-close btn-close-white" style="float:right;margin-left:10px;"></button>
+            </div>
+        `);
+                $('body').append($flash);
+                $flash.find('.btn-close').on('click', function() {
+                    $flash.remove();
+                });
+                setTimeout(() => {
+                    $flash.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }, 4000);
             }
 
             function closeAllPanels() {
                 $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfo').removeClass('open');
             }
 
-            // ==================== ROUTE FUNCTIONS (Enhanced from reference) ====================
-
-            // Format distance for display
             function formatDistance(meters) {
                 if (meters < 1000) return meters.toFixed(0) + ' m';
                 return (meters / 1000).toFixed(2) + ' km';
             }
 
-            // Format duration for display
             function formatDuration(seconds) {
                 const minutes = Math.floor(seconds / 60);
                 if (minutes < 60) return minutes + ' min';
@@ -1084,14 +1160,12 @@
                 return hours + 'h ' + mins + 'm';
             }
 
-            // Get route from OSRM (Open Source Routing Machine)
             async function getRouteFromOSRM(startCoord, endCoord) {
                 try {
                     const [startLon, startLat] = startCoord;
                     const [endLon, endLat] = endCoord;
                     const url =
                         `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
-
                     const response = await fetch(url);
                     const data = await response.json();
 
@@ -1106,12 +1180,9 @@
                 }
             }
 
-            // Fallback straight line route
             function getStraightLineRoute(startCoord, endCoord) {
-                const start = ol.proj.fromLonLat(startCoord);
-                const end = ol.proj.fromLonLat(endCoord);
-                const distance = ol.sphere.getDistance(start, end);
-                const duration = distance / 1.39; // Average walking speed ~5 km/h = 1.39 m/s
+                const distance = ol.sphere.getDistance(startCoord, endCoord);
+                const duration = distance / 1.39;
 
                 return {
                     distance: distance,
@@ -1122,37 +1193,37 @@
                     },
                     legs: [{
                         steps: [{
-                            maneuver: {
-                                type: "depart",
-                                instruction: "Start from your location"
+                                maneuver: {
+                                    type: "depart",
+                                    instruction: "Start from your location"
+                                },
+                                distance: distance,
+                                duration: duration
                             },
-                            distance: distance,
-                            duration: duration
-                        }, {
-                            maneuver: {
-                                type: "arrive",
-                                instruction: "Arrive at destination"
-                            },
-                            distance: 0,
-                            duration: 0
-                        }]
+                            {
+                                maneuver: {
+                                    type: "arrive",
+                                    instruction: "Arrive at destination"
+                                },
+                                distance: 0,
+                                duration: 0
+                            }
+                        ]
                     }]
                 };
             }
 
-            // Parse OSRM steps into readable instructions
             function parseOSRMSteps(route) {
                 const steps = [];
                 let accumulatedDistance = 0;
 
                 if (route.legs && route.legs[0] && route.legs[0].steps) {
-                    route.legs[0].steps.forEach((step, index) => {
+                    route.legs[0].steps.forEach((step) => {
                         accumulatedDistance += step.distance;
 
                         let instruction = step.maneuver.instruction || step.maneuver.type;
                         let icon = 'fas fa-arrow-right';
 
-                        // Determine icon based on maneuver type
                         switch (step.maneuver.type) {
                             case 'depart':
                                 icon = 'fas fa-play';
@@ -1182,9 +1253,7 @@
                 return steps;
             }
 
-            // Draw route on map
             function drawRouteOnMap(geometry) {
-                // Create route layer if not exists
                 if (!routeLayer) {
                     routeSource = new ol.source.Vector();
                     routeLayer = new ol.layer.Vector({
@@ -1203,50 +1272,44 @@
                 routeSource.clear();
 
                 const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                routeSource.addFeature(new ol.Feature({
+                const feature = new ol.Feature({
                     geometry: new ol.geom.LineString(coordinates)
-                }));
+                });
 
-                // Fit view to route
-                if (routeSource.getFeatures().length > 0) {
-                    map.getView().fit(routeSource.getFeatures()[0].getGeometry().getExtent(), {
-                        padding: [80, 80, 80, 80],
-                        duration: 800,
-                        maxZoom: 18
-                    });
-                }
+                routeSource.addFeature(feature);
+
+                map.getView().fit(feature.getGeometry().getExtent(), {
+                    padding: [80, 80, 80, 80],
+                    duration: 800,
+                    maxZoom: 18
+                });
             }
 
-            // Display route information
             function displayRouteInfo(distance, duration, destinationName) {
-                const summaryHtml = `
-                    <div><strong>Total Distance:</strong> ${formatDistance(distance)}</div>
-                    <div><strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
-                    <div><strong>Destination:</strong> ${destinationName}</div>
-                `;
-                $('#routeSummary').html(summaryHtml);
+                $('#routeSummary').html(`
+            <div><strong>Total Distance:</strong> ${formatDistance(distance)}</div>
+            <div><strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
+            <div><strong>Destination:</strong> ${destinationName}</div>
+        `);
             }
 
-            // Display turn-by-turn directions
             function displayTurnByTurnDirections() {
                 const directionsList = $('#directionsList');
                 directionsList.empty();
 
                 routeSteps.forEach((step, index) => {
-                    const stepElement = $(`
-                        <div class="direction-step">
-                            <div class="step-number">${index + 1}</div>
-                            <div class="step-content">
-                                <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
-                                <div class="step-distance">${step.distance}</div>
-                            </div>
-                        </div>
-                    `);
-                    directionsList.append(stepElement);
+                    directionsList.append(`
+                <div class="direction-step">
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <div class="step-instruction"><i class="${step.icon} me-2"></i> ${step.instruction}</div>
+                        <div class="step-distance">${step.distance}</div>
+                    </div>
+                </div>
+            `);
                 });
             }
 
-            // Calculate and display route
             async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
                 $('#loadingSpinner').css('display', 'flex');
 
@@ -1269,14 +1332,18 @@
                     displayRouteInfo(totalDistance, totalDuration, destinationName);
                     displayTurnByTurnDirections();
 
-                    // Add destination marker
-                    if (destinationMarker) map.removeLayer(destinationMarker);
-                    const destLayer = new ol.layer.Vector({
+                    if (destinationMarker) {
+                        map.removeLayer(destinationMarker);
+                    }
+
+                    destinationMarker = new ol.layer.Vector({
                         source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Point(ol.proj.fromLonLat(
-                                    endCoord))
-                            })]
+                            features: [
+                                new ol.Feature({
+                                    geometry: new ol.geom.Point(ol.proj.fromLonLat(
+                                        endCoord))
+                                })
+                            ]
                         }),
                         style: new ol.style.Style({
                             image: new ol.style.Circle({
@@ -1291,12 +1358,10 @@
                             })
                         })
                     });
-                    map.addLayer(destLayer);
-                    destinationMarker = destLayer;
 
+                    map.addLayer(destinationMarker);
                     $('#routeInfo').addClass('open');
                     showFlashMessage('Route calculated successfully!', 'success');
-
                 } catch (error) {
                     console.error('Route calculation error:', error);
                     showFlashMessage('Error calculating route: ' + error.message, 'error');
@@ -1305,7 +1370,6 @@
                 }
             }
 
-            // Get route to selected building
             async function getRouteToBuilding(gisid, coords) {
                 if (!currentPosition) {
                     showFlashMessage('Please enable location tracking first', 'warning');
@@ -1320,7 +1384,6 @@
                 closeAllPanels();
             }
 
-            // Start navigation mode
             function startNavigation() {
                 if (!currentRoute) {
                     showFlashMessage('Please calculate a route first', 'warning');
@@ -1340,14 +1403,12 @@
 
                 updateNavigationDisplay();
 
-                // Start navigation interval to update ETA
                 if (navigationInterval) clearInterval(navigationInterval);
                 navigationInterval = setInterval(updateNavigationStatus, 3000);
 
                 showFlashMessage('Navigation started! Follow the route instructions.', 'success');
             }
 
-            // Update navigation display
             function updateNavigationDisplay() {
                 if (!currentRoute) return;
 
@@ -1374,21 +1435,18 @@
                 }
             }
 
-            // Update navigation status (called periodically)
             function updateNavigationStatus() {
                 if (!navigationMode || !currentRoute) return;
 
-                // Simulate progress (in real app, this would use actual location)
                 if (currentStepIndex < routeSteps.length - 1) {
                     currentStepIndex++;
                     updateNavigationDisplay();
-                } else if (currentStepIndex >= routeSteps.length - 1) {
+                } else {
                     stopNavigation();
                     showFlashMessage('You have arrived at your destination!', 'success');
                 }
             }
 
-            // Stop navigation
             function stopNavigation() {
                 navigationMode = false;
                 if (navigationInterval) {
@@ -1399,9 +1457,8 @@
                 $('#navigationInstruction').hide();
             }
 
-            // Clear route
             function clearRoute() {
-                if (routeLayer) routeSource.clear();
+                if (routeLayer && routeSource) routeSource.clear();
                 if (destinationMarker) {
                     map.removeLayer(destinationMarker);
                     destinationMarker = null;
@@ -1412,9 +1469,9 @@
                 $('#routeInfo').removeClass('open');
             }
 
-            // ==================== BUILD SEARCH INDEX ====================
             function buildSearchIndex() {
                 allBuildings = [];
+
                 $.each(polygonDatas, function(i, building) {
                     let info = {
                         gisid: building.gisid,
@@ -1436,8 +1493,8 @@
                                     let cx = 0,
                                         cy = 0;
                                     $.each(coords[0], function(k, c) {
-                                        cx += c[0];
-                                        cy += c[1];
+                                        cx += parseFloat(c[0]);
+                                        cy += parseFloat(c[1]);
                                     });
                                     info.coordinates = [cx / coords[0].length, cy / coords[0]
                                         .length];
@@ -1456,21 +1513,20 @@
                             });
                         });
                     }
+
                     allBuildings.push(info);
                 });
             }
 
-            // ==================== LOCATION TRACKING ====================
             function startLocationTracking() {
                 if (!navigator.geolocation) {
-                    alert("Geolocation not supported");
+                    showFlashMessage("Geolocation not supported", "error");
                     return;
                 }
 
                 $('#locationBtn').addClass('active');
                 locationTracking = true;
 
-                // Add center button
                 if ($('#centerMyLocationBtn').length === 0) {
                     $('body').append(
                         '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
@@ -1481,7 +1537,7 @@
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
                 }, function(err) {
-                    alert("Unable to get location: " + err.message);
+                    showFlashMessage("Unable to get location: " + err.message, "error");
                     locationTracking = false;
                     $('#locationBtn').removeClass('active');
                     $('#centerMyLocationBtn').remove();
@@ -1489,7 +1545,7 @@
 
                 watchId = navigator.geolocation.watchPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {}, {
+                }, function() {}, {
                     enableHighAccuracy: true,
                     maximumAge: 5000,
                     timeout: 10000
@@ -1500,11 +1556,14 @@
                 if (watchId) navigator.geolocation.clearWatch(watchId);
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
+
                 locationTracking = false;
+                currentPosition = null;
                 $('#locationBtn').removeClass('active');
                 $('#centerMyLocationBtn').remove();
                 currentLocationLayer = null;
                 accuracyLayer = null;
+                mapCenteredOnce = false;
             }
 
             function updateLocationOnMap(lon, lat, accuracy) {
@@ -1516,9 +1575,11 @@
 
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
-                        })]
+                        features: [
+                            new ol.Feature({
+                                geometry: new ol.geom.Circle(coords, accuracy)
+                            })
+                        ]
                     }),
                     style: new ol.style.Style({
                         stroke: new ol.style.Stroke({
@@ -1534,9 +1595,11 @@
 
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(coords)
-                        })]
+                        features: [
+                            new ol.Feature({
+                                geometry: new ol.geom.Point(coords)
+                            })
+                        ]
                     }),
                     style: new ol.style.Style({
                         image: new ol.style.Circle({
@@ -1553,17 +1616,16 @@
                 });
                 map.addLayer(currentLocationLayer);
 
-                if (!localStorage.getItem('mapCentered')) {
+                if (!mapCenteredOnce) {
                     map.getView().setCenter(coords);
                     map.getView().setZoom(18);
-                    localStorage.setItem('mapCentered', 'true');
+                    mapCenteredOnce = true;
                 }
             }
 
             function centerToMyLocation() {
                 if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
+                    map.getView().setCenter(ol.proj.fromLonLat(currentPosition));
                     map.getView().setZoom(19);
                     showFlashMessage('Centered on your location', 'info');
                 } else {
@@ -1572,7 +1634,6 @@
                 }
             }
 
-            // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
                 if (!text || !text.trim()) {
                     $('#searchResults').html(
@@ -1588,33 +1649,34 @@
                         type = '',
                         val = '';
 
-                    if (b.gisid && b.gisid.toLowerCase().includes(term)) {
+                    if (b.gisid && String(b.gisid).toLowerCase().includes(term)) {
                         match = true;
                         type = 'GIS ID';
                         val = b.gisid;
-                    } else if (b.building_usage && b.building_usage.toLowerCase().includes(term)) {
+                    } else if (b.building_usage && String(b.building_usage).toLowerCase().includes(term)) {
                         match = true;
                         type = 'Building Usage';
                         val = b.building_usage;
-                    } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
+                    } else if (b.road_name && String(b.road_name).toLowerCase().includes(term)) {
                         match = true;
                         type = 'Road Name';
                         val = b.road_name;
                     } else {
                         $.each(b.assessments, function(j, a) {
-                            if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
+                            if (a.assessment_no && String(a.assessment_no).toLowerCase().includes(
+                                    term)) {
                                 match = true;
                                 type = 'Assessment No';
                                 val = a.assessment_no;
                                 return false;
                             }
-                            if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
+                            if (a.owner_name && String(a.owner_name).toLowerCase().includes(term)) {
                                 match = true;
                                 type = 'Owner Name';
                                 val = a.owner_name;
                                 return false;
                             }
-                            if (a.phone && a.phone.toLowerCase().includes(term)) {
+                            if (a.phone && String(a.phone).toLowerCase().includes(term)) {
                                 match = true;
                                 type = 'Phone';
                                 val = a.phone;
@@ -1635,6 +1697,7 @@
                 });
 
                 let $res = $('#searchResults').empty();
+
                 if (!results.length) {
                     $res.html(
                         '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
@@ -1644,16 +1707,18 @@
                 $.each(results, function(i, r) {
                     let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
                     let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
-                    $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
-                        <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
-                        <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
-                    </div>`);
+                    $res.append(`
+                <div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
+                    <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
+                    <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
+                    <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
+                    <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
+                </div>
+            `);
                 });
 
                 $('.search-result-item').off('click').on('click', function(e) {
-                    if (!$(e.target).hasClass('direction-btn')) {
+                    if (!$(e.target).closest('.direction-btn').length) {
                         zoomToBuilding($(this).data('gisid'));
                         closeAllPanels();
                     }
@@ -1664,6 +1729,7 @@
                     let p = $(this).closest('.search-result-item');
                     let lon = p.data('lon');
                     let lat = p.data('lat');
+
                     if (lon && lat) {
                         selectedBuilding = {
                             gisid: p.data('gisid'),
@@ -1679,33 +1745,31 @@
 
             function zoomToBuilding(gisid) {
                 if (!polygonLayer) return;
+
                 let features = polygonLayer.getSource().getFeatures();
-                let f = null;
-                for (let i = 0; i < features.length; i++) {
-                    if (features[i].get('gisid') == gisid) {
-                        f = features[i];
-                        break;
-                    }
-                }
-                if (f) {
-                    let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, {
+                let feature = features.find(f => f.get('gisid') == gisid);
+
+                if (feature) {
+                    let extent = feature.getGeometry().getExtent();
+                    map.getView().fit(extent, {
                         padding: [50, 50, 50, 50],
-                        duration: 800
+                        duration: 800,
+                        maxZoom: 20
                     });
-                    showPopup(gisid, ol.extent.getCenter(e));
+                    showPopup(gisid, ol.extent.getCenter(extent));
                 } else {
                     showFlashMessage("Building not found on map", 'error');
                 }
             }
 
-            // ==================== POPUP FUNCTIONS ====================
             function createPopup() {
                 popupElement = $('<div>', {
                     class: 'ol-popup',
                     style: 'display:none'
                 })[0];
+
                 $('body').append(popupElement);
+
                 return new ol.Overlay({
                     element: popupElement,
                     positioning: 'bottom-center',
@@ -1716,6 +1780,7 @@
 
             window.closePopup = function() {
                 $('.ol-popup').hide();
+                if (popupOverlay) popupOverlay.setPosition(undefined);
             };
 
             window.switchTab = function(t) {
@@ -1725,12 +1790,13 @@
                 currentActiveTab = t;
             };
 
-            function showPopup(gisid, coord) {
+            function showPopup(gisid, coord3857) {
                 let pd = polygonDatas.find(p => p.gisid == gisid);
                 if (!pd) return;
 
                 let assessments = pd.pointdata || [];
                 let shops = [];
+
                 $.each(assessments, function(i, a) {
                     if (a.shops) {
                         $.each(a.shops, function(j, s) {
@@ -1742,262 +1808,349 @@
                     }
                 });
 
-                let buildingHtml =
-                    `<div class="building-details-content">${[
-                    ['fingerprint', 'GIS ID', pd.gisid],
-                    ['building', 'Building Usage', pd.building_usage],
-                    ['home', 'Building Type', pd.building_type],
-                    ['layer-group', 'Floors', pd.number_floor],
-                    ['receipt', 'Total Bills', pd.number_bill],
-                    ['store', 'Total Shops', pd.total_shops],
-                    ['road', 'Road Name', pd.road_name],
-                    ['map-pin', 'Zone', pd.zone]
-                ].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
+                let buildingHtml = `<div class="building-details-content">${
+            [
+                ['fingerprint', 'GIS ID', pd.gisid],
+                ['building', 'Building Usage', pd.building_usage],
+                ['home', 'Building Type', pd.building_type],
+                ['layer-group', 'Floors', pd.number_floor],
+                ['receipt', 'Total Bills', pd.number_bill],
+                ['store', 'Total Shops', pd.total_shops],
+                ['road', 'Road Name', pd.road_name],
+                ['map-pin', 'Zone', pd.zone]
+            ].map(([i,l,v]) =>
+                `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`
+            ).join('')
+        }</div>`;
 
                 let assessmentsHtml = !assessments.length ?
                     '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments</p></div>' :
-                    assessments.map((a, i) =>
-                        `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
-                            <div class="assessment-header">
-                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span>
-                                <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
-                            </div>
-                            <div class="assessment-body">
-                                ${[['Owner', a.owner_name || a.present_owner_name], ['Phone', a.phone_number], ['Floor', a.floor], ['Usage', a.bill_usage], ['Shops', (a.shops || []).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                            </div>
-                        </div>`
-                    ).join('');
+                    assessments.map((a, i) => `
+                <div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
+                    <div class="assessment-header">
+                        <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i + 1)}</span>
+                        <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
+                    </div>
+                    <div class="assessment-body">
+                        ${[
+                            ['Owner', a.owner_name || a.present_owner_name],
+                            ['Phone', a.phone_number],
+                            ['Floor', a.floor],
+                            ['Usage', a.bill_usage],
+                            ['Shops', (a.shops || []).length]
+                        ].map(([l,v]) => `
+                                <div class="assessment-row">
+                                    <div class="assessment-label">${l}:</div>
+                                    <div class="assessment-value">${v || 'N/A'}</div>
+                                </div>
+                            `).join('')}
+                    </div>
+                </div>
+            `).join('');
 
                 let shopsHtml = !shops.length ?
                     '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' :
                     shops.map(s => `
-                        <div class="shop-item">
-                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
-                            ${[['Category', s.shop_category], ['Owner', s.shop_owner_name], ['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                        </div>
-                    `).join('');
+                <div class="shop-item">
+                    <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
+                    ${[
+                        ['Category', s.shop_category],
+                        ['Owner', s.shop_owner_name],
+                        ['Mobile', s.shop_mobile]
+                    ].map(([l,v]) => `
+                            <div class="assessment-row">
+                                <div class="assessment-label">${l}:</div>
+                                <div class="assessment-value">${v || 'N/A'}</div>
+                            </div>
+                        `).join('')}
+                </div>
+            `).join('');
+
+                let popupLonLat = ol.proj.toLonLat(coord3857);
 
                 let html = `
-                    <div class="popup-header">
-                        <h4><i class="fas fa-building"></i> Building Details</h4>
-                        <button class="popup-close" onclick="closePopup()">&times;</button>
-                    </div>
-                    <div class="popup-tabs">
-                        <button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
-                        <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
-                        <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button>
-                    </div>
-                    <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
-                    <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
-                    <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>
-                    <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <button class="btn-start-nav" id="routeFromPopupBtn"><i class="fas fa-route"></i> Get Directions to this Building</button>
-                    </div>`;
+            <div class="popup-header">
+                <h4><i class="fas fa-building"></i> Building Details</h4>
+                <button class="popup-close" onclick="closePopup()">&times;</button>
+            </div>
+            <div class="popup-tabs">
+                <button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
+                <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
+                <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button>
+            </div>
+            <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
+            <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
+            <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>
+            <div style="padding:16px; border-top:1px solid rgba(255,255,255,0.1);">
+                <button class="btn-start-nav" id="routeFromPopupBtn"><i class="fas fa-route"></i> Get Directions to this Building</button>
+            </div>
+        `;
 
                 $(popupElement).html(html).show();
+
                 if ($(window).width() > 768 && popupOverlay) {
-                    popupOverlay.setPosition(coord);
+                    popupOverlay.setPosition(coord3857);
                 }
 
                 $('#routeFromPopupBtn').off('click').on('click', function() {
                     closePopup();
-                    getRouteToBuilding(pd.gisid, [coord[0], coord[1]]);
+                    getRouteToBuilding(pd.gisid, popupLonLat);
                 });
 
                 $('.assessment-card').off('click').on('click', function() {
+                    $('.assessment-form-container').remove();
+
                     let id = $(this).data('id');
                     let num = $(this).data('assessment');
+
                     $(this).after(`
-                        <div class="assessment-form-container">
-                            <button class="close-form-btn" style="float:right; background:none; border:none; color:#ff4444; font-size:20px;">&times;</button>
-                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                            <form class="qc-form">
-                                <input type="hidden" name="assessment_id" value="${id}">
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Square Feet:</label>
-                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Usage:</label>
-                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                        <option value="">Select</option>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Industrial">Industrial</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">Tax Amount (₹):</label>
-                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
-                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
-                                </div>
-                            </form>
+                <div class="assessment-form-container">
+                    <button class="close-form-btn" style="float:right; background:none; border:none; color:#ff4444; font-size:20px;">&times;</button>
+                    <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
+                    <form class="qc-form">
+                        <input type="hidden" name="assessment_id" value="${id}">
+                        <div style="margin-bottom:12px;">
+                            <label style="color:#ffc107">QC Square Feet:</label>
+                            <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
                         </div>
-                    `);
+                        <div style="margin-bottom:12px;">
+                            <label style="color:#ffc107">QC Usage:</label>
+                            <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
+                                <option value="">Select Usage</option>
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="Industrial">Industrial</option>
+                                <option value="Mixed">Mixed</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button type="submit" style="flex:1; padding:10px; background:#28a745; border:none; border-radius:8px; color:white;">Save QC</button>
+                        </div>
+                    </form>
+                </div>
+            `);
+                });
 
-                    $('.qc-form').on('submit', function(e) {
-                        e.preventDefault();
-                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
-                            $(this).find('select[name="qc_usage"]').val() &&
-                            $(this).find('input[name="tax_amount"]').val();
-                        let $badge = $(this).closest('.assessment-card').find('.badge');
-                        if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html(
-                                '<i class="fas fa-check-circle"></i> QC Complete');
-                        } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html(
-                                '<i class="fas fa-clock"></i> QC Pending');
-                        }
-                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' :
-                            'QC Pending'), 'info');
-                        $('.assessment-form-container').remove();
-                    });
+                $(document).off('click', '.close-form-btn').on('click', '.close-form-btn', function() {
+                    $(this).closest('.assessment-form-container').remove();
+                });
 
-                    $('.close-form-btn, .cancel-form-btn').on('click', function() {
-                        $('.assessment-form-container').remove();
-                    });
+                $(document).off('submit', '.qc-form').on('submit', '.qc-form', function(e) {
+                    e.preventDefault();
+                    showFlashMessage('QC form submission hook ready. Connect your Laravel route here.',
+                        'info');
                 });
             }
 
-            // ==================== POLYGON STYLE FUNCTION ====================
-            function polygonStyleFunction(feature) {
-                let gisid = feature.get('gisid');
-                let sqfeet = feature.get('sqfeet');
-                let geometry = feature.getGeometry();
-                let center;
+            function createPolygonLayer() {
+                const features = [];
 
-                try {
-                    center = geometry.getInteriorPoint();
-                    if (!center) {
-                        let extent = geometry.getExtent();
-                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                    }
-                } catch (e) {
-                    let extent = geometry.getExtent();
-                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                }
+                $.each(polygons, function(i, poly) {
+                    try {
+                        let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) :
+                            poly.coordinates;
+                        if (!coords || !coords.length) return;
 
-                let isVisible = feature.get('visible');
-                if (isVisible === false) return null;
+                        const transformed = coords.map(ring =>
+                            ring.map(c => ol.proj.fromLonLat([parseFloat(c[0]), parseFloat(c[1])]))
+                        );
 
-                return [
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 2
-                        }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255,68,68,0.15)'
-                        })
-                    }),
-                    new ol.style.Style({
-                        geometry: center,
-                        text: new ol.style.Text({
-                            text: `${gisid}\n${sqfeet || 0} sqft`,
-                            font: 'bold 11px Arial',
+                        const feature = new ol.Feature({
+                            geometry: new ol.geom.Polygon(transformed),
+                            gisid: poly.gisid
+                        });
+
+                        feature.setStyle(new ol.style.Style({
                             fill: new ol.style.Fill({
-                                color: '#fff'
+                                color: 'rgba(255, 68, 68, 0.35)'
                             }),
                             stroke: new ol.style.Stroke({
-                                color: '#000',
+                                color: '#ff4444',
                                 width: 2
-                            }),
-                            backgroundFill: new ol.style.Fill({
-                                color: 'rgba(0,0,0,0.7)'
-                            }),
-                            padding: [4, 8, 4, 8]
-                        })
-                    })
-                ];
-            }
+                            })
+                        }));
 
-            // ==================== REFRESH LAYERS ====================
-            function refreshLayers() {
-                if (polygonLayer) map.removeLayer(polygonLayer);
-                if (lineLayer) map.removeLayer(lineLayer);
-
-                let ps = new ol.source.Vector();
-                $.each(polygons, function(i, p) {
-                    try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
-                            .coordinates;
-                        if (c && c.length) {
-                            ps.addFeature(new ol.Feature({
-                                geometry: new ol.geom.Polygon(c),
-                                gisid: p.gisid,
-                                sqfeet: p.sqfeet,
-                                visible: true
-                            }));
-                        }
+                        features.push(feature);
                     } catch (e) {
-                        console.error("Error parsing polygon:", e);
+                        console.error('Polygon parse error', e);
                     }
                 });
 
                 polygonLayer = new ol.layer.Vector({
-                    source: ps,
-                    style: polygonStyleFunction,
-                    visible: true
+                    source: new ol.source.Vector({
+                        features
+                    })
                 });
 
-                let ls = new ol.source.Vector();
-                $.each(lines, function(i, l) {
+                map.addLayer(polygonLayer);
+            }
+
+            function createLineLayer() {
+                const features = [];
+
+                $.each(lines, function(i, line) {
                     try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
-                            .coordinates;
-                        if (c && c.length) {
-                            if (c.length === 1 && Array.isArray(c[0][0])) {
-                                c = c[0];
-                            }
-                            ls.addFeature(new ol.Feature({
-                                geometry: new ol.geom.LineString(c),
-                                gisid: l.gisid
-                            }));
-                        }
+                        let coords = typeof line.coordinates === 'string' ? JSON.parse(line.coordinates) :
+                            line.coordinates;
+                        if (!coords || !coords.length) return;
+
+                        const transformed = coords.map(c => ol.proj.fromLonLat([parseFloat(c[0]),
+                            parseFloat(c[1])
+                        ]));
+
+                        const feature = new ol.Feature({
+                            geometry: new ol.geom.LineString(transformed)
+                        });
+
+                        features.push(feature);
                     } catch (e) {
-                        console.error("Error parsing line:", e);
+                        console.error('Line parse error', e);
                     }
                 });
 
                 lineLayer = new ol.layer.Vector({
-                    source: ls,
+                    source: new ol.source.Vector({
+                        features
+                    }),
                     style: new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: '#ffc107',
                             width: 3
                         })
-                    }),
-                    visible: true
+                    })
                 });
 
-                map.addLayer(polygonLayer);
                 map.addLayer(lineLayer);
-
-                map.on('click', function(e) {
-                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
-                    if (feature && feature.get('gisid')) {
-                        showPopup(feature.get('gisid'), e.coordinate);
-                    } else if (popupElement) {
-                        $(popupElement).hide();
-                    }
-                });
-
-                map.on('pointermove', function(e) {
-                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
-                    $('#map').css('cursor', hasFeature ? 'pointer' : '');
-                });
-
-                showLoading(false);
             }
 
-            // ==================== MAP INITIALIZATION ====================
+            function createBoundaryLayer() {
+                if (!wardData.boundary) return;
+
+                try {
+                    let coords = typeof wardData.boundary === 'string' ? JSON.parse(wardData.boundary) : wardData
+                        .boundary;
+                    if (!coords || !coords.length) return;
+
+                    const transformed = coords.map(ring =>
+                        ring.map(c => ol.proj.fromLonLat([parseFloat(c[0]), parseFloat(c[1])]))
+                    );
+
+                    const feature = new ol.Feature({
+                        geometry: new ol.geom.Polygon(transformed)
+                    });
+
+                    boundaryLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [feature]
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff0000',
+                                width: 3,
+                                lineDash: [8, 8]
+                            }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255, 0, 0, 0.02)'
+                            })
+                        })
+                    });
+
+                    map.addLayer(boundaryLayer);
+                } catch (e) {
+                    console.error('Boundary parse error', e);
+                }
+            }
+
+            function createImageLayer() {
+                if (!wardData.drone_image || !wardData.extent_left || !wardData.extent_bottom || !wardData
+                    .extent_right || !wardData.extent_top) {
+                    return;
+                }
+
+                const imageExtent = ol.proj.transformExtent(
+                    [
+                        parseFloat(wardData.extent_left),
+                        parseFloat(wardData.extent_bottom),
+                        parseFloat(wardData.extent_right),
+                        parseFloat(wardData.extent_top)
+                    ],
+                    'EPSG:4326',
+                    'EPSG:3857'
+                );
+
+                imageLayer = new ol.layer.Image({
+                    source: new ol.source.ImageStatic({
+                        url: wardData.drone_image,
+                        imageExtent: imageExtent
+                    }),
+                    visible: false
+                });
+
+                map.addLayer(imageLayer);
+            }
+
+            function setBaseLayer(type) {
+                currentBaseLayer = type;
+
+                if (osmLayer) osmLayer.setVisible(type === 'osm');
+                if (satelliteLayer) satelliteLayer.setVisible(type === 'satellite');
+                if (imageLayer) imageLayer.setVisible(type === 'drone');
+            }
+
+            function applyFilters() {
+                const usage = $('#filterBuildingUsage').val().toLowerCase().trim();
+                const road = $('#filterRoadName').val().toLowerCase().trim();
+                const zone = $('#filterZone').val().toLowerCase().trim();
+
+                let visibleCount = 0;
+
+                polygonLayer.getSource().getFeatures().forEach(feature => {
+                    const gisid = feature.get('gisid');
+                    const pd = polygonDatas.find(p => p.gisid == gisid);
+
+                    let visible = true;
+
+                    if (pd) {
+                        if (usage && !(pd.building_usage || '').toLowerCase().includes(usage)) visible =
+                            false;
+                        if (road && !(pd.road_name || '').toLowerCase().includes(road)) visible = false;
+                        if (zone && !(pd.zone || '').toLowerCase().includes(zone)) visible = false;
+                    }
+
+                    feature.setStyle(visible ? new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 68, 68, 0.35)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        })
+                    }) : null);
+
+                    feature.set('hiddenByFilter', !visible);
+                    if (visible) visibleCount++;
+                });
+
+                $('#filterCount').text(`Showing ${visibleCount} building(s)`);
+            }
+
+            function resetFilters() {
+                $('#filterBuildingUsage, #filterRoadName, #filterZone').val('');
+                polygonLayer.getSource().getFeatures().forEach(feature => {
+                    feature.set('hiddenByFilter', false);
+                    feature.setStyle(new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 68, 68, 0.35)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        })
+                    }));
+                });
+                $('#filterCount').text('No filter applied');
+            }
+
             function initMap() {
                 showLoading(true);
 
@@ -2008,382 +2161,161 @@
 
                 satelliteLayer = new ol.layer.Tile({
                     source: new ol.source.XYZ({
-                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
                     }),
                     visible: false
                 });
-
-                let droneImg = wardData.drone_image;
-                let hasDrone = false;
-
-                if (droneImg && droneImg !== 'null' && droneImg !== '') {
-                    try {
-                        let imageUrl = droneImg;
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
-                            imageUrl = '/' + imageUrl.replace(/^\/+/, '');
-                        }
-
-                        imageLayer = new ol.layer.Image({
-                            source: new ol.source.ImageStatic({
-                                url: imageUrl,
-                                imageExtent: [
-                                    parseFloat(wardData.extent_left),
-                                    parseFloat(wardData.extent_bottom),
-                                    parseFloat(wardData.extent_right),
-                                    parseFloat(wardData.extent_top)
-                                ],
-                                projection: 'EPSG:3857'
-                            }),
-                            visible: true,
-                            opacity: 0.8
-                        });
-                        hasDrone = true;
-                    } catch (e) {
-                        console.error("Error loading drone image:", e);
-                    }
-                }
-
-                let bound = wardData.boundary;
-                let boundExt = null;
-
-                if (bound && bound.length && bound[0].length) {
-                    try {
-                        let bc = bound[0].map(c => ol.proj.fromLonLat(c));
-                        boundaryLayer = new ol.layer.Vector({
-                            source: new ol.source.Vector({
-                                features: [new ol.Feature({
-                                    geometry: new ol.geom.Polygon([bc])
-                                })]
-                            }),
-                            style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({
-                                    color: '#ff0000',
-                                    width: 3,
-                                    lineDash: [10, 5]
-                                }),
-                                fill: new ol.style.Fill({
-                                    color: 'rgba(255,0,0,0.05)'
-                                })
-                            }),
-                            visible: true
-                        });
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
-                            .max(...lats)
-                        ]);
-                    } catch (e) {
-                        console.error("Error parsing boundary:", e);
-                    }
-                }
-
-                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-                let zoom = 18;
-
-                if (bound && bound[0] && bound[0].length) {
-                    try {
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
-                            lats) + Math.max(...lats)) / 2]);
-                        zoom = 18;
-                    } catch (e) {}
-                }
 
                 map = new ol.Map({
                     target: 'map',
                     layers: [osmLayer, satelliteLayer],
                     view: new ol.View({
-                        center: center,
-                        zoom: zoom
-                    })
+                        center: ol.proj.fromLonLat([78.1198, 9.9252]),
+                        zoom: 16
+                    }),
+                    controls: []
                 });
 
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
 
-                if (imageLayer) map.addLayer(imageLayer);
-                if (boundaryLayer) map.addLayer(boundaryLayer);
+                createImageLayer();
+                createPolygonLayer();
+                createLineLayer();
+                createBoundaryLayer();
+                buildSearchIndex();
 
-                setTimeout(() => {
-                    if (boundExt) {
-                        map.getView().fit(boundExt, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                    }
-                }, 500);
-
-                // Add panels to DOM
-                $('body').append(`
-                    <div class="layer-switcher panel" id="layerSwitcher">
-                        <button class="panel-close" onclick="$('#layerSwitcher').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                        <div class="layer-group">
-                            <div class="group-title">Base Maps</div>
-                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
-                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-                        </div>
-                        <div class="layer-group">
-                            <div class="group-title">Overlays</div>
-                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
-                        </div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="map-legend panel" id="mapLegend">
-                        <button class="panel-close" onclick="$('#mapLegend').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                        <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
-                        <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
-                        <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="search-panel panel" id="searchPanel">
-                        <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-search"></i> Search Building</h5>
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
-                            <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
-                        </div>
-                        <div id="searchResults" class="search-results"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="filter-panel panel" id="filterPanel">
-                        <button class="panel-close" onclick="$('#filterPanel').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
-                        <div class="filter-group">
-                            <label>QC Status</label>
-                            <select id="filterType">
-                                <option value="all">All Buildings</option>
-                                <option value="completed">QC Complete</option>
-                                <option value="pending">QC Pending</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Min Floors</label>
-                            <input type="number" id="filterMinFloors" placeholder="Min">
-                        </div>
-                        <div class="filter-group">
-                            <label>Max Floors</label>
-                            <input type="number" id="filterMaxFloors" placeholder="Max">
-                        </div>
-                        <div class="filter-actions">
-                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
-                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
-                        </div>
-                        <div class="filter-count" id="filterCount"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
-                    </div>
-                `);
-
-                // Event listeners
-                $('input[name="baseLayer"]').on('change', function() {
-                    currentBaseLayer = $(this).val();
-                    osmLayer.setVisible(currentBaseLayer === 'osm');
-                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
-                });
-
-                $('#toggleBuildings').on('change', function() {
-                    if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
-                });
-
-                $('#toggleRoads').on('change', function() {
-                    if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
-                });
-
-                $('#toggleBoundary').on('change', function() {
-                    if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
-                });
-
-                if (hasDrone) {
-                    $('#toggleDrone').on('change', function() {
-                        if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
+                if (polygonLayer && polygonLayer.getSource().getFeatures().length) {
+                    map.getView().fit(polygonLayer.getSource().getExtent(), {
+                        padding: [60, 60, 60, 60],
+                        duration: 1000,
+                        maxZoom: 19
+                    });
+                } else if (boundaryLayer && boundaryLayer.getSource().getFeatures().length) {
+                    map.getView().fit(boundaryLayer.getSource().getExtent(), {
+                        padding: [60, 60, 60, 60],
+                        duration: 1000,
+                        maxZoom: 19
                     });
                 }
 
-                $('#doSearchBtn').on('click', function() {
-                    searchBuildings($('#searchInput').val());
-                });
+                map.on('singleclick', function(evt) {
+                    let found = false;
 
-                $('#searchInput').on('keypress', function(e) {
-                    if (e.which === 13) {
-                        searchBuildings($(this).val());
-                    }
-                });
-
-                $('#applyFilterBtn').on('click', function() {
-                    let type = $('#filterType').val();
-                    let minF = $('#filterMinFloors').val();
-                    let maxF = $('#filterMaxFloors').val();
-                    let src = polygonLayer.getSource();
-                    let fts = src.getFeatures();
-                    let cnt = 0;
-
-                    $.each(fts, function(i, f) {
-                        let g = f.get('gisid');
-                        let b = polygonDatas.find(p => p.gisid == g);
-                        let show = true;
-
-                        if (type === 'completed' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (!has) show = false;
-                        } else if (type === 'pending' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (has) show = false;
+                    map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+                        if (layer === polygonLayer && !feature.get('hiddenByFilter')) {
+                            found = true;
+                            showPopup(feature.get('gisid'), evt.coordinate);
+                            return true;
                         }
-
-                        if (show && b && (minF || maxF)) {
-                            let fl = parseInt(b.number_floor) || 0;
-                            if (minF && fl < parseInt(minF)) show = false;
-                            if (maxF && fl > parseInt(maxF)) show = false;
-                        }
-
-                        f.set('visible', show);
-                        if (show) cnt++;
                     });
 
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${cnt} of ${fts.length} buildings`);
-                    closeAllPanels();
-                });
-
-                $('#resetFilterBtn').on('click', function() {
-                    $('#filterType').val('all');
-                    $('#filterMinFloors, #filterMaxFloors').val('');
-                    let src = polygonLayer.getSource();
-                    $.each(src.getFeatures(), function(i, f) {
-                        f.set('visible', true);
-                    });
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(
-                        `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
-                    closeAllPanels();
-                });
-
-                $('#zoomInBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() + 1);
-                });
-
-                $('#zoomOutBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() - 1);
-                });
-
-                // Button handlers
-                $('#menuBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#layerSwitcher').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#layerSwitcher').addClass('open');
-                });
-
-                $('#legendBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#mapLegend').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#mapLegend').addClass('open');
-                });
-
-                $('#openSearchBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#searchPanel').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) {
-                        $('#searchPanel').addClass('open');
-                        setTimeout(() => $('#searchInput').focus(), 300);
+                    if (!found && $(window).width() > 768) {
+                        closePopup();
                     }
                 });
 
-                $('#filterBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#filterPanel').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#filterPanel').addClass('open');
-                });
-
-                $('#locationBtn').on('click', function() {
-                    if (locationTracking) {
-                        stopLocationTracking();
-                        clearRoute();
-                    } else {
-                        startLocationTracking();
-                    }
-                });
-
-                $('#routeBtn').on('click', function() {
-                    if (selectedBuilding) {
-                        getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords);
-                    } else {
-                        showFlashMessage('Please search and select a building first', 'warning');
-                        $('#openSearchBtn').click();
-                    }
-                });
-
-                $('#closeRouteInfo').on('click', function() {
-                    clearRoute();
-                });
-
-                $('#startNavigationBtn').on('click', function() {
-                    startNavigation();
-                });
-
-                $('#closeNavigation').on('click', function() {
-                    stopNavigation();
-                });
-
-                // Close panels when clicking outside
-                $(document).on('click touchstart', function(e) {
-                    if (!$(e.target).closest('.panel').length &&
-                        !$(e.target).closest('.action-btn').length &&
-                        !$(e.target).closest('#centerMyLocationBtn').length) {
-                        closeAllPanels();
-                    }
-                });
-
-                refreshLayers();
+                showLoading(false);
             }
 
-            // Start the application
-            initMap();
-            buildSearchIndex();
-
-            $(window).on('resize', function() {
-                setTimeout(() => {
-                    if (map) map.updateSize();
-                }, 100);
+            $('#menuBtn').on('click', function() {
+                const panel = $('#layerSwitcher');
+                const isOpen = panel.hasClass('open');
+                closeAllPanels();
+                if (!isOpen) panel.addClass('open');
             });
+
+            $('#legendBtn').on('click', function() {
+                const panel = $('#mapLegend');
+                const isOpen = panel.hasClass('open');
+                closeAllPanels();
+                if (!isOpen) panel.addClass('open');
+            });
+
+            $('#openSearchBtn').on('click', function() {
+                const panel = $('#searchPanel');
+                const isOpen = panel.hasClass('open');
+                closeAllPanels();
+                if (!isOpen) panel.addClass('open');
+            });
+
+            $('#filterBtn').on('click', function() {
+                const panel = $('#filterPanel');
+                const isOpen = panel.hasClass('open');
+                closeAllPanels();
+                if (!isOpen) panel.addClass('open');
+            });
+
+            $('#routeBtn').on('click', function() {
+                clearRoute();
+                showFlashMessage('Route cleared', 'info');
+            });
+
+            $('#closeLayerPanel').on('click', () => $('#layerSwitcher').removeClass('open'));
+            $('#closeLegendPanel').on('click', () => $('#mapLegend').removeClass('open'));
+            $('#closeSearchPanel').on('click', () => $('#searchPanel').removeClass('open'));
+            $('#closeFilterPanel').on('click', () => $('#filterPanel').removeClass('open'));
+            $('#closeRouteInfo').on('click', () => $('#routeInfo').removeClass('open'));
+            $('#closeNavigation').on('click', stopNavigation);
+
+            $('#zoomInBtn').on('click', function() {
+                const view = map.getView();
+                view.animate({
+                    zoom: view.getZoom() + 1,
+                    duration: 200
+                });
+            });
+
+            $('#zoomOutBtn').on('click', function() {
+                const view = map.getView();
+                view.animate({
+                    zoom: view.getZoom() - 1,
+                    duration: 200
+                });
+            });
+
+            $('input[name="baseLayer"]').on('change', function() {
+                setBaseLayer($(this).val());
+            });
+
+            $('#toggleBuildings').on('change', function() {
+                if (polygonLayer) polygonLayer.setVisible(this.checked);
+            });
+
+            $('#toggleRoads').on('change', function() {
+                if (lineLayer) lineLayer.setVisible(this.checked);
+            });
+
+            $('#toggleBoundary').on('change', function() {
+                if (boundaryLayer) boundaryLayer.setVisible(this.checked);
+            });
+
+            $('#searchBtn').on('click', function() {
+                searchBuildings($('#searchInput').val());
+            });
+
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    searchBuildings($(this).val());
+                }
+            });
+
+            $('#applyFilterBtn').on('click', applyFilters);
+            $('#resetFilterBtn').on('click', resetFilters);
+
+            $('#locationBtn').on('click', function() {
+                if (locationTracking) {
+                    stopLocationTracking();
+                    showFlashMessage('Location tracking stopped', 'info');
+                } else {
+                    startLocationTracking();
+                    showFlashMessage('Location tracking started', 'success');
+                }
+            });
+
+            $('#startNavigationBtn').on('click', startNavigation);
+
+            initMap();
         });
     </script>
 @endpush
