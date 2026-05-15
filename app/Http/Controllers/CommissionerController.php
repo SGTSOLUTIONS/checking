@@ -189,6 +189,7 @@ class CommissionerController extends Controller
         if (!$corporation) {
             return back()->with('error', 'Corporation not found');
         }
+        return response()->json($user);
 
 
     }
