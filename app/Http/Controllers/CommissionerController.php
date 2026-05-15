@@ -215,6 +215,9 @@ class CommissionerController extends Controller
             : 0;
 
         $wards = [];
+          $shopTableName = "shop_corporation_{$corporation->id}";
+          $shopCount = DB::table($shopTableName)->count();
+                    $totalShops = $shopCount;
 
         foreach ($wards_per_zones as $wards_per_zone) {
 
@@ -281,8 +284,7 @@ class CommissionerController extends Controller
                 $shopDataNotinMisCount = 0;
 
                 if (Schema::hasTable($shopTableName)) {
-                    $shopCount = DB::table($shopTableName)->where('ward_no',$wardlist->ward_no)->count();
-                    $totalShops += $shopCount;
+
 
                     if (Schema::hasTable($shopDataTableName)) {
                         $shopDataCount = DB::table($shopDataTableName)->count();
