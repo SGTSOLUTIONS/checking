@@ -192,7 +192,6 @@ class CommissionerController extends Controller
 
         $ward_datas = Ward::find($user->corporation_id);
         return response()->json($ward_datas);
-s
 
     }
     private function calculateWardVariations($corporationId, $zone, $wardNo)
