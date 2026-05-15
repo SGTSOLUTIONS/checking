@@ -134,7 +134,7 @@
             .action-buttons {
                 position: absolute;
                 bottom: auto;
-                top: 50%;
+                top: 80%;
                 right: 20px;
                 left: auto;
                 transform: translateY(-50%);
@@ -905,6 +905,38 @@
             background: #ff4444;
             border-radius: 10px;
         }
+
+        /* Custom Center Button */
+        .center-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 80px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .center-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (min-width: 769px) {
+            .center-btn {
+                bottom: auto;
+                top: 160px;
+                left: 20px;
+            }
+        }
     </style>
 @endpush
 
@@ -944,7 +976,8 @@
             // ==================== SEARCH & DIRECTION VARIABLES ====================
             let allBuildings = [],
                 directionLineLayer = null,
-                destinationMarkerLayer = null;
+                destinationMarkerLayer = null,
+                currentRouteFeature = null;
 
             // ==================== HELPER FUNCTIONS ====================
             function showLoading(show) {
@@ -952,7 +985,7 @@
                     if ($('#mapLoading').length === 0) {
                         $('body').append(
                             '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                            );
+                        );
                     }
                     $('#mapLoading').show();
                 } else {
@@ -963,6 +996,44 @@
             // Close all panels
             function closeAllPanels() {
                 $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel').removeClass('open');
+            }
+
+            // Clear route
+            function clearRoute() {
+                if (directionLineLayer) {
+                    map.removeLayer(directionLineLayer);
+                    directionLineLayer = null;
+                }
+                if (destinationMarkerLayer) {
+                    map.removeLayer(destinationMarkerLayer);
+                    destinationMarkerLayer = null;
+                }
+                $('#directionPanel').remove();
+            }
+
+            // Center map to current location
+            function centerToMyLocation() {
+                if (currentPosition) {
+                    let coords = ol.proj.fromLonLat(currentPosition);
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(19);
+                    // Flash animation for location marker
+                    if (currentLocationLayer) {
+                        currentLocationLayer.setVisible(false);
+                        setTimeout(() => {
+                            if (currentLocationLayer) currentLocationLayer.setVisible(true);
+                        }, 200);
+                        setTimeout(() => {
+                            if (currentLocationLayer) currentLocationLayer.setVisible(false);
+                        }, 400);
+                        setTimeout(() => {
+                            if (currentLocationLayer) currentLocationLayer.setVisible(true);
+                        }, 600);
+                    }
+                } else {
+                    alert("Location not available. Please enable location tracking first.");
+                    startLocationTracking();
+                }
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -992,7 +1063,8 @@
                                         cy += c[1];
                                     });
                                     info.coordinates = [cx / coords[0].length, cy / coords[0]
-                                        .length];
+                                        .length
+                                    ];
                                 }
                             } catch (e) {}
                             return false;
@@ -1001,6 +1073,7 @@
                     if (building.pointdata) {
                         $.each(building.pointdata, function(j, a) {
                             info.assessments.push({
+                                id: a.id,
                                 assessment_no: a.assessment,
                                 owner_name: a.owner_name || a.present_owner_name,
                                 phone: a.phone_number
@@ -1019,16 +1092,29 @@
                 }
                 $('#locationBtn').addClass('active');
                 locationTracking = true;
+
+                // Add center button if not exists
+                if ($('#centerMyLocationBtn').length === 0) {
+                    $('body').append(
+                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
+                    );
+                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
+                }
+
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
                 }, function(err) {
                     alert("Unable to get location: " + err.message);
                     locationTracking = false;
                     $('#locationBtn').removeClass('active');
+                    $('#centerMyLocationBtn').remove();
                 });
+
                 watchId = navigator.geolocation.watchPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {}, {
+                }, function(err) {
+                    console.warn("Watch position error:", err);
+                }, {
                     enableHighAccuracy: true,
                     maximumAge: 5000,
                     timeout: 10000
@@ -1041,14 +1127,19 @@
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
                 locationTracking = false;
                 $('#locationBtn').removeClass('active');
+                $('#centerMyLocationBtn').remove();
+                currentLocationLayer = null;
+                accuracyLayer = null;
             }
 
             function updateLocationOnMap(lon, lat, accuracy) {
                 let coords = ol.proj.fromLonLat([lon, lat]);
                 currentPosition = [lon, lat];
+
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
 
+                // Accuracy circle
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -1067,10 +1158,100 @@
                 });
                 map.addLayer(accuracyLayer);
 
+                // Location marker with pulsing effect
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
                             geometry: new ol.geom.Point(coords)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 10,
+                            fill: new ol.style.Fill({
+                                color: '#ff4444'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#fff',
+                                width: 3
+                            })
+                        })
+                    })
+                });
+                map.addLayer(currentLocationLayer);
+            }
+
+            // ==================== IMPROVED DIRECTION FUNCTIONS ====================
+            function calculateDistance(lon1, lat1, lon2, lat2) {
+                let R = 6371;
+                let dLat = (lat2 - lat1) * Math.PI / 180;
+                let dLon = (lon2 - lon1) * Math.PI / 180;
+                let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            }
+
+            function calculateBearing(lon1, lat1, lon2, lat2) {
+                let φ1 = lat1 * Math.PI / 180;
+                let φ2 = lat2 * Math.PI / 180;
+                let λ1 = lon1 * Math.PI / 180;
+                let λ2 = lon2 * Math.PI / 180;
+                let y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+                let x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+                let θ = Math.atan2(y, x);
+                let bearing = (θ * 180 / Math.PI + 360) % 360;
+                return bearing;
+            }
+
+            function getDirectionText(bearing) {
+                if (bearing >= 337.5 || bearing < 22.5) return "North ↑";
+                if (bearing >= 22.5 && bearing < 67.5) return "North-East ↗";
+                if (bearing >= 67.5 && bearing < 112.5) return "East →";
+                if (bearing >= 112.5 && bearing < 157.5) return "South-East ↘";
+                if (bearing >= 157.5 && bearing < 202.5) return "South ↓";
+                if (bearing >= 202.5 && bearing < 247.5) return "South-West ↙";
+                if (bearing >= 247.5 && bearing < 292.5) return "West ←";
+                return "North-West ↖";
+            }
+
+            function showDirectionToBuilding(gisid, coords) {
+                if (!currentPosition) {
+                    alert("Please enable location tracking first");
+                    startLocationTracking();
+                    return;
+                }
+
+                // Clear existing route
+                clearRoute();
+
+                let from = ol.proj.fromLonLat(currentPosition);
+                let to = ol.proj.fromLonLat(coords);
+
+                // Create line feature for route
+                let routeFeature = new ol.Feature({
+                    geometry: new ol.geom.LineString([from, to])
+                });
+
+                directionLineLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [routeFeature]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#28a745',
+                            width: 5,
+                            lineDash: [15, 10]
+                        })
+                    })
+                });
+                map.addLayer(directionLineLayer);
+
+                // Destination marker with animation
+                destinationMarkerLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Point(to)
                         })]
                     }),
                     style: new ol.style.Style({
@@ -1086,105 +1267,66 @@
                         })
                     })
                 });
-                map.addLayer(currentLocationLayer);
-
-                if (!localStorage.getItem('mapCentered')) {
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(18);
-                    localStorage.setItem('mapCentered', 'true');
-                }
-            }
-
-            // ==================== DIRECTION FUNCTIONS ====================
-            function calculateDistance(lon1, lat1, lon2, lat2) {
-                let R = 6371;
-                let dLat = (lat2 - lat1) * Math.PI / 180;
-                let dLon = (lon2 - lon1) * Math.PI / 180;
-                let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            }
-
-            function showDirectionToBuilding(gisid, coords) {
-                if (!currentPosition) {
-                    alert("Please enable location tracking first");
-                    startLocationTracking();
-                    return;
-                }
-                if (directionLineLayer) map.removeLayer(directionLineLayer);
-                if (destinationMarkerLayer) map.removeLayer(destinationMarkerLayer);
-
-                let from = ol.proj.fromLonLat(currentPosition);
-                let to = ol.proj.fromLonLat(coords);
-
-                directionLineLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.LineString([from, to])
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#28a745',
-                            width: 4,
-                            lineDash: [10, 10]
-                        })
-                    })
-                });
-                map.addLayer(directionLineLayer);
-
-                destinationMarkerLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(to)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 15,
-                            fill: new ol.style.Fill({
-                                color: '#28a745'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#fff',
-                                width: 3
-                            })
-                        })
-                    })
-                });
                 map.addLayer(destinationMarkerLayer);
 
+                // Calculate route info
                 let distance = calculateDistance(currentPosition[0], currentPosition[1], coords[0], coords[1]);
+                let bearing = calculateBearing(currentPosition[0], currentPosition[1], coords[0], coords[1]);
+                let direction = getDirectionText(bearing);
+
                 let html = `
                     <div class="direction-panel panel show" id="directionPanel">
-                        <button class="close-direction" onclick="$('#directionPanel').remove();">&times;</button>
-                        <h5><i class="fas fa-directions"></i> Direction to Building</h5>
+                        <button class="close-direction" onclick="clearRouteAndPanel()">&times;</button>
+                        <h5><i class="fas fa-directions"></i> Route to Building</h5>
                         <div class="direction-info">
-                            <p><strong>GIS ID:</strong> ${gisid}</p>
-                            <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
-                            <p><strong>Walking:</strong> ${Math.round(distance / 5 * 60)} min</p>
-                            <p><strong>Driving:</strong> ${Math.round(distance / 40 * 60)} min</p>
+                            <p><strong>📍 GIS ID:</strong> ${gisid}</p>
+                            <p><strong>📏 Distance:</strong> ${distance.toFixed(2)} km (${(distance * 1000).toFixed(0)} m)</p>
+                            <p><strong>🧭 Direction:</strong> ${direction}</p>
+                            <p><strong>🚶 Walking:</strong> ${Math.round(distance / 5 * 60)} min (${(distance / 5).toFixed(1)} km/h)</p>
+                            <p><strong>🚗 Driving:</strong> ${Math.round(distance / 40 * 60)} min (${(distance / 40).toFixed(1)} km/h average)</p>
                         </div>
-                        <button id="fitBothBtn" style="width:100%; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
-                            <i class="fas fa-map-marked-alt"></i> Show Full Route
-                        </button>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <button id="fitRouteBtn" style="flex:1; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
+                                <i class="fas fa-map-marked-alt"></i> Fit Route
+                            </button>
+                            <button id="clearRouteBtn" style="flex:1; padding:10px; background:#dc3545; border:none; border-radius:8px; color:white; cursor:pointer;">
+                                <i class="fas fa-trash"></i> Clear Route
+                            </button>
+                        </div>
                     </div>`;
+
                 $('#directionPanel').remove();
                 $('body').append(html);
 
-                $('#fitBothBtn').on('click', function() {
-                    map.getView().fit(ol.extent.boundingExtent([from, to]), {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
+                $('#fitRouteBtn').on('click', function() {
+                    let extent = ol.extent.boundingExtent([from, to]);
+                    // Add padding to extent
+                    let paddedExtent = ol.extent.buffer(extent, 100);
+                    map.getView().fit(paddedExtent, {
+                        padding: [80, 80, 80, 80],
+                        duration: 800,
+                        maxZoom: 18
                     });
                 });
 
-                map.getView().fit(ol.extent.boundingExtent([from, to]), {
-                    padding: [50, 50, 50, 50],
-                    duration: 1000
+                $('#clearRouteBtn').on('click', function() {
+                    clearRoute();
+                });
+
+                // Auto-fit route on creation with appropriate zoom level
+                let extent = ol.extent.boundingExtent([from, to]);
+                let paddedExtent = ol.extent.buffer(extent, 100);
+                map.getView().fit(paddedExtent, {
+                    padding: [80, 80, 80, 80],
+                    duration: 600,
+                    maxZoom: 18
                 });
             }
+
+            // Global function for route panel close
+            window.clearRouteAndPanel = function() {
+                clearRoute();
+            };
 
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
@@ -1296,9 +1438,11 @@
                 }
                 if (f) {
                     let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, {
+                    let paddedExtent = ol.extent.buffer(e, 20);
+                    map.getView().fit(paddedExtent, {
                         padding: [50, 50, 50, 50],
-                        duration: 1000
+                        duration: 800,
+                        maxZoom: 20
                     });
                     showPopup(gisid, ol.extent.getCenter(e));
                 } else {
@@ -1615,12 +1759,17 @@
                 let droneImg = wardData.drone_image;
                 let hasDrone = false;
 
-                if (droneImg && wardData.extent_left) {
+                // Fix drone image URL and add it properly
+                if (droneImg && droneImg !== 'null' && droneImg !== '') {
                     try {
-                        let imageUrl = droneImg.replace(/^\/+/, '');
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-                            imageUrl = '/' + imageUrl;
+                        let imageUrl = droneImg;
+                        // Handle relative paths
+                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
+                            imageUrl = '/' + imageUrl.replace(/^\/+/, '');
                         }
+
+                        console.log("Loading drone image from:", imageUrl);
+
                         imageLayer = new ol.layer.Image({
                             source: new ol.source.ImageStatic({
                                 url: imageUrl,
@@ -1632,9 +1781,11 @@
                                 ],
                                 projection: 'EPSG:3857'
                             }),
-                            visible: true
+                            visible: true,
+                            opacity: 0.8
                         });
                         hasDrone = true;
+                        console.log("Drone image layer created successfully");
                     } catch (e) {
                         console.error("Error loading drone image:", e);
                     }
@@ -1699,8 +1850,13 @@
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
 
-                if (imageLayer) map.addLayer(imageLayer);
-                if (boundaryLayer) map.addLayer(boundaryLayer);
+                // Add drone image layer after map is initialized
+                if (hasDrone && imageLayer) {
+                    map.addLayer(imageLayer);
+                }
+                if (boundaryLayer) {
+                    map.addLayer(boundaryLayer);
+                }
 
                 setTimeout(() => {
                     if (boundExt) {
@@ -1781,7 +1937,12 @@
                     </div>
                 `);
 
-
+                $('body').append(`
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                    </div>
+                `);
 
                 // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
@@ -1886,11 +2047,13 @@
                 });
 
                 $('#zoomInBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() + 1);
+                    let currentZoom = map.getView().getZoom();
+                    map.getView().setZoom(currentZoom + 1);
                 });
 
                 $('#zoomOutBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() - 1);
+                    let currentZoom = map.getView().getZoom();
+                    map.getView().setZoom(currentZoom - 1);
                 });
 
                 // Button handlers - ALL DEVICES
@@ -1912,15 +2075,21 @@
                     }
                 });
 
-                $('#searchBtn').on('click', function(e) {
-                    e.stopPropagation();
+                // Fix duplicate ID issue - search button handler
+                $('#searchBtn').off('click').on('click', function(e) {
                     let isOpen = $('#searchPanel').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) {
-                        $('#searchPanel').addClass('open');
-                        setTimeout(function() {
-                            $('#searchInput').focus();
-                        }, 300);
+                    if ($(e.target).closest('#searchBtn').length && $(e.target).closest('#searchPanel').length) {
+                        // This is the search button inside the panel - do search
+                        searchBuildings($('#searchInput').val());
+                    } else if ($(e.target).closest('#searchBtn').length && !$(e.target).closest('#searchPanel').length) {
+                        // This is the action button - toggle panel
+                        closeAllPanels();
+                        if (!isOpen) {
+                            $('#searchPanel').addClass('open');
+                            setTimeout(function() {
+                                $('#searchInput').focus();
+                            }, 300);
+                        }
                     }
                 });
 
@@ -1938,18 +2107,14 @@
                         stopLocationTracking();
                     } else {
                         startLocationTracking();
-                        setTimeout(function() {
-                            if (currentPosition) {
-                                map.getView().setCenter(ol.proj.fromLonLat(currentPosition));
-                            }
-                        }, 1000);
                     }
                 });
 
                 // Close panels when clicking outside
                 $(document).on('click touchstart', function(e) {
                     if (!$(e.target).closest('.panel').length &&
-                        !$(e.target).closest('.action-btn').length) {
+                        !$(e.target).closest('.action-btn').length &&
+                        !$(e.target).closest('#centerMyLocationBtn').length) {
                         closeAllPanels();
                     }
                 });

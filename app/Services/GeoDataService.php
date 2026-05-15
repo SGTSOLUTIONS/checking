@@ -148,8 +148,8 @@ class GeoDataService
                     $table->string('halfyeartax')->nullable();
                     $table->string('balance')->nullable();
                     $table->string('no_of_persons')->nullable();
-                    $table->string('qc_area')->nullable();
-                    $table->string('qc_usage')->nullable();
+                    $table->string('qcsqfeet')->nullable();
+                    $table->string('qcusage')->nullable();
                     $table->string('qc_name')->nullable();
                     $table->string('qc_remarks')->nullable();
                     $table->string('zone')->nullable();
