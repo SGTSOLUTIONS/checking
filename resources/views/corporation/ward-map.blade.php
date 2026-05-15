@@ -16,7 +16,7 @@
                 <i class="fas fa-info-circle"></i>
                 <span class="btn-label">Legend</span>
             </button>
-            <button class="action-btn search-btn" id="searchBtn" title="Search">
+            <button class="action-btn search-btn" id="openSearchBtn" title="Search">
                 <i class="fas fa-search"></i>
                 <span class="btn-label">Search</span>
             </button>
@@ -976,8 +976,7 @@
             // ==================== SEARCH & DIRECTION VARIABLES ====================
             let allBuildings = [],
                 directionLineLayer = null,
-                destinationMarkerLayer = null,
-                currentRouteFeature = null;
+                destinationMarkerLayer = null;
 
             // ==================== HELPER FUNCTIONS ====================
             function showLoading(show) {
@@ -1082,6 +1081,7 @@
                     }
                     allBuildings.push(info);
                 });
+                console.log("Search index built with", allBuildings.length, "buildings");
             }
 
             // ==================== LOCATION TRACKING ====================
@@ -1158,7 +1158,7 @@
                 });
                 map.addLayer(accuracyLayer);
 
-                // Location marker with pulsing effect
+                // Location marker
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -1181,7 +1181,7 @@
                 map.addLayer(currentLocationLayer);
             }
 
-            // ==================== IMPROVED DIRECTION FUNCTIONS ====================
+            // ==================== DIRECTION FUNCTIONS ====================
             function calculateDistance(lon1, lat1, lon2, lat2) {
                 let R = 6371;
                 let dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1229,13 +1229,11 @@
                 let to = ol.proj.fromLonLat(coords);
 
                 // Create line feature for route
-                let routeFeature = new ol.Feature({
-                    geometry: new ol.geom.LineString([from, to])
-                });
-
                 directionLineLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
-                        features: [routeFeature]
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.LineString([from, to])
+                        })]
                     }),
                     style: new ol.style.Style({
                         stroke: new ol.style.Stroke({
@@ -1247,7 +1245,7 @@
                 });
                 map.addLayer(directionLineLayer);
 
-                // Destination marker with animation
+                // Destination marker
                 destinationMarkerLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -1282,8 +1280,8 @@
                             <p><strong>📍 GIS ID:</strong> ${gisid}</p>
                             <p><strong>📏 Distance:</strong> ${distance.toFixed(2)} km (${(distance * 1000).toFixed(0)} m)</p>
                             <p><strong>🧭 Direction:</strong> ${direction}</p>
-                            <p><strong>🚶 Walking:</strong> ${Math.round(distance / 5 * 60)} min (${(distance / 5).toFixed(1)} km/h)</p>
-                            <p><strong>🚗 Driving:</strong> ${Math.round(distance / 40 * 60)} min (${(distance / 40).toFixed(1)} km/h average)</p>
+                            <p><strong>🚶 Walking:</strong> ${Math.round(distance / 5 * 60)} min</p>
+                            <p><strong>🚗 Driving:</strong> ${Math.round(distance / 40 * 60)} min</p>
                         </div>
                         <div style="display: flex; gap: 10px; margin-top: 12px;">
                             <button id="fitRouteBtn" style="flex:1; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
@@ -1300,7 +1298,6 @@
 
                 $('#fitRouteBtn').on('click', function() {
                     let extent = ol.extent.boundingExtent([from, to]);
-                    // Add padding to extent
                     let paddedExtent = ol.extent.buffer(extent, 100);
                     map.getView().fit(paddedExtent, {
                         padding: [80, 80, 80, 80],
@@ -1313,7 +1310,7 @@
                     clearRoute();
                 });
 
-                // Auto-fit route on creation with appropriate zoom level
+                // Auto-fit route
                 let extent = ol.extent.boundingExtent([from, to]);
                 let paddedExtent = ol.extent.buffer(extent, 100);
                 map.getView().fit(paddedExtent, {
@@ -1323,18 +1320,20 @@
                 });
             }
 
-            // Global function for route panel close
             window.clearRouteAndPanel = function() {
                 clearRoute();
             };
 
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
+                console.log("Searching for:", text);
+
                 if (!text || !text.trim()) {
                     $('#searchResults').html(
                         '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
                     return;
                 }
+
                 let term = text.toLowerCase().trim();
                 let results = [];
 
@@ -1342,6 +1341,7 @@
                     let match = false,
                         type = '',
                         val = '';
+
                     if (b.gisid && b.gisid.toLowerCase().includes(term)) {
                         match = true;
                         type = 'GIS ID';
@@ -1354,6 +1354,10 @@
                         match = true;
                         type = 'Road Name';
                         val = b.road_name;
+                    } else if (b.zone && b.zone.toLowerCase().includes(term)) {
+                        match = true;
+                        type = 'Zone';
+                        val = b.zone;
                     } else {
                         $.each(b.assessments, function(j, a) {
                             if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
@@ -1376,6 +1380,7 @@
                             }
                         });
                     }
+
                     if (match) {
                         results.push({
                             gisid: b.gisid,
@@ -1387,7 +1392,10 @@
                     }
                 });
 
+                console.log("Found", results.length, "results");
+
                 let $res = $('#searchResults').empty();
+
                 if (!results.length) {
                     $res.html(
                         '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
@@ -1759,11 +1767,9 @@
                 let droneImg = wardData.drone_image;
                 let hasDrone = false;
 
-                // Fix drone image URL and add it properly
                 if (droneImg && droneImg !== 'null' && droneImg !== '') {
                     try {
                         let imageUrl = droneImg;
-                        // Handle relative paths
                         if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
                             imageUrl = '/' + imageUrl.replace(/^\/+/, '');
                         }
@@ -1850,7 +1856,6 @@
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
 
-                // Add drone image layer after map is initialized
                 if (hasDrone && imageLayer) {
                     map.addLayer(imageLayer);
                 }
@@ -1902,8 +1907,8 @@
                         <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
                         <h5><i class="fas fa-search"></i> Search Building</h5>
                         <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
-                            <button id="searchBtn"><i class="fas fa-search"></i> Go</button>
+                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment, Zone...">
+                            <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
                         </div>
                         <div id="searchResults" class="search-results"></div>
                     </div>
@@ -1969,7 +1974,8 @@
                     });
                 }
 
-                $('#searchBtn').on('click', function() {
+                // Search button inside panel
+                $('#doSearchBtn').on('click', function() {
                     searchBuildings($('#searchInput').val());
                 });
 
@@ -2056,7 +2062,7 @@
                     map.getView().setZoom(currentZoom - 1);
                 });
 
-                // Button handlers - ALL DEVICES
+                // Button handlers
                 $('#menuBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#layerSwitcher').hasClass('open');
@@ -2075,21 +2081,15 @@
                     }
                 });
 
-                // Fix duplicate ID issue - search button handler
-                $('#searchBtn').off('click').on('click', function(e) {
+                $('#openSearchBtn').on('click', function(e) {
+                    e.stopPropagation();
                     let isOpen = $('#searchPanel').hasClass('open');
-                    if ($(e.target).closest('#searchBtn').length && $(e.target).closest('#searchPanel').length) {
-                        // This is the search button inside the panel - do search
-                        searchBuildings($('#searchInput').val());
-                    } else if ($(e.target).closest('#searchBtn').length && !$(e.target).closest('#searchPanel').length) {
-                        // This is the action button - toggle panel
-                        closeAllPanels();
-                        if (!isOpen) {
-                            $('#searchPanel').addClass('open');
-                            setTimeout(function() {
-                                $('#searchInput').focus();
-                            }, 300);
-                        }
+                    closeAllPanels();
+                    if (!isOpen) {
+                        $('#searchPanel').addClass('open');
+                        setTimeout(function() {
+                            $('#searchInput').focus();
+                        }, 300);
                     }
                 });
 
