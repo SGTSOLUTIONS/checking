@@ -204,87 +204,87 @@ class GeoDataService
      * @param array $coordinates - Polygon coordinates in EPSG:3857 projection
      * @return float - Area in square feet
      */
- private function calculatePolygonAreaInSquareFeet($coordinates)
-{
-    try {
+    private function calculatePolygonAreaInSquareFeet($coordinates)
+    {
+        try {
+            if (!is_array($coordinates) || empty($coordinates)) {
+                Log::warning("Invalid coordinates array");
+                return 0;
+            }
 
-        if (!is_array($coordinates) || empty($coordinates)) {
-            Log::warning("Invalid coordinates array");
+            // Extract the outer ring (first ring of first polygon)
+            $ring = null;
+
+            // Check structure and extract appropriate ring
+            if (isset($coordinates[0]) && is_array($coordinates[0])) {
+                // Check if it's a Polygon (array of rings)
+                if (isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+                    // Polygon structure: [[[x,y],[x,y]], [[x,y],[x,y]]]
+                    $ring = $coordinates[0]; // First ring (outer boundary)
+                }
+                // Check if it's a MultiPolygon
+                elseif (isset($coordinates[0][0][0]) && is_array($coordinates[0][0][0])) {
+                    // MultiPolygon structure: [[[[x,y],[x,y]]], [[[x,y],[x,y]]]]
+                    $ring = $coordinates[0][0]; // First polygon's first ring
+                }
+                // Check if already flattened points
+                elseif (isset($coordinates[0][0]) && is_numeric($coordinates[0][0])) {
+                    // Flattened structure: [[x,y],[x,y]]
+                    $ring = $coordinates;
+                } else {
+                    Log::warning("Unsupported coordinate structure");
+                    return 0;
+                }
+            } else {
+                Log::warning("Invalid coordinate structure - missing first level array");
+                return 0;
+            }
+
+            if (!$ring || !is_array($ring) || count($ring) < 3) {
+                Log::warning("Invalid polygon ring - need at least 3 points");
+                return 0;
+            }
+
+            // Validate ring points
+            foreach ($ring as $point) {
+                if (!isset($point[0], $point[1]) || !is_numeric($point[0]) || !is_numeric($point[1])) {
+                    Log::warning("Invalid point in ring: " . json_encode($point));
+                    return 0;
+                }
+            }
+
+            $areaInSqMeters = $this->calculate3857AreaInMeters($ring);
+
+            if ($areaInSqMeters > 0 && $areaInSqMeters < 1000000) {
+                $areaInSqFeet = $areaInSqMeters * 10.7639;
+                $result = round($areaInSqFeet, 0);
+                Log::info("Calculated area: {$result} sq ft");
+                return $result;
+            }
+
+            // Try spherical calculation if coordinates appear to be in degrees
+            $samplePoint = $ring[0];
+            if (
+                isset($samplePoint[0], $samplePoint[1]) &&
+                abs($samplePoint[0]) <= 180 &&
+                abs($samplePoint[1]) <= 90
+            ) {
+
+                $areaInSqMeters = $this->calculateSphericalAreaInMeters($ring);
+                $areaInSqFeet = $areaInSqMeters * 10.7639;
+                $result = round($areaInSqFeet, 0);
+                Log::info("Calculated spherical area: {$result} sq ft");
+                return $result;
+            }
+
+            Log::warning("Area calculation returned unreasonable value");
+            return 0;
+        } catch (\Exception $e) {
+            Log::error("Area calculation failed: " . $e->getMessage());
+            Log::error("Coordinates structure: " . json_encode(array_slice($coordinates, 0, 2)));
             return 0;
         }
-
-        /**
-         * Handle both:
-         * Raw Polygon:
-         * [
-         *   [[x,y],[x,y]]
-         * ]
-         *
-         * Flattened:
-         * [
-         *   [x,y],[x,y]
-         * ]
-         */
-
-        if (
-            isset($coordinates[0][0]) &&
-            is_numeric($coordinates[0][0])
-        ) {
-            // Already flattened
-            $ring = $coordinates;
-        } else {
-            // GeoJSON polygon structure
-            $ring = $coordinates[0] ?? null;
-        }
-
-        if (!$ring || !is_array($ring) || count($ring) < 3) {
-            Log::warning("Invalid polygon ring - need at least 3 points");
-            return 0;
-        }
-
-        $areaInSqMeters = $this->calculate3857AreaInMeters($ring);
-
-        if ($areaInSqMeters > 0 && $areaInSqMeters < 1000000) {
-
-            $areaInSqFeet = $areaInSqMeters * 10.7639;
-
-            $result = round($areaInSqFeet, 0);
-
-            Log::info("Calculated area: {$result} sq ft");
-
-            return $result;
-        }
-
-        $samplePoint = $ring[0];
-
-        if (
-            isset($samplePoint[0], $samplePoint[1]) &&
-            abs($samplePoint[0]) <= 180 &&
-            abs($samplePoint[1]) <= 90
-        ) {
-
-            $areaInSqMeters = $this->calculateSphericalAreaInMeters($ring);
-
-            $areaInSqFeet = $areaInSqMeters * 10.7639;
-
-            $result = round($areaInSqFeet, 0);
-
-            Log::info("Calculated spherical area: {$result} sq ft");
-
-            return $result;
-        }
-
-        Log::warning("Area calculation returned unreasonable value");
-
-        return 0;
-
-    } catch (\Exception $e) {
-
-        Log::error("Area calculation failed: " . $e->getMessage());
-
-        return 0;
     }
-}
     /**
      * Calculate area for EPSG:3857 (Web Mercator) coordinates
      * Web Mercator has significant distortion, so we need to correct for latitude
@@ -801,12 +801,10 @@ class GeoDataService
                     'sqfeet' => $sqfeet,
                     'midpoint' => $midpoint
                 ];
-
             } catch (\Exception $e) {
                 DB::rollBack();
                 throw $e;
             }
-
         } catch (\Exception $e) {
             Log::error("❌ Failed to store polygon: " . $e->getMessage());
             return [
@@ -922,12 +920,10 @@ class GeoDataService
                     'sqfeet' => $sqfeet,
                     'midpoint' => $midpoint
                 ];
-
             } catch (\Exception $e) {
                 DB::rollBack();
                 throw $e;
             }
-
         } catch (\Exception $e) {
             Log::error("❌ Failed to update polygon: " . $e->getMessage());
             return [
@@ -940,33 +936,62 @@ class GeoDataService
     /**
      * ✅ Flatten coordinates
      */
+    /**
+     * ✅ Flatten coordinates with better error handling
+     */
     private function flattenCoordinates($geometryType, $coordinates)
     {
-        $flattened = [];
-
         try {
-            if ($geometryType === 'Polygon') {
-                foreach ($coordinates as $ring) {
-                    if (is_array($ring) && count($ring) > 0) {
-                        $flattened[] = $ring;
-                    }
-                }
-            } elseif ($geometryType === 'MultiPolygon') {
-                foreach ($coordinates as $polygon) {
-                    foreach ($polygon as $ring) {
-                        if (is_array($ring) && count($ring) > 0) {
-                            $flattened[] = $ring;
+            if (empty($coordinates)) {
+                Log::warning("Empty coordinates provided");
+                return [];
+            }
+
+            switch ($geometryType) {
+                case 'Polygon':
+                    // Polygon: coordinates is array of rings (first ring is outer boundary, others are holes)
+                    // Return the first ring (outer boundary) for midpoint calculation
+                    if (isset($coordinates[0]) && is_array($coordinates[0])) {
+                        // Check if we have a proper ring (array of points)
+                        if (isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+                            return [$coordinates[0]]; // Return as array of rings
                         }
+                        // If it's already flattened points
+                        return [$coordinates];
                     }
-                }
+                    return [];
+
+                case 'MultiPolygon':
+                    // MultiPolygon: coordinates is array of polygons
+                    // Each polygon is array of rings
+                    // Return the first polygon's first ring (outer boundary)
+                    if (isset($coordinates[0][0][0]) && is_array($coordinates[0][0][0])) {
+                        return [$coordinates[0][0]]; // First polygon, first ring
+                    }
+                    if (isset($coordinates[0][0]) && is_array($coordinates[0][0])) {
+                        return [$coordinates[0]];
+                    }
+                    return [];
+
+                case 'LineString':
+                    return $coordinates;
+
+                case 'MultiLineString':
+                    if (isset($coordinates[0]) && is_array($coordinates[0])) {
+                        return $coordinates[0];
+                    }
+                    return $coordinates;
+
+                default:
+                    Log::warning("Unknown geometry type: {$geometryType}");
+                    return [];
             }
         } catch (\Exception $e) {
             Log::error("❌ Failed to flatten coordinates: " . $e->getMessage());
+            Log::error("Geometry type: {$geometryType}, Coordinates sample: " . json_encode(array_slice($coordinates, 0, 2)));
+            return [];
         }
-
-        return $flattened;
     }
-
     /**
      * ✅ Calculate midpoint
      */
@@ -998,7 +1023,6 @@ class GeoDataService
             $centroidY = $totalY / $count;
 
             return [$centroidX, $centroidY];
-
         } catch (\Exception $e) {
             Log::error("❌ Failed to calculate midpoint: " . $e->getMessage());
             return null;
