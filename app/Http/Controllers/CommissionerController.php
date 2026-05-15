@@ -177,108 +177,162 @@ class CommissionerController extends Controller
     // }
 
     public function dashboard()
-    {
-        $user = Auth::guard('corporation')->user();
+{
+    $user = Auth::guard('corporation')->user();
 
-        if (!$user) {
-            return redirect()->route('corporation.login');
-        }
-
-        $corporation = Corporation::find($user->corporation_id);
-
-        if (!$corporation) {
-            return back()->with('error', 'Corporation not found');
-        }
-        $ward_datas = Ward::where('corporation_id', $corporation->id)
-            ->where('status', 'active')
-            ->get();
-
-        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
-            ->where('status', 'active')
-            ->select('zone', DB::raw('count(*) as total'))
-            ->groupBy('zone')
-            ->get();
-        $misTableName = "mis_corporation_{$corporation->id}";
-
-
-        $totalBuilding = 0;
-        $toatalSurvayedBuilding = 0;
-        $totalMis = DB::table($misTableName)->count();
-        $totalSurvayedAssessment = 0;
-        $collections = [];
-        $zones = [];
-        $Wards = [];
-        foreach ($wards_per_zones as $wards_per_zone) {
-            $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
-            foreach ($wardlists as $wardlist) {
-                $polygonsTableName = "polygon_{$wardlist->id}_{$wardlist->zone}_{$wardlist->ward_no}";
-                $polygonDataTableName = "polygondata_{$wardlist->id}_{$wardlist->zone}_{$wardlist->ward_no}";
-                $pointDataTableName = "pointdata_{$wardlist->id}_{$wardlist->zone}_{$wardlist->ward_no}";
-                $shopTableName = "shop_{$wardlist->id}_{$wardlist->zone}_{$wardlist->ward_no}";
-                $shopDataTableName = "shopData_{$wardlist->id}_{$wardlist->zone}_{$wardlist->ward_no}";
-                if (Schema::hasTable($polygonsTableName)) {
-                    $polygonCount = DB::table($polygonsTableName)->count();
-                    $totalBuilding = $totalBuilding + $polygonCount;
-                } else {
-                    $polygonCount = 0;
-                }
-
-                if (Schema::hasTable($polygonDataTableName)) {
-                    $polygonDataCount = DB::table($polygonDataTableName)->distinct('gisid')->count('gisid');
-                    $toatalSurvayedBuilding = $toatalSurvayedBuilding + $polygonDataCount;
-                } else {
-                    $polygonDataCount = 0;
-                }
-
-                if (Schema::hasTable($pointDataTableName)) {
-                    $pointDataCount = DB::table($pointDataTableName)->count();
-                    $totalSurvayedAssessment = $totalSurvayedAssessment + $pointDataCount;
-                } else {
-                    $pointDataCount = 0;
-                }
-
-                if (Schema::hasTable($shopTableName)) {
-                    $shopCount = DB::table($shopTableName)->count();
-                    if (Schema::hasTable($shopDataTableName)) {
-                        $shopDataCount = DB::table($shopDataTableName)->count();
-                        $shopData = DB::table($shopDataTableName)
-                            ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
-                                $query->select('prof_tax_assessment')
-                                    ->from($shopTableName);
-                            })
-                            ->get();
-
-                        $shopDataInMisCount = $shopData->count();
-                        $shopDataNotinMisCount = $shopDataCount  - $shopDataInMisCount;
-                    } else {
-                        $shopDataCount = 0;
-                    }
-                } else {
-                    $shopCount = 0;
-                }
-                $wards[] = [
-                    'ward_id' => $wardlist->id,
-                    'ward_no' => $wardlist->ward_no,
-                    'zone' => $wardlist->zone,
-
-                    'total_buildings' => $polygonCount,
-                    'surveyed_buildings' => $polygonDataCount,
-                    'surveyed_assessment' => $pointDataCount,
-
-                    'mis_count' => $totalMis,
-
-                    'shop_count' => $shopCount ?? 0,
-                    'shop_data_count' => $shopDataCount ?? 0,
-
-                    'shop_data_in_mis_count' => $shopDataInMisCount ?? 0,
-                    'shop_data_not_in_mis_count' => $shopDataNotinMisCount ?? 0,
-                ];
-            }
-        }
-
-
-        return response()->json($wards);
+    if (!$user) {
+        return redirect()->route('corporation.login');
     }
+
+    $corporation = Corporation::find($user->corporation_id);
+
+    if (!$corporation) {
+        return back()->with('error', 'Corporation not found');
+    }
+
+    $ward_datas = Ward::where('corporation_id', $corporation->id)
+        ->where('status', 'active')
+        ->get();
+
+    $wards_per_zones = Ward::where('corporation_id', $corporation->id)
+        ->where('status', 'active')
+        ->select('zone', DB::raw('count(*) as total'))
+        ->groupBy('zone')
+        ->get();
+
+    $misTableName = "mis_corporation_{$corporation->id}";
+
+    $totalBuilding = 0;
+    $totalSurveyedBuilding = 0;
+    $totalSurveyedAssessment = 0;
+
+    $totalMis = Schema::hasTable($misTableName)
+        ? DB::table($misTableName)->count()
+        : 0;
+
+    $wards = [];
+
+    foreach ($wards_per_zones as $wards_per_zone) {
+
+        $wardlists = Ward::where('corporation_id', $corporation->id)
+            ->where('zone', $wards_per_zone->zone)
+            ->get();
+
+        foreach ($wardlists as $wardlist) {
+
+            $pointDataTableName = $this->getPointDataTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $polygonDataTableName = $this->getPolygonDataTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $polygonsTableName = $this->getPolygonTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $zone = trim(strtolower($wardlist->zone));
+
+            $shopTableName = "shop_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
+
+            $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
+
+            // Polygon Count
+            if ($polygonsTableName) {
+                $polygonCount = DB::table($polygonsTableName)->count();
+                $totalBuilding += $polygonCount;
+            } else {
+                $polygonCount = 0;
+            }
+
+            // PolygonData Count (Unique GISID)
+            if ($polygonDataTableName) {
+                $polygonDataCount = DB::table($polygonDataTableName)
+                    ->distinct('gisid')
+                    ->count('gisid');
+
+                $totalSurveyedBuilding += $polygonDataCount;
+            } else {
+                $polygonDataCount = 0;
+            }
+
+            // PointData Count
+            if ($pointDataTableName) {
+                $pointDataCount = DB::table($pointDataTableName)->count();
+
+                $totalSurveyedAssessment += $pointDataCount;
+            } else {
+                $pointDataCount = 0;
+            }
+
+            // Shop Count
+            if (Schema::hasTable($shopTableName)) {
+
+                $shopCount = DB::table($shopTableName)->count();
+
+                if (Schema::hasTable($shopDataTableName)) {
+
+                    $shopDataCount = DB::table($shopDataTableName)->count();
+
+                    $shopDataInMisCount = DB::table($shopDataTableName)
+                        ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
+                            $query->select('prof_tax_assessment')
+                                ->from($shopTableName);
+                        })
+                        ->count();
+
+                    $shopDataNotinMisCount = $shopDataCount - $shopDataInMisCount;
+
+                } else {
+
+                    $shopDataCount = 0;
+                    $shopDataInMisCount = 0;
+                    $shopDataNotinMisCount = 0;
+                }
+
+            } else {
+
+                $shopCount = 0;
+                $shopDataCount = 0;
+                $shopDataInMisCount = 0;
+                $shopDataNotinMisCount = 0;
+            }
+
+            $wards[] = [
+                'ward_id' => $wardlist->id,
+                'ward_no' => $wardlist->ward_no,
+                'zone' => $wardlist->zone,
+
+                'total_buildings' => $polygonCount,
+                'surveyed_buildings' => $polygonDataCount,
+                'surveyed_assessment' => $pointDataCount,
+
+                'mis_count' => $totalMis,
+
+                'shop_count' => $shopCount,
+                'shop_data_count' => $shopDataCount,
+
+                'shop_data_in_mis_count' => $shopDataInMisCount,
+                'shop_data_not_in_mis_count' => $shopDataNotinMisCount,
+            ];
+        }
+    }
+
+    return response()->json([
+        'total_building' => $totalBuilding,
+        'total_surveyed_building' => $totalSurveyedBuilding,
+        'total_mis' => $totalMis,
+        'total_surveyed_assessment' => $totalSurveyedAssessment,
+        'wards' => $wards,
+    ]);
+}
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
         $zone = strtolower(trim($zone));
