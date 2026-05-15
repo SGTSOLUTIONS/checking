@@ -32,8 +32,6 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
     Route::middleware('auth:corporation')->group(function () {
         Route::get('/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
         Route::get('/ward/{ward_no}', [CommissionerController::class, 'mapView'])->name('ward.map');
-          Route::post('/commissioner/ward-data', [CommissionerController::class, 'getWardData'])->name('ward.data');
-    Route::get('/commissioner/all-wards-data', [CommissionerController::class, 'getAllWardsData'])->name('all.wards.data');
         Route::get('/ward/{ward_no}/excel', [CommissionerController::class, 'mapDownloadExcel'])->name('ward.excel');
         Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
         Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
