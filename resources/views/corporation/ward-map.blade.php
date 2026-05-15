@@ -1,25 +1,14 @@
-@extends('layouts.commissioner')
+<!DOCTYPE html>
+<html lang="en">
 
-@section('title', 'Ward Map - ' . ($ward->ward_no ?? ''))
-
-@section('content')
-    <div class="container-fluid p-0">
-        <div id="map"></div>
-
-        <!-- Mobile Buttons -->
-        <button class="mobile-btn menu-btn" id="mobileMenuBtn"><i class="fas fa-layer-group"></i></button>
-        <button class="mobile-btn legend-btn" id="mobileLegendBtn"><i class="fas fa-info-circle"></i></button>
-        <button class="mobile-btn search-btn" id="mobileSearchBtn"><i class="fas fa-search"></i></button>
-        <button class="mobile-btn filter-btn" id="mobileFilterBtn"><i class="fas fa-filter"></i></button>
-        <button class="mobile-btn location-btn" id="mobileLocationBtn"><i class="fas fa-location-dot"></i></button>
-    </div>
-@endsection
-
-@push('styles')
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Ward Map - Smart Navigation</title>
+    <!-- OpenLayers & Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
     <style>
         * {
             margin: 0;
@@ -42,27 +31,27 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Mobile Buttons */
+        /* ========= PANEL & BUTTONS ========= */
         .mobile-btn {
             position: fixed;
             z-index: 1002;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            font-size: 20px;
-            transition: all 0.2s ease;
+            font-size: 22px;
+            transition: 0.2s ease;
         }
 
         .mobile-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.94);
         }
 
         .menu-btn {
@@ -73,19 +62,19 @@
 
         .legend-btn {
             bottom: 20px;
-            right: 80px;
+            right: 85px;
             background: rgba(255, 193, 7, 0.9);
         }
 
         .search-btn {
             bottom: 20px;
-            right: 140px;
+            right: 150px;
             background: rgba(23, 162, 184, 0.9);
         }
 
         .filter-btn {
             bottom: 20px;
-            right: 200px;
+            right: 215px;
             background: rgba(40, 167, 69, 0.9);
         }
 
@@ -101,23 +90,22 @@
             }
         }
 
-        /* Panels Base Style */
         .panel {
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.94);
+            backdrop-filter: blur(16px);
+            border-radius: 20px;
             padding: 18px;
             color: white;
             z-index: 1000;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 68, 68, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border: 1px solid rgba(255, 68, 68, 0.4);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
         }
 
         .panel h5 {
-            margin: 0 0 15px 0;
+            margin: 0 0 12px 0;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             color: #ffc107;
             border-bottom: 2px solid #ff4444;
             padding-bottom: 8px;
@@ -126,30 +114,23 @@
             gap: 8px;
         }
 
-        .panel h5 i {
-            font-size: 18px;
-        }
-
-        /* Layer Switcher - Desktop */
+        /* Layer Switcher (Desktop right, Mobile bottom-right slide) */
         .layer-switcher {
             position: absolute;
             top: 100px;
             right: 20px;
-            min-width: 180px;
+            min-width: 190px;
         }
 
-        /* Layer Switcher - Mobile */
         @media (max-width: 768px) {
             .layer-switcher {
                 position: fixed;
-                bottom: 80px;
+                bottom: 90px;
                 right: 20px;
                 top: auto;
-                transform: translateX(120%);
-                min-width: 200px;
+                transform: translateX(130%);
                 opacity: 0;
                 visibility: hidden;
-                transition: all 0.3s ease;
             }
 
             .layer-switcher.open {
@@ -159,36 +140,6 @@
             }
         }
 
-        .layer-group {
-            margin-bottom: 15px;
-        }
-
-        .layer-group label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 10px 0;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .layer-group label:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .group-title {
-            font-weight: 600;
-            color: #ffc107;
-            font-size: 12px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Legend - Desktop */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -197,18 +148,15 @@
             pointer-events: none;
         }
 
-        /* Legend - Mobile */
         @media (max-width: 768px) {
             .map-legend {
                 position: fixed;
-                bottom: 140px;
+                bottom: 150px;
                 right: 20px;
-                top: auto;
-                transform: translateX(120%);
-                pointer-events: auto;
+                transform: translateX(130%);
                 opacity: 0;
                 visibility: hidden;
-                transition: all 0.3s ease;
+                pointer-events: auto;
             }
 
             .map-legend.open {
@@ -218,60 +166,25 @@
             }
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            font-size: 12px;
-        }
-
-        .legend-color {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-        }
-
-        .legend-color.building {
-            background: rgba(255, 68, 68, 0.5);
-            border: 2px solid #ff4444;
-        }
-
-        .legend-color.road {
-            background: none;
-            border: 2px solid #ffc107;
-            height: 3px;
-            width: 24px;
-            margin-top: 10px;
-        }
-
-        .legend-color.boundary {
-            background: none;
-            border: 2px dashed #ff0000;
-        }
-
-        /* Search Panel - Desktop */
         .search-panel {
             position: absolute;
             top: 20px;
             left: 20px;
-            width: 350px;
+            width: 360px;
             max-width: calc(100% - 40px);
         }
 
-        /* Search Panel - Mobile */
         @media (max-width: 768px) {
             .search-panel {
                 position: fixed;
                 top: auto;
-                bottom: 100px;
+                bottom: 110px;
                 left: 20px;
                 right: 20px;
                 width: auto;
                 transform: translateY(150%);
                 opacity: 0;
                 visibility: hidden;
-                transition: all 0.3s ease;
             }
 
             .search-panel.open {
@@ -281,91 +194,6 @@
             }
         }
 
-        .search-box {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #ff4444;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .search-box input:focus {
-            border-color: #ffc107;
-        }
-
-        .search-box button {
-            padding: 12px 24px;
-            border-radius: 10px;
-            border: none;
-            background: #ff4444;
-            color: white;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .search-box button:active {
-            transform: scale(0.98);
-        }
-
-        .search-results {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .search-result-item {
-            padding: 12px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-left: 3px solid #ffc107;
-        }
-
-        .search-result-item:active {
-            background: rgba(255, 68, 68, 0.3);
-        }
-
-        .result-gisid {
-            font-weight: bold;
-            color: #ffc107;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .result-owner {
-            font-size: 11px;
-            color: #ddd;
-            margin: 3px 0;
-        }
-
-        .direction-btn {
-            margin-top: 8px;
-            padding: 6px 12px;
-            background: #28a745;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 11px;
-            transition: all 0.2s;
-        }
-
-        .direction-btn:active {
-            background: #1e7e34;
-        }
-
-        /* Filter Panel - Desktop */
         .filter-panel {
             position: absolute;
             top: 100px;
@@ -373,17 +201,15 @@
             width: 280px;
         }
 
-        /* Filter Panel - Mobile */
         @media (max-width: 768px) {
             .filter-panel {
                 position: fixed;
-                bottom: 100px;
+                bottom: 110px;
                 right: 20px;
                 top: auto;
-                transform: translateX(120%);
+                transform: translateX(130%);
                 opacity: 0;
                 visibility: hidden;
-                transition: all 0.3s ease;
             }
 
             .filter-panel.open {
@@ -393,78 +219,31 @@
             }
         }
 
-        .filter-group {
-            margin-bottom: 15px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            color: #ffc107;
-            font-weight: 500;
-        }
-
-        .filter-group select,
-        .filter-group input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ff4444;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .filter-group select:focus,
-        .filter-group input:focus {
-            border-color: #ffc107;
-        }
-
-        .filter-actions {
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 90px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
             display: flex;
-            gap: 10px;
-            margin-top: 15px;
+            z-index: 1000;
+            overflow: hidden;
         }
 
-        .apply-btn,
-        .reset-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
+        .zoom-btn {
+            width: 48px;
+            height: 48px;
+            background: transparent;
             border: none;
+            color: white;
+            font-size: 20px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
+            transition: 0.1s;
         }
 
-        .apply-btn {
-            background: #28a745;
-            color: white;
-        }
-
-        .apply-btn:active {
-            background: #1e7e34;
-        }
-
-        .reset-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .reset-btn:active {
-            background: #c82333;
-        }
-
-        .filter-count {
-            margin-top: 12px;
-            font-size: 12px;
-            color: #ffc107;
-            text-align: center;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
+        .zoom-btn:active {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         /* Direction Panel */
@@ -473,22 +252,14 @@
             bottom: 100px;
             left: 20px;
             right: 20px;
-            max-width: 400px;
+            max-width: 420px;
             display: none;
             z-index: 1003;
         }
 
-        @media (max-width: 768px) {
-            .direction-panel {
-                bottom: 100px;
-                left: 10px;
-                right: 10px;
-            }
-        }
-
         .direction-panel.show {
             display: block;
-            animation: slideUp 0.3s ease;
+            animation: slideUp 0.25s ease;
         }
 
         @keyframes slideUp {
@@ -496,24 +267,11 @@
                 transform: translateY(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateY(0);
                 opacity: 1;
             }
-        }
-
-        .direction-info {
-            font-size: 13px;
-            margin-top: 12px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-        }
-
-        .direction-info p {
-            margin: 8px 0;
-            display: flex;
-            justify-content: space-between;
         }
 
         .close-direction {
@@ -521,80 +279,31 @@
             background: none;
             border: none;
             color: #ff4444;
-            font-size: 22px;
+            font-size: 24px;
             cursor: pointer;
-            padding: 0 5px;
         }
 
-        /* Zoom Controls */
-        .zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 80px;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 1000;
-        }
-
-        .zoom-btn {
-            width: 45px;
-            height: 45px;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .zoom-btn:active {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .zoom-btn:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Loading */
-        .map-loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            z-index: 2000;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Popup */
+        /* Popup (mobile bottom sheet, desktop absolute) */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
+            background: linear-gradient(145deg, #12121c, #1e1e2f);
             color: white;
-            border-radius: 25px 25px 0 0 !important;
-            padding: 0;
+            border-radius: 28px 28px 0 0 !important;
             width: 100% !important;
-            max-height: 70vh !important;
+            max-height: 70vh;
             z-index: 9999 !important;
             overflow-y: auto;
-            animation: slideUpPopup 0.3s ease-out !important;
+            animation: slideUpPopup 0.3s ease-out;
         }
 
         @keyframes slideUpPopup {
             from {
                 transform: translateY(100%);
             }
+
             to {
                 transform: translateY(0);
             }
@@ -605,11 +314,12 @@
                 position: absolute !important;
                 bottom: auto !important;
                 width: auto !important;
-                min-width: 400px !important;
-                max-width: 500px !important;
-                border-radius: 20px !important;
-                animation: none !important;
+                min-width: 380px;
+                max-width: 500px;
+                border-radius: 24px !important;
+                animation: none;
             }
+
             .ol-popup:after {
                 content: '';
                 position: absolute;
@@ -618,50 +328,21 @@
                 transform: translateX(-50%);
                 border-width: 10px 10px 0;
                 border-style: solid;
-                border-color: #1a1a2e transparent transparent;
+                border-color: #1e1e2f transparent transparent;
             }
         }
 
         .popup-header {
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
-            padding: 18px 20px;
+            background: #0f0f1a;
+            padding: 16px 20px;
             border-bottom: 2px solid #ff4444;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-        }
-
-        .popup-header h4 {
-            margin: 0;
-            font-size: 18px;
-            color: #ff4444;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .popup-close {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .popup-close:active {
-            background: #ff4444;
-            transform: rotate(90deg);
         }
 
         .popup-tabs {
             display: flex;
-            background: #141424;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: #181826;
         }
 
         .popup-tab {
@@ -669,14 +350,8 @@
             background: none;
             border: none;
             color: #aaa;
-            padding: 14px;
-            cursor: pointer;
+            padding: 12px;
             font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .popup-tab:active {
-            background: rgba(255, 68, 68, 0.2);
         }
 
         .popup-tab.active {
@@ -686,7 +361,7 @@
 
         .popup-tab-content {
             display: none;
-            padding: 20px;
+            padding: 18px;
             max-height: 55vh;
             overflow-y: auto;
         }
@@ -698,257 +373,282 @@
         .detail-row {
             display: flex;
             margin-bottom: 12px;
-            padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            flex-wrap: wrap;
+            padding: 6px 0;
         }
 
         .detail-label {
-            font-weight: 600;
-            color: #ffc107;
             width: 110px;
+            color: #ffc107;
+            font-weight: 600;
             font-size: 12px;
         }
 
         .detail-value {
-            color: #eee;
             flex: 1;
             font-size: 13px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .badge-warning {
-            background: #ffc107;
-            color: #333;
         }
 
         .assessment-card {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 12px;
             border-left: 3px solid #ffc107;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .assessment-card:active {
-            transform: translateX(5px);
-            background: rgba(255, 255, 255, 0.1);
+        .badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
         }
 
-        .assessment-header {
-            background: rgba(255, 193, 7, 0.15);
-            padding: 12px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .badge-success {
+            background: #28a745;
         }
 
-        .assessment-number {
-            font-weight: 700;
-            font-size: 13px;
-            color: #ffc107;
-        }
-
-        .assessment-body {
-            padding: 12px 15px;
-        }
-
-        .assessment-row {
-            display: flex;
-            margin-bottom: 8px;
-            font-size: 12px;
-            flex-wrap: wrap;
-        }
-
-        .assessment-label {
-            width: 80px;
-            color: #aaa;
-        }
-
-        .assessment-value {
-            color: #fff;
-            flex: 1;
+        .badge-warning {
+            background: #ffc107;
+            color: #000;
         }
 
         .shop-item {
-            background: rgba(255, 68, 68, 0.1);
-            border-radius: 10px;
+            background: rgba(255, 68, 68, 0.12);
+            border-radius: 14px;
             padding: 12px;
             margin-top: 8px;
-            border: 1px solid rgba(255, 68, 68, 0.2);
-        }
-
-        .shop-name {
-            font-weight: 700;
-            color: #ff4444;
-            font-size: 13px;
-            margin-bottom: 8px;
         }
 
         .empty-state {
             text-align: center;
-            padding: 40px 20px;
-            color: #888;
+            padding: 30px;
+            color: #aaa;
         }
 
-        .empty-state i {
-            font-size: 50px;
-            margin-bottom: 15px;
-            opacity: 0.5;
+        .search-result-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid #ffc107;
         }
 
-        .assessment-form-container {
-            margin: 10px;
-            padding: 15px;
-            background: #1a1a2e;
-            border-radius: 12px;
-            border-left: 3px solid #ff4444;
-        }
-
-        .close-form-btn {
-            background: none;
+        .direction-btn {
+            margin-top: 8px;
+            background: #28a745;
             border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
             color: white;
-            font-size: 20px;
-            cursor: pointer;
-            float: right;
         }
 
-        /* Scrollbar Styling */
-        .search-results::-webkit-scrollbar,
-        .popup-tab-content::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .search-results::-webkit-scrollbar-track,
-        .popup-tab-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        .search-results::-webkit-scrollbar-thumb,
-        .popup-tab-content::-webkit-scrollbar-thumb {
-            background: #ff4444;
-            border-radius: 10px;
+        @media (max-width: 768px) {
+            .detail-label {
+                width: 90px;
+            }
         }
     </style>
-@endpush
+</head>
 
-@push('scripts')
+<body>
+    <div id="map"></div>
+
+    <!-- Floating toggles -->
+    <button class="mobile-btn menu-btn" id="mobileMenuBtn"><i class="fas fa-layer-group"></i></button>
+    <button class="mobile-btn legend-btn" id="mobileLegendBtn"><i class="fas fa-info-circle"></i></button>
+    <button class="mobile-btn search-btn" id="mobileSearchBtn"><i class="fas fa-search"></i></button>
+    <button class="mobile-btn filter-btn" id="mobileFilterBtn"><i class="fas fa-filter"></i></button>
+    <button class="mobile-btn location-btn" id="mobileLocationBtn"><i class="fas fa-location-dot"></i></button>
+
+    <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
-
     <script>
-        $(document).ready(function() {
-            // ==================== DATA FROM SERVER ====================
-            let polygonDatas = @json($polygonDatas ?? []);
-            let polygons = @json($polygons ?? []);
-            let lines = @json($lines ?? []);
-            let wardData = {
-                ward_no: @json($ward->ward_no ?? ''),
-                drone_image: @json($ward->drone_image ?? null),
-                extent_left: @json($ward->extent_left ?? null),
-                extent_bottom: @json($ward->extent_bottom ?? null),
-                extent_right: @json($ward->extent_right ?? null),
-                extent_top: @json($ward->extent_top ?? null),
-                boundary: @json($ward->boundary ?? null)
+        $(function() {
+            // ==================== MOCK DATA (simulating backend) ====================
+            const wardData = {
+                ward_no: "12",
+                drone_image: null, // no drone for simplicity
+                extent_left: null,
+                extent_bottom: null,
+                extent_right: null,
+                extent_top: null,
+                boundary: [
+                    [
+                        [80.2715, 13.0835],
+                        [80.2728, 13.0822],
+                        [80.2700, 13.0815],
+                        [80.2690, 13.0830],
+                        [80.2715, 13.0835]
+                    ]
+                ] // ward polygon approx
             };
 
-            // ==================== MAP VARIABLES ====================
-            let map, polygonLayer, lineLayer, imageLayer, boundaryLayer, osmLayer, satelliteLayer;
-            let currentBaseLayer = 'osm';
+            // building polygons (mock)
+            const polygons = [{
+                    gisid: "B001",
+                    coordinates: [
+                        [
+                            [80.2707, 13.0829],
+                            [80.2710, 13.0829],
+                            [80.2710, 13.0832],
+                            [80.2707, 13.0832],
+                            [80.2707, 13.0829]
+                        ]
+                    ],
+                    sqfeet: 1250
+                },
+                {
+                    gisid: "B002",
+                    coordinates: [
+                        [
+                            [80.2715, 13.0825],
+                            [80.2719, 13.0825],
+                            [80.2719, 13.0829],
+                            [80.2715, 13.0829],
+                            [80.2715, 13.0825]
+                        ]
+                    ],
+                    sqfeet: 980
+                },
+                {
+                    gisid: "B003",
+                    coordinates: [
+                        [
+                            [80.2700, 13.0835],
+                            [80.2705, 13.0835],
+                            [80.2705, 13.0839],
+                            [80.2700, 13.0839],
+                            [80.2700, 13.0835]
+                        ]
+                    ],
+                    sqfeet: 2100
+                }
+            ];
+            const lines = []; // roads mock (optional)
+
+            const polygonDatas = [{
+                    gisid: "B001",
+                    building_usage: "Residential",
+                    building_type: "House",
+                    number_floor: 2,
+                    road_name: "Main Street",
+                    zone: "A",
+                    number_bill: 3,
+                    total_shops: 1,
+                    pointdata: [{
+                        assessment: "AS101",
+                        owner_name: "Rajesh Kumar",
+                        phone_number: "9876543210",
+                        floor: "1",
+                        bill_usage: "Self",
+                        shops: [{
+                            shop_name: "General Store",
+                            shop_category: "Retail",
+                            shop_owner_name: "Rajesh",
+                            shop_mobile: "9876543210"
+                        }],
+                        qcsqfeet: 1200,
+                        qcusage: "Residential"
+                    }]
+                },
+                {
+                    gisid: "B002",
+                    building_usage: "Commercial",
+                    building_type: "Shop",
+                    number_floor: 1,
+                    road_name: "Market Road",
+                    zone: "B",
+                    number_bill: 1,
+                    total_shops: 2,
+                    pointdata: [{
+                        assessment: "AS202",
+                        owner_name: "Meera Gupta",
+                        phone_number: "9988776655",
+                        floor: "G",
+                        bill_usage: "Rent",
+                        shops: [{
+                            shop_name: "Bakery",
+                            shop_category: "Food",
+                            shop_owner_name: "Meera",
+                            shop_mobile: "9988776655"
+                        }],
+                        qcsqfeet: null,
+                        qcusage: null
+                    }]
+                },
+                {
+                    gisid: "B003",
+                    building_usage: "Mixed",
+                    building_type: "Apartment",
+                    number_floor: 3,
+                    road_name: "Park Lane",
+                    zone: "A",
+                    number_bill: 5,
+                    total_shops: 0,
+                    pointdata: [{
+                        assessment: "AS303",
+                        owner_name: "Sundar Pichai",
+                        phone_number: "9123456789",
+                        floor: "2",
+                        bill_usage: "Residential",
+                        shops: [],
+                        qcsqfeet: 1800,
+                        qcusage: "Residential"
+                    }]
+                }
+            ];
+
+            // ==================== GLOBAL ====================
+            let map, polygonLayer, lineLayer, boundaryLayer, osmLayer, satelliteLayer, imageLayer;
             let popupOverlay, popupElement;
             let currentActiveTab = 'building';
-
-            // ==================== LOCATION VARIABLES ====================
+            let allBuildings = [];
+            let currentPosition = null;
             let currentLocationLayer = null,
-                accuracyLayer = null,
-                currentPosition = null;
+                accuracyLayer = null;
             let locationTracking = false,
                 watchId = null;
-
-            // ==================== SEARCH & DIRECTION VARIABLES ====================
-            let allBuildings = [],
-                directionLineLayer = null,
+            let directionLineLayer = null,
                 destinationMarkerLayer = null;
 
-            // ==================== HELPER FUNCTIONS ====================
-            function showLoading(show) {
-                if (show) {
-                    if ($('#mapLoading').length === 0) {
-                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
-                    }
-                    $('#mapLoading').show();
-                } else {
-                    $('#mapLoading').hide();
-                }
-            }
-
-            // Close all mobile panels - only one panel open at a time
-            function closeAllMobilePanels(exceptPanel = null) {
-                if (exceptPanel !== 'layer') $('#layerSwitcher').removeClass('open');
-                if (exceptPanel !== 'legend') $('#mapLegend').removeClass('open');
-                if (exceptPanel !== 'search') $('#searchPanel').removeClass('open');
-                if (exceptPanel !== 'filter') $('#filterPanel').removeClass('open');
-            }
-
-            // ==================== BUILD SEARCH INDEX ====================
             function buildSearchIndex() {
                 allBuildings = [];
-                $.each(polygonDatas, function(i, building) {
-                    let info = {
-                        gisid: building.gisid,
-                        building_usage: building.building_usage,
-                        building_type: building.building_type,
-                        road_name: building.road_name,
-                        zone: building.zone,
-                        number_floor: building.number_floor,
-                        coordinates: null,
-                        assessments: []
-                    };
-                    $.each(polygons, function(j, poly) {
-                        if (poly.gisid == building.gisid) {
-                            try {
-                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
-                                if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0, cy = 0;
-                                    $.each(coords[0], function(k, c) {
-                                        cx += c[0];
-                                        cy += c[1];
-                                    });
-                                    info.coordinates = [cx / coords[0].length, cy / coords[0].length];
-                                }
-                            } catch (e) {}
-                            return false;
-                        }
-                    });
-                    if (building.pointdata) {
-                        $.each(building.pointdata, function(j, a) {
-                            info.assessments.push({
-                                assessment_no: a.assessment,
-                                owner_name: a.owner_name || a.present_owner_name,
-                                phone: a.phone_number
-                            });
+                polygonDatas.forEach(b => {
+                    let polyInfo = polygons.find(p => p.gisid === b.gisid);
+                    let coords = null;
+                    if (polyInfo && polyInfo.coordinates && polyInfo.coordinates[0] && polyInfo.coordinates[
+                            0].length) {
+                        let sumX = 0,
+                            sumY = 0,
+                            pts = polyInfo.coordinates[0];
+                        pts.forEach(c => {
+                            sumX += c[0];
+                            sumY += c[1];
                         });
+                        coords = [sumX / pts.length, sumY / pts.length];
                     }
-                    allBuildings.push(info);
+                    allBuildings.push({
+                        gisid: b.gisid,
+                        building_usage: b.building_usage,
+                        road_name: b.road_name,
+                        zone: b.zone,
+                        number_floor: b.number_floor,
+                        coordinates: coords,
+                        assessments: (b.pointdata || []).map(a => ({
+                            assessment_no: a.assessment,
+                            owner_name: a.owner_name,
+                            phone: a.phone_number
+                        }))
+                    });
                 });
             }
 
-            // ==================== LOCATION TRACKING ====================
+            // ==================== LOCATION ====================
             function startLocationTracking() {
                 if (!navigator.geolocation) {
                     alert("Geolocation not supported");
@@ -956,19 +656,15 @@
                 }
                 $('#mobileLocationBtn').css('background', '#28a745');
                 locationTracking = true;
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {
-                    alert("Unable to get location: " + err.message);
-                    locationTracking = false;
-                    $('#mobileLocationBtn').css('background', 'rgba(220,53,69,0.9)');
+                navigator.geolocation.getCurrentPosition(pos => updateLocationOnMap(pos.coords.longitude, pos.coords
+                    .latitude, pos.coords.accuracy), err => {
+                    alert("Location error");
+                    stopLocationTracking();
                 });
-                watchId = navigator.geolocation.watchPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {}, {
+                watchId = navigator.geolocation.watchPosition(pos => updateLocationOnMap(pos.coords.longitude, pos
+                    .coords.latitude, pos.coords.accuracy), null, {
                     enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 10000
+                    maximumAge: 5000
                 });
             }
 
@@ -980,16 +676,15 @@
                 $('#mobileLocationBtn').css('background', 'rgba(220,53,69,0.9)');
             }
 
-            function updateLocationOnMap(lon, lat, accuracy) {
+            function updateLocationOnMap(lon, lat, acc) {
                 let coords = ol.proj.fromLonLat([lon, lat]);
                 currentPosition = [lon, lat];
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
-
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
+                            geometry: new ol.geom.Circle(coords, acc)
                         })]
                     }),
                     style: new ol.style.Style({
@@ -1003,7 +698,6 @@
                     })
                 });
                 map.addLayer(accuracyLayer);
-
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -1024,7 +718,6 @@
                     })
                 });
                 map.addLayer(currentLocationLayer);
-
                 if (!localStorage.getItem('mapCentered')) {
                     map.getView().setCenter(coords);
                     map.getView().setZoom(18);
@@ -1032,54 +725,49 @@
                 }
             }
 
-            // ==================== DIRECTION FUNCTIONS ====================
-            function calculateDistance(lon1, lat1, lon2, lat2) {
-                let R = 6371;
-                let dLat = (lat2 - lat1) * Math.PI / 180;
-                let dLon = (lon2 - lon1) * Math.PI / 180;
-                let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            // ==================== DIRECTION ====================
+            function haversineDistance(lon1, lat1, lon2, lat2) {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180,
+                    dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI /
+                    180) * Math.sin(dLon / 2) ** 2;
                 return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             }
 
-            function showDirectionToBuilding(gisid, coords) {
+            function showDirectionToBuilding(gisid, lonLat) {
                 if (!currentPosition) {
-                    alert("Please enable location tracking first");
+                    alert("Enable location tracking first");
                     startLocationTracking();
                     return;
                 }
                 if (directionLineLayer) map.removeLayer(directionLineLayer);
                 if (destinationMarkerLayer) map.removeLayer(destinationMarkerLayer);
-
-                let from = ol.proj.fromLonLat(currentPosition);
-                let to = ol.proj.fromLonLat(coords);
-
+                let fromProj = ol.proj.fromLonLat(currentPosition);
+                let toProj = ol.proj.fromLonLat(lonLat);
                 directionLineLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
-                            geometry: new ol.geom.LineString([from, to])
+                            geometry: new ol.geom.LineString([fromProj, toProj])
                         })]
                     }),
                     style: new ol.style.Style({
                         stroke: new ol.style.Stroke({
                             color: '#28a745',
                             width: 4,
-                            lineDash: [10, 10]
+                            lineDash: [8, 8]
                         })
                     })
                 });
-                map.addLayer(directionLineLayer);
-
                 destinationMarkerLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
-                            geometry: new ol.geom.Point(to)
+                            geometry: new ol.geom.Point(toProj)
                         })]
                     }),
                     style: new ol.style.Style({
                         image: new ol.style.Circle({
-                            radius: 15,
+                            radius: 14,
                             fill: new ol.style.Fill({
                                 color: '#28a745'
                             }),
@@ -1090,162 +778,33 @@
                         })
                     })
                 });
+                map.addLayer(directionLineLayer);
                 map.addLayer(destinationMarkerLayer);
-
-                let distance = calculateDistance(currentPosition[0], currentPosition[1], coords[0], coords[1]);
-                let html = `
-                    <div class="direction-panel panel show" id="directionPanel">
-                        <button class="close-direction" onclick="$('#directionPanel').remove();">&times;</button>
-                        <h5><i class="fas fa-directions"></i> Direction to Building</h5>
-                        <div class="direction-info">
-                            <p><strong>GIS ID:</strong> ${gisid}</p>
-                            <p><strong>Distance:</strong> ${distance.toFixed(2)} km</p>
-                            <p><strong>Walking:</strong> ${Math.round(distance / 5 * 60)} min</p>
-                            <p><strong>Driving:</strong> ${Math.round(distance / 40 * 60)} min</p>
-                        </div>
-                        <button id="fitBothBtn" style="width:100%; padding:10px; background:#ff4444; border:none; border-radius:8px; color:white; cursor:pointer;">
-                            <i class="fas fa-map-marked-alt"></i> Show Full Route
-                        </button>
-                    </div>`;
+                let dist = haversineDistance(currentPosition[0], currentPosition[1], lonLat[0], lonLat[1]);
+                let html = `<div class="direction-panel panel show" id="directionPanel">
+                    <button class="close-direction" onclick="$('#directionPanel').remove();">&times;</button>
+                    <h5><i class="fas fa-directions"></i> Direction to ${gisid}</h5>
+                    <div class="direction-info"><p><strong>Distance:</strong> ${dist.toFixed(2)} km</p><p><strong>Walking:</strong> ${Math.round(dist/5*60)} min</p><p><strong>Driving:</strong> ${Math.round(dist/40*60)} min</p></div>
+                    <button id="fitBothBtn" style="width:100%; background:#ff4444; border:none; padding:10px; border-radius:12px; color:white; margin-top:10px;"><i class="fas fa-map-marked-alt"></i> Show Full Route</button>
+                </div>`;
                 $('#directionPanel').remove();
                 $('body').append(html);
-
-                $('#fitBothBtn').on('click', function() {
-                    map.getView().fit(ol.extent.boundingExtent([from, to]), {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
+                $('#fitBothBtn').on('click', () => {
+                    map.getView().fit(ol.extent.boundingExtent([fromProj, toProj]), {
+                        padding: [60, 60, 60, 60],
+                        duration: 800
                     });
                 });
-
-                map.getView().fit(ol.extent.boundingExtent([from, to]), {
-                    padding: [50, 50, 50, 50],
-                    duration: 1000
+                map.getView().fit(ol.extent.boundingExtent([fromProj, toProj]), {
+                    padding: [60, 60, 60, 60],
+                    duration: 800
                 });
             }
 
-            // ==================== SEARCH FUNCTIONS ====================
-            function searchBuildings(text) {
-                if (!text || !text.trim()) {
-                    $('#searchResults').html('<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
-                    return;
-                }
-                let term = text.toLowerCase().trim();
-                let results = [];
-
-                $.each(allBuildings, function(i, b) {
-                    let match = false, type = '', val = '';
-                    if (b.gisid && b.gisid.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'GIS ID';
-                        val = b.gisid;
-                    } else if (b.building_usage && b.building_usage.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'Building Usage';
-                        val = b.building_usage;
-                    } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'Road Name';
-                        val = b.road_name;
-                    } else {
-                        $.each(b.assessments, function(j, a) {
-                            if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Assessment No';
-                                val = a.assessment_no;
-                                return false;
-                            }
-                            if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Owner Name';
-                                val = a.owner_name;
-                                return false;
-                            }
-                            if (a.phone && a.phone.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Phone';
-                                val = a.phone;
-                                return false;
-                            }
-                        });
-                    }
-                    if (match) {
-                        results.push({
-                            gisid: b.gisid,
-                            matchType: type,
-                            matchValue: val,
-                            building: b,
-                            coordinates: b.coordinates
-                        });
-                    }
-                });
-
-                let $res = $('#searchResults').empty();
-                if (!results.length) {
-                    $res.html('<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
-                    return;
-                }
-
-                $.each(results, function(i, r) {
-                    let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
-                    let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
-                    $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
-                        <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
-                        <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
-                    </div>`);
-                });
-
-                $('.search-result-item').off('click').on('click', function(e) {
-                    if (!$(e.target).hasClass('direction-btn')) {
-                        zoomToBuilding($(this).data('gisid'));
-                        closeAllMobilePanels();
-                    }
-                });
-
-                $('.direction-btn').off('click').on('click', function(e) {
-                    e.stopPropagation();
-                    let p = $(this).closest('.search-result-item');
-                    let lon = p.data('lon');
-                    let lat = p.data('lat');
-                    if (lon && lat) {
-                        showDirectionToBuilding(p.data('gisid'), [parseFloat(lon), parseFloat(lat)]);
-                        closeAllMobilePanels();
-                    } else {
-                        alert("Coordinates not available for this building");
-                    }
-                });
-            }
-
-            function zoomToBuilding(gisid) {
-                if (!polygonLayer) return;
-                let features = polygonLayer.getSource().getFeatures();
-                let f = null;
-                for (let i = 0; i < features.length; i++) {
-                    if (features[i].get('gisid') == gisid) {
-                        f = features[i];
-                        break;
-                    }
-                }
-                if (f) {
-                    let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
-                    showPopup(gisid, ol.extent.getCenter(e));
-                } else {
-                    alert("Building not found on map");
-                }
-            }
-
-            // ==================== POPUP FUNCTIONS ====================
+            // ==================== POPUP ====================
             function createPopup() {
-                popupElement = $('<div>', {
-                    class: 'ol-popup',
-                    style: 'display:none'
-                })[0];
-                $('body').append(popupElement);
+                popupElement = $('<div class="ol-popup" style="display:none"></div>')[0];
+                document.body.appendChild(popupElement);
                 return new ol.Overlay({
                     element: popupElement,
                     positioning: 'bottom-center',
@@ -1253,164 +812,69 @@
                     offset: [0, -10]
                 });
             }
-
             window.closePopup = function() {
                 $('.ol-popup').hide();
             };
-
-            window.switchTab = function(t) {
+            window.switchTab = function(tab) {
                 $('.popup-tab-content, .popup-tab').removeClass('active');
-                $('#tab-' + t).addClass('active');
-                $('.popup-tab[data-tab="' + t + '"]').addClass('active');
-                currentActiveTab = t;
+                $(`#tab-${tab}`).addClass('active');
+                $(`.popup-tab[data-tab="${tab}"]`).addClass('active');
+                currentActiveTab = tab;
             };
 
             function showPopup(gisid, coord) {
-                let pd = polygonDatas.find(p => p.gisid == gisid);
-                if (!pd) return;
-
-                let assessments = pd.pointdata || [];
+                let bld = polygonDatas.find(p => p.gisid == gisid);
+                if (!bld) return;
+                let assessments = bld.pointdata || [];
                 let shops = [];
-                $.each(assessments, function(i, a) {
-                    if (a.shops) {
-                        $.each(a.shops, function(j, s) {
-                            shops.push({
-                                ...s,
-                                assessmentNumber: a.assessment || 'Bill ' + (i + 1)
-                            });
-                        });
-                    }
+                assessments.forEach(a => {
+                    if (a.shops) a.shops.forEach(s => shops.push({
+                        ...s,
+                        assessmentNumber: a.assessment
+                    }));
                 });
-
-                let buildingHtml = `<div class="building-details-content">${[
-                    ['fingerprint', 'GIS ID', pd.gisid],
-                    ['building', 'Building Usage', pd.building_usage],
-                    ['home', 'Building Type', pd.building_type],
-                    ['layer-group', 'Floors', pd.number_floor],
-                    ['receipt', 'Total Bills', pd.number_bill],
-                    ['store', 'Total Shops', pd.total_shops],
-                    ['road', 'Road Name', pd.road_name],
-                    ['map-pin', 'Zone', pd.zone]
-                ].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
-
-                let assessmentsHtml = !assessments.length ?
-                    '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments</p></div>' :
-                    assessments.map((a, i) =>
-                        `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
-                            <div class="assessment-header">
-                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span>
-                                <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
-                            </div>
-                            <div class="assessment-body">
-                                ${[['Owner', a.owner_name || a.present_owner_name], ['Phone', a.phone_number], ['Floor', a.floor], ['Usage', a.bill_usage], ['Shops', (a.shops || []).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                            </div>
-                        </div>`
-                    ).join('');
-
-                let shopsHtml = !shops.length ?
-                    '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' :
-                    shops.map(s => `
-                        <div class="shop-item">
-                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
-                            ${[['Category', s.shop_category], ['Owner', s.shop_owner_name], ['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                        </div>
-                    `).join('');
-
-                let html = `
-                    <div class="popup-header">
-                        <h4><i class="fas fa-building"></i> Building Details</h4>
-                        <button class="popup-close" onclick="closePopup()">&times;</button>
-                    </div>
-                    <div class="popup-tabs">
-                        <button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
-                        <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
-                        <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button>
-                    </div>
-                    <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
-                    <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
-                    <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>`;
-
+                let buildingHtml =
+                    `<div>${[
+                    ['fingerprint','GIS ID',bld.gisid],['building','Usage',bld.building_usage],['home','Type',bld.building_type],
+                    ['layer-group','Floors',bld.number_floor],['road','Road',bld.road_name],['map-pin','Zone',bld.zone]
+                ].map(([i,l,v])=>`<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v||'N/A'}</div></div>`).join('')}</div>`;
+                let assessmentsHtml = assessments.length ? assessments.map((a, i) => `<div class="assessment-card" data-assessment-id="${a.assessment || ''}" data-gisid="${bld.gisid}">
+                    <div class="assessment-header" style="display:flex; justify-content:space-between; padding:10px;"><span><i class="fas fa-file-invoice"></i> ${a.assessment || 'Bill'}</span><span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span></div>
+                    <div class="assessment-body" style="padding:10px">${[['Owner',a.owner_name],['Phone',a.phone_number],['Floor',a.floor],['Usage',a.bill_usage]].map(([l,v])=>`<div class="detail-row"><div class="detail-label">${l}:</div><div class="detail-value">${v||'N/A'}</div></div>`).join('')}</div>
+                </div>`).join('') : '<div class="empty-state">No assessments</div>';
+                let shopsHtml = shops.length ? shops.map(s =>
+                    `<div class="shop-item"><div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name}</div><div>${s.shop_category} | ${s.shop_owner_name}</div></div>`
+                    ).join('') : '<div class="empty-state">No shops</div>';
+                let html =
+                    `<div class="popup-header"><h4><i class="fas fa-building"></i> ${bld.gisid}</h4><button class="popup-close" onclick="closePopup()">&times;</button></div>
+                <div class="popup-tabs">
+                    <button class="popup-tab ${currentActiveTab=='building'?'active':''}" data-tab="building" onclick="switchTab('building')">Building</button>
+                    <button class="popup-tab ${currentActiveTab=='assessments'?'active':''}" data-tab="assessments" onclick="switchTab('assessments')">Assessments</button>
+                    <button class="popup-tab ${currentActiveTab=='shops'?'active':''}" data-tab="shops" onclick="switchTab('shops')">Shops</button>
+                </div>
+                <div id="tab-building" class="popup-tab-content ${currentActiveTab=='building'?'active':''}">${buildingHtml}</div>
+                <div id="tab-assessments" class="popup-tab-content ${currentActiveTab=='assessments'?'active':''}">${assessmentsHtml}</div>
+                <div id="tab-shops" class="popup-tab-content ${currentActiveTab=='shops'?'active':''}">${shopsHtml}</div>`;
                 $(popupElement).html(html).show();
-                if ($(window).width() > 768 && popupOverlay) {
-                    popupOverlay.setPosition(coord);
-                }
-
-                $('.assessment-card').off('click').on('click', function() {
-                    let id = $(this).data('id');
-                    let num = $(this).data('assessment');
-                    $(this).after(`
-                        <div class="assessment-form-container">
-                            <button class="close-form-btn">&times;</button>
-                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                            <form class="qc-form">
-                                <input type="hidden" name="assessment_id" value="${id}">
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Square Feet:</label>
-                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Usage:</label>
-                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                        <option value="">Select</option>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Industrial">Industrial</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">Tax Amount (₹):</label>
-                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
-                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    `);
-
-                    $('.qc-form').on('submit', function(e) {
-                        e.preventDefault();
-                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
-                                      $(this).find('select[name="qc_usage"]').val() &&
-                                      $(this).find('input[name="tax_amount"]').val();
-                        let $badge = $(this).closest('.assessment-card').find('.badge');
-                        if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
-                        } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
-                        }
-                        alert('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'));
-                        $('.assessment-form-container').remove();
-                    });
-
-                    $('.close-form-btn, .cancel-form-btn').on('click', function() {
-                        $('.assessment-form-container').remove();
-                    });
+                if ($(window).width() > 768 && popupOverlay) popupOverlay.setPosition(coord);
+                $('.assessment-card').on('click', function() {
+                    alert(`QC details: tap to edit form (simulated)`);
                 });
             }
 
-            // ==================== POLYGON STYLE FUNCTION ====================
-            function polygonStyleFunction(feature) {
-                let gisid = feature.get('gisid');
-                let sqfeet = feature.get('sqfeet');
-                let geometry = feature.getGeometry();
+            // ==================== STYLE & LAYERS ====================
+            function polygonStyleFn(feature) {
+                let gisid = feature.get('gisid'),
+                    sq = feature.get('sqfeet');
+                let geom = feature.getGeometry();
                 let center;
-
                 try {
-                    center = geometry.getInteriorPoint();
-                    if (!center) {
-                        let extent = geometry.getExtent();
-                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                    }
-                } catch(e) {
-                    let extent = geometry.getExtent();
-                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+                    center = geom.getInteriorPoint();
+                } catch (e) {
+                    let ext = geom.getExtent();
+                    center = new ol.geom.Point([(ext[0] + ext[2]) / 2, (ext[1] + ext[3]) / 2]);
                 }
-
-                let isVisible = feature.get('visible');
-                if (isVisible === false) return null;
-
+                if (feature.get('visible') === false) return null;
                 return [
                     new ol.style.Style({
                         stroke: new ol.style.Stroke({
@@ -1418,14 +882,14 @@
                             width: 2
                         }),
                         fill: new ol.style.Fill({
-                            color: 'rgba(255,68,68,0.15)'
+                            color: 'rgba(255,68,68,0.2)'
                         })
                     }),
                     new ol.style.Style({
                         geometry: center,
                         text: new ol.style.Text({
-                            text: `${gisid}\n${sqfeet || 0} sqft`,
-                            font: 'bold 11px Arial',
+                            text: `${gisid}\n${sq || 0}ft²`,
+                            font: 'bold 10px Arial',
                             fill: new ol.style.Fill({
                                 color: '#fff'
                             }),
@@ -1434,60 +898,41 @@
                                 width: 2
                             }),
                             backgroundFill: new ol.style.Fill({
-                                color: 'rgba(0,0,0,0.7)'
+                                color: 'rgba(0,0,0,0.6)'
                             }),
-                            padding: [4, 8, 4, 8]
+                            padding: [3, 6, 3, 6]
                         })
                     })
                 ];
             }
 
-            // ==================== REFRESH LAYERS ====================
             function refreshLayers() {
                 if (polygonLayer) map.removeLayer(polygonLayer);
                 if (lineLayer) map.removeLayer(lineLayer);
-
                 let ps = new ol.source.Vector();
-                $.each(polygons, function(i, p) {
+                polygons.forEach(p => {
                     try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
-                        if (c && c.length) {
-                            ps.addFeature(new ol.Feature({
-                                geometry: new ol.geom.Polygon(c),
-                                gisid: p.gisid,
-                                sqfeet: p.sqfeet,
-                                visible: true
-                            }));
-                        }
-                    } catch(e) {
-                        console.error("Error parsing polygon:", e);
-                    }
+                        ps.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Polygon(p.coordinates),
+                            gisid: p.gisid,
+                            sqfeet: p.sqfeet,
+                            visible: true
+                        }));
+                    } catch (e) {}
                 });
-
                 polygonLayer = new ol.layer.Vector({
                     source: ps,
-                    style: polygonStyleFunction,
+                    style: polygonStyleFn,
                     visible: true
                 });
-
                 let ls = new ol.source.Vector();
-                $.each(lines, function(i, l) {
+                lines.forEach(l => {
                     try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
-                        if (c && c.length) {
-                            if (c.length === 1 && Array.isArray(c[0][0])) {
-                                c = c[0];
-                            }
-                            ls.addFeature(new ol.Feature({
-                                geometry: new ol.geom.LineString(c),
-                                gisid: l.gisid
-                            }));
-                        }
-                    } catch(e) {
-                        console.error("Error parsing line:", e);
-                    }
+                        ls.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(l.coordinates)
+                        }));
+                    } catch (e) {}
                 });
-
                 lineLayer = new ol.layer.Vector({
                     source: ls,
                     style: new ol.style.Style({
@@ -1498,413 +943,216 @@
                     }),
                     visible: true
                 });
-
                 map.addLayer(polygonLayer);
                 map.addLayer(lineLayer);
-
-                map.on('click', function(e) {
-                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
-                    if (feature && feature.get('gisid')) {
-                        showPopup(feature.get('gisid'), e.coordinate);
-                    } else if (popupElement) {
-                        $(popupElement).hide();
-                    }
+                map.on('click', e => {
+                    let feature = map.forEachFeatureAtPixel(e.pixel, f => f);
+                    if (feature && feature.get('gisid')) showPopup(feature.get('gisid'), e.coordinate);
+                    else if (popupElement) $(popupElement).hide();
                 });
-
-                map.on('pointermove', function(e) {
-                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
-                    $('#map').css('cursor', hasFeature ? 'pointer' : '');
-                });
-
-                showLoading(false);
             }
 
-            // ==================== MAP INITIALIZATION ====================
+            // ==================== MAP INIT ====================
             function initMap() {
-                showLoading(true);
-
                 osmLayer = new ol.layer.Tile({
                     source: new ol.source.OSM(),
                     visible: true
                 });
-
                 satelliteLayer = new ol.layer.Tile({
                     source: new ol.source.XYZ({
                         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                     }),
                     visible: false
                 });
-
-                let droneImg = wardData.drone_image;
-                let hasDrone = false;
-
-                if (droneImg && wardData.extent_left) {
-                    try {
-                        let imageUrl = droneImg.replace(/^\/+/, '');
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
-                            imageUrl = '/' + imageUrl;
-                        }
-                        imageLayer = new ol.layer.Image({
-                            source: new ol.source.ImageStatic({
-                                url: imageUrl,
-                                imageExtent: [
-                                    parseFloat(wardData.extent_left),
-                                    parseFloat(wardData.extent_bottom),
-                                    parseFloat(wardData.extent_right),
-                                    parseFloat(wardData.extent_top)
-                                ],
-                                projection: 'EPSG:3857'
+                let boundaryFeature = null;
+                if (wardData.boundary && wardData.boundary[0]) {
+                    let coords3857 = wardData.boundary[0].map(c => ol.proj.fromLonLat(c));
+                    boundaryLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Polygon([coords3857])
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({
+                                color: '#ff0000',
+                                width: 3,
+                                lineDash: [8, 6]
                             }),
-                            visible: true
-                        });
-                        hasDrone = true;
-                    } catch(e) {
-                        console.error("Error loading drone image:", e);
-                    }
+                            fill: new ol.style.Fill({
+                                color: 'rgba(255,0,0,0.05)'
+                            })
+                        }),
+                        visible: true
+                    });
                 }
-
-                let bound = wardData.boundary;
-                let boundExt = null;
-
-                if (bound && bound.length && bound[0].length) {
-                    try {
-                        let bc = bound[0].map(c => ol.proj.fromLonLat(c));
-                        boundaryLayer = new ol.layer.Vector({
-                            source: new ol.source.Vector({
-                                features: [new ol.Feature({
-                                    geometry: new ol.geom.Polygon([bc])
-                                })]
-                            }),
-                            style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({
-                                    color: '#ff0000',
-                                    width: 3,
-                                    lineDash: [10, 5]
-                                }),
-                                fill: new ol.style.Fill({
-                                    color: 'rgba(255,0,0,0.05)'
-                                })
-                            }),
-                            visible: true
-                        });
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-                    } catch(e) {
-                        console.error("Error parsing boundary:", e);
-                    }
-                }
-
-                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-                let zoom = 18;
-
-                if (bound && bound[0] && bound[0].length) {
-                    try {
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
-                        zoom = 18;
-                    } catch(e) {}
-                }
-
+                let center = ol.proj.fromLonLat([80.2710, 13.0828]);
                 map = new ol.Map({
                     target: 'map',
                     layers: [osmLayer, satelliteLayer],
                     view: new ol.View({
                         center: center,
-                        zoom: zoom
+                        zoom: 17
                     })
                 });
-
+                if (boundaryLayer) map.addLayer(boundaryLayer);
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
+                refreshLayers();
 
-                if (imageLayer) map.addLayer(imageLayer);
-                if (boundaryLayer) map.addLayer(boundaryLayer);
+                // Append UI Panels
+                $('body').append(
+                    `<div class="layer-switcher panel" id="layerSwitcher"><h5><i class="fas fa-layer-group"></i> Layers</h5><div class="layer-group"><div class="group-title">Base</div><label><input type="radio" name="baseLayer" value="osm" checked> OSM</label><label><input type="radio" name="baseLayer" value="satellite"> Satellite</label></div><div class="layer-group"><div class="group-title">Overlays</div><label><input type="checkbox" id="toggleBuildings" checked> Buildings</label><label><input type="checkbox" id="toggleRoads" checked> Roads</label><label><input type="checkbox" id="toggleBoundary" checked> Ward Boundary</label></div></div>`
+                    );
+                $('body').append(
+                    `<div class="map-legend panel" id="mapLegend"><h5><i class="fas fa-info-circle"></i> Legend</h5><div class="legend-item"><div style="width:24px;height:24px;background:rgba(255,68,68,0.5);border:1px solid #ff4444;"></div><span>Buildings</span></div><div class="legend-item"><div style="width:24px;height:3px;background:#ffc107;"></div><span>Roads</span></div><div class="legend-item"><div style="width:24px;height:3px;border:1px dashed red;"></div><span>Boundary</span></div></div>`
+                    );
+                $('body').append(
+                    `<div class="search-panel panel" id="searchPanel"><h5><i class="fas fa-search"></i> Search</h5><div class="search-box"><input type="text" id="searchInput" placeholder="GIS ID / Owner / Assessment"><button id="searchBtn">Go</button></div><div id="searchResults" class="search-results"></div></div>`
+                    );
+                $('body').append(
+                    `<div class="filter-panel panel" id="filterPanel"><h5><i class="fas fa-filter"></i> Filter</h5><div class="filter-group"><label>QC Status</label><select id="filterType"><option value="all">All</option><option value="completed">QC Complete</option><option value="pending">QC Pending</option></select></div><div><label>Min Floors</label><input type="number" id="filterMinFloors" placeholder="Min"></div><div style="margin-top:8px"><label>Max Floors</label><input type="number" id="filterMaxFloors" placeholder="Max"></div><div class="filter-actions" style="margin-top:15px; display:flex; gap:8px"><button class="apply-btn" id="applyFilterBtn">Apply</button><button class="reset-btn" id="resetFilterBtn">Reset</button></div><div class="filter-count" id="filterCount"></div></div>`
+                    );
 
-                setTimeout(() => {
-                    if (boundExt) {
-                        map.getView().fit(boundExt, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
-                    }
-                }, 500);
-
-                // Add panels to DOM
-                $('body').append(`
-                    <div class="layer-switcher panel" id="layerSwitcher">
-                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                        <div class="layer-group">
-                            <div class="group-title">Base Maps</div>
-                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
-                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-                        </div>
-                        <div class="layer-group">
-                            <div class="group-title">Overlays</div>
-                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
-                        </div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="map-legend panel" id="mapLegend">
-                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                        <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
-                        <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
-                        <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="search-panel panel" id="searchPanel">
-                        <h5><i class="fas fa-search"></i> Search Building</h5>
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
-                            <button id="searchBtn"><i class="fas fa-search"></i> Go</button>
-                        </div>
-                        <div id="searchResults" class="search-results"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="filter-panel panel" id="filterPanel">
-                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
-                        <div class="filter-group">
-                            <label>QC Status</label>
-                            <select id="filterType">
-                                <option value="all">All Buildings</option>
-                                <option value="completed">QC Complete</option>
-                                <option value="pending">QC Pending</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Min Floors</label>
-                            <input type="number" id="filterMinFloors" placeholder="Min">
-                        </div>
-                        <div class="filter-group">
-                            <label>Max Floors</label>
-                            <input type="number" id="filterMaxFloors" placeholder="Max">
-                        </div>
-                        <div class="filter-actions">
-                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
-                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
-                        </div>
-                        <div class="filter-count" id="filterCount"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
-                    </div>
-                `);
-
-                // Event listeners
-                $('input[name="baseLayer"]').on('change', function() {
-                    currentBaseLayer = $(this).val();
-                    osmLayer.setVisible(currentBaseLayer === 'osm');
-                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
+                // event bindings
+                $('input[name="baseLayer"]').change(function() {
+                    osmLayer.setVisible($(this).val() === 'osm');
+                    satelliteLayer.setVisible($(this).val() === 'satellite');
                 });
-
-                $('#toggleBuildings').on('change', function() {
+                $('#toggleBuildings').change(function() {
                     if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
                 });
-
-                $('#toggleRoads').on('change', function() {
+                $('#toggleRoads').change(function() {
                     if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
                 });
-
-                $('#toggleBoundary').on('change', function() {
+                $('#toggleBoundary').change(function() {
                     if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
                 });
-
-                if (hasDrone) {
-                    $('#toggleDrone').on('change', function() {
-                        if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
-                    });
-                }
-
-                $('#searchBtn').on('click', function() {
-                    searchBuildings($('#searchInput').val());
+                $('#searchBtn').click(() => {
+                    let txt = $('#searchInput').val();
+                    if (txt) searchBuildings(txt);
                 });
-
-                $('#searchInput').on('keypress', function(e) {
-                    if (e.which === 13) {
-                        searchBuildings($(this).val());
-                    }
-                });
-
-                $('#applyFilterBtn').on('click', function() {
-                    let type = $('#filterType').val();
-                    let minF = $('#filterMinFloors').val();
-                    let maxF = $('#filterMaxFloors').val();
-                    let src = polygonLayer.getSource();
-                    let fts = src.getFeatures();
-                    let cnt = 0;
-
-                    $.each(fts, function(i, f) {
-                        let g = f.get('gisid');
-                        let b = polygonDatas.find(p => p.gisid == g);
-                        let show = true;
-
-                        if (type === 'completed' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (!has) show = false;
-                        } else if (type === 'pending' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (has) show = false;
-                        }
-
-                        if (show && b && (minF || maxF)) {
-                            let fl = parseInt(b.number_floor) || 0;
-                            if (minF && fl < parseInt(minF)) show = false;
-                            if (maxF && fl > parseInt(maxF)) show = false;
-                        }
-
-                        f.set('visible', show);
-                        if (show) cnt++;
-                    });
-
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${cnt} of ${fts.length} buildings`);
-                    closeAllMobilePanels();
-                });
-
-                $('#resetFilterBtn').on('click', function() {
-                    $('#filterType').val('all');
-                    $('#filterMinFloors, #filterMaxFloors').val('');
-                    let src = polygonLayer.getSource();
-                    $.each(src.getFeatures(), function(i, f) {
-                        f.set('visible', true);
-                    });
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
-                    closeAllMobilePanels();
-                });
-
-                $('#zoomInBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() + 1);
-                });
-
-                $('#zoomOutBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() - 1);
-                });
-
-                // Mobile button handlers - Only ONE panel opens at a time
-                $('#mobileMenuBtn').on('click', function(e) {
+                $('#applyFilterBtn').click(applyFilters);
+                $('#resetFilterBtn').click(resetFilters);
+                $('#zoomInBtn').click(() => map.getView().setZoom(map.getView().getZoom() + 1));
+                $('#zoomOutBtn').click(() => map.getView().setZoom(map.getView().getZoom() - 1));
+                // mobile panels
+                $('#mobileMenuBtn').click(e => {
                     e.stopPropagation();
-                    let isOpen = $('#layerSwitcher').hasClass('open');
-                    closeAllMobilePanels();
-                    if (!isOpen) {
-                        $('#layerSwitcher').addClass('open');
-                    }
+                    closeAllPanels();
+                    $('#layerSwitcher').toggleClass('open');
                 });
-
-                $('#mobileLegendBtn').on('click', function(e) {
+                $('#mobileLegendBtn').click(e => {
                     e.stopPropagation();
-                    let isOpen = $('#mapLegend').hasClass('open');
-                    closeAllMobilePanels();
-                    if (!isOpen) {
-                        $('#mapLegend').addClass('open');
-                    }
+                    closeAllPanels();
+                    $('#mapLegend').toggleClass('open');
                 });
-
-                $('#mobileSearchBtn').on('click', function(e) {
+                $('#mobileSearchBtn').click(e => {
                     e.stopPropagation();
-                    let isOpen = $('#searchPanel').hasClass('open');
-                    closeAllMobilePanels();
-                    if (!isOpen) {
-                        $('#searchPanel').addClass('open');
-                        setTimeout(function() {
-                            $('#searchInput').focus();
-                        }, 300);
-                    }
+                    closeAllPanels();
+                    $('#searchPanel').toggleClass('open');
+                    if ($('#searchPanel').hasClass('open')) setTimeout(() => $('#searchInput').focus(),
+                    200);
                 });
-
-                $('#mobileFilterBtn').on('click', function(e) {
+                $('#mobileFilterBtn').click(e => {
                     e.stopPropagation();
-                    let isOpen = $('#filterPanel').hasClass('open');
-                    closeAllMobilePanels();
-                    if (!isOpen) {
-                        $('#filterPanel').addClass('open');
-                    }
+                    closeAllPanels();
+                    $('#filterPanel').toggleClass('open');
                 });
-
-                $('#mobileLocationBtn').on('click', function() {
-                    if (locationTracking) {
-                        stopLocationTracking();
-                    } else {
-                        startLocationTracking();
-                        setTimeout(function() {
-                            if (currentPosition) {
-                                map.getView().setCenter(ol.proj.fromLonLat(currentPosition));
-                            }
-                        }, 1000);
-                    }
+                $('#mobileLocationBtn').click(() => {
+                    if (locationTracking) stopLocationTracking();
+                    else startLocationTracking();
                 });
-
-                // Close panels when tapping outside on mobile
                 $(document).on('click touchstart', function(e) {
-                    if ($(window).width() <= 768) {
-                        // Close layer switcher if clicking outside
-                        if (!$('#layerSwitcher').is(e.target) && !$('#layerSwitcher').has(e.target).length && !$('#mobileMenuBtn').is(e.target) && !$('#mobileMenuBtn').has(e.target).length) {
-                            $('#layerSwitcher').removeClass('open');
-                        }
-                        // Close legend if clicking outside
-                        if (!$('#mapLegend').is(e.target) && !$('#mapLegend').has(e.target).length && !$('#mobileLegendBtn').is(e.target) && !$('#mobileLegendBtn').has(e.target).length) {
-                            $('#mapLegend').removeClass('open');
-                        }
-                        // Close search panel if clicking outside
-                        if (!$('#searchPanel').is(e.target) && !$('#searchPanel').has(e.target).length && !$('#mobileSearchBtn').is(e.target) && !$('#mobileSearchBtn').has(e.target).length) {
-                            $('#searchPanel').removeClass('open');
-                        }
-                        // Close filter panel if clicking outside
-                        if (!$('#filterPanel').is(e.target) && !$('#filterPanel').has(e.target).length && !$('#mobileFilterBtn').is(e.target) && !$('#mobileFilterBtn').has(e.target).length) {
-                            $('#filterPanel').removeClass('open');
-                        }
-                    }
+                    if ($(window).width() <= 768 && !$(e.target).closest('.panel, .mobile-btn').length)
+                        closeAllPanels();
                 });
-
-                refreshLayers();
             }
 
-            // Start the application
-            initMap();
-            buildSearchIndex();
+            function closeAllPanels() {
+                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel').removeClass('open');
+            }
 
-            // Handle window resize
-            $(window).on('resize', function() {
-                setTimeout(function() {
-                    if (map) map.updateSize();
-                }, 100);
-            });
+            function searchBuildings(term) {
+                let lower = term.toLowerCase();
+                let results = allBuildings.filter(b => b.gisid.toLowerCase().includes(lower) || (b.assessments.some(
+                    a => a.owner_name?.toLowerCase().includes(lower))));
+                let $res = $('#searchResults').empty();
+                if (!results.length) {
+                    $res.html('<div class="empty-state">No buildings</div>');
+                    return;
+                }
+                results.forEach(r => {
+                    let coords = r.coordinates;
+                    $res.append(
+                        `<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${coords?coords[0]:''}" data-lat="${coords?coords[1]:''}"><div><strong>${r.gisid}</strong> | ${r.building_usage}</div><div>${r.road_name}</div><button class="direction-btn" data-gisid="${r.gisid}" data-lon="${coords?coords[0]:''}" data-lat="${coords?coords[1]:''}"><i class="fas fa-directions"></i> Directions</button></div>`
+                        );
+                });
+                $('.search-result-item').on('click', function(e) {
+                    if (!$(e.target).hasClass('direction-btn')) zoomToBuilding($(this).data('gisid'));
+                });
+                $('.direction-btn').on('click', function(e) {
+                    e.stopPropagation();
+                    let lon = $(this).data('lon'),
+                        lat = $(this).data('lat');
+                    if (lon && lat) showDirectionToBuilding($(this).data('gisid'), [parseFloat(lon),
+                        parseFloat(lat)
+                    ]);
+                    else alert("No coordinates");
+                });
+            }
+
+            function zoomToBuilding(gisid) {
+                let feat = polygonLayer.getSource().getFeatures().find(f => f.get('gisid') == gisid);
+                if (feat) {
+                    map.getView().fit(feat.getGeometry().getExtent(), {
+                        padding: [50, 50, 50, 50],
+                        duration: 700
+                    });
+                    showPopup(gisid, ol.extent.getCenter(feat.getGeometry().getExtent()));
+                } else alert("Not found");
+            }
+
+            function applyFilters() {
+                let type = $('#filterType').val();
+                let min = parseInt($('#filterMinFloors').val()) || 0;
+                let max = parseInt($('#filterMaxFloors').val()) || 999;
+                let features = polygonLayer.getSource().getFeatures();
+                let count = 0;
+                features.forEach(f => {
+                    let gis = f.get('gisid');
+                    let bdata = polygonDatas.find(p => p.gisid == gis);
+                    let visible = true;
+                    if (type !== 'all' && bdata) {
+                        let hasQC = (bdata.pointdata || []).some(a => a.qcsqfeet || a.qcusage);
+                        if (type === 'completed' && !hasQC) visible = false;
+                        if (type === 'pending' && hasQC) visible = false;
+                    }
+                    let floors = bdata ? parseInt(bdata.number_floor) || 0 : 0;
+                    if (floors < min || floors > max) visible = false;
+                    f.set('visible', visible);
+                    if (visible) count++;
+                });
+                polygonLayer.setStyle(polygonStyleFn);
+                polygonLayer.changed();
+                $('#filterCount').text(`Showing ${count} of ${features.length}`);
+                closeAllPanels();
+            }
+
+            function resetFilters() {
+                $('#filterType').val('all');
+                $('#filterMinFloors,#filterMaxFloors').val('');
+                let features = polygonLayer.getSource().getFeatures();
+                features.forEach(f => f.set('visible', true));
+                polygonLayer.setStyle(polygonStyleFn);
+                polygonLayer.changed();
+                $('#filterCount').text(`Showing ${features.length} of ${features.length}`);
+                closeAllPanels();
+            }
+            buildSearchIndex();
+            initMap();
         });
     </script>
-@endpush
+</body>
+
+</html>
