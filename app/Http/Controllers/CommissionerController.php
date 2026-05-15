@@ -58,6 +58,9 @@ class CommissionerController extends Controller
         $collections = [];
         $zonesWithWards = [];
         $chartData = [];
+return response()->json($wards_per_zones);
+
+
 
         foreach ($wards_per_zones as $wards_per_zone) {
             $wardlists = Ward::where('zone', $wards_per_zone->zone)->get();
