@@ -710,9 +710,13 @@
                 }
             });
 
-            $("#searchGisidBtn").on('click',function(){
+            $("#searchGisidBtn").on('click', function() {
                 var searchvalue = $("#searchInput").val();
-                alert(searchvalue);
+
+                const findoplygon = polygons.find(function(polygon) {
+                    return polygon.gisid == searchvalue;
+                });
+                console.log(findpolygon);
             });
 
 
