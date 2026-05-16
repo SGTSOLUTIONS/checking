@@ -144,177 +144,7 @@
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
-                            @forelse($wards as $ward)
-                                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 ward-card-item"
-                                    data-zone="{{ strtolower($ward['zone']) }}"
-                                    data-ward="{{ strtolower($ward['ward_no']) }}">
-                                    <div class="ward-card h-100">
-                                        <!-- Card Header -->
-                                        <div class="ward-card-header d-flex justify-content-between align-items-start p-3"
-                                            style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
-                                            <div>
-                                                <h5 class="mb-0 text-white fw-bold">
-                                                    Ward {{ $ward['ward_no'] }}
-                                                </h5>
-                                                <small class="text-white-50">
-                                                    <i class="fas fa-map-marker-alt"></i> {{ ucfirst($ward['zone']) }}
-                                                    Zone
-                                                </small>
-                                            </div>
-                                            <a href="{{ route('corporation.ward.map', $ward['ward_no']) }}"
-                                                class="btn btn-sm btn-light">
-                                                <i class="fas fa-map-marked-alt"></i> View Map
-                                            </a>
-                                        </div>
 
-                                        <!-- Card Body -->
-                                        <div class="ward-card-body p-3">
-                                            <!-- Buildings Section -->
-                                            <div class="info-section mb-3">
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <h6 class="mb-0 fw-bold">
-                                                        <i class="fas fa-building me-2" style="color:#1679AB;"></i>
-                                                        Buildings
-                                                    </h6>
-                                                    @php
-                                                        $buildingProgress =
-                                                            $ward['total_buildings'] > 0
-                                                                ? floor(
-                                                                        ($ward['surveyed_buildings'] /
-                                                                            $ward['total_buildings']) *
-                                                                            100 *
-                                                                            100,
-                                                                    ) / 100
-                                                                : 0;
-                                                    @endphp
-                                                    <span
-                                                        class="badge {{ $buildingProgress >= 80 ? 'bg-success' : ($buildingProgress >= 50 ? 'bg-warning' : 'bg-danger') }}">
-                                                        {{ $buildingProgress }}% Complete
-                                                    </span>
-                                                </div>
-                                                <div class="row g-2">
-                                                    <div class="col-6">
-                                                        <div class="info-item text-center p-2 bg-light rounded">
-                                                            <small class="text-muted d-block">Total</small>
-                                                            <strong
-                                                                class="fs-4">{{ number_format($ward['total_buildings']) }}</strong>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <div class="info-item text-center p-2 bg-light rounded">
-                                                            <small class="text-muted d-block">Surveyed</small>
-                                                            <strong
-                                                                class="fs-4">{{ number_format($ward['surveyed_buildings']) }}</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="progress mt-2" style="height: 8px;">
-                                                    <div class="progress-bar bg-info"
-                                                        style="width: {{ $buildingProgress }}%" role="progressbar"
-                                                        aria-valuenow="{{ $buildingProgress }}" aria-valuemin="0"
-                                                        aria-valuemax="100">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Assessments Section -->
-                                            <div class="info-section mb-3">
-                                                <h6 class="fw-bold mb-2">
-                                                    <i class="fas fa-clipboard-list me-2" style="color:#FFC107;"></i>
-                                                    Assessments
-                                                </h6>
-                                                <div class="info-item text-center p-2 bg-light rounded">
-                                                    <small class="text-muted d-block">Surveyed Assessments</small>
-                                                    <strong
-                                                        class="fs-3">{{ number_format($ward['surveyed_assessment']) }}</strong>
-                                                </div>
-                                            </div>
-
-                                            <!-- Shops Section -->
-                                            <div class="info-section mb-3">
-                                                <h6 class="fw-bold mb-2">
-                                                    <i class="fas fa-store me-2" style="color:#28a745;"></i>
-                                                    Shops Information
-                                                </h6>
-                                                <div class="row g-2">
-                                                    <div class="col-4">
-                                                        <div class="info-item text-center p-2 bg-light rounded">
-                                                            <small class="text-muted d-block">Total Shops</small>
-                                                            <strong
-                                                                class="fs-5">{{ number_format($ward['shop_count']) }}</strong>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="info-item text-center p-2 bg-light rounded">
-                                                            <small class="text-muted d-block">Shop Data</small>
-                                                            <strong
-                                                                class="fs-5">{{ number_format($ward['shop_data_count']) }}</strong>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <div class="info-item text-center p-2 bg-light rounded">
-                                                            <small class="text-muted d-block">In MIS</small>
-                                                            <strong
-                                                                class="fs-5 {{ $ward['shop_data_in_mis_count'] > 0 ? 'text-success' : 'text-danger' }}">
-                                                                {{ number_format($ward['shop_data_in_mis_count']) }}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- MIS Status -->
-                                            <div class="info-section">
-                                                <div
-                                                    class="d-flex justify-content-between align-items-center p-2 rounded
-                                                    {{ $ward['shop_data_in_mis_count'] == $ward['shop_data_count'] && $ward['shop_data_count'] > 0 ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
-                                                    <small class="fw-bold">
-                                                        <i class="fas fa-check-circle me-1"></i>
-                                                        MIS Status:
-                                                    </small>
-                                                    @php
-                                                        $misMatchPercent =
-                                                            $ward['shop_data_count'] > 0
-                                                                ? floor(
-                                                                        ($ward['shop_data_in_mis_count'] /
-                                                                            $ward['shop_data_count']) *
-                                                                            100 *
-                                                                            100,
-                                                                    ) / 100
-                                                                : 0;
-                                                    @endphp
-                                                    <span
-                                                        class="badge {{ $misMatchPercent == 100 ? 'bg-success' : 'bg-warning' }}">
-                                                        {{ $misMatchPercent }}% Matched
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Card Footer -->
-                                        <div class="ward-card-footer p-3 bg-light">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-calendar-alt me-1"></i>
-                                                    Last updated: {{ now()->format('d M Y') }}
-                                                </small>
-                                                <a href="{{ route('corporation.ward.details', $ward['ward_no']) }}"
-                                                    class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-chart-line"></i> Details
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="col-12">
-                                    <div class="alert alert-info text-center py-5">
-                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                                        <h5>No ward data available</h5>
-                                        <p class="mb-0">No wards found for this corporation.</p>
-                                    </div>
-                                </div>
-                            @endforelse
                         </div>
 
                         <!-- Pagination -->
@@ -342,12 +172,47 @@
 @endsection
 
 @push('scripts')
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-   <script>
-    $(document).ready(function () {
-        alert('hi');
-    });
-</script>
+    <script>
+        $(document).ready(function() {
+
+            const corporation = @json($corporation);
+            const ward_count = @json($ward_count);
+            const total_building = @json($total_building);
+            const total_surveyed_building = @json($total_surveyed_building);
+            const total_surveyed_assessment = @json($total_surveyed_assessment);
+            const total_mis = @json($total_mis);
+            const total_shops = @json($total_shops);
+            const total_shop_data_count = @json($total_shop_data_count);
+            const total_shop_data_in_mis = @json($total_shop_data_in_mis);
+            const total_shop_data_not_in_mis = @json($total_shop_data_not_in_mis);
+            const survey_percentage = @json($survey_percentage);
+            const wards = @json($wards);
+            const wards_per_zones = @json($wards_per_zones);
+
+            const $wardcontainer = $("#wardsContainer");
+
+            renderWards(wards);
+
+            function renderWards(wards) {
+
+                $wardcontainer.empty();
+
+                wards.forEach(function(ward) {
+
+                    let card = `
+                    <div class="card p-3 mb-2">
+                        <h2>${ward.id}</h2>
+                    </div>
+                `;
+
+                    $wardcontainer.append(card);
+
+                });
+            }
+
+        });
+    </script>
+
 
     <style>
         .dashboard-content-area {
