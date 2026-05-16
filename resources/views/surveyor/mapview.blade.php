@@ -230,6 +230,25 @@
                     })
                 });
             }
+              const polygonSource = new ol.source.Vector();
+            polygons.forEach(poly => {
+                try {
+                    let coords = JSON.parse(poly.coordinates);
+                    polygonSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.Polygon(coords),
+                        gisid: poly.gisid,
+                        type: "Polygon",
+                        sqfeet: poly.sqfeet || "0"
+                    }));
+                } catch (e) {
+                    console.error('Polygon parse error:', e);
+                }
+            });
+            const polygonLayer = new ol.layer.Vector({
+                source: polygonSource,
+                style: createPolygonStyle,
+                visible: true
+            });
             // Line Layer
             const lineSource = new ol.source.Vector();
             lines.forEach(l => {
