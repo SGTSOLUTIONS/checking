@@ -709,19 +709,42 @@
                     $('#searchInput').focus();
                 }
             });
+            var highlightSource = new ol.source.Vector();
+            var highlightLayer = new ol.layer.Vector({
+                source: highlightSource,
+
+                style: new ol.style.Style({
+
+                    stroke: new ol.style.Stroke({
+                        color: '#ff0000',
+                        width: 4
+                    }),
+
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255,0,0,0.2)'
+                    })
+
+                })
+            });
+            map.addLayer(highlightLayer);
 
             $("#searchGisidBtn").on('click', function() {
 
                 var searchvalue = $("#searchInput").val();
+
                 var findpolygon = polygons.find(function(polygon) {
                     return polygon.gisid == searchvalue;
                 });
+
                 console.log(findpolygon);
+
                 if (findpolygon) {
+                    highlightSource.clear();
                     var coordinates = JSON.parse(findpolygon.coordinates);
                     var feature = new ol.Feature({
                         geometry: new ol.geom.Polygon(coordinates)
                     });
+                    highlightSource.addFeature(feature);
                     map.getView().fit(feature.getGeometry().getExtent(), {
                         duration: 1000,
                         padding: [50, 50, 50, 50],
