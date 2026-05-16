@@ -117,57 +117,15 @@
             </div>
         </div>
 
-        <!-- Charts Row -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-7">
-                <div class="stat-card p-3">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2" style="color:#1679AB;"></i>Ward-wise Building Statistics</h5>
-                    <div class="chart-container">
-                        <canvas id="buildingChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-5">
-                <div class="stat-card p-3">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2" style="color:#1679AB;"></i>Survey Coverage Overview</h5>
-                    <div class="chart-container">
-                        <canvas id="coveragePieChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Second Charts Row -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-6">
-                <div class="stat-card p-3">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-store me-2" style="color:#1679AB;"></i>Shop Data Matching Status</h5>
-                    <div class="chart-container">
-                        <canvas id="shopChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="stat-card p-3">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-chart-simple me-2" style="color:#1679AB;"></i>Assessment Progress</h5>
-                    <div class="chart-container">
-                        <canvas id="assessmentDoughnutChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ward-wise Statistics Table with Pagination -->
+        <!-- Individual Ward Cards Section -->
         <div class="row">
             <div class="col-12">
                 <div class="stat-card p-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                        <h5 class="fw-bold mb-0">
-                            <i class="fas fa-table me-2" style="color:#1679AB;"></i>
-                            Ward-wise Detailed Statistics
-                        </h5>
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                        <h4 class="fw-bold mb-0">
+                            <i class="fas fa-building me-2" style="color:#1679AB;"></i>
+                            Ward-wise Detailed Information
+                        </h4>
                         <div class="mt-2 mt-sm-0">
                             <span class="badge bg-info">
                                 <i class="fas fa-layer-group"></i> Showing {{ $wards_pagination->firstItem() }} to {{ $wards_pagination->lastItem() }} of {{ $wards_pagination->total() }} wards
@@ -175,9 +133,9 @@
                         </div>
                     </div>
 
-                    <!-- Search Box -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                    <!-- Search and Filter Section -->
+                    <div class="row mb-4 g-3">
+                        <div class="col-md-4">
                             <div class="input-group">
                                 <span class="input-group-text bg-white">
                                     <i class="fas fa-search text-muted"></i>
@@ -192,120 +150,199 @@
                                 @endif
                             </div>
                         </div>
+                        <div class="col-md-3">
+                            <select id="zoneFilter" class="form-select">
+                                <option value="">All Zones</option>
+                                @foreach($wards_per_zones as $zone)
+                                    <option value="{{ $zone->zone }}" {{ request()->get('zone') == $zone->zone ? 'selected' : '' }}>
+                                        {{ ucfirst($zone->zone) }} ({{ $zone->total }} wards)
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="perPageSelect" class="form-select">
+                                <option value="12" {{ request()->get('per_page', 12) == 12 ? 'selected' : '' }}>12 per page</option>
+                                <option value="24" {{ request()->get('per_page', 12) == 24 ? 'selected' : '' }}>24 per page</option>
+                                <option value="48" {{ request()->get('per_page', 12) == 48 ? 'selected' : '' }}>48 per page</option>
+                                <option value="96" {{ request()->get('per_page', 12) == 96 ? 'selected' : '' }}>96 per page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-success w-100" id="exportDataBtn">
+                                <i class="fas fa-download"></i> Export Data
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="wardsTable">
-                            <thead>
-                                <tr>
-                                    <th class="sortable" data-sort="zone">
-                                        Zone
-                                        @if(request()->get('sort') == 'zone')
-                                            <i class="fas fa-sort-{{ request()->get('direction') == 'asc' ? 'up' : 'down' }}"></i>
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </th>
-                                    <th class="sortable" data-sort="ward_no">
-                                        Ward No
-                                        @if(request()->get('sort') == 'ward_no')
-                                            <i class="fas fa-sort-{{ request()->get('direction') == 'asc' ? 'up' : 'down' }}"></i>
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </th>
-                                    <th class="sortable" data-sort="total_buildings">
-                                        Total Buildings
-                                        @if(request()->get('sort') == 'total_buildings')
-                                            <i class="fas fa-sort-{{ request()->get('direction') == 'asc' ? 'up' : 'down' }}"></i>
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </th>
-                                    <th>Surveyed Buildings</th>
-                                    <th>Surveyed Assessments</th>
-                                    <th>Shops</th>
-                                    <th>Shop Data</th>
-                                    <th>In MIS</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($wards as $ward)
-                                <tr>
-                                    <td><span class="badge bg-secondary">{{ ucfirst($ward['zone']) }}</span></td>
-                                    <td><strong>{{ $ward['ward_no'] }}</strong></td>
-                                    <td>{{ number_format($ward['total_buildings']) }}</td>
-                                    <td>
-                                        {{ number_format($ward['surveyed_buildings']) }}
-                                        @php
-                                            $wardPct = $ward['total_buildings'] > 0
-                                                ? round(($ward['surveyed_buildings'] / $ward['total_buildings']) * 100)
-                                                : 0;
-                                        @endphp
-                                        <small class="text-muted">({{ $wardPct }}%)</small>
-                                    </td>
-                                    <td>{{ number_format($ward['surveyed_assessment']) }}</td>
-                                    <td>{{ number_format($ward['shop_count']) }}</td>
-                                    <td>{{ number_format($ward['shop_data_count']) }}</td>
-                                    <td>
-                                        @if($ward['shop_data_in_mis_count'] > 0)
-                                            <span class="badge bg-success">{{ number_format($ward['shop_data_in_mis_count']) }}</span>
-                                        @else
-                                            <span class="badge bg-secondary">0</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('corporation.ward.map', $ward['ward_no']) }}"
-                                           class="btn btn-primary btn-sm">
-                                            <i class="fas fa-map-marked-alt"></i> Map
+                    <!-- Ward Cards Grid -->
+                    <div class="row g-4" id="wardsContainer">
+                        @forelse($wards as $ward)
+                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 ward-card-item"
+                             data-zone="{{ strtolower($ward['zone']) }}"
+                             data-ward="{{ strtolower($ward['ward_no']) }}">
+                            <div class="ward-card h-100">
+                                <!-- Card Header -->
+                                <div class="ward-card-header d-flex justify-content-between align-items-start p-3"
+                                     style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
+                                    <div>
+                                        <h5 class="mb-0 text-white fw-bold">
+                                            Ward {{ $ward['ward_no'] }}
+                                        </h5>
+                                        <small class="text-white-50">
+                                            <i class="fas fa-map-marker-alt"></i> {{ ucfirst($ward['zone']) }} Zone
+                                        </small>
+                                    </div>
+                                    <a href="{{ route('corporation.ward.map', $ward['ward_no']) }}"
+                                       class="btn btn-sm btn-light">
+                                        <i class="fas fa-map-marked-alt"></i> View Map
+                                    </a>
+                                </div>
+
+                                <!-- Card Body -->
+                                <div class="ward-card-body p-3">
+                                    <!-- Buildings Section -->
+                                    <div class="info-section mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0 fw-bold">
+                                                <i class="fas fa-building me-2" style="color:#1679AB;"></i>
+                                                Buildings
+                                            </h6>
+                                            @php
+                                                $buildingProgress = $ward['total_buildings'] > 0
+                                                    ? round(($ward['surveyed_buildings'] / $ward['total_buildings']) * 100)
+                                                    : 0;
+                                            @endphp
+                                            <span class="badge {{ $buildingProgress >= 80 ? 'bg-success' : ($buildingProgress >= 50 ? 'bg-warning' : 'bg-danger') }}">
+                                                {{ $buildingProgress }}% Complete
+                                            </span>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="info-item text-center p-2 bg-light rounded">
+                                                    <small class="text-muted d-block">Total</small>
+                                                    <strong class="fs-4">{{ number_format($ward['total_buildings']) }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="info-item text-center p-2 bg-light rounded">
+                                                    <small class="text-muted d-block">Surveyed</small>
+                                                    <strong class="fs-4">{{ number_format($ward['surveyed_buildings']) }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="progress mt-2" style="height: 8px;">
+                                            <div class="progress-bar bg-info"
+                                                 style="width: {{ $buildingProgress }}%"
+                                                 role="progressbar"
+                                                 aria-valuenow="{{ $buildingProgress }}"
+                                                 aria-valuemin="0"
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Assessments Section -->
+                                    <div class="info-section mb-3">
+                                        <h6 class="fw-bold mb-2">
+                                            <i class="fas fa-clipboard-list me-2" style="color:#FFC107;"></i>
+                                            Assessments
+                                        </h6>
+                                        <div class="info-item text-center p-2 bg-light rounded">
+                                            <small class="text-muted d-block">Surveyed Assessments</small>
+                                            <strong class="fs-3">{{ number_format($ward['surveyed_assessment']) }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shops Section -->
+                                    <div class="info-section mb-3">
+                                        <h6 class="fw-bold mb-2">
+                                            <i class="fas fa-store me-2" style="color:#28a745;"></i>
+                                            Shops Information
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="info-item text-center p-2 bg-light rounded">
+                                                    <small class="text-muted d-block">Total Shops</small>
+                                                    <strong class="fs-5">{{ number_format($ward['shop_count']) }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="info-item text-center p-2 bg-light rounded">
+                                                    <small class="text-muted d-block">Shop Data</small>
+                                                    <strong class="fs-5">{{ number_format($ward['shop_data_count']) }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="info-item text-center p-2 bg-light rounded">
+                                                    <small class="text-muted d-block">In MIS</small>
+                                                    <strong class="fs-5 {{ $ward['shop_data_in_mis_count'] > 0 ? 'text-success' : 'text-danger' }}">
+                                                        {{ number_format($ward['shop_data_in_mis_count']) }}
+                                                    </strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- MIS Status -->
+                                    <div class="info-section">
+                                        <div class="d-flex justify-content-between align-items-center p-2 rounded
+                                                    {{ $ward['shop_data_in_mis_count'] == $ward['shop_data_count'] && $ward['shop_data_count'] > 0 ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10' }}">
+                                            <small class="fw-bold">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                MIS Status:
+                                            </small>
+                                            @php
+                                                $misMatchPercent = $ward['shop_data_count'] > 0
+                                                    ? round(($ward['shop_data_in_mis_count'] / $ward['shop_data_count']) * 100)
+                                                    : 0;
+                                            @endphp
+                                            <span class="badge {{ $misMatchPercent == 100 ? 'bg-success' : 'bg-warning' }}">
+                                                {{ $misMatchPercent }}% Matched
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card Footer -->
+                                <div class="ward-card-footer p-3 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            Last updated: {{ now()->format('d M Y') }}
+                                        </small>
+                                        <a href="{{ route('corporation.ward.details', $ward['ward_no']) }}"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-line"></i> Details
                                         </a>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-5">
-                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                                        No ward data available
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="col-12">
+                            <div class="alert alert-info text-center py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <h5>No ward data available</h5>
+                                <p class="mb-0">No wards found for this corporation.</p>
+                            </div>
+                        </div>
+                        @endforelse
                     </div>
 
-                    <!-- Pagination and Per Page Controls -->
+                    <!-- Pagination -->
+                    @if($wards_pagination->hasPages())
                     <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
                         <div class="mb-2 mb-sm-0">
                             <small class="text-muted">
-                                Showing {{ $wards_pagination->firstItem() ?? 0 }} to {{ $wards_pagination->lastItem() ?? 0 }} of {{ $wards_pagination->total() ?? 0 }} entries
+                                Showing {{ $wards_pagination->firstItem() ?? 0 }} to {{ $wards_pagination->lastItem() ?? 0 }} of {{ $wards_pagination->total() ?? 0 }} wards
                             </small>
                         </div>
                         <div>
                             {{ $wards_pagination->appends(request()->query())->links() }}
                         </div>
                     </div>
-
-                    <!-- Per Page Selector -->
-                    <div class="mt-3 d-flex align-items-center">
-                        <label class="text-muted me-2 mb-0">Show per page:</label>
-                        <select id="perPageSelect" class="form-select form-select-sm d-inline-block w-auto">
-                            <option value="15" {{ request()->get('per_page', 15) == 15 ? 'selected' : '' }}>15</option>
-                            <option value="25" {{ request()->get('per_page', 15) == 25 ? 'selected' : '' }}>25</option>
-                            <option value="50" {{ request()->get('per_page', 15) == 50 ? 'selected' : '' }}>50</option>
-                            <option value="100" {{ request()->get('per_page', 15) == 100 ? 'selected' : '' }}>100</option>
-                        </select>
-
-                        <!-- Export Buttons -->
-                        <div class="ms-auto">
-                            <button class="btn btn-sm btn-outline-success me-2" id="exportExcelBtn">
-                                <i class="fas fa-file-excel"></i> Export
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" id="exportPdfBtn">
-                                <i class="fas fa-file-pdf"></i> PDF
-                            </button>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -316,237 +353,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
-    // Get data from Laravel
-    const wardsData = @json($wards);
-    const totalBuildings = {{ $total_building }};
-    const totalSurveyedBuildings = {{ $total_surveyed_building }};
-    const totalSurveyedAssessment = {{ $total_surveyed_assessment }};
-    const totalShopDataInMis = {{ $total_shop_data_in_mis }};
-    const totalShopDataNotInMis = {{ $total_shop_data_not_in_mis }};
-    const total_mis = {{ $total_mis }};
-
-    if (!wardsData || wardsData.length === 0) {
-        // Show message if no data for charts
-        const chartContainers = document.querySelectorAll('.chart-container');
-        if (chartContainers.length > 0 && totalBuildings === 0) {
-            chartContainers.forEach(container => {
-                if (container.querySelector('canvas')) {
-                    container.innerHTML = `<div class="alert alert-info text-center m-0">No data available for charts</div>`;
-                }
-            });
-        }
-        return;
-    }
-
-    // Prepare data for charts
-    const labels = wardsData.map(w => w.ward_no);
-    const buildingsData = wardsData.map(w => w.total_buildings);
-    const surveyedData = wardsData.map(w => w.surveyed_buildings);
-    const assessmentsData = wardsData.map(w => w.surveyed_assessment);
-
-    // ========== BAR CHART: Buildings vs Surveyed ==========
-    const barCtx = document.getElementById('buildingChart');
-    if (barCtx) {
-        new Chart(barCtx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Total Buildings',
-                        data: buildingsData,
-                        backgroundColor: '#102C57',
-                        borderRadius: 6
-                    },
-                    {
-                        label: 'Surveyed Buildings',
-                        data: surveyedData,
-                        backgroundColor: '#1679AB',
-                        borderRadius: 6
-                    },
-                    {
-                        label: 'Surveyed Assessments',
-                        data: assessmentsData,
-                        backgroundColor: '#FFC107',
-                        borderRadius: 6
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Count'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ========== PIE CHART: Survey Coverage ==========
-    const notSurveyed = totalBuildings - totalSurveyedBuildings;
-    const pieCtx = document.getElementById('coveragePieChart');
-    if (pieCtx && totalBuildings > 0) {
-        new Chart(pieCtx.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: ['Surveyed Buildings', 'Not Surveyed'],
-                datasets: [{
-                    data: [totalSurveyedBuildings, notSurveyed],
-                    backgroundColor: ['#28a745', '#dc3545'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = totalBuildings;
-                                const value = context.raw;
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ========== HORIZONTAL BAR: Shop Data Status ==========
-    const shopCtx = document.getElementById('shopChart');
-    if (shopCtx) {
-        new Chart(shopCtx.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Shop Data in MIS', 'Shop Data Not in MIS'],
-                datasets: [{
-                    label: 'Count',
-                    data: [totalShopDataInMis, totalShopDataNotInMis],
-                    backgroundColor: ['#28a745', '#dc3545'],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Records'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: ${context.raw.toLocaleString()}`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ========== DOUGHNUT CHART: Assessment Progress ==========
-    const remainingAssessment = total_mis > totalSurveyedAssessment
-        ? total_mis - totalSurveyedAssessment
-        : 0;
-    const doughnutCtx = document.getElementById('assessmentDoughnutChart');
-    if (doughnutCtx && total_mis > 0) {
-        new Chart(doughnutCtx.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Surveyed Assessments', 'Pending Assessments'],
-                datasets: [{
-                    data: [totalSurveyedAssessment, remainingAssessment],
-                    backgroundColor: ['#17a2b8', '#6c757d'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = total_mis;
-                                const value = context.raw;
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ========== PAGINATION AND FILTER CONTROLS ==========
-
-    // Per page selector functionality
-    const perPageSelect = document.getElementById('perPageSelect');
-    if (perPageSelect) {
-        perPageSelect.addEventListener('change', function() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('per_page', this.value);
-            url.searchParams.set('page', 1);
-            window.location.href = url.toString();
-        });
-    }
 
     // Search functionality
     const searchInput = document.getElementById('wardSearch');
@@ -567,47 +375,56 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Sort functionality
-    const sortableHeaders = document.querySelectorAll('.sortable');
-    sortableHeaders.forEach(header => {
-        header.style.cursor = 'pointer';
-        header.addEventListener('click', function() {
-            const sortField = this.getAttribute('data-sort');
+    // Zone filter functionality
+    const zoneFilter = document.getElementById('zoneFilter');
+    if (zoneFilter) {
+        zoneFilter.addEventListener('change', function() {
             const url = new URL(window.location.href);
-            const currentSort = url.searchParams.get('sort');
-            const currentDirection = url.searchParams.get('direction');
-
-            let newDirection = 'asc';
-            if (currentSort === sortField && currentDirection === 'asc') {
-                newDirection = 'desc';
+            if (this.value) {
+                url.searchParams.set('zone', this.value);
+            } else {
+                url.searchParams.delete('zone');
             }
-
-            url.searchParams.set('sort', sortField);
-            url.searchParams.set('direction', newDirection);
             url.searchParams.set('page', 1);
             window.location.href = url.toString();
         });
-    });
+    }
 
-    // Export to Excel functionality
-    const exportExcelBtn = document.getElementById('exportExcelBtn');
-    if (exportExcelBtn) {
-        exportExcelBtn.addEventListener('click', function() {
+    // Per page selector
+    const perPageSelect = document.getElementById('perPageSelect');
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', this.value);
+            url.searchParams.set('page', 1);
+            window.location.href = url.toString();
+        });
+    }
+
+    // Export data functionality
+    const exportBtn = document.getElementById('exportDataBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
             const url = new URL(window.location.href);
             url.searchParams.set('export', 'excel');
             window.location.href = url.toString();
         });
     }
 
-    // Export to PDF functionality
-    const exportPdfBtn = document.getElementById('exportPdfBtn');
-    if (exportPdfBtn) {
-        exportPdfBtn.addEventListener('click', function() {
-            const url = new URL(window.location.href);
-            url.searchParams.set('export', 'pdf');
-            window.location.href = url.toString();
-        });
-    }
+    // Add animation to cards on load
+    const cards = document.querySelectorAll('.ward-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.5s ease';
+
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        }, 0);
+    });
 
 });
 </script>
@@ -644,23 +461,63 @@ document.addEventListener("DOMContentLoaded", function () {
     color: #1679AB;
 }
 
-.chart-container {
-    position: relative;
-    width: 100%;
-    height: 320px;
+/* Ward Card Styles */
+.ward-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    opacity: 0;
 }
 
-.table th {
-    background: #102C57;
-    color: #fff;
-    border: none;
-    font-weight: 600;
+.ward-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
 }
 
-.table td {
-    vertical-align: middle;
+.ward-card-header {
+    color: white;
 }
 
+.ward-card-body {
+    background: white;
+}
+
+.ward-card-footer {
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.info-section {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding-bottom: 10px;
+}
+
+.info-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-item {
+    transition: all 0.2s ease;
+}
+
+.info-item:hover {
+    transform: scale(1.02);
+    background: #e9ecef !important;
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Badge Styles */
 .badge {
     padding: 6px 12px;
     font-size: 12px;
@@ -668,16 +525,34 @@ document.addEventListener("DOMContentLoaded", function () {
     border-radius: 20px;
 }
 
+/* Button Styles */
 .btn-sm {
     border-radius: 8px;
     padding: 5px 12px;
 }
 
-h3, h5 {
-    letter-spacing: -0.3px;
+.btn-outline-primary:hover {
+    background: #1679AB;
+    border-color: #1679AB;
 }
 
-/* Pagination Styling */
+/* Form Controls */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #1679AB;
+    box-shadow: 0 0 0 0.2rem rgba(22,121,171,0.25);
+}
+
+.input-group-text {
+    border-radius: 10px 0 0 10px;
+}
+
+/* Pagination Styles */
 .pagination {
     margin-bottom: 0;
 }
@@ -686,6 +561,8 @@ h3, h5 {
     color: #102C57;
     border-radius: 8px;
     margin: 0 2px;
+    border: none;
+    padding: 8px 14px;
 }
 
 .page-item.active .page-link {
@@ -696,47 +573,63 @@ h3, h5 {
 
 .page-link:hover {
     color: #1679AB;
-}
-
-/* Sortable headers */
-.sortable {
-    position: relative;
-    user-select: none;
-}
-
-.sortable:hover {
-    background-color: rgba(255,255,255,0.1);
+    background-color: #f8f9fa;
 }
 
 /* Responsive Design */
-@media(max-width:768px){
+@media(max-width: 1200px) {
+    .ward-card-header h5 {
+        font-size: 1.1rem;
+    }
+
+    .info-item strong {
+        font-size: 1.2rem;
+    }
+}
+
+@media(max-width: 768px) {
     .dashboard-content-area {
         padding: 15px;
     }
-    .chart-container {
-        height: 250px;
-    }
+
     .stat-card {
         margin-bottom: 15px;
     }
-    .table-responsive {
-        font-size: 12px;
+
+    .ward-card {
+        margin-bottom: 15px;
     }
+
+    .info-item strong {
+        font-size: 1rem;
+    }
+
     .btn-sm {
-        padding: 3px 8px;
+        padding: 4px 10px;
         font-size: 11px;
     }
+
     .badge {
-        padding: 4px 8px;
         font-size: 10px;
     }
 }
 
-/* Loading animation */
-@keyframes fadeIn {
+@media(max-width: 576px) {
+    .ward-card-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .ward-card-header .btn {
+        width: 100%;
+    }
+}
+
+/* Loading Animation */
+@keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(30px);
     }
     to {
         opacity: 1;
@@ -744,15 +637,12 @@ h3, h5 {
     }
 }
 
-.animate__animated {
+.animate__fadeInUp {
+    animation-name: fadeInUp;
     animation-duration: 0.6s;
 }
 
-.animate__fadeInUp {
-    animation-name: fadeIn;
-}
-
-/* Custom scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -770,6 +660,42 @@ h3, h5 {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #102C57;
+}
+
+/* Hover Effects */
+.ward-card .btn {
+    transition: all 0.2s ease;
+}
+
+.ward-card .btn:hover {
+    transform: translateX(3px);
+}
+
+/* Statistics Card Icons */
+.stat-icon i {
+    font-size: 28px;
+}
+
+/* Progress Bar Colors */
+.progress-bar.bg-info {
+    background-color: #1679AB !important;
+}
+
+/* Text Colors */
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-warning {
+    color: #ffc107 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-primary {
+    color: #1679AB !important;
 }
 </style>
 @endpush
