@@ -36,165 +36,165 @@
             font-size: 24px;
         }
 
-       /* FLOATING BUTTON */
-#layerToggleBtn {
-    position: absolute;
-    top: 130px;
-    right: 20px;
-    width: 55px;
-    height: 55px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    border-radius: 16px;
-    z-index: 1200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 22px;
-    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-    transition: all 0.3s ease;
-}
+        /* FLOATING BUTTON */
+        #layerToggleBtn {
+            position: absolute;
+            top: 130px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 22px;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+        }
 
-#layerToggleBtn:hover {
-    transform: scale(1.08);
-}
+        #layerToggleBtn:hover {
+            transform: scale(1.08);
+        }
 
-/* PANEL */
-.layer-switcher {
-    position: absolute;
-    top: 125px;
-    right: 90px;
-    z-index: 1100;
-    width: 260px;
+        /* PANEL */
+        .layer-switcher {
+            position: absolute;
+            top: 125px;
+            right: 90px;
+            z-index: 1100;
+            width: 260px;
 
-    background: rgba(255, 255, 255, 0.97);
-    backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
 
-    border-radius: 20px;
-    padding: 18px;
+            border-radius: 20px;
+            padding: 18px;
 
-    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
 
-    border: 1px solid rgba(255,255,255,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
 
-    transition: all 0.35s ease;
-}
+            transition: all 0.35s ease;
+        }
 
-/* CLOSED STATE */
-.layer-switcher.closed {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(30px) scale(0.95);
-}
+        /* CLOSED STATE */
+        .layer-switcher.closed {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px) scale(0.95);
+        }
 
-/* HEADER */
-.layer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-    font-size: 18px;
-    font-weight: 700;
-    color: #0f172a;
-}
+        /* HEADER */
+        .layer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
 
-.layer-header div {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+        .layer-header div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-.layer-header i {
-    color: #2563eb;
-}
+        .layer-header i {
+            color: #2563eb;
+        }
 
-/* CLOSE BUTTON */
-#closeLayerPanel {
-    border: none;
-    background: #eff6ff;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    cursor: pointer;
-    color: #1e40af;
-    transition: 0.3s;
-}
+        /* CLOSE BUTTON */
+        #closeLayerPanel {
+            border: none;
+            background: #eff6ff;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #1e40af;
+            transition: 0.3s;
+        }
 
-#closeLayerPanel:hover {
-    background: #dbeafe;
-    transform: rotate(90deg);
-}
+        #closeLayerPanel:hover {
+            background: #dbeafe;
+            transform: rotate(90deg);
+        }
 
-/* ITEMS */
-.layer-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+        /* ITEMS */
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
 
-    padding: 11px 12px;
+            padding: 11px 12px;
 
-    border-radius: 12px;
-    cursor: pointer;
+            border-radius: 12px;
+            cursor: pointer;
 
-    transition: all 0.25s ease;
+            transition: all 0.25s ease;
 
-    margin-bottom: 8px;
+            margin-bottom: 8px;
 
-    font-weight: 500;
-}
+            font-weight: 500;
+        }
 
-.layer-item:hover {
-    background: #eff6ff;
-    transform: translateX(4px);
-}
+        .layer-item:hover {
+            background: #eff6ff;
+            transform: translateX(4px);
+        }
 
-.layer-item input {
-    display: none;
-}
+        .layer-item input {
+            display: none;
+        }
 
-/* CHECKBOX */
-.checkmark {
-    width: 20px;
-    height: 20px;
+        /* CHECKBOX */
+        .checkmark {
+            width: 20px;
+            height: 20px;
 
-    border-radius: 6px;
-    border: 2px solid #2563eb;
+            border-radius: 6px;
+            border: 2px solid #2563eb;
 
-    position: relative;
+            position: relative;
 
-    transition: 0.3s;
-}
+            transition: 0.3s;
+        }
 
-.layer-item input:checked + .checkmark {
-    background: #2563eb;
-}
+        .layer-item input:checked+.checkmark {
+            background: #2563eb;
+        }
 
-.layer-item input:checked + .checkmark::after {
-    content: "✓";
-    position: absolute;
-    color: white;
-    font-size: 13px;
-    top: -1px;
-    left: 3px;
-}
+        .layer-item input:checked+.checkmark::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 13px;
+            top: -1px;
+            left: 3px;
+        }
 
-/* MOBILE */
-@media(max-width:768px) {
+        /* MOBILE */
+        @media(max-width:768px) {
 
-    #layerToggleBtn {
-        top: 95px;
-        right: 12px;
-        width: 50px;
-        height: 50px;
-    }
+            #layerToggleBtn {
+                top: 95px;
+                right: 12px;
+                width: 50px;
+                height: 50px;
+            }
 
-    .layer-switcher {
-        top: 90px;
-        right: 70px;
-        width: 220px;
-    }
-}
+            .layer-switcher {
+                top: 90px;
+                right: 70px;
+                width: 220px;
+            }
+        }
     </style>
 @endsection
 
@@ -577,7 +577,15 @@
                     zoom: 17
                 })
             });
+            // ================= PANEL TOGGLE ================= //
 
+            $('#layerToggleBtn').click(function() {
+                $('#layerSwitcher').toggleClass('closed');
+            });
+
+            $('#closeLayerPanel').click(function() {
+                $('#layerSwitcher').addClass('closed');
+            });
             $('#osmToggle').change(function() {
                 osmLayer.setVisible($(this).is(':checked'));
             });
