@@ -133,17 +133,34 @@
                                 Ward-wise Detailed Information
                             </h4>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                            <input type="text" class="form-control" id="filterward" name="filterward"
-                                placeholder="ward">
-                            <input type="text" class="form-control"  name="filterzone" id="filterzone">
-                            <input
-    type="number"
-    id="filterBuildingCoverage"
-    class="form-control"
-    placeholder="Enter Building Coverage %">
+
+                        <!-- Filter Section - Improved styling -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Ward Number:</label>
+                                <input type="text" class="form-control" id="filterward" name="filterward"
+                                    placeholder="Enter ward number...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Zone:</label>
+                                <input type="text" class="form-control" id="filterzone" name="filterzone"
+                                    placeholder="Enter zone name...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Building Coverage (%):</label>
+                                <input type="number" id="filterBuildingCoverage" class="form-control"
+                                    placeholder="Enter coverage % (e.g., 75)">
+                                <small class="text-muted">Shows wards within ±3% of entered value</small>
+                            </div>
                         </div>
 
+                        <!-- Results Counter -->
+                        <div class="mb-3">
+                            <span class="badge bg-primary p-2">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Showing <span id="resultCount">0</span> wards
+                            </span>
+                        </div>
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
@@ -179,25 +196,28 @@
         $(document).ready(function() {
             const wards = @json($wards);
             const $wardcontainer = $("#wardsContainer");
-            renderWards(wards);
 
-            function renderWards(wards) {
+            // Initial render
+            renderWards(wards);
+            updateResultCount(wards.length);
+
+            function renderWards(wardsArray) {
                 $wardcontainer.empty();
 
-                if (wards.length === 0) {
+                if (wardsArray.length === 0) {
                     $wardcontainer.append(`
                     <div class="col-12">
                         <div class="alert alert-info text-center py-5">
                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                             <h5>No ward data available</h5>
-                            <p class="mb-0">No wards found for this corporation.</p>
+                            <p class="mb-0">No wards match your filter criteria.</p>
                         </div>
                     </div>
                 `);
                     return;
                 }
 
-                wards.forEach(function(ward) {
+                wardsArray.forEach(function(ward) {
                     let buildingProgress = ward.total_buildings > 0 ?
                         ((ward.surveyed_buildings / ward.total_buildings) * 100).toFixed(2) :
                         0;
@@ -211,8 +231,9 @@
 
                     let card = `
                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 ward-card-item"
-                        data-zone="${ward.zone.toLowerCase()}"
-                        data-ward="${ward.ward_no}">
+                        data-zone="${(ward.zone || '').toLowerCase()}"
+                        data-ward="${ward.ward_no}"
+                        data-building-coverage="${buildingProgress}">
 
                         <div class="ward-card h-100">
 
@@ -227,7 +248,7 @@
 
                                     <small class="text-white-50">
                                         <i class="fas fa-map-marker-alt"></i>
-                                        ${ward.zone} Zone
+                                        ${ward.zone || 'N/A'} Zone
                                     </small>
                                 </div>
 
@@ -261,14 +282,14 @@
                                         <div class="col-6">
                                             <div class="info-item text-center p-2 bg-light rounded">
                                                 <small class="text-muted d-block">Total</small>
-                                                <strong class="fs-4">${ward.total_buildings}</strong>
+                                                <strong class="fs-4">${ward.total_buildings || 0}</strong>
                                             </div>
                                         </div>
 
                                         <div class="col-6">
                                             <div class="info-item text-center p-2 bg-light rounded">
                                                 <small class="text-muted d-block">Surveyed</small>
-                                                <strong class="fs-4">${ward.surveyed_buildings}</strong>
+                                                <strong class="fs-4">${ward.surveyed_buildings || 0}</strong>
                                             </div>
                                         </div>
 
@@ -296,7 +317,7 @@
                                         </small>
 
                                         <strong class="fs-3">
-                                            ${ward.surveyed_assessment}
+                                            ${ward.surveyed_assessment || 0}
                                         </strong>
                                     </div>
 
@@ -315,14 +336,14 @@
                                         <div class="col-4">
                                             <div class="info-item text-center p-2 bg-light rounded">
                                                 <small class="text-muted d-block">Total Shops</small>
-                                                <strong class="fs-5">${ward.shop_count}</strong>
+                                                <strong class="fs-5">${ward.shop_count || 0}</strong>
                                             </div>
                                         </div>
 
                                         <div class="col-4">
                                             <div class="info-item text-center p-2 bg-light rounded">
                                                 <small class="text-muted d-block">Shop Data</small>
-                                                <strong class="fs-5">${ward.shop_data_count}</strong>
+                                                <strong class="fs-5">${ward.shop_data_count || 0}</strong>
                                             </div>
                                         </div>
 
@@ -330,7 +351,7 @@
                                             <div class="info-item text-center p-2 bg-light rounded">
                                                 <small class="text-muted d-block">In MIS</small>
                                                 <strong class="fs-5 ${ward.shop_data_in_mis_count > 0 ? 'text-success' : 'text-danger'}">
-                                                    ${ward.shop_data_in_mis_count}
+                                                    ${ward.shop_data_in_mis_count || 0}
                                                 </strong>
                                             </div>
                                         </div>
@@ -386,60 +407,87 @@
                 `;
 
                     $wardcontainer.append(card);
-
-                    // Add animation to cards after they're added
-                    setTimeout(() => {
-                        $('.ward-card').css('opacity', '1');
-                    }, 100);
                 });
+
+                // Add animation trigger
+                $('.ward-card-item').each(function(index) {
+                    $(this).css('animation-delay', (index * 0.05) + 's');
+                });
+            }
+
+            function updateResultCount(count) {
+                $("#resultCount").text(count);
             }
 
             function applyFilters() {
-
-                var filterward = $("#filterward").val().toLowerCase();
-                var filterzone = $("#filterzone").val().toLowerCase();
-
-                // Get building coverage input
-                var filterBuildingCoverage = parseFloat($("#filterBuildingCoverage").val());
+                var filterward = $("#filterward").val().toLowerCase().trim();
+                var filterzone = $("#filterzone").val().toLowerCase().trim();
+                var filterBuildingCoverage = $("#filterBuildingCoverage").val();
 
                 var filteredWards = wards.filter(function(ward) {
-
                     // Calculate building coverage %
-                    var buildingCoverage =
-                        ((ward.surveyed_buildings / ward.total_buildings) * 100) ?? 0;
+                    var buildingCoverage = ward.total_buildings > 0 ?
+                        (ward.surveyed_buildings / ward.total_buildings) * 100 : 0;
 
-                    // Ward filter
-                    var wardMatch = ward.ward_no
-                        .toString()
-                        .toLowerCase()
-                        .includes(filterward);
+                    // Ward filter - if empty, match all
+                    var wardMatch = true;
+                    if (filterward !== "") {
+                        wardMatch = ward.ward_no
+                            .toString()
+                            .toLowerCase()
+                            .includes(filterward);
+                    }
 
-                    // Zone filter
-                    var zoneMatch = ward.zone
-                        .toString()
-                        .toLowerCase()
-                        .includes(filterzone);
+                    // Zone filter - if empty, match all
+                    var zoneMatch = true;
+                    if (filterzone !== "") {
+                        zoneMatch = (ward.zone || '')
+                            .toString()
+                            .toLowerCase()
+                            .includes(filterzone);
+                    }
 
+                    // Building coverage filter - if empty, match all
                     var buildingCoverageMatch = true;
-                    if (!isNaN(filterBuildingCoverage)) {
-
-                        buildingCoverageMatch =
-                            buildingCoverage >= (filterBuildingCoverage - 3) &&
-                            buildingCoverage <= (filterBuildingCoverage + 3);
+                    if (filterBuildingCoverage !== "" && !isNaN(parseFloat(filterBuildingCoverage))) {
+                        var targetCoverage = parseFloat(filterBuildingCoverage);
+                        buildingCoverageMatch = buildingCoverage >= (targetCoverage - 3) &&
+                                              buildingCoverage <= (targetCoverage + 3);
                     }
 
                     return wardMatch && zoneMatch && buildingCoverageMatch;
-
                 });
 
                 renderWards(filteredWards);
+                updateResultCount(filteredWards.length);
             }
 
-            $("#filterward").on("keyup", applyFilters);
-            $("#filterzone").on("keyup", applyFilters);
-$("#filterBuildingCoverage").on("keyup", applyFilters);
+            // Debounce function to improve performance
+            function debounce(func, delay) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            }
 
+            // Apply filters with debounce for better performance
+            const debouncedApplyFilters = debounce(applyFilters, 300);
 
+            // Event listeners
+            $("#filterward").on("keyup", debouncedApplyFilters);
+            $("#filterzone").on("keyup", debouncedApplyFilters);
+            $("#filterBuildingCoverage").on("keyup", debouncedApplyFilters);
+
+            // Optional: Add clear filters button functionality
+            $(".clear-filters").on("click", function() {
+                $("#filterward").val('');
+                $("#filterzone").val('');
+                $("#filterBuildingCoverage").val('');
+                applyFilters();
+            });
         });
     </script>
 
@@ -475,7 +523,21 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
             color: #1679AB;
         }
 
-        /* Ward Card Styles - FIXED */
+        /* Form Controls */
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #1679AB;
+            box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
+        }
+
+        /* Ward Card Styles */
         .ward-card {
             background: white;
             border-radius: 15px;
@@ -483,9 +545,7 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             opacity: 1;
-            /* Changed from 0 to 1 */
             visibility: visible;
-            /* Added for visibility */
         }
 
         .ward-card:hover {
@@ -553,24 +613,6 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
             border-color: #1679AB;
         }
 
-        /* Form Controls */
-        .form-control,
-        .form-select {
-            border-radius: 10px;
-            border: 1px solid #dee2e6;
-            padding: 8px 12px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #1679AB;
-            box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
-        }
-
-        .input-group-text {
-            border-radius: 10px 0 0 10px;
-        }
-
         /* Pagination Styles */
         .pagination {
             margin-bottom: 0;
@@ -593,6 +635,23 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
         .page-link:hover {
             color: #1679AB;
             background-color: #f8f9fa;
+        }
+
+        /* Card Entry Animation */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ward-card-item {
+            animation: cardFadeIn 0.5s ease forwards;
+            opacity: 0;
         }
 
         /* Responsive Design */
@@ -650,7 +709,6 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
                 opacity: 0;
                 transform: translateY(30px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -660,23 +718,6 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
         .animate__fadeInUp {
             animation-name: fadeInUp;
             animation-duration: 0.6s;
-        }
-
-        /* Card Entry Animation */
-        @keyframes cardFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .ward-card-item {
-            animation: cardFadeIn 0.5s ease forwards;
         }
 
         /* Custom Scrollbar */
@@ -733,6 +774,11 @@ $("#filterBuildingCoverage").on("keyup", applyFilters);
 
         .text-primary {
             color: #1679AB !important;
+        }
+
+        /* Label styling */
+        label {
+            font-size: 0.9rem;
         }
     </style>
 @endpush
