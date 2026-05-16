@@ -133,7 +133,12 @@
                                 Ward-wise Detailed Information
                             </h4>
                         </div>
-                        <input type="text" class="form-conntrol" id="filterward" name="filterward">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                            <input type="text" class="form-conntrol" id="filterward" name="filterward"
+                                placeholder="ward">
+                            <input type="text" name="filterzone" id="filterzone">
+                        </div>
+
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
@@ -387,12 +392,23 @@
             $("#filterward").on("keyup", function() {
 
                 var filterward = $(this).val().toLowerCase();
+                var filterzone = $("#filterzone").val().toLowerCase();
 
                 var filteredWards = wards.filter(function(ward) {
 
                     return ward.ward_no.toString().toLowerCase().includes(filterward);
 
                 });
+
+                if (filterzone != "") {
+
+                    filteredWards = filteredWards.filter(function(ward) {
+
+                        return ward.zone.toString().toLowerCase().includes(filterzone);
+
+                    });
+
+                }
 
                 renderWards(filteredWards);
 
