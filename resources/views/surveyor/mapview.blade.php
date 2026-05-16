@@ -713,7 +713,7 @@
             $("#searchGisidBtn").on('click', function() {
                 var searchvalue = $("#searchInput").val();
 
-                const findoplygon = polygons.find(function(polygon) {
+                var findoplygon = polygons.find(function(polygon) {
                     return polygon.gisid == searchvalue;
                 });
                 console.log(findpolygon);
