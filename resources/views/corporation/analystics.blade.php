@@ -172,46 +172,234 @@
 @endsection
 
 @push('scripts')
-    <script>
-        $(document).ready(function() {
+   <script>
+    $(document).ready(function () {
 
-            const corporation = @json($corporation);
-            const ward_count = @json($ward_count);
-            const total_building = @json($total_building);
-            const total_surveyed_building = @json($total_surveyed_building);
-            const total_surveyed_assessment = @json($total_surveyed_assessment);
-            const total_mis = @json($total_mis);
-            const total_shops = @json($total_shops);
-            const total_shop_data_count = @json($total_shop_data_count);
-            const total_shop_data_in_mis = @json($total_shop_data_in_mis);
-            const total_shop_data_not_in_mis = @json($total_shop_data_not_in_mis);
-            const survey_percentage = @json($survey_percentage);
-            const wards = @json($wards);
-            const wards_per_zones = @json($wards_per_zones);
+        const wards = @json($wards);
 
-            const $wardcontainer = $("#wardsContainer");
+        const $wardcontainer = $("#wardsContainer");
 
-            renderWards(wards);
+        renderWards(wards);
 
-            function renderWards(wards) {
+        function renderWards(wards) {
 
-                $wardcontainer.empty();
+            $wardcontainer.empty();
 
-                wards.forEach(function(ward) {
+            if (wards.length === 0) {
 
-                    let card = `
-                    <div class="card p-3 mb-2">
-                        <h2>${ward.id}</h2>
+                $wardcontainer.append(`
+                    <div class="col-12">
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                            <h5>No ward data available</h5>
+                            <p class="mb-0">No wards found for this corporation.</p>
+                        </div>
+                    </div>
+                `);
+
+                return;
+            }
+
+            wards.forEach(function (ward) {
+
+                let buildingProgress = ward.total_buildings > 0
+                    ? ((ward.surveyed_buildings / ward.total_buildings) * 100).toFixed(2)
+                    : 0;
+
+                let progressClass =
+                    buildingProgress >= 80
+                        ? 'bg-success'
+                        : buildingProgress >= 50
+                        ? 'bg-warning'
+                        : 'bg-danger';
+
+                let misMatchPercent = ward.shop_data_count > 0
+                    ? ((ward.shop_data_in_mis_count / ward.shop_data_count) * 100).toFixed(2)
+                    : 0;
+
+                let card = `
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 ward-card-item"
+                        data-zone="${ward.zone.toLowerCase()}"
+                        data-ward="${ward.ward_no}">
+
+                        <div class="ward-card h-100">
+
+                            <!-- Header -->
+                            <div class="ward-card-header d-flex justify-content-between align-items-start p-3"
+                                style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
+
+                                <div>
+                                    <h5 class="mb-0 text-white fw-bold">
+                                        Ward ${ward.ward_no}
+                                    </h5>
+
+                                    <small class="text-white-50">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        ${ward.zone} Zone
+                                    </small>
+                                </div>
+
+                                <a href="/corporation/ward/map/${ward.ward_no}"
+                                    class="btn btn-sm btn-light">
+
+                                    <i class="fas fa-map-marked-alt"></i> View Map
+                                </a>
+                            </div>
+
+                            <!-- Body -->
+                            <div class="ward-card-body p-3">
+
+                                <!-- Buildings -->
+                                <div class="info-section mb-3">
+
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                                        <h6 class="mb-0 fw-bold">
+                                            <i class="fas fa-building me-2" style="color:#1679AB;"></i>
+                                            Buildings
+                                        </h6>
+
+                                        <span class="badge ${progressClass}">
+                                            ${buildingProgress}% Complete
+                                        </span>
+                                    </div>
+
+                                    <div class="row g-2">
+
+                                        <div class="col-6">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Total</small>
+                                                <strong class="fs-4">${ward.total_buildings}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-6">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Surveyed</small>
+                                                <strong class="fs-4">${ward.surveyed_buildings}</strong>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="progress mt-2" style="height:8px;">
+                                        <div class="progress-bar bg-info"
+                                            style="width:${buildingProgress}%">
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Assessments -->
+                                <div class="info-section mb-3">
+
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-clipboard-list me-2" style="color:#FFC107;"></i>
+                                        Assessments
+                                    </h6>
+
+                                    <div class="info-item text-center p-2 bg-light rounded">
+                                        <small class="text-muted d-block">
+                                            Surveyed Assessments
+                                        </small>
+
+                                        <strong class="fs-3">
+                                            ${ward.surveyed_assessment}
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <!-- Shops -->
+                                <div class="info-section mb-3">
+
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-store me-2" style="color:#28a745;"></i>
+                                        Shops Information
+                                    </h6>
+
+                                    <div class="row g-2">
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Total Shops</small>
+                                                <strong class="fs-5">${ward.shop_count}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Shop Data</small>
+                                                <strong class="fs-5">${ward.shop_data_count}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">In MIS</small>
+                                                <strong class="fs-5 ${ward.shop_data_in_mis_count > 0 ? 'text-success' : 'text-danger'}">
+                                                    ${ward.shop_data_in_mis_count}
+                                                </strong>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- MIS -->
+                                <div class="info-section">
+
+                                    <div class="d-flex justify-content-between align-items-center p-2 rounded
+                                        ${misMatchPercent == 100 ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10'}">
+
+                                        <small class="fw-bold">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            MIS Status:
+                                        </small>
+
+                                        <span class="badge ${misMatchPercent == 100 ? 'bg-success' : 'bg-warning'}">
+                                            ${misMatchPercent}% Matched
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="ward-card-footer p-3 bg-light">
+
+                                <div class="d-flex justify-content-between align-items-center">
+
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        Last updated: ${new Date().toLocaleDateString()}
+                                    </small>
+
+                                    <a href="/corporation/ward/details/${ward.ward_no}"
+                                        class="btn btn-sm btn-outline-primary">
+
+                                        <i class="fas fa-chart-line"></i> Details
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
                     </div>
                 `;
 
-                    $wardcontainer.append(card);
+                $wardcontainer.append(card);
 
-                });
-            }
+            });
+        }
 
-        });
-    </script>
+    });
+</script>
 
 
     <style>
