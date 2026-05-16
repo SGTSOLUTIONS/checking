@@ -241,9 +241,11 @@
             0% {
                 filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
             }
+
             50% {
                 filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
             }
+
             100% {
                 filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
             }
@@ -252,7 +254,8 @@
         /* MOBILE */
         @media(max-width:768px) {
 
-            #layerToggleBtn, #searchToggleBtn {
+            #layerToggleBtn,
+            #searchToggleBtn {
                 top: 95px;
                 right: 12px;
                 width: 50px;
@@ -299,6 +302,7 @@
 
     <div id="searchLabel" class="search-Lable closed">
         <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name...">
+        <button class="btn btn-primary"> <i class="fas fa-search"></i></button>
     </div>
 
     <!-- Layer Switcher Panel -->
@@ -452,15 +456,25 @@
                 return new ol.style.Style({
                     image: new ol.style.Circle({
                         radius: 8,
-                        fill: new ol.style.Fill({ color: color }),
-                        stroke: new ol.style.Stroke({ color: color, width: 2 })
+                        fill: new ol.style.Fill({
+                            color: color
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 2
+                        })
                     }),
                     text: new ol.style.Text({
                         text: gisid ? String(gisid) : "",
                         scale: 1.3,
                         offsetY: -15,
-                        fill: new ol.style.Fill({ color: "#000" }),
-                        stroke: new ol.style.Stroke({ color: "#fff", width: 3 })
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
                     })
                 });
             }
@@ -487,9 +501,16 @@
                         text: new ol.style.Text({
                             text: sqft + " SQFT",
                             font: "bold 14px Arial",
-                            fill: new ol.style.Fill({ color: "#000000" }),
-                            backgroundFill: new ol.style.Fill({ color: "#ffffff" }),
-                            backgroundStroke: new ol.style.Stroke({ color: "#000000", width: 1 }),
+                            fill: new ol.style.Fill({
+                                color: "#000000"
+                            }),
+                            backgroundFill: new ol.style.Fill({
+                                color: "#ffffff"
+                            }),
+                            backgroundStroke: new ol.style.Stroke({
+                                color: "#000000",
+                                width: 1
+                            }),
                             padding: [4, 6, 4, 6],
                             overflow: true,
                             textAlign: "center",
@@ -497,8 +518,13 @@
                         }),
                         image: new ol.style.Circle({
                             radius: 4,
-                            fill: new ol.style.Fill({ color: "yellow" }),
-                            stroke: new ol.style.Stroke({ color: "#000", width: 1 })
+                            fill: new ol.style.Fill({
+                                color: "yellow"
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            })
                         })
                     })
                 ];
@@ -518,8 +544,13 @@
                         font: "bold 14px Calibri, sans-serif",
                         placement: "line",
                         overflow: true,
-                        fill: new ol.style.Fill({ color: "#000" }),
-                        stroke: new ol.style.Stroke({ color: "#fff", width: 3 })
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
                     })
                 });
             }
@@ -560,7 +591,8 @@
                         return;
                     }
 
-                    if (coords.length === 1 && Array.isArray(coords[0]) && coords[0].length > 0 && Array.isArray(coords[0][0])) {
+                    if (coords.length === 1 && Array.isArray(coords[0]) && coords[0].length > 0 && Array
+                        .isArray(coords[0][0])) {
                         coords = coords[0];
                     }
 
@@ -621,7 +653,9 @@
             // Initialize map
             const map = new ol.Map({
                 target: 'map',
-                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer, pointLayer],
+                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
+                    pointLayer
+                ],
                 view: new ol.View({
                     projection: "EPSG:3857",
                     center: ol.extent.getCenter(imageExtent),
@@ -675,7 +709,6 @@
                     $('#searchInput').focus();
                 }
             });
-
 
 
         });
