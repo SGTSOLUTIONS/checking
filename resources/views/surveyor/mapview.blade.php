@@ -4,7 +4,183 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+/* ==========================================
+   MAP CONTAINER
+========================================== */
 
+#map {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    background: #f5f5f5;
+}
+
+/* ==========================================
+   DESKTOP HEADER
+========================================== */
+
+.desktop-only {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1000;
+
+    background: rgba(255, 255, 255, 0.95);
+
+    padding: 12px 18px;
+
+    border-radius: 12px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    backdrop-filter: blur(5px);
+}
+
+.desktop-only h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #222;
+}
+
+/* ==========================================
+   OPENLAYERS CONTROLS
+========================================== */
+
+.ol-control button {
+    background-color: #ffffff !important;
+    color: #333 !important;
+
+    border-radius: 8px !important;
+
+    border: none !important;
+
+    width: 36px !important;
+    height: 36px !important;
+
+    font-size: 18px !important;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ol-control button:hover {
+    background-color: #f0f0f0 !important;
+}
+
+/* ==========================================
+   ZOOM CONTROL POSITION
+========================================== */
+
+.ol-zoom {
+    top: 80px !important;
+    left: 10px !important;
+}
+
+/* ==========================================
+   ATTRIBUTION
+========================================== */
+
+.ol-attribution {
+    background: rgba(255, 255, 255, 0.9) !important;
+
+    border-radius: 8px;
+
+    padding: 4px 8px;
+}
+
+/* ==========================================
+   POPUP STYLE (OPTIONAL)
+========================================== */
+
+.ol-popup {
+    position: absolute;
+
+    background-color: white;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+    padding: 15px;
+
+    border-radius: 10px;
+
+    border: 1px solid #cccccc;
+
+    bottom: 12px;
+
+    left: -50px;
+
+    min-width: 220px;
+}
+
+.ol-popup:after,
+.ol-popup:before {
+    top: 100%;
+
+    border: solid transparent;
+
+    content: " ";
+
+    height: 0;
+    width: 0;
+
+    position: absolute;
+
+    pointer-events: none;
+}
+
+.ol-popup:after {
+    border-top-color: white;
+
+    border-width: 10px;
+
+    left: 48px;
+
+    margin-left: -10px;
+}
+
+.ol-popup:before {
+    border-top-color: #cccccc;
+
+    border-width: 11px;
+
+    left: 48px;
+
+    margin-left: -11px;
+}
+
+/* ==========================================
+   MOBILE RESPONSIVE
+========================================== */
+
+@media (max-width: 768px) {
+
+    .desktop-only {
+
+        top: 8px;
+        left: 8px;
+        right: 8px;
+
+        padding: 10px 14px;
+    }
+
+    .desktop-only h3 {
+
+        font-size: 16px;
+    }
+
+    .ol-zoom {
+
+        top: 70px !important;
+    }
+
+    .ol-control button {
+
+        width: 32px !important;
+        height: 32px !important;
+
+        font-size: 16px !important;
+    }
+
+}
 @endsection
 
 @section('content')
