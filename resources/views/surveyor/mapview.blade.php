@@ -2,25 +2,29 @@
 @extends('layouts.surveyor-layout')
 @section('css')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             background: #f4f7fb;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
 
         /* MAP */
         #map {
             width: 100%;
-            height: 90vh;
-            border-radius: 18px;
+            height: calc(100vh - 60px);
+            border-radius: 0;
             overflow: hidden;
             border: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
         }
 
-        /* PAGE HEADER */
+        /* PAGE HEADER - Desktop */
         .page-title {
             background: linear-gradient(135deg, #0f172a, #1e293b);
             color: white;
@@ -36,86 +40,68 @@
             font-size: 24px;
         }
 
-        /* FLOATING BUTTON */
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* FLOATING BUTTONS - Desktop */
+        #layerToggleBtn,
+        #searchToggleBtn,
+        #liveToggleBtn,
+        #routeBtn {
+            position: absolute;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 22px;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
         #layerToggleBtn {
-            position: absolute;
             top: 130px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border-radius: 16px;
-            z-index: 1200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 22px;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-            transition: all 0.3s ease;
         }
 
-        #layerToggleBtn:hover {
-            transform: scale(1.08);
-        }
-
-        /* Search Button */
         #searchToggleBtn {
-            position: absolute;
             top: 195px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border-radius: 16px;
-            z-index: 1200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 22px;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-            transition: all 0.3s ease;
         }
 
         #liveToggleBtn {
-            position: absolute;
-            top: 250px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border-radius: 16px;
-            z-index: 1200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 22px;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-            transition: all 0.3s ease;
+            top: 260px;
         }
 
         #routeBtn {
-            position: absolute;
-            top: 300px;
-            right: 20px;
-            width: 55px;
-            height: 55px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border-radius: 16px;
-            z-index: 1200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 22px;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-            transition: all 0.3s ease;
+            top: 325px;
+        }
+
+        #layerToggleBtn:hover,
+        #searchToggleBtn:hover,
+        #liveToggleBtn:hover,
+        #routeBtn:hover {
+            transform: scale(1.08);
         }
 
         #routeBtn.closed {
@@ -123,26 +109,22 @@
             visibility: hidden;
         }
 
-        #searchToggleBtn:hover {
-            transform: scale(1.08);
-        }
-
-        /* Search Label */
+        /* Search Label - Desktop */
         .search-Lable {
             position: absolute;
             top: 195px;
             right: 90px;
             z-index: 1100;
-            width: 260px;
-            background: rgba(255, 255, 255, 0.97);
+            width: 320px;
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(12px);
             border-radius: 20px;
-            padding: 8px 15px;
+            padding: 12px 15px;
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
             border: 1px solid rgba(255, 255, 255, 0.4);
             transition: all 0.35s ease;
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
 
         .search-Lable.closed {
@@ -161,18 +143,28 @@
 
         .search-Lable button {
             border-radius: 12px;
-            padding: 10px 15px;
+            padding: 10px 20px;
             white-space: nowrap;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        /* PANEL */
+        .search-Lable button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Layer Switcher Panel - Desktop */
         .layer-switcher {
             position: absolute;
             top: 125px;
             right: 90px;
             z-index: 1100;
-            width: 260px;
-            background: rgba(255, 255, 255, 0.97);
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 18px;
@@ -181,14 +173,12 @@
             transition: all 0.35s ease;
         }
 
-        /* CLOSED STATE */
         .layer-switcher.closed {
             opacity: 0;
             visibility: hidden;
             transform: translateX(30px) scale(0.95);
         }
 
-        /* HEADER */
         .layer-header {
             display: flex;
             align-items: center;
@@ -209,7 +199,6 @@
             color: #2563eb;
         }
 
-        /* CLOSE BUTTON */
         #closeLayerPanel {
             border: none;
             background: #eff6ff;
@@ -226,7 +215,6 @@
             transform: rotate(90deg);
         }
 
-        /* ITEMS */
         .layer-item {
             display: flex;
             align-items: center;
@@ -248,7 +236,6 @@
             display: none;
         }
 
-        /* CHECKBOX */
         .checkmark {
             width: 20px;
             height: 20px;
@@ -271,90 +258,243 @@
             left: 3px;
         }
 
-        /* SEARCH RESULT HIGHLIGHT */
-        .highlight-feature {
-            animation: pulse 1.5s ease-in-out 3;
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 1300;
+            animation: slideUp 0.3s ease;
+            backdrop-filter: blur(10px);
+            pointer-events: none;
         }
 
-        @keyframes pulse {
-            0% {
-                filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
+        .toast-notification.success {
+            background: rgba(34, 197, 94, 0.95);
+        }
+
+        .toast-notification.error {
+            background: rgba(239, 68, 68, 0.95);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
             }
-            50% {
-                filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
-            }
-            100% {
-                filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
             }
         }
 
-        /* MOBILE */
-        @media(max-width:768px) {
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-header {
+                display: block;
+            }
+
+            #map {
+                height: calc(100vh - 56px);
+            }
+
+            /* Floating buttons - Mobile (vertical arrangement on left side) */
             #layerToggleBtn,
             #searchToggleBtn,
             #liveToggleBtn,
             #routeBtn {
-                top: 95px;
-                right: 12px;
-                width: 50px;
-                height: 50px;
+                right: auto;
+                left: 12px;
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+                border-radius: 14px;
+            }
+
+            #layerToggleBtn {
+                top: 70px;
             }
 
             #searchToggleBtn {
-                top: 155px;
+                top: 128px;
             }
 
             #liveToggleBtn {
-                top: 175px;
+                top: 186px;
             }
 
             #routeBtn {
-                top: 195px;
+                top: 244px;
             }
 
+            /* Panels - Mobile (full width or larger) */
             .layer-switcher {
-                top: 90px;
-                right: 70px;
-                width: 220px;
+                top: 60px;
+                right: 12px;
+                left: 12px;
+                width: auto;
+                max-width: calc(100% - 24px);
+                border-radius: 16px;
+                padding: 15px;
             }
 
             .search-Lable {
-                top: 155px;
-                right: 70px;
-                width: 200px;
+                top: 128px;
+                right: 12px;
+                left: 70px;
+                width: auto;
+                max-width: calc(100% - 90px);
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .search-Lable input {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .search-Lable button {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+
+            .layer-item {
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+
+            .layer-header {
+                font-size: 16px;
+                margin-bottom: 12px;
+            }
+        }
+
+        /* Small Mobile (below 480px) */
+        @media (max-width: 480px) {
+
+            #layerToggleBtn,
+            #searchToggleBtn,
+            #liveToggleBtn,
+            #routeBtn {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+
+            #layerToggleBtn {
+                top: 65px;
+            }
+
+            #searchToggleBtn {
+                top: 117px;
+            }
+
+            #liveToggleBtn {
+                top: 169px;
+            }
+
+            #routeBtn {
+                top: 221px;
+            }
+
+            .search-Lable {
+                left: 64px;
+                padding: 8px 10px;
+            }
+
+            .search-Lable input {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .search-Lable button {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .layer-switcher {
+                padding: 12px;
+            }
+        }
+
+        /* Tablet Landscape */
+        @media (min-width: 769px) and (max-width: 1024px) {
+
+            #layerToggleBtn,
+            #searchToggleBtn,
+            #liveToggleBtn,
+            #routeBtn {
+                width: 50px;
+                height: 50px;
+                right: 15px;
+            }
+
+            .layer-switcher {
+                right: 80px;
+                width: 260px;
+            }
+
+            .search-Lable {
+                right: 80px;
+                width: 300px;
             }
         }
     </style>
 @endsection
 
 @section('content')
-    <div class="container-fluid py-3 desktop-only">
-        <h3 class="fw-bold mb-3">
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <h4>
             <i class="fas fa-map-marked-alt me-2"></i>
-            Ward Map View - Ward {{ $ward->ward_no }}
-        </h3>
+            Ward {{ $ward->ward_no }} Map
+        </h4>
+    </div>
+
+    <!-- Desktop Header -->
+    <div class="container-fluid py-3 desktop-only">
+        <div class="page-title">
+            <h3>
+                <i class="fas fa-map-marked-alt me-2"></i>
+                Ward Map View - Ward {{ $ward->ward_no }}
+            </h3>
+        </div>
     </div>
 
     <div id="map"></div>
 
-    <!-- Floating Toggle Button -->
-    <div id="layerToggleBtn">
+    <!-- Floating Action Buttons -->
+    <div id="layerToggleBtn" title="Toggle Layers">
         <i class="fas fa-layer-group"></i>
     </div>
 
-    <div id="searchToggleBtn">
+    <div id="searchToggleBtn" title="Search">
         <i class="fas fa-search"></i>
     </div>
-    <div id="liveToggleBtn">
-        <i class="fas fa-location"></i>
+
+    <div id="liveToggleBtn" title="My Location">
+        <i class="fas fa-location-dot"></i>
     </div>
-    <div id="routeBtn">
+
+    <div id="routeBtn" title="Get Route">
         <i class="fas fa-route"></i>
     </div>
 
+    <!-- Search Panel -->
     <div id="searchLabel" class="search-Lable closed">
         <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name...">
-        <button class="btn btn-primary" id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
+        <button id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
     </div>
 
     <!-- Layer Switcher Panel -->
@@ -426,6 +566,7 @@
             let polygonDatas = @json($polygonDatas ?? []);
             let ward = @json($ward ?? []);
             let mis = @json($misData ?? []);
+            let selectedgisid = null;
 
             // Routes for AJAX calls
             let routes = {
@@ -439,6 +580,17 @@
                 surveyorModifyFeature: "{{ route('surveyor.modify.feature') }}",
                 deleteFeature: "{{ route('surveyor.delete.feature') }}"
             };
+
+            // Toast notification function
+            function showToast(message, type = 'info') {
+                const toast = $('<div class="toast-notification ' + type + '">' + message + '</div>');
+                $('body').append(toast);
+                setTimeout(() => {
+                    toast.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                }, 3000);
+            }
 
             // Drone image configuration
             let droneImageURL = "{{ asset($ward->drone_image) }}";
@@ -715,13 +867,31 @@
                 })
             });
 
+            // Add touch-friendly interactions for mobile
+            if ('ontouchstart' in window) {
+                map.getInteractions().forEach(interaction => {
+                    if (interaction instanceof ol.interaction.DoubleClickZoom) {
+                        interaction.setActive(false);
+                    }
+                });
+            }
+
             // ================= PANEL TOGGLE ================= //
             $('#layerToggleBtn').click(function() {
                 $('#layerSwitcher').toggleClass('closed');
+                $('#searchLabel').addClass('closed');
             });
 
             $('#closeLayerPanel').click(function() {
                 $('#layerSwitcher').addClass('closed');
+            });
+
+            // Close panels when clicking outside (for mobile)
+            $(document).click(function(event) {
+                if (!$(event.target).closest(
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn').length) {
+                    $('#layerSwitcher, #searchLabel').addClass('closed');
+                }
             });
 
             // Layer visibility toggles
@@ -754,10 +924,16 @@
             });
 
             // Search toggle button
-            $('#searchToggleBtn').click(function() {
+            $('#searchToggleBtn').click(function(e) {
+                e.stopPropagation();
                 $('#searchLabel').toggleClass('closed');
+                $('#layerSwitcher').addClass('closed');
                 if (!$('#searchLabel').hasClass('closed')) {
-                    $('#searchInput').focus();
+                    setTimeout(() => {
+                        $('#searchInput').focus();
+                    }, 100);
+                } else {
+                    selectedgisid = null;
                 }
             });
 
@@ -766,7 +942,7 @@
                 var searchvalue = $("#searchInput").val().trim();
 
                 if (!searchvalue) {
-                    alert("Please enter a GIS ID or Road Name");
+                    showToast("Please enter a GIS ID or Road Name", 'error');
                     return;
                 }
 
@@ -786,116 +962,153 @@
                             padding: [50, 50, 50, 50],
                             maxZoom: 22
                         });
-                    } catch(e) {
+                        selectedgisid = findpolygon.gisid;
+                        showToast("Found GIS ID: " + findpolygon.gisid, 'success');
+                        $('#searchLabel').addClass('closed');
+                    } catch (e) {
                         console.error('Error parsing coordinates:', e);
-                        alert("Error displaying polygon");
+                        showToast("Error displaying polygon", 'error');
                     }
+                } else {
+                    // Search in lines/roads
+                    var findLine = lines.find(function(line) {
+                        return line.gisid == searchvalue || (line.road_name && line.road_name
+                            .toLowerCase().includes(searchvalue.toLowerCase()));
+                    });
+
+                    if (findLine) {
+                        try {
+                            let coords;
+                            if (typeof findLine.coordinates === 'string') {
+                                coords = JSON.parse(findLine.coordinates);
+                            } else {
+                                coords = findLine.coordinates;
+                            }
+
+                            if (coords.length === 1 && Array.isArray(coords[0])) {
+                                coords = coords[0];
+                            }
+
+                            var feature = new ol.Feature({
+                                geometry: new ol.geom.LineString(coords)
+                            });
+                            map.getView().fit(feature.getGeometry().getExtent(), {
+                                duration: 1000,
+                                padding: [50, 50, 50, 50],
+                                maxZoom: 20
+                            });
+                            showToast("Found: " + (findLine.road_name || findLine.gisid), 'success');
+                            $('#searchLabel').addClass('closed');
+                        } catch (e) {
+                            console.error('Error parsing line coordinates:', e);
+                            showToast("Error displaying road", 'error');
+                        }
+                    } else {
+                        showToast("GIS ID or Road Name not found", 'error');
+                    }
+                }
+            });
+
+            // Enter key support for search
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#searchGisidBtn').click();
                 }
             });
 
             // Route button functionality
             $('#routeBtn').click(function() {
-                console.log('Route button clicked - Add routing functionality here');
-                // You can implement routing functionality here
-                alert('Routing feature will be implemented soon');
+                if (selectedgisid) {
+                    showToast("Routing to GIS ID: " + selectedgisid, 'info');
+                    // Implement routing logic here
+                } else {
+                    showToast("Please search for a location first", 'error');
+                }
             });
 
-           let liveMarkerLayer;
-let liveMarker;
-let watchId;
+            // Live location button functionality
+            let currentLocationMarker = null;
 
-$('#liveToggleBtn').click(function () {
+            $('#liveToggleBtn').click(function() {
+                if ("geolocation" in navigator) {
+                    showToast('Fetching your location...', 'info');
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const coords = ol.proj.fromLonLat([lon, lat]);
 
-    // Remove old tracking if already running
-    if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
+                        map.getView().animate({
+                            center: coords,
+                            zoom: 18,
+                            duration: 1000
+                        });
 
-        if (liveMarkerLayer) {
-            map.removeLayer(liveMarkerLayer);
-        }
+                        // Remove existing marker if any
+                        if (currentLocationMarker) {
+                            map.removeLayer(currentLocationMarker);
+                        }
 
-        watchId = null;
-        return;
-    }
-
-    // Marker Layer
-    liveMarkerLayer = new ol.layer.Vector({
-        source: new ol.source.Vector()
-    });
-
-    map.addLayer(liveMarkerLayer);
-
-    // Start live tracking
-    watchId = navigator.geolocation.watchPosition(
-        function (position) {
-
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-
-            const coords = ol.proj.fromLonLat([lon, lat]);
-
-            // First time create marker
-            if (!liveMarker) {
-
-                liveMarker = new ol.Feature({
-                    geometry: new ol.geom.Point(coords)
-                });
-
-                // Animated human-style marker
-                liveMarker.setStyle(
-                    new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({
-                                color: '#007bff'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#ffffff',
-                                width: 4
+                        // Add a permanent marker for current location
+                        currentLocationMarker = new ol.layer.Vector({
+                            source: new ol.source.Vector(),
+                            style: new ol.style.Style({
+                                image: new ol.style.Circle({
+                                    radius: 12,
+                                    fill: new ol.style.Fill({
+                                        color: '#ff4444'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#ffffff',
+                                        width: 3
+                                    })
+                                })
                             })
-                        })
-                    })
-                );
+                        });
 
-                liveMarkerLayer.getSource().addFeature(liveMarker);
+                        const marker = new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        });
 
-            } else {
+                        currentLocationMarker.getSource().addFeature(marker);
+                        map.addLayer(currentLocationMarker);
 
-                // Animate movement
-                liveMarker.getGeometry().setCoordinates(coords);
-            }
+                        showToast('Location found!', 'success');
 
-            // Smooth map move
-            map.getView().animate({
-                center: coords,
-                duration: 1000
+                    }, function(error) {
+                        let message = "Error getting location";
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                message = "Please enable location permissions";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message = "Location information unavailable";
+                                break;
+                            case error.TIMEOUT:
+                                message = "Location request timed out";
+                                break;
+                        }
+                        showToast(message, 'error');
+                    });
+                } else {
+                    showToast("Geolocation is not supported by your browser", 'error');
+                }
             });
-
-        },
-
-        function (error) {
-            alert("Location error: " + error.message);
-        },
-
-        {
-            enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 5000
-        }
-    );
-});
 
             // Keyboard shortcuts
             $(document).keydown(function(e) {
                 // Press 'L' for layer switcher
                 if (e.key === 'l' || e.key === 'L') {
                     $('#layerSwitcher').toggleClass('closed');
+                    $('#searchLabel').addClass('closed');
                 }
                 // Press 'S' for search
                 if (e.key === 's' || e.key === 'S') {
                     $('#searchLabel').toggleClass('closed');
+                    $('#layerSwitcher').addClass('closed');
                     if (!$('#searchLabel').hasClass('closed')) {
-                        $('#searchInput').focus();
+                        setTimeout(() => {
+                            $('#searchInput').focus();
+                        }, 100);
                     }
                 }
                 // Press 'ESC' to close panels
@@ -906,9 +1119,22 @@ $('#liveToggleBtn').click(function () {
 
             // Add scale line control
             const scaleLine = new ol.control.ScaleLine({
-                units: 'metric'
+                units: 'metric',
+                target: document.createElement('div')
             });
             map.addControl(scaleLine);
+
+            // Handle map touch events for better mobile experience
+            if ('ontouchstart' in window) {
+                map.on('click', function() {
+                    // Close panels on map click for mobile
+                    if (window.innerWidth <= 768) {
+                        $('#layerSwitcher, #searchLabel').addClass('closed');
+                    }
+                });
+            }
+
+            showToast('Map loaded successfully', 'success');
         });
     </script>
 @endsection
