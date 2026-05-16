@@ -36,90 +36,165 @@
             font-size: 24px;
         }
 
-        /* LAYER SWITCHER */
-        .layer-switcher {
-            position: absolute;
-            top: 120px;
-            right: 20px;
-            z-index: 1000;
-            width: 240px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 18px;
-            padding: 18px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+       /* FLOATING BUTTON */
+#layerToggleBtn {
+    position: absolute;
+    top: 130px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border-radius: 16px;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+    transition: all 0.3s ease;
+}
 
-        .layer-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 18px;
-            color: #0f172a;
-        }
+#layerToggleBtn:hover {
+    transform: scale(1.08);
+}
 
-        .layer-header i {
-            color: #2563eb;
-        }
+/* PANEL */
+.layer-switcher {
+    position: absolute;
+    top: 125px;
+    right: 90px;
+    z-index: 1100;
+    width: 260px;
 
-        .layer-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(12px);
 
-        .layer-item:hover {
-            background: #eff6ff;
-            transform: translateX(4px);
-        }
+    border-radius: 20px;
+    padding: 18px;
 
-        .layer-item input {
-            display: none;
-        }
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
 
-        .checkmark {
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
-            border: 2px solid #2563eb;
-            position: relative;
-            transition: 0.3s;
-        }
+    border: 1px solid rgba(255,255,255,0.4);
 
-        .layer-item input:checked+.checkmark {
-            background: #2563eb;
-        }
+    transition: all 0.35s ease;
+}
 
-        .layer-item input:checked+.checkmark::after {
-            content: "✓";
-            position: absolute;
-            color: white;
-            font-size: 13px;
-            top: -1px;
-            left: 3px;
-        }
+/* CLOSED STATE */
+.layer-switcher.closed {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(30px) scale(0.95);
+}
 
-        /* MOBILE */
-        @media(max-width:768px) {
-            .layer-switcher {
-                width: 200px;
-                right: 10px;
-                top: 90px;
-            }
+/* HEADER */
+.layer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
 
-            #map {
-                height: 85vh;
-            }
-        }
+.layer-header div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.layer-header i {
+    color: #2563eb;
+}
+
+/* CLOSE BUTTON */
+#closeLayerPanel {
+    border: none;
+    background: #eff6ff;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: #1e40af;
+    transition: 0.3s;
+}
+
+#closeLayerPanel:hover {
+    background: #dbeafe;
+    transform: rotate(90deg);
+}
+
+/* ITEMS */
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 11px 12px;
+
+    border-radius: 12px;
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+
+    margin-bottom: 8px;
+
+    font-weight: 500;
+}
+
+.layer-item:hover {
+    background: #eff6ff;
+    transform: translateX(4px);
+}
+
+.layer-item input {
+    display: none;
+}
+
+/* CHECKBOX */
+.checkmark {
+    width: 20px;
+    height: 20px;
+
+    border-radius: 6px;
+    border: 2px solid #2563eb;
+
+    position: relative;
+
+    transition: 0.3s;
+}
+
+.layer-item input:checked + .checkmark {
+    background: #2563eb;
+}
+
+.layer-item input:checked + .checkmark::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 13px;
+    top: -1px;
+    left: 3px;
+}
+
+/* MOBILE */
+@media(max-width:768px) {
+
+    #layerToggleBtn {
+        top: 95px;
+        right: 12px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .layer-switcher {
+        top: 90px;
+        right: 70px;
+        width: 220px;
+    }
+}
     </style>
 @endsection
 
@@ -132,11 +207,23 @@
     </div>
 
     <div id="map"></div>
+    <!-- Floating Toggle Button -->
+    <div id="layerToggleBtn">
+        <i class="fas fa-layer-group"></i>
+    </div>
+
     <!-- Layer Switcher Panel -->
-    <div id="layerSwitcher" class="layer-switcher">
+    <div id="layerSwitcher" class="layer-switcher closed">
+
         <div class="layer-header">
-            <i class="fas fa-layer-group"></i>
-            <span>Map Layers</span>
+            <div>
+                <i class="fas fa-layer-group"></i>
+                <span>Map Layers</span>
+            </div>
+
+            <button id="closeLayerPanel">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
         <label class="layer-item">
@@ -180,6 +267,7 @@
             <span class="checkmark"></span>
             <span>Points</span>
         </label>
+
     </div>
 @endsection
 
