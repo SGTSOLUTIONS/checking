@@ -1793,17 +1793,11 @@
             let currentLocationMarker = null;
             let locationWatchId = null;
             let isLiveLocationActive = false;
-            let currentRoute = null;
-            let routeSteps = [];
-            let currentStepIndex = 0;
-            let navigationMode = false;
-            let navigationInterval = null;
             let isMobile = $(window).width() <= 768;
             let draw = null;
             let modify = null;
             let select = null;
             let isModifyMode = false;
-            let selectedFeature = null;
             let isDrawingActive = false;
             let featureClickHandler = null;
 
@@ -1878,7 +1872,6 @@
                         })
                     }),
 
-                    // Label Style
                     // Label Style
                     new ol.style.Style({
                         geometry: centerPoint,
@@ -2152,17 +2145,6 @@
                 source: highlightSource,
                 style: createHighlightStyle
             });
-            const routeSource = new ol.source.Vector();
-            const routeLayer = new ol.layer.Vector({
-                source: routeSource,
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: '#ff0000',
-                        width: 4,
-                        lineDash: [5, 5]
-                    })
-                })
-            });
             const locationSource = new ol.source.Vector();
             const locationLayer = new ol.layer.Vector({
                 source: locationSource,
@@ -2173,7 +2155,7 @@
             const map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, terrainLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer,
-                    lineLayer, pointLayer, highlightLayer, routeLayer, locationLayer
+                    lineLayer, pointLayer, highlightLayer, locationLayer
                 ],
                 view: new ol.View({
                     projection: "EPSG:3857",
@@ -2197,8 +2179,7 @@
             }
             setTimeout(fitViewToAllFeatures, 500);
 
-            // Shop Details Functions - FIXED VERSION
-            // Shop Details Functions - FIXED VERSION
+            // Shop Details Functions
             function addShopForm(shopNumber, container) {
                 const shopHtml = `
                     <div class="shop-item mb-4 p-3 border rounded position-relative" data-shop-index="${shopNumber}" style="background: #f8f9fa; transition: all 0.3s ease;">
@@ -2876,14 +2857,11 @@
                 map.on('click', featureClickHandler);
             }
 
-            // Search and Route Functions
+            // Search Functions (without routing)
             function searchGISID(gisid, isMobileFlag = false) {
                 const searchResults = isMobileFlag ? $('#mobileSearchResults') : $('#searchResults');
                 searchResults.empty();
                 highlightSource.clear();
-                routeSource.clear();
-                currentRoute = null;
-                selectedFeature = null;
                 const allSources = [pointSource, lineSource, polygonSource];
                 let foundFeatures = [];
                 allSources.forEach(source => {
@@ -2899,11 +2877,9 @@
                             `<strong>GIS ID:</strong> ${feature.get('gisid')}<br><strong>Type:</strong> ${feature.get('type')}`
                         );
                         resultItem.on('click', function() {
-                            selectedFeature = feature;
                             highlightAndZoomToFeature(feature, isMobileFlag);
                             if (isMobileFlag) $('#mobileSearchOverlay').hide();
                             searchResults.hide();
-                            showRouteOptions(isMobileFlag);
                         });
                         searchResults.append(resultItem);
                     });
@@ -2917,7 +2893,6 @@
 
             function highlightAndZoomToFeature(feature, isMobileFlag = false) {
                 highlightSource.clear();
-                routeSource.clear();
                 highlightSource.addFeature(feature.clone());
                 const view = map.getView();
                 const geometry = feature.getGeometry();
@@ -2936,269 +2911,14 @@
                 if (!isMobileFlag) showFeatureInfo(feature);
             }
 
-            function showRouteOptions(isMobileFlag = false) {
-                if (isMobileFlag) {
-                    const sheet = $('#routeBottomSheet');
-                    const content = sheet.find('.bottom-sheet-content');
-                    content.html(
-                        `<div class="swipe-handle"></div><h4 class="mb-3"><i class="fas fa-route me-2"></i>Route Options</h4><p>Do you want to calculate route to <strong>${selectedFeature?.get('gisid')}</strong>?</p><button class="btn btn-primary w-100 mb-2" id="calculateRouteBtn"><i class="fas fa-calculator me-2"></i>Calculate Route</button><button class="btn btn-secondary w-100" id="cancelRouteBtn">Cancel</button>`
-                    );
-                    $('#calculateRouteBtn').on('click', function() {
-                        calculateRouteToSelectedFeature();
-                    });
-                    $('#cancelRouteBtn').on('click', function() {
-                        closeRouteOptions();
-                    });
-                    sheet.addClass('open');
-                } else {
-                    closeRouteOptions();
-                    const routePanel = $(`
-                        <div id="routeOptionsPanel" class="position-absolute bg-white p-3 rounded shadow" style="top: 80px; left: 330px; z-index: 1000;">
-                            <h5><i class="fas fa-route me-2"></i>Calculate Route</h5>
-                            <p>Do you want to calculate route to this location?</p>
-                            <button class="btn btn-primary me-2" id="calculateRouteBtnDesktop"><i class="fas fa-calculator me-2"></i>Calculate Route</button>
-                            <button class="btn btn-secondary" id="cancelRouteBtnDesktop">Cancel</button>
-                        </div>
-                    `);
-                    $('body').append(routePanel);
-                    $('#calculateRouteBtnDesktop').on('click', function() {
-                        calculateRouteToSelectedFeature();
-                    });
-                    $('#cancelRouteBtnDesktop').on('click', function() {
-                        closeRouteOptions();
-                    });
-                }
+            function showFeatureInfo(feature) {
+                $('#featureDetails').html(
+                    `<p><strong>GIS ID:</strong> ${feature.get('gisid')}</p><p><strong>Type:</strong> ${feature.get('type')}</p>`
+                );
+                $('#featureInfo').show();
             }
 
-            window.calculateRouteToSelectedFeature = async function() {
-                if (!selectedFeature) {
-                    showFlashMessage('No feature selected. Please search for a GIS ID first.', 'error');
-                    return;
-                }
-                if (!currentLocationMarker) {
-                    const enableLocation = confirm(
-                        'Live location is not enabled. Would you like to enable it for route calculation?'
-                    );
-                    if (enableLocation) {
-                        toggleLiveLocation();
-                        setTimeout(async () => {
-                            if (currentLocationMarker) await calculateAndDisplayRoute(
-                                selectedFeature);
-                            else showFlashMessage(
-                                'Unable to get your location. Please enable location services.',
-                                'error');
-                        }, 2000);
-                    }
-                    return;
-                }
-                await calculateAndDisplayRoute(selectedFeature);
-            };
-
-            window.closeRouteOptions = function() {
-                $('#routeOptionsPanel').remove();
-                const sheet = $('#routeBottomSheet');
-                if (sheet.length) {
-                    sheet.removeClass('open');
-                    const content = sheet.find('.bottom-sheet-content');
-                    content.html(
-                        `<div class="swipe-handle"></div><h4 class="mb-3"><i class="fas fa-route me-2"></i>Route Information</h4><div id="mobileRouteSummary" class="route-summary"></div><div id="mobileDirectionsList" class="directions-list"></div><button class="btn btn-primary w-100 mt-3" id="startNavigationFromSheet"><i class="fas fa-play me-2"></i>Start Navigation</button><button class="btn btn-outline-secondary w-100 mt-2" id="closeRouteSheet">Close</button>`
-                    );
-                    $('#startNavigationFromSheet').off('click').on('click', startNavigation);
-                    $('#closeRouteSheet').off('click').on('click', function() {
-                        sheet.removeClass('open');
-                    });
-                }
-            };
-
-            async function calculateAndDisplayRoute(feature) {
-                $('#loadingSpinner').show();
-                try {
-                    const currentCoords = currentLocationMarker.getGeometry().getCoordinates();
-                    const geometry = feature.getGeometry();
-                    const targetCoords = geometry.getType() === 'Point' ? geometry.getCoordinates() : ol.extent
-                        .getCenter(geometry.getExtent());
-                    const currentLonLat = ol.proj.toLonLat(currentCoords);
-                    const targetLonLat = ol.proj.toLonLat(targetCoords);
-                    const route = await calculateEnhancedRoute(currentLonLat, targetLonLat,
-                        `GIS ID: ${feature.get('gisid')}`);
-                    currentRoute = route;
-                    if (isMobile) $('#routeBottomSheet').addClass('open');
-                    else $('#navigationControls').show();
-                    closeRouteOptions();
-                } catch (error) {
-                    console.error('Route calculation error:', error);
-                    showFlashMessage('Error calculating route: ' + error.message, 'error');
-                } finally {
-                    $('#loadingSpinner').hide();
-                }
-            }
-
-            // Route Functions
-            async function getRouteFromOSRM(startCoord, endCoord) {
-                try {
-                    const [startLon, startLat] = startCoord;
-                    const [endLon, endLat] = endCoord;
-                    const url =
-                        `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) throw new Error(
-                        'No route found');
-                    return data.routes[0];
-                } catch (error) {
-                    return getStraightLineRoute(startCoord, endCoord);
-                }
-            }
-
-            function getStraightLineRoute(startCoord, endCoord) {
-                const distance = ol.sphere.getDistance(ol.proj.fromLonLat(startCoord), ol.proj.fromLonLat(
-                    endCoord));
-                const duration = distance / 1.39;
-                return {
-                    distance,
-                    duration,
-                    geometry: {
-                        type: "LineString",
-                        coordinates: [startCoord, endCoord]
-                    },
-                    legs: [{
-                        steps: [{
-                            maneuver: {
-                                type: "depart",
-                                instruction: "Start from your location"
-                            },
-                            distance,
-                            duration
-                        }, {
-                            maneuver: {
-                                type: "arrive",
-                                instruction: "Arrive at destination"
-                            },
-                            distance: 0,
-                            duration: 0
-                        }]
-                    }]
-                };
-            }
-
-            function formatDistance(meters) {
-                return meters < 1000 ? meters.toFixed(0) + ' meters' : (meters / 1000).toFixed(2) + ' km';
-            }
-
-            function formatDuration(seconds) {
-                const minutes = Math.floor(seconds / 60);
-                return minutes < 60 ? minutes + ' min' : Math.floor(minutes / 60) + 'h ' + (minutes % 60) + 'm';
-            }
-
-            async function calculateEnhancedRoute(startCoord, endCoord, placeName) {
-                try {
-                    if (isMobile) $('#mobileRouteSummary').html('<div>Calculating route...</div>');
-                    else {
-                        $('#desktopRouteSummary').html('<div>Calculating route...</div>');
-                        $('#routeInfo').show();
-                    }
-                    const route = await getRouteFromOSRM(startCoord, endCoord);
-                    const totalDistance = route.distance;
-                    const totalDuration = route.duration;
-                    routeSteps = [];
-                    let accumulatedDistance = 0;
-                    if (route.legs && route.legs[0] && route.legs[0].steps) {
-                        route.legs[0].steps.forEach(step => {
-                            accumulatedDistance += step.distance;
-                            routeSteps.push({
-                                instruction: step.maneuver.instruction || step.maneuver.type,
-                                distance: formatDistance(accumulatedDistance),
-                                icon: 'fas fa-arrow-up',
-                                type: step.maneuver.type
-                            });
-                        });
-                    }
-                    drawRouteOnMap(route.geometry);
-                    displayRouteInfo(totalDistance, totalDuration, placeName);
-                    return {
-                        distance: totalDistance,
-                        duration: totalDuration,
-                        geometry: route.geometry,
-                        endCoord: endCoord,
-                        placeName: placeName
-                    };
-                } catch (error) {
-                    const distance = ol.sphere.getDistance(ol.proj.fromLonLat(startCoord), ol.proj.fromLonLat(
-                        endCoord));
-                    const duration = distance / 1.39;
-                    routeSteps = [{
-                        instruction: "Start from your current location",
-                        distance: "0.0 km",
-                        icon: "fas fa-play",
-                        type: "depart"
-                    }, {
-                        instruction: "Continue straight to destination",
-                        distance: formatDistance(distance),
-                        icon: "fas fa-arrow-up",
-                        type: "continue"
-                    }, {
-                        instruction: "Arrive at your destination",
-                        distance: formatDistance(distance),
-                        icon: "fas fa-flag-checkered",
-                        type: "arrive"
-                    }];
-                    drawRouteOnMap({
-                        type: "LineString",
-                        coordinates: [startCoord, endCoord]
-                    });
-                    displayRouteInfo(distance, duration, placeName);
-                    return {
-                        distance,
-                        duration,
-                        geometry: {
-                            type: "LineString",
-                            coordinates: [startCoord, endCoord]
-                        },
-                        endCoord: endCoord,
-                        placeName: placeName
-                    };
-                }
-            }
-
-            function drawRouteOnMap(geometry) {
-                const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                routeSource.clear();
-                routeSource.addFeature(new ol.Feature({
-                    geometry: new ol.geom.LineString(coordinates)
-                }));
-                if (routeSource.getFeatures().length > 0) {
-                    map.getView().fit(routeSource.getFeatures()[0].getGeometry().getExtent(), {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
-                }
-            }
-
-            function displayRouteInfo(distance, duration, placeName) {
-                const summaryHtml =
-                    `<div><strong>Total Distance:</strong> ${formatDistance(distance)}</div><div><strong>Estimated Time:</strong> ${formatDuration(duration)}</div><div><strong>Destination:</strong> ${placeName}</div>`;
-                if (isMobile) {
-                    $('#mobileRouteSummary').html(summaryHtml);
-                    displayTurnByTurnDirections(true);
-                } else {
-                    $('#desktopRouteSummary').html(summaryHtml);
-                    displayTurnByTurnDirections(false);
-                    $('#navigationControls').show();
-                }
-            }
-
-            function displayTurnByTurnDirections(isMobileFlag = false) {
-                const directionsList = isMobileFlag ? $('#mobileDirectionsList') : $('#desktopDirectionsList');
-                directionsList.empty();
-                routeSteps.forEach((step, index) => {
-                    const stepElement = $('<div>').addClass('direction-step').html(
-                        `<div class="step-number">${index + 1}</div><div class="step-content"><div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div><div class="step-distance">${step.distance}</div></div>`
-                    );
-                    directionsList.append(stepElement);
-                });
-            }
-
-            // Live Location
+            // Live Location (without navigation)
             function toggleLiveLocation() {
                 if (isLiveLocationActive) {
                     if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
@@ -3216,10 +2936,6 @@
                         btn.html('<i class="fas fa-location-arrow me-2"></i>Live Location');
                     }
                     showFlashMessage('Location tracking stopped', 'info');
-                    if (navigationMode) {
-                        navigationMode = false;
-                        if (navigationInterval) clearInterval(navigationInterval);
-                    }
                 } else {
                     if (!navigator.geolocation) {
                         alert('Geolocation is not supported');
@@ -3257,7 +2973,6 @@
                                 hasZoomedToLocation = true;
                                 showFlashMessage('Location found!', 'success');
                             }
-                            if (navigationMode && currentRoute) updateRouteIfActive();
                         },
                         (error) => {
                             showFlashMessage('Location error: ' + error.message, 'error');
@@ -3268,66 +2983,6 @@
                             maximumAge: 0
                         }
                     );
-                }
-            }
-
-            function updateRouteIfActive() {
-                if (currentRoute && currentLocationMarker && navigationMode) {
-                    const currentCoords = currentLocationMarker.getGeometry().getCoordinates();
-                    const currentLonLat = ol.proj.toLonLat(currentCoords);
-                    calculateEnhancedRoute(currentLonLat, currentRoute.endCoord, currentRoute.placeName).then(
-                        route => currentRoute = route);
-                }
-            }
-
-            // Navigation Functions
-            function startNavigation() {
-                if (!currentRoute) {
-                    alert('Please calculate a route first');
-                    return;
-                }
-                if (!currentLocationMarker) {
-                    alert('Please enable live location first');
-                    return;
-                }
-                navigationMode = true;
-                currentStepIndex = 0;
-                if (isMobile) {
-                    $('#navigationHeader').show();
-                    $('#navigationInstruction').show();
-                    $('#routeBottomSheet').removeClass('open');
-                }
-                $('#etaTime').text(formatDuration(currentRoute.duration));
-                $('#etaDistance').text(formatDistance(currentRoute.distance));
-                $('#destinationAddress').text(currentRoute.placeName);
-                updateNavigationInstruction();
-                navigationInterval = setInterval(updateNavigationStatus, 5000);
-                if (isMobile) {
-                    map.getView().animate({
-                        center: currentLocationMarker.getGeometry().getCoordinates(),
-                        zoom: 18,
-                        duration: 1000
-                    });
-                }
-                alert('Navigation started! Follow the route instructions.');
-            }
-
-            function updateNavigationInstruction() {
-                if (currentStepIndex < routeSteps.length) {
-                    $('#instructionText').text(routeSteps[currentStepIndex].instruction);
-                    $('#instructionDistance').text(routeSteps[currentStepIndex].distance);
-                    $('#instructionIcon').attr('class', routeSteps[currentStepIndex].icon);
-                }
-            }
-
-            function updateNavigationStatus() {
-                if (!navigationMode || !currentRoute) return;
-                const progress = Math.min(1, currentStepIndex / (routeSteps.length - 1));
-                $('#etaTime').text(formatDuration(currentRoute.duration * (1 - progress)));
-                $('#etaDistance').text(formatDistance(currentRoute.distance * (1 - progress)));
-                if (Math.random() > 0.7 && currentStepIndex < routeSteps.length - 1) {
-                    currentStepIndex++;
-                    updateNavigationInstruction();
                 }
             }
 
@@ -3623,13 +3278,6 @@
                 map.render();
             }
 
-            function showFeatureInfo(feature) {
-                $('#featureDetails').html(
-                    `<p><strong>GIS ID:</strong> ${feature.get('gisid')}</p><p><strong>Type:</strong> ${feature.get('type')}</p>`
-                );
-                $('#featureInfo').show();
-            }
-
             function showFlashMessage(message, type = 'info') {
                 const alertClass = {
                     'success': 'alert-success',
@@ -3645,17 +3293,7 @@
 
             function clearAll() {
                 highlightSource.clear();
-                routeSource.clear();
-                $('#navigationControls').hide();
                 $('#featureInfo').hide();
-                $('#routeInfo').hide();
-                $('#routeBottomSheet').removeClass('open');
-                $('#navigationHeader').hide();
-                $('#navigationInstruction').hide();
-                navigationMode = false;
-                currentRoute = null;
-                selectedFeature = null;
-                closeRouteOptions();
             }
 
             // Mobile Event Handlers
@@ -3665,12 +3303,6 @@
             $('#mobileLocationBtn').on('click', toggleLiveLocation);
             $('#mobileLayersBtn').on('click', function() {
                 $('#mobileLayerSwitcher').show();
-            });
-            $('#mobileRouteBtn').on('click', function() {
-                if (selectedFeature && currentLocationMarker) calculateRouteToSelectedFeature();
-                else if (selectedFeature && !currentLocationMarker) showFlashMessage(
-                    'Please enable live location first', 'warning');
-                else showFlashMessage('Please search for a GIS ID first', 'warning');
             });
             $('#mobileMenuBtn').on('click', showMobileMenu);
             $('#mobileSearchSubmit').on('click', function() {
@@ -3849,13 +3481,8 @@
                     if (!isLiveLocationActive && confirm('Enable live location?')) toggleLiveLocation();
                 }
             });
-            $('#startNavigation').on('click', startNavigation);
-            $('#clearNavigation').on('click', clearAll);
             $('#closeFeatureInfo').on('click', function() {
                 $('#featureInfo').hide();
-            });
-            $('#closeDirections').on('click', function() {
-                $('#routeInfo').hide();
             });
             $('#editToolSelect').on('change', function() {
                 const value = $(this).val();
