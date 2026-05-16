@@ -5,11 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
+        body {
+            background: #f4f7fb;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* MAP */
         #map {
             width: 100%;
             height: 90vh;
-            border-radius: 10px;
-            border: 2px solid #ddd;
+            border-radius: 18px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        /* PAGE HEADER */
+        .page-title {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 16px 25px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .page-title h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        /* LAYER SWITCHER */
+        .layer-switcher {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            z-index: 1000;
+            width: 240px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: #0f172a;
+        }
+
+        .layer-header i {
+            color: #2563eb;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .layer-item:hover {
+            background: #eff6ff;
+            transform: translateX(4px);
+        }
+
+        .layer-item input {
+            display: none;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #2563eb;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .layer-item input:checked+.checkmark {
+            background: #2563eb;
+        }
+
+        .layer-item input:checked+.checkmark::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 13px;
+            top: -1px;
+            left: 3px;
+        }
+
+        /* MOBILE */
+        @media(max-width:768px) {
+            .layer-switcher {
+                width: 200px;
+                right: 10px;
+                top: 90px;
+            }
+
+            #map {
+                height: 85vh;
+            }
         }
     </style>
 @endsection
@@ -23,6 +132,55 @@
     </div>
 
     <div id="map"></div>
+    <!-- Layer Switcher Panel -->
+    <div id="layerSwitcher" class="layer-switcher">
+        <div class="layer-header">
+            <i class="fas fa-layer-group"></i>
+            <span>Map Layers</span>
+        </div>
+
+        <label class="layer-item">
+            <input type="checkbox" id="osmToggle" checked>
+            <span class="checkmark"></span>
+            <span>OSM Map</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="satelliteToggle">
+            <span class="checkmark"></span>
+            <span>Satellite</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="droneToggle" checked>
+            <span class="checkmark"></span>
+            <span>Drone Image</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="boundaryToggle" checked>
+            <span class="checkmark"></span>
+            <span>Ward Boundary</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="polygonToggle" checked>
+            <span class="checkmark"></span>
+            <span>Buildings</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="lineToggle" checked>
+            <span class="checkmark"></span>
+            <span>Roads</span>
+        </label>
+
+        <label class="layer-item">
+            <input type="checkbox" id="pointToggle" checked>
+            <span class="checkmark"></span>
+            <span>Points</span>
+        </label>
+    </div>
 @endsection
 
 @section('script')
@@ -230,7 +388,7 @@
                     })
                 });
             }
-              const polygonSource = new ol.source.Vector();
+            const polygonSource = new ol.source.Vector();
             polygons.forEach(poly => {
                 try {
                     let coords = JSON.parse(poly.coordinates);
@@ -293,12 +451,12 @@
                 } catch (e) {
                     console.error('Line parse error:', e, l);
                 }
-                });
-                console.log(`Loaded ${lineSource.getFeatures().length} line features`);
-                const lineLayer = new ol.layer.Vector({
-                    source: lineSource,
-                    style: createLineStyle,
-                    visible: true
+            });
+            console.log(`Loaded ${lineSource.getFeatures().length} line features`);
+            const lineLayer = new ol.layer.Vector({
+                source: lineSource,
+                style: createLineStyle,
+                visible: true
             });
 
             // Point Layer
@@ -320,15 +478,40 @@
                 style: createPointStyle,
                 visible: true
             });
-             const map = new ol.Map({
+            const map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer,
-                    lineLayer, pointLayer],
+                    lineLayer, pointLayer
+                ],
                 view: new ol.View({
                     projection: "EPSG:3857",
                     center: ol.extent.getCenter(imageExtent),
                     zoom: 17
                 })
+            });
+
+            $('#osmToggle').change(function() {
+                osmLayer.setVisible($(this).is(':checked'));
+            });
+
+            $('#satelliteToggle').change(function() {
+                satelliteLayer.setVisible($(this).is(':checked'));
+            });
+
+            $('#droneToggle').change(function() {
+                droneLayer.setVisible($(this).is(':checked'));
+            });
+
+            $('#boundaryToggle').change(function() {
+                boundaryLayer.setVisible($(this).is(':checked'));
+            });
+
+            $('#polygonToggle').change(function() {
+                polygonLayer.setVisible($(this).is(':checked'));
+            });
+
+            $('#lineToggle').change(function() {
+                lineLayer.setVisible($(this).is(':checked'));
             });
         });
     </script>
