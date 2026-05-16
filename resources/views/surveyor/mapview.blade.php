@@ -667,131 +667,6 @@
                 pointLayer.setVisible($(this).is(':checked'));
             });
 
-            // ================= SEARCH FUNCTIONALITY ================= //
-            let currentHighlightFeature = null;
-            let currentHighlightLayer = null;
-
-            // Function to remove highlight
-            function removeHighlight() {
-                if (currentHighlightFeature && currentHighlightLayer) {
-                    currentHighlightLayer.getSource().removeFeature(currentHighlightFeature);
-                    currentHighlightFeature = null;
-                    currentHighlightLayer = null;
-                }
-            }
-
-            // Function to highlight feature
-            function highlightFeature(feature, layer, color = '#ff0000') {
-                removeHighlight();
-
-                // Create a copy of the geometry for highlighting
-                const geom = feature.getGeometry().clone();
-                const highlightFeature = new ol.Feature({ geometry: geom });
-
-                // Create highlight style based on geometry type
-                let style;
-                if (geom.getType() === 'Point') {
-                    style = new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.6)' }),
-                            stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
-                        })
-                    });
-                } else if (geom.getType() === 'LineString') {
-                    style = new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: color,
-                            width: 6,
-                            lineDash: [10, 10]
-                        })
-                    });
-                } else {
-                    style = new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: color, width: 4 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' })
-                    });
-                }
-
-                highlightFeature.setStyle(style);
-
-                // Create a temporary layer for highlight
-                const highlightLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [highlightFeature]
-                    }),
-                    zIndex: 1000
-                });
-
-                map.addLayer(highlightLayer);
-                currentHighlightFeature = highlightFeature;
-                currentHighlightLayer = highlightLayer;
-
-                // Zoom to feature
-                const extent = geom.getExtent();
-                map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
-
-                // Auto remove highlight after 5 seconds
-                setTimeout(() => {
-                    removeHighlight();
-                }, 5000);
-            }
-
-            // Search function
-            function searchFeature(searchTerm) {
-                if (!searchTerm || searchTerm.trim() === '') {
-                    removeHighlight();
-                    return;
-                }
-
-                searchTerm = searchTerm.trim();
-                let found = false;
-
-                // Search in polygons
-                polygonSource.getFeatures().forEach(feature => {
-                    const gisid = feature.get('gisid');
-                    if (gisid && String(gisid) === searchTerm) {
-                        highlightFeature(feature, polygonLayer, '#ff0000');
-                        found = true;
-                        return;
-                    }
-                });
-
-                if (!found) {
-                    // Search in lines (roads) by gisid or road_name
-                    lineSource.getFeatures().forEach(feature => {
-                        const gisid = feature.get('gisid');
-                        const roadName = feature.get('road_name');
-                        if ((gisid && String(gisid) === searchTerm) ||
-                            (roadName && roadName.toLowerCase().includes(searchTerm.toLowerCase()))) {
-                            highlightFeature(feature, lineLayer, '#ff0000');
-                            found = true;
-                            return;
-                        }
-                    });
-                }
-
-                if (!found) {
-                    // Search in points
-                    pointSource.getFeatures().forEach(feature => {
-                        const gisid = feature.get('gisid');
-                        if (gisid && String(gisid) === searchTerm) {
-                            highlightFeature(feature, pointLayer, '#ff0000');
-                            found = true;
-                            return;
-                        }
-                    });
-                }
-
-                if (!found) {
-                    // Show toast or alert if no feature found
-                    if (typeof toastr !== 'undefined') {
-                        toastr.info('No feature found with GIS ID or Road Name: ' + searchTerm);
-                    } else {
-                        alert('No feature found with GIS ID or Road Name: ' + searchTerm);
-                    }
-                }
-            }
 
             // Search toggle button
             $('#searchToggleBtn').click(function() {
@@ -801,23 +676,8 @@
                 }
             });
 
-            // Search input handler
-            $('#searchInput').on('keypress', function(e) {
-                if (e.which === 13) { // Enter key
-                    searchFeature($(this).val());
-                    $(this).val(''); // Clear input after search
-                    $('#searchLabel').addClass('closed'); // Close search panel
-                }
-            });
 
-            // Close search panel when clicking outside (optional)
-            $(document).click(function(e) {
-                if (!$(e.target).closest('#searchLabel').length && !$(e.target).closest('#searchToggleBtn').length) {
-                    if (!$('#searchLabel').hasClass('closed')) {
-                        $('#searchLabel').addClass('closed');
-                    }
-                }
-            });
+
         });
     </script>
 @endsection
