@@ -33,12 +33,18 @@ class ProfImport implements ToCollection, WithHeadingRow
                     $row['ward_no'] ?? $row['ward'] ?? null
                 );
 
+                // Optional
                 $assessment = $this->cleanValue(
                     $row['assessment'] ?? null
                 );
 
+                // Required
+                $profAssessment = $this->cleanValue(
+                    $row['prof_tax_assessment'] ?? null
+                );
+
                 // Skip empty rows
-                if (!$wardNo && !$assessment) {
+                if (!$wardNo && !$profAssessment) {
                     continue;
                 }
 
@@ -52,9 +58,7 @@ class ProfImport implements ToCollection, WithHeadingRow
 
                     'assessment' => $assessment,
 
-                    'prof_tax_assessment' => $this->cleanValue(
-                        $row['prof_tax_assessment'] ?? null
-                    ),
+                    'prof_tax_assessment' => $profAssessment,
 
                     'old_prof_tax_assessment' => $this->cleanValue(
                         $row['old_prof_tax_assessment'] ?? null
@@ -91,9 +95,9 @@ class ProfImport implements ToCollection, WithHeadingRow
                     'updated_at' => now(),
                 ];
 
-                // Check existing record
+                // Check existing record using prof_tax_assessment
                 $existing = DB::table($this->tableName)
-                    ->where('assessment', $assessment)
+                    ->where('prof_tax_assessment', $profAssessment)
                     ->where('ward_no', $wardNo)
                     ->first();
 
