@@ -226,7 +226,7 @@
                                     </small>
                                 </div>
 
-                                <a href="/corporation/ward/map/${ward.ward_no}"
+                                <a href="/corporation/ward/${ward.ward_no}"
                                     class="btn btn-sm btn-light">
 
                                     <i class="fas fa-map-marked-alt"></i> View Map
