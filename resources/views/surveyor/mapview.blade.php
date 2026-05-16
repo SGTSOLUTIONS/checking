@@ -80,6 +80,49 @@
             transition: all 0.3s ease;
         }
 
+        #liveToggleBtn {
+            position: absolute;
+            top: 215px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 22px;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #routeBtn {
+            position: absolute;
+            top: 235px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 22px;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        #routeBtn.closed {
+            opacity: 0;
+            visibility: hidden;
+        }
+
         #searchToggleBtn:hover {
             transform: scale(1.08);
         }
@@ -98,6 +141,8 @@
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
             border: 1px solid rgba(255, 255, 255, 0.4);
             transition: all 0.35s ease;
+            display: flex;
+            gap: 8px;
         }
 
         .search-Lable.closed {
@@ -111,6 +156,13 @@
             border: 1px solid #cbd5e1;
             padding: 10px 15px;
             font-size: 14px;
+            flex: 1;
+        }
+
+        .search-Lable button {
+            border-radius: 12px;
+            padding: 10px 15px;
+            white-space: nowrap;
         }
 
         /* PANEL */
@@ -120,17 +172,12 @@
             right: 90px;
             z-index: 1100;
             width: 260px;
-
             background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(12px);
-
             border-radius: 20px;
             padding: 18px;
-
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
-
             border: 1px solid rgba(255, 255, 255, 0.4);
-
             transition: all 0.35s ease;
         }
 
@@ -184,16 +231,11 @@
             display: flex;
             align-items: center;
             gap: 12px;
-
             padding: 11px 12px;
-
             border-radius: 12px;
             cursor: pointer;
-
             transition: all 0.25s ease;
-
             margin-bottom: 8px;
-
             font-weight: 500;
         }
 
@@ -210,12 +252,9 @@
         .checkmark {
             width: 20px;
             height: 20px;
-
             border-radius: 6px;
             border: 2px solid #2563eb;
-
             position: relative;
-
             transition: 0.3s;
         }
 
@@ -241,11 +280,9 @@
             0% {
                 filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
             }
-
             50% {
                 filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
             }
-
             100% {
                 filter: drop-shadow(0 0 0px rgba(255, 0, 0, 0));
             }
@@ -253,9 +290,10 @@
 
         /* MOBILE */
         @media(max-width:768px) {
-
             #layerToggleBtn,
-            #searchToggleBtn {
+            #searchToggleBtn,
+            #liveToggleBtn,
+            #routeBtn {
                 top: 95px;
                 right: 12px;
                 width: 50px;
@@ -264,6 +302,14 @@
 
             #searchToggleBtn {
                 top: 155px;
+            }
+
+            #liveToggleBtn {
+                top: 175px;
+            }
+
+            #routeBtn {
+                top: 195px;
             }
 
             .layer-switcher {
@@ -299,10 +345,16 @@
     <div id="searchToggleBtn">
         <i class="fas fa-search"></i>
     </div>
+    <div id="liveToggleBtn">
+        <i class="fas fa-location"></i>
+    </div>
+    <div id="routeBtn">
+        <i class="fas fa-route"></i>
+    </div>
 
     <div id="searchLabel" class="search-Lable closed">
         <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name...">
-        <button class="btn btn-primary" id="searchGisidBtn"> <i class="fas fa-search"></i></button>
+        <button class="btn btn-primary" id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
     </div>
 
     <!-- Layer Switcher Panel -->
@@ -701,7 +753,6 @@
                 pointLayer.setVisible($(this).is(':checked'));
             });
 
-
             // Search toggle button
             $('#searchToggleBtn').click(function() {
                 $('#searchLabel').toggleClass('closed');
@@ -709,54 +760,162 @@
                     $('#searchInput').focus();
                 }
             });
-            var highlightSource = new ol.source.Vector();
-            var highlightLayer = new ol.layer.Vector({
-                source: highlightSource,
 
-                style: new ol.style.Style({
-
-                    stroke: new ol.style.Stroke({
-                        color: '#ff0000',
-                        width: 4
-                    }),
-
-                    fill: new ol.style.Fill({
-                        color: 'rgba(255,0,0,0.2)'
-                    })
-
-                })
-            });
-            map.addLayer(highlightLayer);
-
+            // Search functionality
             $("#searchGisidBtn").on('click', function() {
+                var searchvalue = $("#searchInput").val().trim();
 
-                var searchvalue = $("#searchInput").val();
+                if (!searchvalue) {
+                    alert("Please enter a GIS ID or Road Name");
+                    return;
+                }
 
+                // Search in polygons
                 var findpolygon = polygons.find(function(polygon) {
                     return polygon.gisid == searchvalue;
                 });
 
-                console.log(findpolygon);
-
                 if (findpolygon) {
-                    highlightSource.clear();
-                    var coordinates = JSON.parse(findpolygon.coordinates);
-                    var feature = new ol.Feature({
-                        geometry: new ol.geom.Polygon(coordinates)
-                    });
-                    highlightSource.addFeature(feature);
-                    map.getView().fit(feature.getGeometry().getExtent(), {
-                        duration: 1000,
-                        padding: [50, 50, 50, 50],
-                        maxZoom: 22
-                    });
-
+                    try {
+                        var coordinates = JSON.parse(findpolygon.coordinates);
+                        var feature = new ol.Feature({
+                            geometry: new ol.geom.Polygon(coordinates)
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 22
+                        });
+                    } catch(e) {
+                        console.error('Error parsing coordinates:', e);
+                        alert("Error displaying polygon");
+                    }
                 } else {
-                    alert("Polygon not found");
-                }
+                    // Search in lines/roads
+                    var findLine = lines.find(function(line) {
+                        return line.gisid == searchvalue || line.road_name == searchvalue;
+                    });
 
+                    if (findLine) {
+                        try {
+                            let coords;
+                            if (typeof findLine.coordinates === 'string') {
+                                coords = JSON.parse(findLine.coordinates);
+                            } else {
+                                coords = findLine.coordinates;
+                            }
+
+                            if (coords.length === 1 && Array.isArray(coords[0])) {
+                                coords = coords[0];
+                            }
+
+                            var feature = new ol.Feature({
+                                geometry: new ol.geom.LineString(coords)
+                            });
+                            map.getView().fit(feature.getGeometry().getExtent(), {
+                                duration: 1000,
+                                padding: [50, 50, 50, 50],
+                                maxZoom: 20
+                            });
+                        } catch(e) {
+                            console.error('Error parsing line coordinates:', e);
+                            alert("Error displaying road");
+                        }
+                    } else {
+                        alert("GIS ID or Road Name not found");
+                    }
+                }
             });
 
+            // Enter key support for search
+            $('#searchInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#searchGisidBtn').click();
+                }
+            });
+
+            // Route button functionality
+            $('#routeBtn').click(function() {
+                console.log('Route button clicked - Add routing functionality here');
+                // You can implement routing functionality here
+                alert('Routing feature will be implemented soon');
+            });
+
+            // Live location button functionality
+            $('#liveToggleBtn').click(function() {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const coords = ol.proj.fromLonLat([lon, lat]);
+
+                        map.getView().animate({
+                            center: coords,
+                            zoom: 18,
+                            duration: 1000
+                        });
+
+                        // Add a temporary marker for current location
+                        const markerLayer = new ol.layer.Vector({
+                            source: new ol.source.Vector(),
+                            style: new ol.style.Style({
+                                image: new ol.style.Circle({
+                                    radius: 10,
+                                    fill: new ol.style.Fill({
+                                        color: '#ff4444'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#ffffff',
+                                        width: 3
+                                    })
+                                })
+                            })
+                        });
+
+                        const marker = new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        });
+
+                        markerLayer.getSource().addFeature(marker);
+                        map.addLayer(markerLayer);
+
+                        // Remove marker after 5 seconds
+                        setTimeout(() => {
+                            map.removeLayer(markerLayer);
+                        }, 5000);
+
+                    }, function(error) {
+                        alert("Error getting location: " + error.message);
+                    });
+                } else {
+                    alert("Geolocation is not supported by your browser");
+                }
+            });
+
+            // Keyboard shortcuts
+            $(document).keydown(function(e) {
+                // Press 'L' for layer switcher
+                if (e.key === 'l' || e.key === 'L') {
+                    $('#layerSwitcher').toggleClass('closed');
+                }
+                // Press 'S' for search
+                if (e.key === 's' || e.key === 'S') {
+                    $('#searchLabel').toggleClass('closed');
+                    if (!$('#searchLabel').hasClass('closed')) {
+                        $('#searchInput').focus();
+                    }
+                }
+                // Press 'ESC' to close panels
+                if (e.key === 'Escape') {
+                    $('#layerSwitcher, #searchLabel').addClass('closed');
+                }
+            });
+
+            // Add scale line control
+            const scaleLine = new ol.control.ScaleLine({
+                units: 'metric'
+            });
+            map.addControl(scaleLine);
         });
     </script>
 @endsection
