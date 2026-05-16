@@ -475,7 +475,7 @@
                 </nav>
                 <div class="mt-auto p-3">
                     <hr class="bg-secondary" style="opacity:0.2;">
-                    <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+                    <form method="POST" action="{{ route('corporation.logout') }}" id="logoutForm">
                         @csrf
                         <a class="nav-link text-white-50" href="#" id="logoutBtn">
                             <i class="fas fa-sign-out-alt"></i> Logout

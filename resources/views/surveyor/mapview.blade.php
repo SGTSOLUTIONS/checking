@@ -2201,56 +2201,63 @@
             // Shop Details Functions - FIXED VERSION
             function addShopForm(shopNumber, container) {
                 const shopHtml = `
-        <div class="shop-item mb-4 p-3 border rounded position-relative" data-shop-index="${shopNumber}" style="background: #f8f9fa; transition: all 0.3s ease;">
-            <button type="button" class="remove-shop-btn" data-shop-id="${shopNumber}" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; z-index: 10;">
-                <i class="fas fa-times"></i>
-            </button>
-            <h6 class="mb-3 text-primary" style="color: #4a6ee0 !important; font-weight: 600;">
-                <i class="fas fa-store me-2"></i>Shop #${shopNumber}
-            </h6>
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">Shop Floor</label>
-                    <input type="number" name="shop_floor_${shopNumber}" class="form-control shop-floor" placeholder="Ground/First/Second" style="border-radius: 8px;">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">Shop Name</label>
-                    <input type="text" name="shop_name_${shopNumber}" class="form-control shop-name" placeholder="Enter shop name" style="border-radius: 8px;">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">Shop Owner Name</label>
-                    <input type="text" name="shop_owner_name_${shopNumber}" class="form-control shop-owner-name" placeholder="Owner name" style="border-radius: 8px;">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">Shop Category</label>
-                    <select name="shop_category_${shopNumber}" class="form-control shop-category" style="border-radius: 8px;">
-                        <option value="">Select Category</option>
-                        <option value="Grocery">Grocery</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Electronics">Electronics</option>
-                        <option value="Restaurant">Restaurant</option>
-                        <option value="Pharmacy">Pharmacy</option>
-                        <option value="Hardware">Hardware</option>
-                        <option value="Stationery">Stationery</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-semibold">Shop Mobile</label>
-                    <input type="tel" name="shop_mobile_${shopNumber}" class="form-control shop-mobile" maxlength="10" pattern="[0-9]{10}" placeholder="10-digit number" style="border-radius: 8px;">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-semibold">License Number</label>
-                    <input type="text" name="license_${shopNumber}" class="form-control shop-license" placeholder="Trade License No" style="border-radius: 8px;">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-semibold">Number of Employees</label>
-                    <input type="number" name="number_of_employee_${shopNumber}" class="form-control shop-employees" min="0" step="1" placeholder="0" style="border-radius: 8px;">
-                </div>
-            </div>
-        </div>
-    `;
-
+                    <div class="shop-item mb-4 p-3 border rounded position-relative" data-shop-index="${shopNumber}" style="background: #f8f9fa; transition: all 0.3s ease;">
+                        <button type="button" class="remove-shop-btn" data-shop-id="${shopNumber}" style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; z-index: 10;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <h6 class="mb-3 text-primary" style="color: #4a6ee0 !important; font-weight: 600;">
+                            <i class="fas fa-store me-2"></i>Shop #${shopNumber}
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Professional Tax Assessment</label>
+                                <input type="text" name="prof_tax_assessment_${shopNumber}" class="form-control shop-prof-tax-assessment" placeholder="Professional Tax Assessment" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Old Professional Tax Assessment</label>
+                                <input type="text" name="old_prof_tax_assessment_${shopNumber}" class="form-control shop-old-prof-tax-assessment" placeholder="Old Professional Tax Assessment" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Shop Floor</label>
+                                <input type="text" name="shop_floor_${shopNumber}" class="form-control shop-floor" placeholder="Ground/First/Second" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Shop Name</label>
+                                <input type="text" name="shop_name_${shopNumber}" class="form-control shop-name" placeholder="Enter shop name" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Shop Owner Name</label>
+                                <input type="text" name="shop_owner_name_${shopNumber}" class="form-control shop-owner-name" placeholder="Owner name" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Shop Category</label>
+                                <select name="shop_category_${shopNumber}" class="form-control shop-category" style="border-radius: 8px;">
+                                    <option value="">Select Category</option>
+                                    <option value="Grocery">Grocery</option>
+                                    <option value="Clothing">Clothing</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Restaurant">Restaurant</option>
+                                    <option value="Pharmacy">Pharmacy</option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Stationery">Stationery</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Shop Mobile</label>
+                                <input type="tel" name="shop_mobile_${shopNumber}" class="form-control shop-mobile" maxlength="10" pattern="[0-9]{10}" placeholder="10-digit number" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">License Number</label>
+                                <input type="text" name="license_${shopNumber}" class="form-control shop-license" placeholder="Trade License No" style="border-radius: 8px;">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Number of Employees</label>
+                                <input type="number" name="number_of_employee_${shopNumber}" class="form-control shop-employees" min="0" step="1" placeholder="0" style="border-radius: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                `;
                 container.append(shopHtml);
 
                 // Add smooth animation
@@ -3332,6 +3339,10 @@
                 formData.append('total_shops', shopCount);
 
                 for (let i = 1; i <= shopCount; i++) {
+                    formData.append(`prof_tax_assessment_${i}`, $(`input[name="prof_tax_assessment_${i}"]`)
+                        .val() || '');
+                    formData.append(`old_prof_tax_assessment_${i}`, $(
+                        `input[name="old_prof_tax_assessment_${i}"]`).val() || '');
                     formData.append(`shop_floor_${i}`, $(`input[name="shop_floor_${i}"]`).val() || '');
                     formData.append(`shop_name_${i}`, $(`input[name="shop_name_${i}"]`).val() || '');
                     formData.append(`shop_owner_name_${i}`, $(`input[name="shop_owner_name_${i}"]`).val() ||

@@ -1343,6 +1343,8 @@ class SurveyorController extends Controller
                 $shopData = [
                     'point_data_id' => $pointId,
                     'shop_floor' => $data["shop_floor_{$i}"] ?? null,
+                    'prof_tax_assessment' => $data["prof_tax_assessment_{$i}"] ?? null,
+                    'old_prof_tax_assessment' => $data["old_prof_tax_assessment_{$i}"] ?? null,
                     'shop_name' => $data["shop_name_{$i}"] ?? null,
                     'shop_owner_name' => $data["shop_owner_name_{$i}"] ?? null,
                     'shop_category' => $data["shop_category_{$i}"] ?? null,

@@ -40,7 +40,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
 
         //map
          Route::get('/ward/{ward_no}/details', [CommissionerController::class, 'wardDetails'])->name('ward.details');
-
+         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::post('/save-qc-data', [CorporationAuthController::class, 'saveQCData']);
     });
 });

@@ -452,7 +452,7 @@
                     if (filterBuildingCoverage !== "" && !isNaN(parseFloat(filterBuildingCoverage))) {
                         var targetCoverage = parseFloat(filterBuildingCoverage);
                         buildingCoverageMatch = buildingCoverage >= (targetCoverage - 3) &&
-                                              buildingCoverage <= (targetCoverage + 3);
+                            buildingCoverage <= (targetCoverage + 3);
                     }
 
                     return wardMatch && zoneMatch && buildingCoverageMatch;
@@ -643,6 +643,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -709,6 +710,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
