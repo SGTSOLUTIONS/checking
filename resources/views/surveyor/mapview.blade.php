@@ -82,7 +82,7 @@
 
         #liveToggleBtn {
             position: absolute;
-            top: 215px;
+            top: 250px;
             right: 20px;
             width: 55px;
             height: 55px;
@@ -101,7 +101,7 @@
 
         #routeBtn {
             position: absolute;
-            top: 235px;
+            top: 300px;
             right: 20px;
             width: 55px;
             height: 55px;
