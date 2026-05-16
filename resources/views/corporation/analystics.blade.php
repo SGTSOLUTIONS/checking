@@ -413,6 +413,31 @@
                 renderWards(filteredWards);
 
             });
+            $("#filterzone").on("keyup", function() {
+
+                var filterward = $(this).val().toLowerCase();
+                var filterzone = $("#filterzone").val().toLowerCase();
+
+                var  filteredWards = filteredWards.filter(function(ward) {
+
+                        return ward.zone.toString().toLowerCase().includes(filterzone);
+
+                    });
+
+                if (filterzone != "") {
+
+
+                    filteredWards = wards.filter(function(ward) {
+
+                    return ward.ward_no.toString().toLowerCase().includes(filterward);
+
+                });
+
+                }
+
+                renderWards(filteredWards);
+
+            });
 
 
         });
