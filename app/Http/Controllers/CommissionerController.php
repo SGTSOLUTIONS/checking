@@ -215,9 +215,9 @@ class CommissionerController extends Controller
             : 0;
 
         $wards = [];
-          $shopTableName = "shop_corporation_{$corporation->id}";
-          $shopCount = DB::table($shopTableName)->count();
-                    $totalShops = $shopCount;
+        $shopTableName = "shop_corporation_{$corporation->id}";
+        $shopCount = DB::table($shopTableName)->count();
+        $totalShops = $shopCount;
 
         foreach ($wards_per_zones as $wards_per_zone) {
 
@@ -342,6 +342,172 @@ class CommissionerController extends Controller
             'wards_per_zones' => $wards_per_zones,
         ]);
     }
+    //analytics
+    public function Analystics()
+    {
+        $user = Auth::guard('corporation')->user();
+
+        if (!$user) {
+            return redirect()->route('corporation.login');
+        }
+
+        $corporation = Corporation::find($user->corporation_id);
+
+        if (!$corporation) {
+            return back()->with('error', 'Corporation not found');
+        }
+
+        $ward_datas = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->get();
+
+        $wards_per_zones = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->select('zone', DB::raw('count(*) as total'))
+            ->groupBy('zone')
+            ->get();
+
+        $misTableName = "mis_corporation_{$corporation->id}";
+
+        $totalBuilding = 0;
+        $totalSurveyedBuilding = 0;
+        $totalSurveyedAssessment = 0;
+        $totalShops = 0;
+        $totalShopDataCount = 0;
+        $totalShopDataInMis = 0;
+        $totalShopDataNotInMis = 0;
+
+        $totalMis = Schema::hasTable($misTableName)
+            ? DB::table($misTableName)->count()
+            : 0;
+
+        // Get paginated wards
+        $paginatedWards = Ward::where('corporation_id', $corporation->id)
+            ->where('status', 'active')
+            ->orderBy('zone')
+            ->orderBy('ward_no')
+            ->paginate(15); // 15 wards per page, you can adjust this number
+
+        $wards = [];
+        $shopTableName = "shop_corporation_{$corporation->id}";
+        $totalShops = DB::table($shopTableName)->count();
+
+        foreach ($paginatedWards as $wardlist) {
+            $pointDataTableName = $this->getPointDataTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $polygonDataTableName = $this->getPolygonDataTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $polygonsTableName = $this->getPolygonTable(
+                $corporation->id,
+                $wardlist->ward_no,
+                $wardlist->zone
+            );
+
+            $zone = trim(strtolower($wardlist->zone));
+
+            $shopTableName = "shop_corporation_{$corporation->id}";
+            $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
+
+            // Polygon Count
+            if ($polygonsTableName && Schema::hasTable($polygonsTableName)) {
+                $polygonCount = DB::table($polygonsTableName)->count();
+                $totalBuilding += $polygonCount;
+            } else {
+                $polygonCount = 0;
+            }
+
+            // PolygonData Count (Unique GISID)
+            if ($polygonDataTableName && Schema::hasTable($polygonDataTableName)) {
+                $polygonDataCount = DB::table($polygonDataTableName)
+                    ->distinct('gisid')
+                    ->count('gisid');
+
+                $totalSurveyedBuilding += $polygonDataCount;
+            } else {
+                $polygonDataCount = 0;
+            }
+
+            // PointData Count
+            if ($pointDataTableName && Schema::hasTable($pointDataTableName)) {
+                $pointDataCount = DB::table($pointDataTableName)->count();
+                $totalSurveyedAssessment += $pointDataCount;
+            } else {
+                $pointDataCount = 0;
+            }
+
+            // Shop Count
+            $shopCount = 0;
+            $shopDataCount = 0;
+            $shopDataInMisCount = 0;
+            $shopDataNotinMisCount = 0;
+
+            if (Schema::hasTable($shopTableName)) {
+                if (Schema::hasTable($shopDataTableName)) {
+                    $shopDataCount = DB::table($shopDataTableName)->count();
+                    $totalShopDataCount += $shopDataCount;
+
+                    $shopDataInMisCount = DB::table($shopDataTableName)
+                        ->whereIn('prof_tax_assessment', function ($query) use ($shopTableName) {
+                            $query->select('prof_tax_assessment')
+                                ->from($shopTableName);
+                        })
+                        ->count();
+
+                    $shopDataNotinMisCount = $shopDataCount - $shopDataInMisCount;
+
+                    $totalShopDataInMis += $shopDataInMisCount;
+                    $totalShopDataNotInMis += $shopDataNotinMisCount;
+                }
+            }
+
+            $wards[] = [
+                'ward_id' => $wardlist->id,
+                'ward_no' => $wardlist->ward_no,
+                'zone' => $wardlist->zone,
+                'drone_image' => $wardlist->drone_image,
+                'total_buildings' => $polygonCount,
+                'surveyed_buildings' => $polygonDataCount,
+                'surveyed_assessment' => $pointDataCount,
+                'mis_count' => $totalMis,
+                'shop_count' => $shopCount,
+                'shop_data_count' => $shopDataCount,
+                'shop_data_in_mis_count' => $shopDataInMisCount,
+                'shop_data_not_in_mis_count' => $shopDataNotinMisCount,
+            ];
+        }
+
+        // Calculate survey percentage
+        $survey_percentage = $totalBuilding > 0
+            ? round(($totalSurveyedBuilding / $totalBuilding) * 100, 1)
+            : 0;
+
+        // Return view with all data
+        return view('corporation.analystics', [
+            'corporation' => $corporation,
+            'ward_count' => $ward_datas->count(),
+            'total_building' => $totalBuilding,
+            'total_surveyed_building' => $totalSurveyedBuilding,
+            'total_surveyed_assessment' => $totalSurveyedAssessment,
+            'total_mis' => $totalMis,
+            'total_shops' => $totalShops,
+            'total_shop_data_count' => $totalShopDataCount,
+            'total_shop_data_in_mis' => $totalShopDataInMis,
+            'total_shop_data_not_in_mis' => $totalShopDataNotInMis,
+            'survey_percentage' => $survey_percentage,
+            'wards' => $wards,
+            'wards_pagination' => $paginatedWards, // Add pagination object
+            'wards_per_zones' => $wards_per_zones,
+        ]);
+    }
+
     private function calculateWardVariations($corporationId, $zone, $wardNo)
     {
         $zone = strtolower(trim($zone));

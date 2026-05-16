@@ -467,7 +467,8 @@
                        href="{{ route('corporation.dashboard') }}">
                         <i class="fas fa-chart-pie"></i> Dashboard
                     </a>
-                    <a class="nav-link" href="#" data-page="analysis" id="analysisNavLink">
+                    <a class="nav-link" {{ request()->routeIs('corporation.analystics') ? 'active' : '' }}"
+                       href="{{ route('corporation.analystics') }}" data-page="analysis" id="analysisNavLink">
                         <i class="fas fa-chart-line"></i> Analytics
                     </a>
                 </nav>
