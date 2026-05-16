@@ -210,7 +210,7 @@
                                             </h6>
                                             @php
                                                 $buildingProgress = $ward['total_buildings'] > 0
-                                                    ? ($ward['surveyed_buildings'] / $ward['total_buildings'] * 100)
+                                                    ? number_format(($ward['surveyed_buildings'] / $ward['total_buildings'] * 100),2)
                                                     : 0;
                                             @endphp
                                             <span class="badge {{ $buildingProgress >= 80 ? 'bg-success' : ($buildingProgress >= 50 ? 'bg-warning' : 'bg-danger') }}">
@@ -294,7 +294,7 @@
                                             </small>
                                             @php
                                                 $misMatchPercent = $ward['shop_data_count'] > 0
-                                                    ? ($ward['shop_data_in_mis_count'] / $ward['shop_data_count']) * 100
+                                                    ? number_format(($ward['shop_data_in_mis_count'] / $ward['shop_data_count']) * 100,2)
                                                     : 0;
                                             @endphp
                                             <span class="badge {{ $misMatchPercent == 100 ? 'bg-success' : 'bg-warning' }}">
