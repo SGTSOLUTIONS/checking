@@ -133,6 +133,7 @@
                                 Ward-wise Detailed Information
                             </h4>
                         </div>
+                        <input type="text" class="form-conntrol" id="filterward" name="filterward">
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
@@ -192,7 +193,7 @@
                         0;
 
                     let progressClass = buildingProgress >= 80 ? 'bg-success' :
-                                        buildingProgress >= 50 ? 'bg-warning' : 'bg-danger';
+                        buildingProgress >= 50 ? 'bg-warning' : 'bg-danger';
 
                     let misMatchPercent = ward.shop_data_count > 0 ?
                         ((ward.shop_data_in_mis_count / ward.shop_data_count) * 100).toFixed(2) :
@@ -382,6 +383,20 @@
                     }, 100);
                 });
             }
+
+            $("#filterward").on("change", function() {
+
+                var filterward = $("#filterward").val();
+
+                var filteredWards = wards.filter(function(ward) {
+                    return ward.ward_no == filterward;
+                });
+
+                renderWards(filteredWards);
+
+            });
+
+
         });
     </script>
 
@@ -424,8 +439,10 @@
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            opacity: 1; /* Changed from 0 to 1 */
-            visibility: visible; /* Added for visibility */
+            opacity: 1;
+            /* Changed from 0 to 1 */
+            visibility: visible;
+            /* Added for visibility */
         }
 
         .ward-card:hover {
@@ -608,6 +625,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
