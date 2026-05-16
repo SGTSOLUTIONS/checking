@@ -394,19 +394,36 @@
                 var filterward = $("#filterward").val().toLowerCase();
                 var filterzone = $("#filterzone").val().toLowerCase();
 
+                // Get building coverage input
+                var filterBuildingCoverage = parseFloat($("#filterBuildingCoverage").val());
+
                 var filteredWards = wards.filter(function(ward) {
 
+                    // Calculate building coverage %
+                    var buildingCoverage =
+                        ((ward.surveyed_buildings / ward.total_buildings) * 100) ?? 0;
+
+                    // Ward filter
                     var wardMatch = ward.ward_no
                         .toString()
                         .toLowerCase()
                         .includes(filterward);
 
+                    // Zone filter
                     var zoneMatch = ward.zone
                         .toString()
                         .toLowerCase()
                         .includes(filterzone);
 
-                    return wardMatch && zoneMatch;
+                    var buildingCoverageMatch = true;
+                    if (!isNaN(filterBuildingCoverage)) {
+
+                        buildingCoverageMatch =
+                            buildingCoverage >= (filterBuildingCoverage - 3) &&
+                            buildingCoverage <= (filterBuildingCoverage + 3);
+                    }
+
+                    return wardMatch && zoneMatch && buildingCoverageMatch;
 
                 });
 
