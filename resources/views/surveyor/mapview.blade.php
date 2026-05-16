@@ -211,6 +211,12 @@
     <div id="layerToggleBtn">
         <i class="fas fa-layer-group"></i>
     </div>
+    <div id="searchToggleBtn">
+        <i class="fas fa-search"></i>
+    </div>
+    <div id="searchLabel" class="search-Lable closed">
+        <input type="text" name="search" id="search" class="form-control">
+    </div>
 
     <!-- Layer Switcher Panel -->
     <div id="layerSwitcher" class="layer-switcher closed">
@@ -608,6 +614,12 @@
 
             $('#lineToggle').change(function() {
                 lineLayer.setVisible($(this).is(':checked'));
+            });
+
+
+            //search gisid function
+              $('#searchToggleBtn').click(function() {
+                $('#searchLable').toggleClass('closed');
             });
         });
     </script>
