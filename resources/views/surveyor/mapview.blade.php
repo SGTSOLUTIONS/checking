@@ -717,6 +717,20 @@
                     return polygon.gisid == searchvalue;
                 });
                 console.log(findpolygon);
+                if (findpolygon) {
+                    var coordinates = JSON.parse(findpolygon.coordinates);
+                    var feature = new ol.Feature({
+                        geometry: new ol.geom.Polygon(coordinates)
+                    });
+                    map.getView().fit(feature.getGeometry().getExtent(), {
+                        duration: 1000,
+                        padding: [50, 50, 50, 50],
+                        maxZoom: 22
+                    });
+
+                } else {
+                    alert("Polygon not found");
+                }
 
             });
 
