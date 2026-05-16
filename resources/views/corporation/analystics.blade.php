@@ -384,12 +384,14 @@
                 });
             }
 
-            $("#filterward").on("change", function() {
+            $("#filterward").on("keyup", function() {
 
-                var filterward = $("#filterward").val();
+                var filterward = $(this).val().toLowerCase();
 
                 var filteredWards = wards.filter(function(ward) {
-                    return ward.ward_no == filterward;
+
+                    return ward.ward_no.toString().toLowerCase().includes(filterward);
+
                 });
 
                 renderWards(filteredWards);
