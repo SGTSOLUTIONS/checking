@@ -790,47 +790,6 @@
                         console.error('Error parsing coordinates:', e);
                         alert("Error displaying polygon");
                     }
-                } else {
-                    // Search in lines/roads
-                    var findLine = lines.find(function(line) {
-                        return line.gisid == searchvalue || line.road_name == searchvalue;
-                    });
-
-                    if (findLine) {
-                        try {
-                            let coords;
-                            if (typeof findLine.coordinates === 'string') {
-                                coords = JSON.parse(findLine.coordinates);
-                            } else {
-                                coords = findLine.coordinates;
-                            }
-
-                            if (coords.length === 1 && Array.isArray(coords[0])) {
-                                coords = coords[0];
-                            }
-
-                            var feature = new ol.Feature({
-                                geometry: new ol.geom.LineString(coords)
-                            });
-                            map.getView().fit(feature.getGeometry().getExtent(), {
-                                duration: 1000,
-                                padding: [50, 50, 50, 50],
-                                maxZoom: 20
-                            });
-                        } catch(e) {
-                            console.error('Error parsing line coordinates:', e);
-                            alert("Error displaying road");
-                        }
-                    } else {
-                        alert("GIS ID or Road Name not found");
-                    }
-                }
-            });
-
-            // Enter key support for search
-            $('#searchInput').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#searchGisidBtn').click();
                 }
             });
 
@@ -841,56 +800,90 @@
                 alert('Routing feature will be implemented soon');
             });
 
-            // Live location button functionality
-            $('#liveToggleBtn').click(function() {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const coords = ol.proj.fromLonLat([lon, lat]);
+           let liveMarkerLayer;
+let liveMarker;
+let watchId;
 
-                        map.getView().animate({
-                            center: coords,
-                            zoom: 18,
-                            duration: 1000
-                        });
+$('#liveToggleBtn').click(function () {
 
-                        // Add a temporary marker for current location
-                        const markerLayer = new ol.layer.Vector({
-                            source: new ol.source.Vector(),
-                            style: new ol.style.Style({
-                                image: new ol.style.Circle({
-                                    radius: 10,
-                                    fill: new ol.style.Fill({
-                                        color: '#ff4444'
-                                    }),
-                                    stroke: new ol.style.Stroke({
-                                        color: '#ffffff',
-                                        width: 3
-                                    })
-                                })
+    // Remove old tracking if already running
+    if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+
+        if (liveMarkerLayer) {
+            map.removeLayer(liveMarkerLayer);
+        }
+
+        watchId = null;
+        return;
+    }
+
+    // Marker Layer
+    liveMarkerLayer = new ol.layer.Vector({
+        source: new ol.source.Vector()
+    });
+
+    map.addLayer(liveMarkerLayer);
+
+    // Start live tracking
+    watchId = navigator.geolocation.watchPosition(
+        function (position) {
+
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            const coords = ol.proj.fromLonLat([lon, lat]);
+
+            // First time create marker
+            if (!liveMarker) {
+
+                liveMarker = new ol.Feature({
+                    geometry: new ol.geom.Point(coords)
+                });
+
+                // Animated human-style marker
+                liveMarker.setStyle(
+                    new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 12,
+                            fill: new ol.style.Fill({
+                                color: '#007bff'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#ffffff',
+                                width: 4
                             })
-                        });
+                        })
+                    })
+                );
 
-                        const marker = new ol.Feature({
-                            geometry: new ol.geom.Point(coords)
-                        });
+                liveMarkerLayer.getSource().addFeature(liveMarker);
 
-                        markerLayer.getSource().addFeature(marker);
-                        map.addLayer(markerLayer);
+            } else {
 
-                        // Remove marker after 5 seconds
-                        setTimeout(() => {
-                            map.removeLayer(markerLayer);
-                        }, 5000);
+                // Animate movement
+                liveMarker.getGeometry().setCoordinates(coords);
+            }
 
-                    }, function(error) {
-                        alert("Error getting location: " + error.message);
-                    });
-                } else {
-                    alert("Geolocation is not supported by your browser");
-                }
+            // Smooth map move
+            map.getView().animate({
+                center: coords,
+                duration: 1000
             });
+
+        },
+
+        function (error) {
+            alert("Location error: " + error.message);
+        },
+
+        {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 5000
+        }
+    );
+});
 
             // Keyboard shortcuts
             $(document).keydown(function(e) {
