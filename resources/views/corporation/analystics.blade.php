@@ -134,9 +134,14 @@
                             </h4>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                            <input type="text" class="form-conntrol" id="filterward" name="filterward"
+                            <input type="text" class="form-control" id="filterward" name="filterward"
                                 placeholder="ward">
-                            <input type="text" name="filterzone" id="filterzone">
+                            <input type="text" class="form-control"  name="filterzone" id="filterzone">
+                            <input
+    type="number"
+    id="filterBuildingCoverage"
+    class="form-control"
+    placeholder="Enter Building Coverage %">
                         </div>
 
 
