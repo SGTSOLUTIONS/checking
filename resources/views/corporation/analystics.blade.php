@@ -132,12 +132,12 @@
                                 <i class="fas fa-building me-2" style="color:#1679AB;"></i>
                                 Ward-wise Detailed Information
                             </h4>
-                            <div class="mt-2 mt-sm-0">
+                            {{-- <div class="mt-2 mt-sm-0">
                                 <span class="badge bg-info">
                                     <i class="fas fa-layer-group"></i> Showing {{ $wards_pagination->firstItem() }} to
                                     {{ $wards_pagination->lastItem() }} of {{ $wards_pagination->total() }} wards
                                 </span>
-                            </div>
+                            </div> --}}
                         </div>
 
 
@@ -342,9 +342,11 @@
 @endsection
 
 @push('scripts')
-    <script>
-      /
-    </script>
+   <script>
+    $(document).ready(function () {
+        alert('hi');
+    });
+</script>
 
     <style>
         .dashboard-content-area {
