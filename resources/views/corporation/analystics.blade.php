@@ -132,19 +132,11 @@
                                 <i class="fas fa-building me-2" style="color:#1679AB;"></i>
                                 Ward-wise Detailed Information
                             </h4>
-                            {{-- <div class="mt-2 mt-sm-0">
-                                <span class="badge bg-info">
-                                    <i class="fas fa-layer-group"></i> Showing {{ $wards_pagination->firstItem() }} to
-                                    {{ $wards_pagination->lastItem() }} of {{ $wards_pagination->total() }} wards
-                                </span>
-                            </div> --}}
                         </div>
-
-
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
-
+                            <!-- Cards will be loaded here by JavaScript -->
                         </div>
 
                         <!-- Pagination -->
@@ -172,22 +164,17 @@
 @endsection
 
 @push('scripts')
-   <script>
-    $(document).ready(function () {
+    <script>
+        $(document).ready(function() {
+            const wards = @json($wards);
+            const $wardcontainer = $("#wardsContainer");
+            renderWards(wards);
 
-        const wards = @json($wards);
+            function renderWards(wards) {
+                $wardcontainer.empty();
 
-        const $wardcontainer = $("#wardsContainer");
-
-        renderWards(wards);
-
-        function renderWards(wards) {
-
-            $wardcontainer.empty();
-
-            if (wards.length === 0) {
-
-                $wardcontainer.append(`
+                if (wards.length === 0) {
+                    $wardcontainer.append(`
                     <div class="col-12">
                         <div class="alert alert-info text-center py-5">
                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
@@ -196,29 +183,23 @@
                         </div>
                     </div>
                 `);
+                    return;
+                }
 
-                return;
-            }
+                wards.forEach(function(ward) {
+                    let buildingProgress = ward.total_buildings > 0 ?
+                        ((ward.surveyed_buildings / ward.total_buildings) * 100).toFixed(2) :
+                        0;
 
-            wards.forEach(function (ward) {
+                    let progressClass = buildingProgress >= 80 ? 'bg-success' :
+                                        buildingProgress >= 50 ? 'bg-warning' : 'bg-danger';
 
-                let buildingProgress = ward.total_buildings > 0
-                    ? ((ward.surveyed_buildings / ward.total_buildings) * 100).toFixed(2)
-                    : 0;
+                    let misMatchPercent = ward.shop_data_count > 0 ?
+                        ((ward.shop_data_in_mis_count / ward.shop_data_count) * 100).toFixed(2) :
+                        0;
 
-                let progressClass =
-                    buildingProgress >= 80
-                        ? 'bg-success'
-                        : buildingProgress >= 50
-                        ? 'bg-warning'
-                        : 'bg-danger';
-
-                let misMatchPercent = ward.shop_data_count > 0
-                    ? ((ward.shop_data_in_mis_count / ward.shop_data_count) * 100).toFixed(2)
-                    : 0;
-
-                let card = `
-                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 ward-card-item"
+                    let card = `
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 ward-card-item"
                         data-zone="${ward.zone.toLowerCase()}"
                         data-ward="${ward.ward_no}">
 
@@ -393,14 +374,16 @@
                     </div>
                 `;
 
-                $wardcontainer.append(card);
+                    $wardcontainer.append(card);
 
-            });
-        }
-
-    });
-</script>
-
+                    // Add animation to cards after they're added
+                    setTimeout(() => {
+                        $('.ward-card').css('opacity', '1');
+                    }, 100);
+                });
+            }
+        });
+    </script>
 
     <style>
         .dashboard-content-area {
@@ -434,14 +417,15 @@
             color: #1679AB;
         }
 
-        /* Ward Card Styles */
+        /* Ward Card Styles - FIXED */
         .ward-card {
             background: white;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            opacity: 0;
+            opacity: 1; /* Changed from 0 to 1 */
+            visibility: visible; /* Added for visibility */
         }
 
         .ward-card:hover {
@@ -616,6 +600,22 @@
         .animate__fadeInUp {
             animation-name: fadeInUp;
             animation-duration: 0.6s;
+        }
+
+        /* Card Entry Animation */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ward-card-item {
+            animation: cardFadeIn 0.5s ease forwards;
         }
 
         /* Custom Scrollbar */
