@@ -39,12 +39,8 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
 
 
         //map
-        Route::post('/ward/filter', [CommissionerController::class, 'filterWardData'])->name('ward.filter');
-        Route::post('/ward/reset', [CommissionerController::class, 'resetWardData'])->name('ward.reset');
-        Route::post('/update-assessment', [CommissionerController::class, 'updateAssessment'])->name('update.assessment');
-        Route::get('/get-assessment-details', [CommissionerController::class, 'getAssessmentDetails'])->name('get.assessment.details');
-        Route::post('/add-missing-columns', [CommissionerController::class, 'addMissingColumns'])->name('add.missing.columns');
-        Route::post('/logout', [CorporationAuthController::class, 'logout'])->name('logout');
+         Route::get('/ward/{ward_no}/details', [CommissionerController::class, 'wardDetails'])->name('ward.details');
+
         Route::post('/save-qc-data', [CorporationAuthController::class, 'saveQCData']);
     });
 });
