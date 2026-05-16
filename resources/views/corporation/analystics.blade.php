@@ -389,55 +389,32 @@
                 });
             }
 
-            $("#filterward").on("keyup", function() {
+            function applyFilters() {
 
-                var filterward = $(this).val().toLowerCase();
+                var filterward = $("#filterward").val().toLowerCase();
                 var filterzone = $("#filterzone").val().toLowerCase();
 
                 var filteredWards = wards.filter(function(ward) {
 
-                    return ward.ward_no.toString().toLowerCase().includes(filterward);
+                    var wardMatch = ward.ward_no
+                        .toString()
+                        .toLowerCase()
+                        .includes(filterward);
+
+                    var zoneMatch = ward.zone
+                        .toString()
+                        .toLowerCase()
+                        .includes(filterzone);
+
+                    return wardMatch && zoneMatch;
 
                 });
 
-                if (filterzone != "") {
-
-                    filteredWards = filteredWards.filter(function(ward) {
-
-                        return ward.zone.toString().toLowerCase().includes(filterzone);
-
-                    });
-
-                }
-
                 renderWards(filteredWards);
+            }
 
-            });
-            $("#filterzone").on("keyup", function() {
-
-                var filterward = $(this).val().toLowerCase();
-                var filterzone = $("#filterzone").val().toLowerCase();
-
-                var  filteredWards = filteredWards.filter(function(ward) {
-
-                        return ward.zone.toString().toLowerCase().includes(filterzone);
-
-                    });
-
-                if (filterzone != "") {
-
-
-                    filteredWards = wards.filter(function(ward) {
-
-                    return ward.ward_no.toString().toLowerCase().includes(filterward);
-
-                });
-
-                }
-
-                renderWards(filteredWards);
-
-            });
+            $("#filterward").on("keyup", applyFilters);
+            $("#filterzone").on("keyup", applyFilters);
 
 
         });
