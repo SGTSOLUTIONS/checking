@@ -91,10 +91,220 @@
                     })
                 })
             });
-            const map = new ol.Map({
+
+            function createPointStyle(feature) {
+                const gisid = feature.get("gisid");
+
+                const pointCount = pointDatas.filter(data => data.point_gisid == gisid).length;
+                const polygonData = polygonDatas.find(data => data.gisid == gisid);
+
+                let color = "blue"; // default
+
+                if (polygonData) {
+                    if (pointCount > 0) {
+                        color = (polygonData.number_bill == pointCount) ? "green" : "red";
+                    } else {
+                        color = "blue";
+                    }
+                }
+
+                return new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 8,
+                        fill: new ol.style.Fill({
+                            color: color
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 2
+                        })
+                    }),
+                    text: new ol.style.Text({
+                        text: gisid ? String(gisid) : "",
+                        scale: 1.3,
+                        offsetY: -15,
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
+                    })
+                });
+            }
+
+            function createPolygonStyle(feature) {
+
+                const gisid = feature.get("gisid");
+                const sqft = feature.get("sqfeet") || "0";
+
+                const polygonData = polygonDatas.find(data => data.gisid == gisid);
+
+                const color = polygonData ? "red" : "blue";
+
+                // Get polygon center point
+                const geometry = feature.getGeometry();
+                const centerPoint = geometry.getInteriorPoint();
+
+                return [
+                    // Polygon Border Style
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 4,
+                            lineJoin: "round",
+                            lineCap: "round"
+                        })
+                    }),
+
+                    // Label Style
+                    // Label Style
+                    new ol.style.Style({
+                        geometry: centerPoint,
+
+                        text: new ol.style.Text({
+                            text: sqft + " SQFT",
+
+                            font: "bold 14px Arial",
+
+                            fill: new ol.style.Fill({
+                                color: "#000000"
+                            }),
+
+                            backgroundFill: new ol.style.Fill({
+                                color: "#ffffff"
+                            }),
+
+                            backgroundStroke: new ol.style.Stroke({
+                                color: "#000000",
+                                width: 1
+                            }),
+
+                            padding: [4, 6, 4, 6],
+
+                            overflow: true,
+
+                            textAlign: "center",
+
+                            offsetY: 0
+                        }),
+
+                        image: new ol.style.Circle({
+                            radius: 4,
+
+                            fill: new ol.style.Fill({
+                                color: "yellow"
+                            }),
+
+                            stroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            })
+                        })
+                    })
+                ];
+            }
+
+            function createLineStyle(feature) {
+                const road_name = feature.get("road_name");
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: "yellow",
+                        width: 4,
+                        lineJoin: "round",
+                        lineCap: "round"
+                    }),
+                    text: new ol.style.Text({
+                        text: road_name ? String(road_name) : "",
+                        font: "bold 14px Calibri, sans-serif",
+                        placement: "line",
+                        overflow: true,
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
+                    })
+                });
+            }
+            // Line Layer
+            const lineSource = new ol.source.Vector();
+            lines.forEach(l => {
+                try {
+                    let coords;
+                    if (typeof l.coordinates === 'string') {
+                        coords = JSON.parse(l.coordinates);
+                    } else if (Array.isArray(l.coordinates)) {
+                        coords = l.coordinates;
+                    } else {
+                        console.warn('Invalid coordinates format for line:', l.gisid);
+                        return;
+                    }
+
+                    if (coords.length === 1 && Array.isArray(coords[0]) && coords[0].length > 0 && Array
+                        .isArray(coords[0][0])) {
+                        coords = coords[0];
+                    }
+
+                    if (!coords || coords.length < 2) {
+                        console.warn('Line needs at least 2 coordinates:', l.gisid);
+                        return;
+                    }
+
+                    const isValid = coords.every(coord =>
+                        Array.isArray(coord) && coord.length >= 2 &&
+                        typeof coord[0] === 'number' && typeof coord[1] === 'number' &&
+                        !isNaN(coord[0]) && !isNaN(coord[1])
+                    );
+
+                    if (!isValid) {
+                        console.warn('Invalid coordinate values for line:', l.gisid);
+                        return;
+                    }
+
+                    lineSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.LineString(coords),
+                        gisid: l.gisid,
+                        type: "Line",
+                        road_name: l.road_name || null
+                    }));
+                } catch (e) {
+                    console.error('Line parse error:', e, l);
+                }
+                });
+                console.log(`Loaded ${lineSource.getFeatures().length} line features`);
+                const lineLayer = new ol.layer.Vector({
+                    source: lineSource,
+                    style: createLineStyle,
+                    visible: true
+            });
+
+            // Point Layer
+            const pointSource = new ol.source.Vector();
+            points.forEach(p => {
+                try {
+                    let coords = JSON.parse(p.coordinates);
+                    pointSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.Point(coords),
+                        gisid: p.gisid,
+                        type: "Point"
+                    }));
+                } catch (e) {
+                    console.error('Point parse error:', e);
+                }
+            });
+            const pointLayer = new ol.layer.Vector({
+                source: pointSource,
+                style: createPointStyle,
+                visible: true
+            });
+             const map = new ol.Map({
                 target: 'map',
-                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer
-                ],
+                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer,
+                    lineLayer, pointLayer],
                 view: new ol.View({
                     projection: "EPSG:3857",
                     center: ol.extent.getCenter(imageExtent),
