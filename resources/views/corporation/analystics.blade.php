@@ -437,6 +437,7 @@
 
             $("#filterward").on("keyup", applyFilters);
             $("#filterzone").on("keyup", applyFilters);
+$("#filterBuildingCoverage").on("keyup", applyFilters);
 
 
         });
