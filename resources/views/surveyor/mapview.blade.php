@@ -93,7 +93,7 @@
             });
             const map = new ol.Map({
                 target: 'map',
-                layers: [osmLayer,, satelliteLayer, droneLayer, boundaryLayer
+                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer
                 ],
                 view: new ol.View({
                     projection: "EPSG:3857",
