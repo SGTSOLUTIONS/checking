@@ -302,7 +302,7 @@
 
     <div id="searchLabel" class="search-Lable closed">
         <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name...">
-        <button class="btn btn-primary"> <i class="fas fa-search"></i></button>
+        <button class="btn btn-primary" id="searchGisidBtn"> <i class="fas fa-search"></i></button>
     </div>
 
     <!-- Layer Switcher Panel -->
@@ -708,6 +708,11 @@
                 if (!$('#searchLabel').hasClass('closed')) {
                     $('#searchInput').focus();
                 }
+            });
+
+            $("#searchGisidBtn").on('click',function(){
+                var searchvalue = $("#searchInput").val();
+                alert(searchvalue);
             });
 
 
