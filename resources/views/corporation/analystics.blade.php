@@ -140,53 +140,7 @@
                             </div>
                         </div>
 
-                        <!-- Search and Filter Section -->
-                        <div class="row mb-4 g-3">
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white">
-                                        <i class="fas fa-search text-muted"></i>
-                                    </span>
-                                    <input type="text" id="wardSearch" class="form-control"
-                                        placeholder="Search by ward number or zone..."
-                                        value="{{ request()->get('search') }}">
-                                    @if (request()->get('search'))
-                                        <a href="{{ route('corporation.analystics') }}"
-                                            class="btn btn-outline-secondary">
-                                            <i class="fas fa-times"></i> Clear
-                                        </a>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <select id="zoneFilter" class="form-select">
-                                    <option value="">All Zones</option>
-                                    @foreach ($wards_per_zones as $zone)
-                                        <option value="{{ $zone->zone }}"
-                                            {{ request()->get('zone') == $zone->zone ? 'selected' : '' }}>
-                                            {{ ucfirst($zone->zone) }} ({{ $zone->total }} wards)
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <select id="perPageSelect" class="form-select">
-                                    <option value="12" {{ request()->get('per_page', 12) == 12 ? 'selected' : '' }}>12
-                                        per page</option>
-                                    <option value="24" {{ request()->get('per_page', 12) == 24 ? 'selected' : '' }}>24
-                                        per page</option>
-                                    <option value="48" {{ request()->get('per_page', 12) == 48 ? 'selected' : '' }}>48
-                                        per page</option>
-                                    <option value="96" {{ request()->get('per_page', 12) == 96 ? 'selected' : '' }}>96
-                                        per page</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-success w-100" id="exportDataBtn">
-                                    <i class="fas fa-download"></i> Export Data
-                                </button>
-                            </div>
-                        </div>
+
 
                         <!-- Ward Cards Grid -->
                         <div class="row g-4" id="wardsContainer">
