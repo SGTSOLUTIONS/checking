@@ -85,6 +85,7 @@ class SurveyorController extends Controller
         $pointDatas = DB::table($pointDataTableName)->get();
         $misData = DB::table($misTableName . ' as mis')
             ->leftJoin($wateTaxTableName . ' as wt', 'mis.assessment', '=', 'wt.assessment')
+            ->where('mis.ward_no', $wardNo)
             ->select(
                 'mis.*',
                 'wt.watertax_no',
