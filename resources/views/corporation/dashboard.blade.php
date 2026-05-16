@@ -243,6 +243,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const totalSurveyedAssessment = {{ $total_surveyed_assessment }};
     const totalShopDataInMis = {{ $total_shop_data_in_mis }};
     const totalShopDataNotInMis = {{ $total_shop_data_not_in_mis }};
+    const total_mis ={{$total_mis}};
 
     if (!wardsData || wardsData.length === 0) {
         document.querySelectorAll('.chart-container').forEach(container => {
@@ -368,8 +369,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // ========== DOUGHNUT CHART: Assessment Progress ==========
-    const remainingAssessment = totalBuildings > totalSurveyedAssessment
-        ? totalBuildings - totalSurveyedAssessment
+    const remainingAssessment = total_mis > totalSurveyedAssessment
+        ? total_mis - totalSurveyedAssessment
         : 0;
     const doughnutCtx = document.getElementById('assessmentDoughnutChart').getContext('2d');
     new Chart(doughnutCtx, {
