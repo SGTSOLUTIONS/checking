@@ -2323,336 +2323,411 @@
 
 
             function handlePolygonClick(properties) {
-
                 const gisId = properties["gisid"];
-
                 resetBuildingForm();
-
                 $("#building_gisid").val(gisId);
-
                 let existingData = null;
 
                 // REMOVE OLD MODAL BEFORE APPENDING NEW ONE
                 $("#buildingModal").remove();
 
                 $("body").append(`
-                    <div class="modal fade" id="buildingModal" tabindex="-1">
-                        <div class="modal-dialog modal-xl">
-                             <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Building Data Collection</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal fade" id="buildingModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-bottom: none;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-building me-2"></i>Building Data Collection - GIS ID: ${gisId}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="buildingForm" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" id="gisIdInput" name="gisid">
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #f8fafc;">
+
+                            <!-- Image Upload Section with Previews -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>Building Images</h6>
                                 </div>
-                                <form id="buildingForm" enctype="multipart/form-data">
-                                    @csrf
-                                    <input type="hidden" id="gisIdInput" name="gisid">
-                                    <div class="modal-body">
-                                        <!-- Two Image Previews Side by Side -->
-                                        <div class="row mb-4">
-                                            <div class="col-md-6">
-                                                <label class="fw-bold mb-2">Image 1 Preview</label>
-                                                <div class="border rounded p-2" style="background: #f8f9fa; min-height: 200px;">
-                                                    <img id="buildingImagePreview" src="" alt="Building Image Preview"
-                                                        class="img-fluid"
-                                                        style="display: none; max-height: 250px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="fw-bold mb-2">
+                                                <i class="fas fa-camera me-1"></i>Image 1
+                                            </label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px; transition: all 0.3s ease;">
+                                                <img id="buildingImagePreview" src="" alt="Building Image Preview"
+                                                    class="img-fluid"
+                                                    style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                <div id="noImagePlaceholder" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
+                                                    <p>No image selected</p>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <label class="fw-bold mb-2">Image 2 Preview</label>
-                                                <div class="border rounded p-2" style="background: #f8f9fa; min-height: 200px;">
-                                                    <img id="buildingImagePreview2" src="" alt="Building Image Preview 2"
-                                                        class="img-fluid"
-                                                        style="display: none; max-height: 250px; width: 100%; object-fit: contain; border-radius: 8px;">
-                                                </div>
+                                            <div class="mt-2">
+                                                <label class="btn btn-outline-primary btn-sm w-100">
+                                                    <i class="fas fa-upload me-1"></i> Choose Image
+                                                    <input type="file" name="image" id="building_image" accept="image/*" style="display: none;" onchange="previewBuildingImage(this, 'buildingImagePreview')">
+                                                </label>
                                             </div>
+                                            <div id="building_image_error" class="error-message text-danger small mt-1"></div>
                                         </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="fw-bold mb-2">
+                                                <i class="fas fa-camera me-1"></i>Image 2
+                                            </label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px; transition: all 0.3s ease;">
+                                                <img id="buildingImagePreview2" src="" alt="Building Image Preview 2"
+                                                    class="img-fluid"
+                                                    style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                <div id="noImagePlaceholder2" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
+                                                    <p>No image selected</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <label class="btn btn-outline-primary btn-sm w-100">
+                                                    <i class="fas fa-upload me-1"></i> Choose Image
+                                                    <input type="file" name="image2" id="building_image2" accept="image/*" style="display: none;" onchange="previewBuildingImage(this, 'buildingImagePreview2')">
+                                                </label>
+                                            </div>
+                                            <div id="building_image2_error" class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <div class="row">
-                                            <div class="col-md-3 mb-3">
-                                                <label>Gisid</label>
-                                                <input type="text" class="form-control" name="building_gisid" id="building_gisid"
-                                                    readonly>
-                                                <div id="building_gisid_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Zone</label>
-                                                <select class="form-control" name="building_zone" id="building_zone">
-                                                    <option value="">Select Zone</option>
-                                                    <option value="ZONE-A">ZONE-A</option>
-                                                    <option value="ZONE-B">ZONE-B</option>
-                                                    <option value="ZONE-C">ZONE-C</option>
-                                                    <option value="ZONE-D">ZONE-D</option>
-                                                    <option value="ZONE-E">ZONE-E</option>
-                                                </select>
-                                                <div id="building_zone_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Number of Bills</label>
-                                                <input type="number" class="form-control" name="number_bill" id="number_bill">
-                                                <div id="number_bill_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Number of Shops</label>
-                                                <input type="number" class="form-control" name="number_shop" id="number_shop">
-                                                <div id="number_shop_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Number of Floors</label>
-                                                <input type="number" class="form-control" name="number_floor" id="number_floor">
-                                                <div id="number_floor_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Percentage</label>
-                                                <select class="form-control mt-2" name="percentage" id="percentage">
-                                                    <option value=""></option>
-                                                    <option value="10">10</option>
-                                                    <option value="20">20</option>
-                                                    <option value="30">30</option>
-                                                    <option value="40">40</option>
-                                                    <option value="50">50</option>
-                                                    <option value="60">60</option>
-                                                    <option value="70">70</option>
-                                                    <option value="80">80</option>
-                                                    <option value="85">85</option>
-                                                    <option value="90">90</option>
-                                                    <option value="100">100</option>
-                                                </select>
-                                                <div id="percentage_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label>Building Name</label>
-                                                <input type="text" class="form-control" name="building_name" id="building_name">
-                                                <div id="building_name_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label>Road Name</label>
-                                                <select class="form-control" id="road_name" name="road_name">
-                                                    <option value="">Select Road Name</option>
-                                                    @if (isset($uniqueRoadNames))
+                            <!-- Basic Information Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">GIS ID <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="building_gisid" id="building_gisid" readonly>
+                                            <div id="building_gisid_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Zone</label>
+                                            <select class="form-select" name="building_zone" id="building_zone">
+                                                <option value="">Select Zone</option>
+                                                <option value="ZONE-A">ZONE-A</option>
+                                                <option value="ZONE-B">ZONE-B</option>
+                                                <option value="ZONE-C">ZONE-C</option>
+                                                <option value="ZONE-D">ZONE-D</option>
+                                                <option value="ZONE-E">ZONE-E</option>
+                                            </select>
+                                            <div id="building_zone_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Bills</label>
+                                            <input type="number" class="form-control" name="number_bill" id="number_bill" min="0">
+                                            <div id="number_bill_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Shops</label>
+                                            <input type="number" class="form-control" name="number_shop" id="number_shop" min="0">
+                                            <div id="number_shop_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Floors</label>
+                                            <input type="number" class="form-control" name="number_floor" id="number_floor" min="0">
+                                            <div id="number_floor_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Percentage</label>
+                                            <select class="form-select" name="percentage" id="percentage">
+                                                <option value="">Select Percentage</option>
+                                                <option value="10">10%</option>
+                                                <option value="20">20%</option>
+                                                <option value="30">30%</option>
+                                                <option value="40">40%</option>
+                                                <option value="50">50%</option>
+                                                <option value="60">60%</option>
+                                                <option value="70">70%</option>
+                                                <option value="80">80%</option>
+                                                <option value="85">85%</option>
+                                                <option value="90">90%</option>
+                                                <option value="100">100%</option>
+                                            </select>
+                                            <div id="percentage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Building Name</label>
+                                            <input type="text" class="form-control" name="building_name" id="building_name" placeholder="Enter building name">
+                                            <div id="building_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Road Name</label>
+                                            <select class="form-select" id="road_name" name="road_name">
+                                                <option value="">Select Road Name</option>
+                                                @if (isset($uniqueRoadNames))
                                                     @foreach ($uniqueRoadNames as $roadName)
-                                                    <option value="{{ $roadName }}">{{ $roadName }}</option>
+                                                        <option value="{{ $roadName }}">{{ $roadName }}</option>
                                                     @endforeach
-                                                    @endif
-                                                </select>
-                                                <div id="road_name_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label>Phone</label>
-                                                <input type="text" class="form-control" name="phone" id="phone_building">
-                                                <div id="phone_building_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Building Usage</label>
-                                                <select class="form-control" name="building_usage" id="building_usage">
-                                                    <option value="">Select</option>
-                                                    <option value="RESIDENTIAL">Residential</option>
-                                                    <option value="COMMERCIAL">Commercial</option>
-                                                    <option value="INDUSTRIAL">Industrial</option>
-                                                    <option value="INSTITUTIONAL">Institutional</option>
-                                                    <option value="MIXED">Mixed</option>
-                                                    <option value="GOVERNMENT">Government</option>
-                                                    <option value="VACANT">Vacant</option>
-                                                </select>
-                                                <div id="building_usage_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Construction Type</label>
-                                                <select class="form-control" name="construction_type" id="construction_type">
-                                                    <option value="">Select</option>
-                                                    <option value="PERMANENT">Permanent</option>
-                                                    <option value="SEMI_PERMANENT">Semi Permanent</option>
-                                                    <option value="VACANT_LAND">Vaccant Land</option>
-                                                    <option value="SHED">Shed</option>
-                                                    <option value="CAR_SHED">Car Shed</option>
-                                                    <option value="TEMPORARY">Temporary</option>
-                                                </select>
-                                                <div id="construction_type_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Building Type</label>
-                                                <select class="form-control" name="building_type" id="building_type">
-                                                    <option value="">Select</option>
-                                                    <option value="Independent">Independent</option>
-                                                    <option value="Flat">Flat</option>
-                                                    <option value="Kalyana_Mandapam">Kalyana Mandapam</option>
-                                                    <option value="Hotel">Hotel</option>
-                                                    <option value="Cinema_Theatre">Cinema Theatre</option>
-                                                    <option value="Central_Government_Building">Central Government Building</option>
-                                                    <option value="State_Government_Building">State Government Building</option>
-                                                    <option value="Municipality_Corporation">Municipality / Corporation</option>
-                                                    <option value="Educational_Institution">Educational Institution</option>
-                                                    <option value="Hospital">Hospital</option>
-                                                    <option value="Commercial_Complex">Commercial Complex</option>
-                                                    <option value="Shop">Shop</option>
-                                                    <option value="Office">Office</option>
-                                                    <option value="Temple">Temple</option>
-                                                    <option value="Mosque">Mosque</option>
-                                                    <option value="Church">Church</option>
-                                                    <option value="Amma_Unavagam">Amma Unavagam</option>
-                                                    <option value="Public_Toilet">Public Toilet</option>
-                                                    <option value="Vacant Land">Vacant Land</option>
-                                                    <option value="Under Construction">Under Construction</option>
-                                                    <option value="Others">Others</option>
-                                                </select>
-                                                <div id="building_type_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>UGD</label>
-                                                <select class="form-control" name="ugd" id="ugd">
-                                                    <option value="">Select</option>
-                                                    <option value="No_Connection">No Connection</option>
-                                                    <option value="Manhole_Available_but_Connection_Not_Given_to_House">Manhole Available
-                                                        but Connection Not Given to House</option>
-                                                    <option value="Stage_1_Completed">Stage 1 Completed</option>
-                                                    <option value="Stage_1_2_Completed">Stage 1, 2 Completed</option>
-                                                    <option value="Stage_1_2_Completed_but_Not_Connected">Stage 1, 2 Completed but Not
-                                                        Connected</option>
-                                                    <option value="Stage_1_2_3_Completed">Stage 1, 2, 3 Completed</option>
-                                                    <option value="Direct_Connection_Given">Direct Connection Given</option>
-                                                    <option value="1_UGD_Connection_-_3_Stage_Completed">1 UGD Connection - 3 Stage
-                                                        Completed</option>
-                                                    <option value="2_UGD_Connection_-_3_Stage_Completed">2 UGD Connection - 3 Stage
-                                                        Completed</option>
-                                                </select>
-                                                <div id="ugd_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Lift Room</label>
-                                                <select class="form-control" name="liftroom" id="liftroom">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="liftroom_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Head Room</label>
-                                                <select class="form-control" name="headroom" id="headroom">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="headroom_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Overhead Tank</label>
-                                                <select class="form-control" name="overhead_tank" id="overhead_tank">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="overhead_tank_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Rainwater Harvesting</label>
-                                                <select class="form-control" name="rainwater_harvesting" id="rainwater_harvesting">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="rainwater_harvesting_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Parking</label>
-                                                <select class="form-control" name="parking" id="parking">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="parking_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Ramp</label>
-                                                <select class="form-control" name="ramp" id="ramp">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="ramp_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Hoarding</label>
-                                                <select class="form-control" name="hoarding" id="hoarding">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="hoarding_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>CCTV</label>
-                                                <select class="form-control" name="cctv" id="cctv">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="cctv_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Cell Tower</label>
-                                                <select class="form-control" name="cell_tower" id="cell_tower">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="cell_tower_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Solar Panel</label>
-                                                <select class="form-control" name="solar_panel" id="solar_panel">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="solar_panel_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Basement</label>
-                                                <input type="number" class="form-control" name="basement" id="basement">
-                                                <div id="basement_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label>Water Connection</label>
-
-                                                <select class="form-control" name="water_connection" id="water_connection">
-                                                    <option value="No">No</option>
-                                                    <option value="Yes">Yes</option>
-                                                </select>
-                                                <div id="water_connection_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Upload Image</label>
-                                                <input type="file" class="form-control" name="image" id="building_image"
-                                                    accept="image/*">
-                                                <div id="building_image_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-4 mb-3">
-                                                <label>Upload Image2</label>
-                                                <input type="file" class="form-control" name="image2" id="building_image2"
-                                                    accept="image/*">
-                                                <div id="building_image2_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label>Remarks</label>
-                                                <textarea class="form-control" name="remarks" id="remarks_building"></textarea>
-                                                <div id="remarks_building_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label>Corporation Remarks</label>
-                                                <textarea class="form-control" name="corporationremarks" id="corporationremarks"></textarea>
-                                                <div id="corporationremarks_error" class="error-message text-danger"></div>
-                                            </div>
-                                            <!-- QC Remarks Field with Error Div -->
-                                            <div class="col-md-3 mb-3">
-                                                <label for="qc_remarks" class="form-label">QC Remarks</label>
-                                                <input type="text" name="qc_remarks" class="form-control" id="qc_remarks">
-                                                <div id="qc_remarks_error" class="error-message text-danger"></div>
-                                            </div>
+                                                @endif
+                                            </select>
+                                            <div id="road_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" name="phone" id="phone_building" placeholder="10-digit mobile number" maxlength="10">
+                                            <div id="phone_building_error" class="error-message text-danger small"></div>
                                         </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary" data-bs-dismiss="modal">
-                                            <i class="fas fa-times me-2"></i>Close
-                                        </button>
-                                        <button type="submit" class="btn btn-primary" id="buildingsubmitBtn">
-                                            <i class="fas fa-save me-2"></i>Save
-                                        </button>
+                                </div>
+                            </div>
+
+                            <!-- Building Details Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-building me-2"></i>Building Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Building Usage</label>
+                                            <select class="form-select" name="building_usage" id="building_usage">
+                                                <option value="">Select Usage</option>
+                                                <option value="RESIDENTIAL">Residential</option>
+                                                <option value="COMMERCIAL">Commercial</option>
+                                                <option value="INDUSTRIAL">Industrial</option>
+                                                <option value="INSTITUTIONAL">Institutional</option>
+                                                <option value="MIXED">Mixed</option>
+                                                <option value="GOVERNMENT">Government</option>
+                                                <option value="VACANT">Vacant</option>
+                                            </select>
+                                            <div id="building_usage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Construction Type</label>
+                                            <select class="form-select" name="construction_type" id="construction_type">
+                                                <option value="">Select Type</option>
+                                                <option value="PERMANENT">Permanent</option>
+                                                <option value="SEMI_PERMANENT">Semi Permanent</option>
+                                                <option value="VACANT_LAND">Vacant Land</option>
+                                                <option value="SHED">Shed</option>
+                                                <option value="CAR_SHED">Car Shed</option>
+                                                <option value="TEMPORARY">Temporary</option>
+                                            </select>
+                                            <div id="construction_type_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Building Type</label>
+                                            <select class="form-select" name="building_type" id="building_type">
+                                                <option value="">Select Type</option>
+                                                <option value="Independent">Independent</option>
+                                                <option value="Flat">Flat</option>
+                                                <option value="Kalyana_Mandapam">Kalyana Mandapam</option>
+                                                <option value="Hotel">Hotel</option>
+                                                <option value="Cinema_Theatre">Cinema Theatre</option>
+                                                <option value="Central_Government_Building">Central Government Building</option>
+                                                <option value="State_Government_Building">State Government Building</option>
+                                                <option value="Municipality_Corporation">Municipality / Corporation</option>
+                                                <option value="Educational_Institution">Educational Institution</option>
+                                                <option value="Hospital">Hospital</option>
+                                                <option value="Commercial_Complex">Commercial Complex</option>
+                                                <option value="Shop">Shop</option>
+                                                <option value="Office">Office</option>
+                                                <option value="Temple">Temple</option>
+                                                <option value="Mosque">Mosque</option>
+                                                <option value="Church">Church</option>
+                                                <option value="Amma_Unavagam">Amma Unavagam</option>
+                                                <option value="Public_Toilet">Public Toilet</option>
+                                                <option value="Vacant Land">Vacant Land</option>
+                                                <option value="Under Construction">Under Construction</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                            <div id="building_type_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">UGD Status</label>
+                                            <select class="form-select" name="ugd" id="ugd">
+                                                <option value="">Select Status</option>
+                                                <option value="No_Connection">No Connection</option>
+                                                <option value="Manhole_Available_but_Connection_Not_Given_to_House">Manhole Available but Connection Not Given</option>
+                                                <option value="Stage_1_Completed">Stage 1 Completed</option>
+                                                <option value="Stage_1_2_Completed">Stage 1 & 2 Completed</option>
+                                                <option value="Stage_1_2_Completed_but_Not_Connected">Stage 1 & 2 Completed but Not Connected</option>
+                                                <option value="Stage_1_2_3_Completed">Stage 1, 2 & 3 Completed</option>
+                                                <option value="Direct_Connection_Given">Direct Connection Given</option>
+                                                <option value="1_UGD_Connection_-_3_Stage_Completed">1 UGD Connection - 3 Stage Completed</option>
+                                                <option value="2_UGD_Connection_-_3_Stage_Completed">2 UGD Connection - 3 Stage Completed</option>
+                                            </select>
+                                            <div id="ugd_error" class="error-message text-danger small"></div>
+                                        </div>
                                     </div>
-                                </form>
+                                </div>
+                            </div>
+
+                            <!-- Amenities Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: #333;">
+                                    <h6 class="mb-0"><i class="fas fa-umbrella me-2"></i>Amenities</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Lift Room</label>
+                                            <select class="form-select" name="liftroom" id="liftroom">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="liftroom_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Head Room</label>
+                                            <select class="form-select" name="headroom" id="headroom">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="headroom_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Overhead Tank</label>
+                                            <select class="form-select" name="overhead_tank" id="overhead_tank">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="overhead_tank_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Rainwater Harvesting</label>
+                                            <select class="form-select" name="rainwater_harvesting" id="rainwater_harvesting">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="rainwater_harvesting_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Parking</label>
+                                            <select class="form-select" name="parking" id="parking">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="parking_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Ramp</label>
+                                            <select class="form-select" name="ramp" id="ramp">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="ramp_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Hoarding</label>
+                                            <select class="form-select" name="hoarding" id="hoarding">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="hoarding_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">CCTV</label>
+                                            <select class="form-select" name="cctv" id="cctv">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="cctv_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Cell Tower</label>
+                                            <select class="form-select" name="cell_tower" id="cell_tower">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="cell_tower_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Solar Panel</label>
+                                            <select class="form-select" name="solar_panel" id="solar_panel">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="solar_panel_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Basement</label>
+                                            <input type="number" class="form-control" name="basement" id="basement" min="0" placeholder="Number of basements">
+                                            <div id="basement_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Water Connection</label>
+                                            <select class="form-select" name="water_connection" id="water_connection">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="water_connection_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-comment me-2"></i>Remarks</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">General Remarks</label>
+                                            <textarea class="form-control" name="remarks" id="remarks_building" rows="3" placeholder="Enter general remarks..."></textarea>
+                                            <div id="remarks_building_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Corporation Remarks</label>
+                                            <textarea class="form-control" name="corporationremarks" id="corporationremarks" rows="3" placeholder="Enter corporation remarks..."></textarea>
+                                            <div id="corporationremarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">QC Remarks</label>
+                                            <textarea class="form-control" name="qc_remarks" id="qc_remarks" rows="2" placeholder="Enter QC remarks..."></textarea>
+                                            <div id="qc_remarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `);
+                        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Close
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="buildingsubmitBtn">
+                                <i class="fas fa-save me-2"></i>Save Building Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `);
+
+                // Add image preview function globally
+                window.previewBuildingImage = function(input, previewId) {
+                    const preview = document.getElementById(previewId);
+                    const placeholder = previewId === 'buildingImagePreview' ? document.getElementById(
+                        'noImagePlaceholder') : document.getElementById('noImagePlaceholder2');
+
+                    if (input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                            preview.style.display = 'block';
+                            if (placeholder) placeholder.style.display = 'none';
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    } else {
+                        preview.src = '';
+                        preview.style.display = 'none';
+                        if (placeholder) placeholder.style.display = 'flex';
+                    }
+                };
 
                 if (polygonDatas && polygonDatas.length > 0) {
                     existingData = polygonDatas.find(item => item.gisid == gisId);
@@ -2660,25 +2735,20 @@
 
                 if (existingData) {
                     populateBuildingForm(existingData);
-
-                    showFlashMessage(
-                        'Loading existing building data...',
-                        'info'
-                    );
-
+                    showFlashMessage('Loading existing building data...', 'info');
                 } else {
-
+                    // Reset image previews
                     $("#buildingImagePreview").hide().attr("src", "");
-
                     $("#buildingImagePreview2").hide().attr("src", "");
-
-                    showFlashMessage(
-                        'Creating new building record...',
-                        'info'
-                    );
+                    $("#noImagePlaceholder").show();
+                    $("#noImagePlaceholder2").show();
+                    showFlashMessage('Creating new building record...', 'info');
                 }
 
                 $("#buildingModal").modal("show");
+
+                // Setup form submission
+                setupBuildingFormSubmission();
             }
 
             function populateBuildingForm(item) {
@@ -2690,12 +2760,15 @@
                 $("#building_name").val(item.building_name || "");
                 $("#road_name").val(item.road_name || "");
                 $("#phone_building").val(item.phone || "");
-                $("#zone_building").val(item.zone || "");
+                $("#building_zone").val(item.zone || item.building_zone || "");
+                $("#percentage").val(item.percentage || "");
+
                 // Building Details
                 $("#building_usage").val(item.building_usage || "");
                 $("#construction_type").val(item.construction_type || "");
                 $("#building_type").val(item.building_type || "");
                 $("#ugd").val(item.ugd || "");
+
                 // Amenities (Yes/No fields)
                 $("#liftroom").val(item.liftroom || "No");
                 $("#headroom").val(item.headroom || "No");
@@ -2710,35 +2783,39 @@
 
                 // Property Details
                 $("#basement").val(item.basement || "");
-                $("#water_connection").val(item.water_connection || "");
-                $("#percentage").val(item.percentage || "");
+                $("#water_connection").val(item.water_connection || "No");
 
                 // Remarks
                 $("#remarks_building").val(item.remarks || "");
                 $("#corporationremarks").val(item.corporationremarks || "");
+                $("#qc_remarks").val(item.qc_remarks || "");
 
                 // Image Previews
-                // Define asset base URL (make sure this is defined globally)
                 const assetUrl = window.assetUrl || "{{ asset('') }}";
 
                 // Show existing first image if exists
                 if (item.image && item.image !== "") {
                     const imageUrl = item.image.startsWith('http') ? item.image : assetUrl + item.image;
                     $("#buildingImagePreview").attr("src", imageUrl).show();
+                    $("#noImagePlaceholder").hide();
                 } else {
                     $("#buildingImagePreview").hide().attr("src", "");
+                    $("#noImagePlaceholder").show();
                 }
 
                 // Show existing second image if exists
                 if (item.image2 && item.image2 !== "") {
                     const imageUrl2 = item.image2.startsWith('http') ? item.image2 : assetUrl + item.image2;
                     $("#buildingImagePreview2").attr("src", imageUrl2).show();
+                    $("#noImagePlaceholder2").hide();
                 } else {
                     $("#buildingImagePreview2").hide().attr("src", "");
+                    $("#noImagePlaceholder2").show();
                 }
             }
 
             function resetBuildingForm() {
+                // Basic Information
                 $("#building_gisid").val("");
                 $("#number_bill").val("");
                 $("#number_shop").val("");
@@ -2746,10 +2823,16 @@
                 $("#building_name").val("");
                 $("#road_name").val("");
                 $("#phone_building").val("");
+                $("#building_zone").val("");
+                $("#percentage").val("");
+
+                // Building Details
                 $("#building_usage").val("");
                 $("#construction_type").val("");
                 $("#building_type").val("");
                 $("#ugd").val("");
+
+                // Amenities
                 $("#liftroom").val("No");
                 $("#headroom").val("No");
                 $("#overhead_tank").val("No");
@@ -2760,16 +2843,21 @@
                 $("#cctv").val("No");
                 $("#cell_tower").val("No");
                 $("#solar_panel").val("No");
+
+                // Property Details
                 $("#basement").val("");
-                $("#water_connection").val("");
-                $("#percentage").val("");
+                $("#water_connection").val("No");
+
+                // Remarks
                 $("#remarks_building").val("");
                 $("#corporationremarks").val("");
-                $("#zone").val("");
+                $("#qc_remarks").val("");
 
-                // Reset both image previews
+                // Reset image previews
                 $("#buildingImagePreview").hide().attr("src", "");
                 $("#buildingImagePreview2").hide().attr("src", "");
+                $("#noImagePlaceholder").show();
+                $("#noImagePlaceholder2").show();
 
                 // Reset file inputs
                 $("#building_image").val("");
@@ -2779,6 +2867,7 @@
                 $(".error-message").html("");
                 $(".is-invalid").removeClass("is-invalid");
             }
+
 
             function refreshVectorLayer() {
                 polygonSource.clear();
