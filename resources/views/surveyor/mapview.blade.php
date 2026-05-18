@@ -2331,7 +2331,8 @@
                 // REMOVE OLD MODAL BEFORE APPENDING NEW ONE
                 $("#buildingModal").remove();
 
-                $("body").append(`
+                // Use a template string but ensure proper escaping
+                const modalHtml = `
         <div class="modal fade" id="buildingModal" tabindex="-1" data-bs-backdrop="static">
             <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
@@ -2343,7 +2344,7 @@
                     </div>
                     <form id="buildingForm" enctype="multipart/form-data">
                         @csrf
-                        <input type="hidden" id="gisIdInput" name="gisid">
+                        <input type="hidden" id="gisIdInput" name="gisid" value="${gisId}">
                         <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #f8fafc;">
 
                             <!-- Image Upload Section with Previews -->
@@ -2354,13 +2355,9 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
-                                            <label class="fw-bold mb-2">
-                                                <i class="fas fa-camera me-1"></i>Image 1
-                                            </label>
-                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px; transition: all 0.3s ease;">
-                                                <img id="buildingImagePreview" src="" alt="Building Image Preview"
-                                                    class="img-fluid"
-                                                    style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                            <label class="fw-bold mb-2"><i class="fas fa-camera me-1"></i>Image 1</label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px;">
+                                                <img id="buildingImagePreview" src="" alt="Building Image Preview" class="img-fluid" style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
                                                 <div id="noImagePlaceholder" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
                                                     <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
                                                     <p>No image selected</p>
@@ -2369,19 +2366,15 @@
                                             <div class="mt-2">
                                                 <label class="btn btn-outline-primary btn-sm w-100">
                                                     <i class="fas fa-upload me-1"></i> Choose Image
-                                                    <input type="file" name="image" id="building_image" accept="image/*" style="display: none;" onchange="previewBuildingImage(this, 'buildingImagePreview')">
+                                                    <input type="file" name="image" id="building_image" accept="image/*" style="display: none;">
                                                 </label>
                                             </div>
                                             <div id="building_image_error" class="error-message text-danger small mt-1"></div>
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="fw-bold mb-2">
-                                                <i class="fas fa-camera me-1"></i>Image 2
-                                            </label>
-                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px; transition: all 0.3s ease;">
-                                                <img id="buildingImagePreview2" src="" alt="Building Image Preview 2"
-                                                    class="img-fluid"
-                                                    style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                            <label class="fw-bold mb-2"><i class="fas fa-camera me-1"></i>Image 2</label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px;">
+                                                <img id="buildingImagePreview2" src="" alt="Building Image Preview 2" class="img-fluid" style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
                                                 <div id="noImagePlaceholder2" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
                                                     <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
                                                     <p>No image selected</p>
@@ -2390,7 +2383,7 @@
                                             <div class="mt-2">
                                                 <label class="btn btn-outline-primary btn-sm w-100">
                                                     <i class="fas fa-upload me-1"></i> Choose Image
-                                                    <input type="file" name="image2" id="building_image2" accept="image/*" style="display: none;" onchange="previewBuildingImage(this, 'buildingImagePreview2')">
+                                                    <input type="file" name="image2" id="building_image2" accept="image/*" style="display: none;">
                                                 </label>
                                             </div>
                                             <div id="building_image2_error" class="error-message text-danger small mt-1"></div>
@@ -2408,7 +2401,7 @@
                                     <div class="row">
                                         <div class="col-md-3 mb-3">
                                             <label class="form-label">GIS ID <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" name="building_gisid" id="building_gisid" readonly>
+                                            <input type="text" class="form-control" name="building_gisid" id="building_gisid" value="${gisId}" readonly>
                                             <div id="building_gisid_error" class="error-message text-danger small"></div>
                                         </div>
                                         <div class="col-md-3 mb-3">
@@ -2706,28 +2699,13 @@
                 </div>
             </div>
         </div>
-    `);
+    `;
 
-                // Add image preview function globally
-                window.previewBuildingImage = function(input, previewId) {
-                    const preview = document.getElementById(previewId);
-                    const placeholder = previewId === 'buildingImagePreview' ? document.getElementById(
-                        'noImagePlaceholder') : document.getElementById('noImagePlaceholder2');
+                $("body").append(modalHtml);
 
-                    if (input.files && input.files[0]) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            preview.src = e.target.result;
-                            preview.style.display = 'block';
-                            if (placeholder) placeholder.style.display = 'none';
-                        };
-                        reader.readAsDataURL(input.files[0]);
-                    } else {
-                        preview.src = '';
-                        preview.style.display = 'none';
-                        if (placeholder) placeholder.style.display = 'flex';
-                    }
-                };
+                // Add image preview functionality after modal is added
+                setupImagePreview();
+                setupBuildingFormSubmission();
 
                 if (polygonDatas && polygonDatas.length > 0) {
                     existingData = polygonDatas.find(item => item.gisid == gisId);
@@ -2737,18 +2715,97 @@
                     populateBuildingForm(existingData);
                     showFlashMessage('Loading existing building data...', 'info');
                 } else {
-                    // Reset image previews
                     $("#buildingImagePreview").hide().attr("src", "");
                     $("#buildingImagePreview2").hide().attr("src", "");
-                    $("#noImagePlaceholder").show();
-                    $("#noImagePlaceholder2").show();
                     showFlashMessage('Creating new building record...', 'info');
                 }
 
                 $("#buildingModal").modal("show");
+            }
 
-                // Setup form submission
-                setupBuildingFormSubmission();
+            function setupImagePreview() {
+                // Image 1 preview
+                $('#building_image').off('change').on('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            $('#buildingImagePreview').attr('src', event.target.result).show();
+                            $('#noImagePlaceholder').hide();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#buildingImagePreview').hide().attr('src', '');
+                        $('#noImagePlaceholder').show();
+                    }
+                });
+
+                // Image 2 preview
+                $('#building_image2').off('change').on('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            $('#buildingImagePreview2').attr('src', event.target.result).show();
+                            $('#noImagePlaceholder2').hide();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#buildingImagePreview2').hide().attr('src', '');
+                        $('#noImagePlaceholder2').show();
+                    }
+                });
+            }
+
+            function setupBuildingFormSubmission() {
+                $("#buildingForm").off('submit').on('submit', function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+
+                    $("#buildingsubmitBtn").prop("disabled", true).html(
+                        '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+                    $.ajax({
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        type: "POST",
+                        url: "{{ route('surveyor.polygon.datas.upload') }}",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            showFlashMessage(response.message, "success");
+                            $("#buildingModal").modal("hide");
+                            if (response.polygonDatas) {
+                                polygonDatas = response.polygonDatas;
+                            }
+                            if (response.polygons) {
+                                polygons = response.polygons;
+                            }
+                            refreshVectorLayer();
+                            resetBuildingForm();
+                        },
+                        error: function(xhr) {
+                            let errorMsg = "An error occurred while saving building data";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            showFlashMessage(errorMsg, "error");
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    $("#" + key + "_error").html(value[0]);
+                                    $("#" + key).addClass("is-invalid");
+                                });
+                            }
+                        },
+                        complete: function() {
+                            $("#buildingsubmitBtn").prop("disabled", false).html(
+                                '<i class="fas fa-save me-2"></i>Save Building Data');
+                        }
+                    });
+                });
             }
 
             function populateBuildingForm(item) {
@@ -2793,7 +2850,6 @@
                 // Image Previews
                 const assetUrl = window.assetUrl || "{{ asset('') }}";
 
-                // Show existing first image if exists
                 if (item.image && item.image !== "") {
                     const imageUrl = item.image.startsWith('http') ? item.image : assetUrl + item.image;
                     $("#buildingImagePreview").attr("src", imageUrl).show();
@@ -2803,7 +2859,6 @@
                     $("#noImagePlaceholder").show();
                 }
 
-                // Show existing second image if exists
                 if (item.image2 && item.image2 !== "") {
                     const imageUrl2 = item.image2.startsWith('http') ? item.image2 : assetUrl + item.image2;
                     $("#buildingImagePreview2").attr("src", imageUrl2).show();
@@ -2815,7 +2870,6 @@
             }
 
             function resetBuildingForm() {
-                // Basic Information
                 $("#building_gisid").val("");
                 $("#number_bill").val("");
                 $("#number_shop").val("");
@@ -2826,13 +2880,11 @@
                 $("#building_zone").val("");
                 $("#percentage").val("");
 
-                // Building Details
                 $("#building_usage").val("");
                 $("#construction_type").val("");
                 $("#building_type").val("");
                 $("#ugd").val("");
 
-                // Amenities
                 $("#liftroom").val("No");
                 $("#headroom").val("No");
                 $("#overhead_tank").val("No");
@@ -2844,30 +2896,22 @@
                 $("#cell_tower").val("No");
                 $("#solar_panel").val("No");
 
-                // Property Details
                 $("#basement").val("");
                 $("#water_connection").val("No");
 
-                // Remarks
                 $("#remarks_building").val("");
                 $("#corporationremarks").val("");
                 $("#qc_remarks").val("");
 
-                // Reset image previews
                 $("#buildingImagePreview").hide().attr("src", "");
                 $("#buildingImagePreview2").hide().attr("src", "");
-                $("#noImagePlaceholder").show();
-                $("#noImagePlaceholder2").show();
 
-                // Reset file inputs
                 $("#building_image").val("");
                 $("#building_image2").val("");
 
-                // Clear any error messages
                 $(".error-message").html("");
                 $(".is-invalid").removeClass("is-invalid");
             }
-
 
             function refreshVectorLayer() {
                 polygonSource.clear();
