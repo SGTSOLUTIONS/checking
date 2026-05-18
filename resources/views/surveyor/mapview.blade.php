@@ -283,6 +283,82 @@
             background: rgba(239, 68, 68, 0.95);
         }
 
+        /* Route Info Panel */
+        .route-info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+            transition: all 0.3s ease;
+            max-width: 400px;
+        }
+
+        .route-info-panel.closed {
+            transform: translateY(150%);
+        }
+
+        .route-info-panel h5 {
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+
+        .route-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .route-stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .route-stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .route-stat-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .close-route-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .start-navigation-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .start-navigation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
         @keyframes slideUp {
             from {
                 opacity: 0;
@@ -293,6 +369,29 @@
                 opacity: 1;
                 transform: translateX(-50%) translateY(0);
             }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 1400;
+            display: none;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* MOBILE RESPONSIVE */
@@ -309,7 +408,6 @@
                 height: calc(100vh - 56px);
             }
 
-            /* Floating buttons - Mobile (vertical arrangement on left side) */
             #layerToggleBtn,
             #searchToggleBtn,
             #liveToggleBtn,
@@ -338,7 +436,6 @@
                 top: 244px;
             }
 
-            /* Panels - Mobile (full width or larger) */
             .layer-switcher {
                 top: 60px;
                 right: 12px;
@@ -359,95 +456,10 @@
                 gap: 8px;
             }
 
-            .search-Lable input {
-                padding: 8px 12px;
-                font-size: 13px;
-            }
-
-            .search-Lable button {
-                padding: 8px 15px;
-                font-size: 13px;
-            }
-
-            .layer-item {
-                padding: 8px 10px;
-                font-size: 14px;
-            }
-
-            .layer-header {
-                font-size: 16px;
-                margin-bottom: 12px;
-            }
-        }
-
-        /* Small Mobile (below 480px) */
-        @media (max-width: 480px) {
-
-            #layerToggleBtn,
-            #searchToggleBtn,
-            #liveToggleBtn,
-            #routeBtn {
-                width: 42px;
-                height: 42px;
-                font-size: 18px;
-            }
-
-            #layerToggleBtn {
-                top: 65px;
-            }
-
-            #searchToggleBtn {
-                top: 117px;
-            }
-
-            #liveToggleBtn {
-                top: 169px;
-            }
-
-            #routeBtn {
-                top: 221px;
-            }
-
-            .search-Lable {
-                left: 64px;
-                padding: 8px 10px;
-            }
-
-            .search-Lable input {
-                padding: 6px 10px;
-                font-size: 12px;
-            }
-
-            .search-Lable button {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-
-            .layer-switcher {
-                padding: 12px;
-            }
-        }
-
-        /* Tablet Landscape */
-        @media (min-width: 769px) and (max-width: 1024px) {
-
-            #layerToggleBtn,
-            #searchToggleBtn,
-            #liveToggleBtn,
-            #routeBtn {
-                width: 50px;
-                height: 50px;
-                right: 15px;
-            }
-
-            .layer-switcher {
-                right: 80px;
-                width: 260px;
-            }
-
-            .search-Lable {
-                right: 80px;
-                width: 300px;
+            .route-info-panel {
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
             }
         }
     </style>
@@ -473,6 +485,29 @@
     </div>
 
     <div id="map"></div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner"></div>
+
+    <!-- Route Info Panel -->
+    <div id="routeInfoPanel" class="route-info-panel closed">
+        <button class="close-route-btn" id="closeRouteBtn">&times;</button>
+        <h5><i class="fas fa-route me-2"></i>Route to Destination</h5>
+        <div id="destinationName" style="font-size: 14px; color: #64748b; margin-bottom: 10px;"></div>
+        <div class="route-stats">
+            <div class="route-stat">
+                <div class="route-stat-value" id="routeDistance">0 km</div>
+                <div class="route-stat-label">Distance</div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-value" id="routeDuration">0 min</div>
+                <div class="route-stat-label">Est. Time</div>
+            </div>
+        </div>
+        <button class="start-navigation-btn" id="startNavigationBtn">
+            <i class="fas fa-directions me-2"></i>Start Navigation
+        </button>
+    </div>
 
     <!-- Floating Action Buttons -->
     <div id="layerToggleBtn" title="Toggle Layers">
@@ -567,6 +602,8 @@
             let ward = @json($ward ?? []);
             let mis = @json($misData ?? []);
             let selectedFeature = null;
+            let currentRoute = null;
+            let isMobile = window.innerWidth <= 768;
 
             // Routes for AJAX calls
             let routes = {
@@ -580,6 +617,26 @@
                 surveyorModifyFeature: "{{ route('surveyor.modify.feature') }}",
                 deleteFeature: "{{ route('surveyor.delete.feature') }}"
             };
+
+            // Helper Functions
+            function formatDistance(meters) {
+                if (meters >= 1000) {
+                    return (meters / 1000).toFixed(1) + ' km';
+                }
+                return Math.round(meters) + ' m';
+            }
+
+            function formatDuration(seconds) {
+                if (seconds >= 3600) {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    return hours + ' hr ' + minutes + ' min';
+                }
+                if (seconds >= 60) {
+                    return Math.floor(seconds / 60) + ' min';
+                }
+                return Math.floor(seconds) + ' sec';
+            }
 
             // Toast notification function
             function showToast(message, type = 'info') {
@@ -854,11 +911,24 @@
                 visible: true
             });
 
+            // Route layer
+            const routeSource = new ol.source.Vector();
+            const routeLayer = new ol.layer.Vector({
+                source: routeSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#2563eb',
+                        width: 5,
+                        lineDash: [10, 10]
+                    })
+                })
+            });
+
             // Initialize map
             const map = new ol.Map({
                 target: 'map',
                 layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
-                    pointLayer
+                    pointLayer, routeLayer
                 ],
                 view: new ol.View({
                     projection: "EPSG:3857",
@@ -886,10 +956,16 @@
                 $('#layerSwitcher').addClass('closed');
             });
 
+            $('#closeRouteBtn').click(function() {
+                $('#routeInfoPanel').addClass('closed');
+                // Clear route from map
+                routeSource.clear();
+            });
+
             // Close panels when clicking outside (for mobile)
             $(document).click(function(event) {
                 if (!$(event.target).closest(
-                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn').length) {
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn').length) {
                     $('#layerSwitcher, #searchLabel').addClass('closed');
                 }
             });
@@ -937,9 +1013,10 @@
                 }
             });
 
-            // Search functionality - REPLACE the entire search section with this
+            // Search functionality
             $("#searchGisidBtn").on('click', function() {
                 var searchvalue = $("#searchInput").val().trim();
+                selectedFeature = null;
 
                 if (!searchvalue) {
                     showToast("Please enter a GIS ID or Road Name", 'error');
@@ -966,11 +1043,8 @@
                             maxZoom: 22
                         });
 
-                        // ✅ FIX: Set selectedFeature here instead of selectedgisid
                         selectedFeature = feature;
-
-                        showToast("Found GIS ID: " + findpolygon.gisid + " - Click route button",
-                        'success');
+                        showToast("Found GIS ID: " + findpolygon.gisid, 'success');
                         $('#searchLabel').addClass('closed');
                     } catch (e) {
                         console.error('Error parsing coordinates:', e);
@@ -1008,11 +1082,8 @@
                                 maxZoom: 20
                             });
 
-                            // ✅ FIX: Set selectedFeature for line
                             selectedFeature = feature;
-
-                            showToast("Found: " + (findLine.road_name || findLine.gisid) +
-                                " - Click route button", 'success');
+                            showToast("Found: " + (findLine.road_name || findLine.gisid), 'success');
                             $('#searchLabel').addClass('closed');
                         } catch (e) {
                             console.error('Error parsing line coordinates:', e);
@@ -1038,7 +1109,6 @@
                                     maxZoom: 22
                                 });
 
-                                // ✅ FIX: Set selectedFeature for point
                                 selectedFeature = feature;
 
                                 // Add a temporary highlight for point
@@ -1069,8 +1139,7 @@
                                     map.removeLayer(highlightLayer);
                                 }, 3000);
 
-                                showToast("Found GIS ID: " + findPoint.gisid + " - Click route button",
-                                    'success');
+                                showToast("Found GIS ID: " + findPoint.gisid, 'success');
                                 $('#searchLabel').addClass('closed');
                             } catch (e) {
                                 console.error('Error parsing point coordinates:', e);
@@ -1083,39 +1152,27 @@
                 }
             });
 
-            // Route button functionality - UPDATE this section
-            $('#routeBtn').click(function() {
-                if (selectedFeature) {
-                    console.log('Selected Feature:', selectedFeature);
-                    console.log('Feature Type:', selectedFeature.get('type'));
-                    console.log('Feature GISID:', selectedFeature.get('gisid'));
-
-                    if (selectedFeature.get('type') === 'Polygon') {
-                        console.log('Polygon SQFT:', selectedFeature.get('sqfeet'));
-                        alert('Route to Polygon: ' + selectedFeature.get('gisid'));
-                    } else if (selectedFeature.get('type') === 'Line') {
-                        console.log('Road Name:', selectedFeature.get('road_name'));
-                        alert('Route to Road: ' + (selectedFeature.get('road_name') || selectedFeature.get(
-                            'gisid')));
-                    } else if (selectedFeature.get('type') === 'Point') {
-                        alert('Route to Point: ' + selectedFeature.get('gisid'));
-                    } else {
-                        alert('Route to selected feature');
-                    }
-                } else {
-                    console.log('No feature selected');
-                    showToast('No feature selected. Please search for a location first.', 'error');
-                }
-            });
             // Live location button functionality
             let currentLocationMarker = null;
+            let currentPosition = null;
 
             $('#liveToggleBtn').click(function() {
-                if ("geolocation" in navigator) {
-                    showToast('Fetching your location...', 'info');
-                    navigator.geolocation.getCurrentPosition(function(position) {
+                toggleLiveLocation();
+            });
+
+            function toggleLiveLocation() {
+                if (!("geolocation" in navigator)) {
+                    showToast("Geolocation is not supported by your browser", 'error');
+                    return;
+                }
+
+                showToast('Fetching your location...', 'info');
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
+                        currentPosition = [lon, lat];
                         const coords = ol.proj.fromLonLat([lon, lat]);
 
                         map.getView().animate({
@@ -1124,12 +1181,12 @@
                             duration: 1000
                         });
 
-                        // Remove existing marker if any
+                        // Remove old location marker
                         if (currentLocationMarker) {
                             map.removeLayer(currentLocationMarker);
                         }
 
-                        // Add a permanent marker for current location
+                        // Create new location marker
                         currentLocationMarker = new ol.layer.Vector({
                             source: new ol.source.Vector(),
                             style: new ol.style.Style({
@@ -1154,8 +1211,8 @@
                         map.addLayer(currentLocationMarker);
 
                         showToast('Location found!', 'success');
-
-                    }, function(error) {
+                    },
+                    function(error) {
                         let message = "Error getting location";
                         switch (error.code) {
                             case error.PERMISSION_DENIED:
@@ -1169,79 +1226,193 @@
                                 break;
                         }
                         showToast(message, 'error');
+                    }
+                );
+            }
+
+            // Get route from OSRM
+            async function getRouteFromOSRM(startCoord, endCoord) {
+                const [startLon, startLat] = startCoord;
+                const [endLon, endLat] = endCoord;
+                const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                    throw new Error('No route found');
+                }
+
+                return data.routes[0];
+            }
+
+            // Draw route on map
+            function drawRouteOnMap(geometry) {
+                routeSource.clear();
+
+                if (geometry.type === 'LineString') {
+                    const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                    const routeFeature = new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates)
                     });
-                } else {
-                    showToast("Geolocation is not supported by your browser", 'error');
+                    routeSource.addFeature(routeFeature);
+
+                    // Fit map to route extent
+                    const extent = routeFeature.getGeometry().getExtent();
+                    map.getView().fit(extent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                }
+            }
+
+            // Display route information
+            function displayRouteInfo(distance, duration, placeName) {
+                $('#routeDistance').text(formatDistance(distance));
+                $('#routeDuration').text(formatDuration(duration));
+                $('#destinationName').text(placeName);
+                $('#routeInfoPanel').removeClass('closed');
+            }
+
+            // Calculate enhanced route
+            async function calculateEnhancedRoute(startCoord, endCoord, placeName) {
+                try {
+                    showToast('Calculating route...', 'info');
+
+                    let route;
+                    try {
+                        route = await getRouteFromOSRM(startCoord, endCoord);
+                    } catch (error) {
+                        // Fallback to direct line if OSRM fails
+                        console.warn('OSRM failed, using direct line:', error);
+                        route = {
+                            distance: ol.sphere.getDistance(
+                                ol.proj.fromLonLat(startCoord),
+                                ol.proj.fromLonLat(endCoord)
+                            ),
+                            duration: (ol.sphere.getDistance(
+                                ol.proj.fromLonLat(startCoord),
+                                ol.proj.fromLonLat(endCoord)
+                            ) / 1.39), // 5 km/h walking speed
+                            geometry: {
+                                type: "LineString",
+                                coordinates: [startCoord, endCoord]
+                            }
+                        };
+                    }
+
+                    const totalDistance = route.distance;
+                    const totalDuration = route.duration;
+
+                    drawRouteOnMap(route.geometry);
+                    displayRouteInfo(totalDistance, totalDuration, placeName);
+
+                    return {
+                        distance: totalDistance,
+                        duration: totalDuration,
+                        geometry: route.geometry,
+                        endCoord: endCoord,
+                        placeName: placeName
+                    };
+                } catch (error) {
+                    console.error('Route calculation error:', error);
+                    showToast('Error calculating route: ' + error.message, 'error');
+                    throw error;
+                }
+            }
+
+            // Calculate and display route
+            async function calculateAndDisplayRoute(feature) {
+                $('#loadingSpinner').show();
+
+                try {
+                    if (!currentLocationMarker) {
+                        showToast('Please enable your location first', 'error');
+                        return;
+                    }
+
+                    // Get current location coordinates
+                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
+                    const geometry = feature.getGeometry();
+
+                    // Get target coordinates (center of feature)
+                    let targetCoords;
+                    if (geometry.getType() === 'Point') {
+                        targetCoords = geometry.getCoordinates();
+                    } else {
+                        targetCoords = ol.extent.getCenter(geometry.getExtent());
+                    }
+
+                    const currentLonLat = ol.proj.toLonLat(currentCoords);
+                    const targetLonLat = ol.proj.toLonLat(targetCoords);
+
+                    const placeName = `GIS ID: ${feature.get('gisid') || 'Selected Location'}`;
+                    const route = await calculateEnhancedRoute(currentLonLat, targetLonLat, placeName);
+                    currentRoute = route;
+
+                } catch (error) {
+                    console.error('Route calculation error:', error);
+                    showToast('Error calculating route: ' + error.message, 'error');
+                } finally {
+                    $('#loadingSpinner').hide();
+                }
+            }
+
+            // Route button click handler
+            $('#routeBtn').click(async function() {
+                if (!selectedFeature) {
+                    showToast('No feature selected. Please search for a location first.', 'error');
+                    return;
+                }
+
+                if (!currentLocationMarker) {
+                    const enableLocation = confirm('Live location is not enabled. Would you like to enable it for route calculation?');
+                    if (enableLocation) {
+                        toggleLiveLocation();
+                        // Wait for location to be acquired
+                        setTimeout(async () => {
+                            if (currentLocationMarker) {
+                                await calculateAndDisplayRoute(selectedFeature);
+                            } else {
+                                showToast('Unable to get your location. Please enable location services.', 'error');
+                            }
+                        }, 2500);
+                    }
+                    return;
+                }
+
+                await calculateAndDisplayRoute(selectedFeature);
+            });
+
+            // Start navigation button
+            $('#startNavigationBtn').click(function() {
+                if (currentRoute) {
+                    // Create a simple navigation alert
+                    const navMessage = `Navigation Started!\nDistance: ${$('#routeDistance').text()}\nEstimated time: ${$('#routeDuration').text()}`;
+                    alert(navMessage);
+
+                    // On mobile, could open Google Maps
+                    if (isMobile && currentRoute.endCoord) {
+                        const destLonLat = currentRoute.endCoord;
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${destLonLat[1]},${destLonLat[0]}`;
+                        if (confirm('Open in Google Maps for turn-by-turn navigation?')) {
+                            window.open(url, '_blank');
+                        }
+                    }
                 }
             });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            // Handle window resize for mobile detection
+            $(window).resize(function() {
+                isMobile = window.innerWidth <= 768;
+            });
 
             // Keyboard shortcuts
             $(document).keydown(function(e) {
-                // Press 'L' for layer switcher
                 if (e.key === 'l' || e.key === 'L') {
                     $('#layerSwitcher').toggleClass('closed');
                     $('#searchLabel').addClass('closed');
                 }
-                // Press 'S' for search
                 if (e.key === 's' || e.key === 'S') {
                     $('#searchLabel').toggleClass('closed');
                     $('#layerSwitcher').addClass('closed');
@@ -1251,9 +1422,8 @@
                         }, 100);
                     }
                 }
-                // Press 'ESC' to close panels
                 if (e.key === 'Escape') {
-                    $('#layerSwitcher, #searchLabel').addClass('closed');
+                    $('#layerSwitcher, #searchLabel, #routeInfoPanel').addClass('closed');
                 }
             });
 
@@ -1267,7 +1437,6 @@
             // Handle map touch events for better mobile experience
             if ('ontouchstart' in window) {
                 map.on('click', function() {
-                    // Close panels on map click for mobile
                     if (window.innerWidth <= 768) {
                         $('#layerSwitcher, #searchLabel').addClass('closed');
                     }
