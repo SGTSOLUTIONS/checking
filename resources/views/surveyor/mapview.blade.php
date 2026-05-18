@@ -566,7 +566,7 @@
             let polygonDatas = @json($polygonDatas ?? []);
             let ward = @json($ward ?? []);
             let mis = @json($misData ?? []);
-            let selectedgisid = null;
+            let selectedFeature = null;
 
             // Routes for AJAX calls
             let routes = {
@@ -933,7 +933,7 @@
                         $('#searchInput').focus();
                     }, 100);
                 } else {
-                    selectedgisid = null;
+                    selectedFeature = null;
                 }
             });
 
@@ -962,7 +962,7 @@
                             padding: [50, 50, 50, 50],
                             maxZoom: 22
                         });
-                        selectedgisid = findpolygon.gisid;
+                        selectedgisid = feature;
                         showToast("Found GIS ID: " + findpolygon.gisid, 'success');
                         $('#searchLabel').addClass('closed');
                     } catch (e) {
@@ -1009,20 +1009,11 @@
                 }
             });
 
-            // Enter key support for search
-            $('#searchInput').on('keypress', function(e) {
-                if (e.which === 13) {
-                    $('#searchGisidBtn').click();
-                }
-            });
 
             // Route button functionality
             $('#routeBtn').click(function() {
-                if (selectedgisid) {
-                    showToast("Routing to GIS ID: " + selectedgisid, 'info');
-                    // Implement routing logic here
-                } else {
-                    showToast("Please search for a location first", 'error');
+                if(selectedFeature){
+                    alert('success');
                 }
             });
 
@@ -1093,6 +1084,65 @@
                     showToast("Geolocation is not supported by your browser", 'error');
                 }
             });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             // Keyboard shortcuts
             $(document).keydown(function(e) {
