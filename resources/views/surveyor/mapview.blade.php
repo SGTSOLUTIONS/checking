@@ -937,7 +937,7 @@
                 }
             });
 
-            // Search functionality
+            // Search functionality - REPLACE the entire search section with this
             $("#searchGisidBtn").on('click', function() {
                 var searchvalue = $("#searchInput").val().trim();
 
@@ -955,15 +955,22 @@
                     try {
                         var coordinates = JSON.parse(findpolygon.coordinates);
                         var feature = new ol.Feature({
-                            geometry: new ol.geom.Polygon(coordinates)
+                            geometry: new ol.geom.Polygon(coordinates),
+                            gisid: findpolygon.gisid,
+                            type: "Polygon",
+                            sqfeet: findpolygon.sqfeet || "0"
                         });
                         map.getView().fit(feature.getGeometry().getExtent(), {
                             duration: 1000,
                             padding: [50, 50, 50, 50],
                             maxZoom: 22
                         });
-                        selectedgisid = feature;
-                        showToast("Found GIS ID: " + findpolygon.gisid, 'success');
+
+                        // ✅ FIX: Set selectedFeature here instead of selectedgisid
+                        selectedFeature = feature;
+
+                        showToast("Found GIS ID: " + findpolygon.gisid + " - Click route button",
+                        'success');
                         $('#searchLabel').addClass('closed');
                     } catch (e) {
                         console.error('Error parsing coordinates:', e);
@@ -990,34 +997,116 @@
                             }
 
                             var feature = new ol.Feature({
-                                geometry: new ol.geom.LineString(coords)
+                                geometry: new ol.geom.LineString(coords),
+                                gisid: findLine.gisid,
+                                road_name: findLine.road_name,
+                                type: "Line"
                             });
                             map.getView().fit(feature.getGeometry().getExtent(), {
                                 duration: 1000,
                                 padding: [50, 50, 50, 50],
                                 maxZoom: 20
                             });
-                            showToast("Found: " + (findLine.road_name || findLine.gisid), 'success');
+
+                            // ✅ FIX: Set selectedFeature for line
+                            selectedFeature = feature;
+
+                            showToast("Found: " + (findLine.road_name || findLine.gisid) +
+                                " - Click route button", 'success');
                             $('#searchLabel').addClass('closed');
                         } catch (e) {
                             console.error('Error parsing line coordinates:', e);
                             showToast("Error displaying road", 'error');
                         }
                     } else {
-                        showToast("GIS ID or Road Name not found", 'error');
+                        // Search in points
+                        var findPoint = points.find(function(point) {
+                            return point.gisid == searchvalue;
+                        });
+
+                        if (findPoint) {
+                            try {
+                                var coordinates = JSON.parse(findPoint.coordinates);
+                                var feature = new ol.Feature({
+                                    geometry: new ol.geom.Point(coordinates),
+                                    gisid: findPoint.gisid,
+                                    type: "Point"
+                                });
+                                map.getView().fit(feature.getGeometry().getExtent(), {
+                                    duration: 1000,
+                                    padding: [50, 50, 50, 50],
+                                    maxZoom: 22
+                                });
+
+                                // ✅ FIX: Set selectedFeature for point
+                                selectedFeature = feature;
+
+                                // Add a temporary highlight for point
+                                const highlightLayer = new ol.layer.Vector({
+                                    source: new ol.source.Vector(),
+                                    style: new ol.style.Style({
+                                        image: new ol.style.Circle({
+                                            radius: 15,
+                                            fill: new ol.style.Fill({
+                                                color: 'rgba(255, 165, 0, 0.7)'
+                                            }),
+                                            stroke: new ol.style.Stroke({
+                                                color: '#ffffff',
+                                                width: 3
+                                            })
+                                        })
+                                    })
+                                });
+
+                                const highlightMarker = new ol.Feature({
+                                    geometry: new ol.geom.Point(coordinates)
+                                });
+
+                                highlightLayer.getSource().addFeature(highlightMarker);
+                                map.addLayer(highlightLayer);
+
+                                setTimeout(() => {
+                                    map.removeLayer(highlightLayer);
+                                }, 3000);
+
+                                showToast("Found GIS ID: " + findPoint.gisid + " - Click route button",
+                                    'success');
+                                $('#searchLabel').addClass('closed');
+                            } catch (e) {
+                                console.error('Error parsing point coordinates:', e);
+                                showToast("Error displaying point", 'error');
+                            }
+                        } else {
+                            showToast("GIS ID or Road Name not found", 'error');
+                        }
                     }
                 }
             });
 
-
-            // Route button functionality
+            // Route button functionality - UPDATE this section
             $('#routeBtn').click(function() {
-                 alert('success');
-                if(selectedFeature){
-                    console.log(selectedFeature);
+                if (selectedFeature) {
+                    console.log('Selected Feature:', selectedFeature);
+                    console.log('Feature Type:', selectedFeature.get('type'));
+                    console.log('Feature GISID:', selectedFeature.get('gisid'));
+
+                    if (selectedFeature.get('type') === 'Polygon') {
+                        console.log('Polygon SQFT:', selectedFeature.get('sqfeet'));
+                        alert('Route to Polygon: ' + selectedFeature.get('gisid'));
+                    } else if (selectedFeature.get('type') === 'Line') {
+                        console.log('Road Name:', selectedFeature.get('road_name'));
+                        alert('Route to Road: ' + (selectedFeature.get('road_name') || selectedFeature.get(
+                            'gisid')));
+                    } else if (selectedFeature.get('type') === 'Point') {
+                        alert('Route to Point: ' + selectedFeature.get('gisid'));
+                    } else {
+                        alert('Route to selected feature');
+                    }
+                } else {
+                    console.log('No feature selected');
+                    showToast('No feature selected. Please search for a location first.', 'error');
                 }
             });
-
             // Live location button functionality
             let currentLocationMarker = null;
 
