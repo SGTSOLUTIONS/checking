@@ -97,13 +97,14 @@
         #routeBtn {
             top: 325px;
         }
+
         #editToggleBtn {
             top: 385px;
         }
 
         #layerToggleBtn:hover,
         #searchToggleBtn:hover,
-         #editToggleBtn:hover,
+        #editToggleBtn:hover,
         #liveToggleBtn:hover,
         #routeBtn:hover {
             transform: scale(1.08);
@@ -471,13 +472,18 @@
             animation: spin 1s linear infinite;
             z-index: 1400;
             display: none;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
         }
 
         @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
         }
 
         /* MOBILE RESPONSIVE */
@@ -496,7 +502,7 @@
 
             #layerToggleBtn,
             #searchToggleBtn,
-             #editToggleBtn,
+            #editToggleBtn,
             #liveToggleBtn,
             #routeBtn {
                 right: auto;
@@ -522,10 +528,11 @@
             #routeBtn {
                 top: 244px;
             }
-            #editToggleBtn
-            {
+
+            #editToggleBtn {
                 top: 302px;
             }
+
             .layer-switcher {
                 top: 60px;
                 right: 12px;
@@ -622,14 +629,15 @@
     </div>
 
     <div id="editToggleBtn" title="My Location">
-        <i class="fas fa-location-dot"></i>
+        <i class="fas fa-pen-to-square"></i>
     </div>
 
 
     <!-- Search Panel -->
     <div id="searchLabel" class="search-Lable closed">
         <div class="search-input-wrapper">
-            <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name..." autocomplete="off">
+            <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name..."
+                autocomplete="off">
             <button id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
         </div>
         <div id="searchSuggestions" class="search-suggestions"></div>
@@ -688,6 +696,20 @@
             <span class="checkmark"></span>
             <span>Points</span>
         </label>
+    </div>
+
+
+    <!-- Search Panel -->
+    <div id="editLabel" class="edit-Lable closed">
+        <select class="form-select forn-control" id="mobileEditToolSelect">
+                <option value="none">Select Tool</option>
+                <option value="Polygon">Draw Polygon</option>
+                <option value="Line">Draw Line</option>
+                <option value="Point">Draw Point</option>
+                <option value="Modify">Modify Feature</option>
+                <option value="Delete">Delete Feature</option>
+
+            </select>
     </div>
 @endsection
 
@@ -774,8 +796,8 @@
                 const lowerQuery = query.toLowerCase();
                 const suggestions = searchIndex.filter(item => {
                     return item.searchText.toLowerCase().includes(lowerQuery) ||
-                           item.title.toLowerCase().includes(lowerQuery) ||
-                           (item.subtitle && item.subtitle.toLowerCase().includes(lowerQuery));
+                        item.title.toLowerCase().includes(lowerQuery) ||
+                        (item.subtitle && item.subtitle.toLowerCase().includes(lowerQuery));
                 });
 
                 // Limit to 10 suggestions
@@ -852,8 +874,7 @@
                         });
                         selectedFeature = feature;
                         showToast("Found GIS ID: " + data.gisid, 'success');
-                    }
-                    else if (type === 'line') {
+                    } else if (type === 'line') {
                         let coords;
                         if (typeof data.coordinates === 'string') {
                             coords = JSON.parse(data.coordinates);
@@ -878,8 +899,7 @@
                         });
                         selectedFeature = feature;
                         showToast("Found: " + (data.road_name || data.gisid), 'success');
-                    }
-                    else if (type === 'point') {
+                    } else if (type === 'point') {
                         const coordinates = JSON.parse(data.coordinates);
                         feature = new ol.Feature({
                             geometry: new ol.geom.Point(coordinates),
@@ -1292,7 +1312,8 @@
             // Close panels when clicking outside
             $(document).click(function(event) {
                 if (!$(event.target).closest(
-                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #searchSuggestions').length) {
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #searchSuggestions'
+                    ).length) {
                     $('#layerSwitcher, #searchLabel').addClass('closed');
                     $('#searchSuggestions').removeClass('show');
                 }
@@ -1368,10 +1389,11 @@
                     return;
                 }
 
-                switch(e.key) {
+                switch (e.key) {
                     case 'ArrowDown':
                         e.preventDefault();
-                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length -
+                            1);
                         updateSelectedSuggestion();
                         break;
                     case 'ArrowUp':
@@ -1450,6 +1472,12 @@
 
                 showToast("GIS ID or Road Name not found", 'error');
             });
+
+
+
+
+
+
 
             // Live location button functionality
             let currentLocationMarker = null;
@@ -1531,7 +1559,8 @@
             async function getRouteFromOSRM(startCoord, endCoord) {
                 const [startLon, startLat] = startCoord;
                 const [endLon, endLat] = endCoord;
-                const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+                const url =
+                    `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
 
                 const response = await fetch(url);
                 const data = await response.json();
@@ -1626,7 +1655,8 @@
                         return;
                     }
 
-                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
+                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry()
+                        .getCoordinates();
                     const geometry = feature.getGeometry();
 
                     let targetCoords;
@@ -1659,14 +1689,18 @@
                 }
 
                 if (!currentLocationMarker) {
-                    const enableLocation = confirm('Live location is not enabled. Would you like to enable it for route calculation?');
+                    const enableLocation = confirm(
+                        'Live location is not enabled. Would you like to enable it for route calculation?'
+                    );
                     if (enableLocation) {
                         toggleLiveLocation();
                         setTimeout(async () => {
                             if (currentLocationMarker) {
                                 await calculateAndDisplayRoute(selectedFeature);
                             } else {
-                                showToast('Unable to get your location. Please enable location services.', 'error');
+                                showToast(
+                                    'Unable to get your location. Please enable location services.',
+                                    'error');
                             }
                         }, 2500);
                     }
@@ -1675,6 +1709,42 @@
 
                 await calculateAndDisplayRoute(selectedFeature);
             });
+
+
+
+             $('#editToggleBtn').click(function(e) {
+                e.stopPropagation();
+                $('#editLabel').toggleClass('closed');
+                $('#searchLabel').addClass('closed');
+                $('#layerSwitcher').addClass('closed');
+
+            });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             // Handle window resize for mobile detection
             $(window).resize(function() {
