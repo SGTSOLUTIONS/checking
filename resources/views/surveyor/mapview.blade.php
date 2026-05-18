@@ -5,1102 +5,1145 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-   <style>
-    * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
-        font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
-        overflow-x: hidden;
-        position: relative;
-    }
-
-    /* MAP CONTAINER */
-    #map {
-        width: 100%;
-        height: calc(90vh - 60px);
-        border-radius: 0;
-        overflow: hidden;
-        border: none;
-        transition: all 0.3s ease;
-    }
-
-    /* PAGE HEADER - Desktop */
-    .page-title {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: white;
-        padding: 16px 25px;
-        border-radius: 16px;
-        margin-bottom: 15px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .page-title h3 {
-        margin: 0;
-        font-weight: 700;
-        font-size: 24px;
-        letter-spacing: -0.5px;
-    }
-
-    .page-title h3 i {
-        margin-right: 12px;
-        color: #3b82f6;
-    }
-
-    /* Mobile Header */
-    .mobile-header {
-        display: none;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: white;
-        padding: 12px 15px;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .mobile-header h4 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .mobile-header h4 i {
-        font-size: 20px;
-        color: #3b82f6;
-    }
-
-    /* Mobile Bottom Navigation Bar */
-    .mobile-bottom-nav {
-        display: none;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px);
-        border-radius: 24px 24px 0 0;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-        z-index: 1200;
-        padding: 8px 16px;
-        justify-content: space-around;
-        align-items: center;
-        border-top: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .mobile-nav-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 16px;
-        border-radius: 16px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        flex: 1;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .mobile-nav-btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(59, 130, 246, 0.2);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .mobile-nav-btn:active::before {
-        width: 100%;
-        height: 100%;
-    }
-
-    .mobile-nav-btn i {
-        font-size: 22px;
-        color: #64748b;
-        margin-bottom: 4px;
-        transition: all 0.3s ease;
-    }
-
-    .mobile-nav-btn span {
-        font-size: 10px;
-        font-weight: 500;
-        color: #64748b;
-        transition: all 0.3s ease;
-    }
-
-    .mobile-nav-btn.active {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        transform: translateY(-2px);
-    }
-
-    .mobile-nav-btn.active i,
-    .mobile-nav-btn.active span {
-        color: white;
-    }
-
-    .mobile-nav-btn:active {
-        transform: scale(0.95);
-    }
-
-    /* FLOATING BUTTONS - Desktop */
-    #layerToggleBtn,
-    #searchToggleBtn,
-    #editToggleBtn,
-    #liveToggleBtn,
-    #routeBtn {
-        position: absolute;
-        right: 20px;
-        width: 55px;
-        height: 55px;
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        color: white;
-        border-radius: 16px;
-        z-index: 1200;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-size: 22px;
-        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none;
-        backdrop-filter: blur(10px);
-    }
-
-    #layerToggleBtn:hover,
-    #searchToggleBtn:hover,
-    #editToggleBtn:hover,
-    #liveToggleBtn:hover,
-    #routeBtn:hover {
-        transform: scale(1.08) translateY(-2px);
-        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
-    }
-
-    #layerToggleBtn:active,
-    #searchToggleBtn:active,
-    #editToggleBtn:active,
-    #liveToggleBtn:active,
-    #routeBtn:active {
-        transform: scale(0.95);
-    }
-
-    #layerToggleBtn { top: 130px; }
-    #searchToggleBtn { top: 195px; }
-    #liveToggleBtn { top: 260px; }
-    #routeBtn { top: 325px; }
-    #editToggleBtn { top: 390px; }
-
-    /* Edit Panel */
-    .edit-Lable {
-        position: absolute;
-        top: 390px;
-        right: 90px;
-        z-index: 1100;
-        width: 280px;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        padding: 15px;
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .edit-Lable.closed {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateX(30px) scale(0.95);
-    }
-
-    .edit-Lable select {
-        width: 100%;
-        padding: 12px;
-        border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        font-size: 14px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-
-    .edit-Lable select:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    /* Search Label - Desktop */
-    .search-Lable {
-        position: absolute;
-        top: 195px;
-        right: 90px;
-        z-index: 1100;
-        width: 350px;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        padding: 15px;
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .search-Lable.closed {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateX(30px) scale(0.95);
-    }
-
-    .search-input-wrapper {
-        display: flex;
-        gap: 10px;
-        width: 100%;
-    }
-
-    .search-Lable input {
-        border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        padding: 12px 15px;
-        font-size: 14px;
-        flex: 1;
-        outline: none;
-        transition: all 0.3s ease;
-        background: white;
-    }
-
-    .search-Lable input:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .search-Lable button {
-        border-radius: 12px;
-        padding: 12px 24px;
-        white-space: nowrap;
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        border: none;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-weight: 600;
-    }
-
-    .search-Lable button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-
-    /* Search Suggestions */
-    .search-suggestions {
-        display: none;
-        background: white;
-        border-radius: 16px;
-        max-height: 320px;
-        overflow-y: auto;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-        margin-top: 5px;
-    }
-
-    .search-suggestions.show {
-        display: block;
-        animation: fadeInDown 0.3s ease;
-    }
-
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .suggestion-item {
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .suggestion-item:last-child {
-        border-bottom: none;
-    }
-
-    .suggestion-item:hover {
-        background: linear-gradient(135deg, #eff6ff, #dbeafe);
-        transform: translateX(4px);
-    }
-
-    .suggestion-item.selected {
-        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    }
-
-    .suggestion-icon {
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #eff6ff;
-        border-radius: 10px;
-        color: #2563eb;
-        font-size: 16px;
-    }
-
-    .suggestion-content {
-        flex: 1;
-    }
-
-    .suggestion-title {
-        font-weight: 600;
-        font-size: 14px;
-        color: #1e293b;
-    }
-
-    .suggestion-subtitle {
-        font-size: 12px;
-        color: #64748b;
-        margin-top: 2px;
-    }
-
-    .suggestion-type {
-        font-size: 10px;
-        padding: 4px 10px;
-        border-radius: 20px;
-        background: #e2e8f0;
-        color: #475569;
-        font-weight: 600;
-    }
-
-    /* Layer Switcher Panel - Desktop */
-    .layer-switcher {
-        position: absolute;
-        top: 125px;
-        right: 90px;
-        z-index: 1100;
-        width: 280px;
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        padding: 18px;
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .layer-switcher.closed {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateX(30px) scale(0.95);
-    }
-
-    .layer-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 18px;
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .layer-header div {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .layer-header i {
-        color: #2563eb;
-        font-size: 20px;
-    }
-
-    #closeLayerPanel {
-        border: none;
-        background: #eff6ff;
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        cursor: pointer;
-        color: #1e40af;
-        transition: all 0.3s ease;
-    }
-
-    #closeLayerPanel:hover {
-        background: #dbeafe;
-        transform: rotate(90deg);
-    }
-
-    .layer-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.25s ease;
-        margin-bottom: 6px;
-        font-weight: 500;
-    }
-
-    .layer-item:hover {
-        background: #eff6ff;
-        transform: translateX(4px);
-    }
-
-    .layer-item input {
-        display: none;
-    }
-
-    .checkmark {
-        width: 20px;
-        height: 20px;
-        border-radius: 6px;
-        border: 2px solid #2563eb;
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .layer-item input:checked+.checkmark {
-        background: #2563eb;
-        animation: pulse 0.3s ease;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.2); }
-        100% { transform: scale(1); }
-    }
-
-    .layer-item input:checked+.checkmark::after {
-        content: "✓";
-        position: absolute;
-        color: white;
-        font-size: 13px;
-        top: -1px;
-        left: 3px;
-    }
-
-    /* Toast Notification */
-    .toast-notification {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(10px);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 50px;
-        font-size: 14px;
-        z-index: 1300;
-        animation: slideUp 0.3s ease;
-        pointer-events: none;
-        font-weight: 500;
-        letter-spacing: 0.3px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    .toast-notification.success {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-    }
-
-    .toast-notification.error {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-
-    .toast-notification.info {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-        }
-    }
-
-    /* Route Info Panel */
-    .route-info-panel {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        background: white;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        z-index: 1100;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        max-width: 400px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .route-info-panel.closed {
-         opacity: 0;
-        visibility: hidden;
-        transform: translateX(30px) scale(0.95);
-    }
-
-    .route-info-panel h5 {
-        margin: 0 0 12px 0;
-        font-weight: 700;
-        font-size: 18px;
-        color: #1e293b;
-    }
-
-    .route-stats {
-        display: flex;
-        gap: 20px;
-        margin-bottom: 15px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .route-stat {
-        flex: 1;
-        text-align: center;
-    }
-
-    .route-stat-value {
-        font-size: 22px;
-        font-weight: 800;
-        color: #2563eb;
-    }
-
-    .route-stat-label {
-        font-size: 11px;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
-    }
-
-    .close-route-btn {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: #f1f5f9;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 10px;
-        font-size: 18px;
-        cursor: pointer;
-        color: #64748b;
-        transition: all 0.3s ease;
-    }
-
-    .close-route-btn:hover {
-        background: #fee2e2;
-        color: #dc2626;
-        transform: rotate(90deg);
-    }
-
-    .start-navigation-btn {
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        color: white;
-        border: none;
-        border-radius: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 14px;
-    }
-
-    .start-navigation-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-    }
-
-    /* Loading Spinner */
-    .loading-spinner {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 60px;
-        height: 60px;
-        border: 4px solid #e2e8f0;
-        border-top: 4px solid #2563eb;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        z-index: 1400;
-        display: none;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(5px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-
-    @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    /* Highlight Layer */
-    .highlight-layer {
-        z-index: 1000;
-    }
-
-    /* Shop Forms Styling */
-    .shop-item {
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-        animation: slideIn 0.3s ease;
-    }
-
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    .shop-item:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .remove-shop-btn {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        color: #dc2626;
-        border: none;
-        border-radius: 10px;
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .remove-shop-btn:hover {
-        background: linear-gradient(135deg, #fecaca, #fca5a5);
-        transform: scale(1.05);
-    }
-
-    /* Modal Styling */
-    .modal-content {
-        border-radius: 24px;
-        overflow: hidden;
-        border: none;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .modal-header {
-        border-bottom: none;
-        padding: 20px 24px;
-    }
-
-    .modal-body {
-        padding: 20px 24px;
-        max-height: 70vh;
-        overflow-y: auto;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #e2e8f0;
-        padding: 16px 24px;
-    }
-
-    /* Card Styling for Forms */
-    .card {
-        border: none;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-header {
-        padding: 14px 20px;
-        font-weight: 600;
-        border: none;
-    }
-
-    .card-body {
-        padding: 20px;
-    }
-
-    /* Form Control Styling */
-    .form-control, .form-select {
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        padding: 10px 14px;
-        transition: all 0.3s ease;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        outline: none;
-    }
-
-    .form-label {
-        font-weight: 600;
-        font-size: 13px;
-        margin-bottom: 6px;
-        color: #475569;
-    }
-
-    /* Error Message Styling */
-    .error-message {
-        font-size: 11px;
-        margin-top: 5px;
-        animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .is-invalid {
-        border-color: #dc2626 !important;
-    }
-
-    /* MOBILE RESPONSIVE */
-    @media (max-width: 768px) {
-        .desktop-only {
-            display: none !important;
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .mobile-header {
-            display: block;
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+            font-family: 'Segoe UI', 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .mobile-bottom-nav {
-            display: flex;
-        }
-
+        /* MAP CONTAINER */
         #map {
-            height: calc(90vh - 56px - 72px);
-            margin-bottom: 0;
+            width: 100%;
+            height: calc(90vh - 60px);
+            border-radius: 0;
+            overflow: hidden;
+            border: none;
+            transition: all 0.3s ease;
         }
 
-        /* Hide floating buttons on mobile */
-        #layerToggleBtn,
-        #searchToggleBtn,
-        #editToggleBtn,
-        #liveToggleBtn,
-        #routeBtn {
+        /* PAGE HEADER - Desktop */
+        .page-title {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 16px 25px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .page-title h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 24px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-title h3 i {
+            margin-right: 12px;
+            color: #3b82f6;
+        }
+
+        /* Mobile Header */
+        .mobile-header {
             display: none;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 12px 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        /* Panels on mobile - appear above bottom nav */
-        .layer-switcher,
-        .search-Lable,
-        .edit-Lable {
+        .mobile-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mobile-header h4 i {
+            font-size: 20px;
+            color: #3b82f6;
+        }
+
+        /* Mobile Bottom Navigation Bar */
+        .mobile-bottom-nav {
+            display: none;
             position: fixed;
-            top: auto;
-            bottom: 80px;
-            left: 12px;
-            right: 12px;
-            width: auto;
-            max-width: calc(100% - 24px);
-            border-radius: 20px;
-            padding: 16px;
-            z-index: 1250;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
-            animation: slideUp 0.3s ease;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1200;
+            padding: 8px 16px;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .search-Lable {
-            bottom: 80px;
-            top: auto;
-            right: 12px;
-            left: 12px;
-            width: auto;
-        }
-
-        .edit-Lable {
-            bottom: 80px;
-            top: auto;
-            right: 12px;
-            left: 12px;
-            width: auto;
-        }
-
-        .layer-switcher {
-            bottom: 80px;
-            top: auto;
-            right: 12px;
-            left: 12px;
-        }
-
-        .route-info-panel {
-            left: 12px;
-            right: 12px;
-            bottom: 80px;
-            padding: 16px;
-            max-width: none;
-        }
-
-        .search-suggestions {
-            max-height: 250px;
-        }
-
-        .suggestion-item {
-            padding: 10px 14px;
-        }
-
-        .suggestion-title {
-            font-size: 13px;
-        }
-
-        .suggestion-subtitle {
-            font-size: 11px;
-        }
-
-        .route-stats {
-            gap: 15px;
-        }
-
-        .route-stat-value {
-            font-size: 18px;
-        }
-
-        /* Modal adjustments for mobile */
-        .modal-dialog {
-            margin: 10px;
-        }
-
-        .modal-body {
-            padding: 16px;
-            max-height: 60vh;
-        }
-
-        .card-header {
-            padding: 12px 16px;
-        }
-
-        .card-body {
-            padding: 16px;
-        }
-
-        /* Toast on mobile */
-        .toast-notification {
-            bottom: 90px;
-            font-size: 12px;
-            padding: 10px 20px;
-        }
-
-        /* Shop items on mobile */
-        .shop-item {
-            padding: 16px;
-        }
-    }
-
-    /* Small Mobile */
-    @media (max-width: 480px) {
         .mobile-nav-btn {
-            padding: 6px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border-radius: 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mobile-nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .mobile-nav-btn:active::before {
+            width: 100%;
+            height: 100%;
         }
 
         .mobile-nav-btn i {
-            font-size: 18px;
+            font-size: 22px;
+            color: #64748b;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
         }
 
         .mobile-nav-btn span {
-            font-size: 9px;
-        }
-
-        .search-Lable input {
-            padding: 8px 12px;
-            font-size: 13px;
-        }
-
-        .search-Lable button {
-            padding: 8px 16px;
-            font-size: 12px;
-        }
-
-        .edit-Lable select {
-            padding: 8px;
-            font-size: 12px;
-        }
-
-        .route-info-panel {
-            padding: 14px;
-        }
-
-        .route-stat-value {
-            font-size: 16px;
-        }
-
-        .route-stat-label {
             font-size: 10px;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.3s ease;
         }
 
-        .start-navigation-btn {
-            padding: 12px;
-            font-size: 13px;
+        .mobile-nav-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-2px);
         }
 
-        .card-header h6 {
-            font-size: 14px;
+        .mobile-nav-btn.active i,
+        .mobile-nav-btn.active span {
+            color: white;
         }
 
-        .form-label {
-            font-size: 12px;
+        .mobile-nav-btn:active {
+            transform: scale(0.95);
         }
 
-        .form-control, .form-select {
-            padding: 8px 12px;
-            font-size: 13px;
-        }
-    }
-
-    /* Tablet Landscape */
-    @media (min-width: 769px) and (max-width: 1024px) {
+        /* FLOATING BUTTONS - Desktop */
         #layerToggleBtn,
         #searchToggleBtn,
         #editToggleBtn,
         #liveToggleBtn,
         #routeBtn {
-            width: 50px;
-            height: 50px;
-            right: 15px;
+            position: absolute;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 22px;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            backdrop-filter: blur(10px);
         }
 
-        .layer-switcher {
-            right: 80px;
-            width: 260px;
+        #layerToggleBtn:hover,
+        #searchToggleBtn:hover,
+        #editToggleBtn:hover,
+        #liveToggleBtn:hover,
+        #routeBtn:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
         }
 
-        .search-Lable {
-            right: 80px;
-            width: 320px;
+        #layerToggleBtn:active,
+        #searchToggleBtn:active,
+        #editToggleBtn:active,
+        #liveToggleBtn:active,
+        #routeBtn:active {
+            transform: scale(0.95);
         }
 
+        #layerToggleBtn {
+            top: 130px;
+        }
+
+        #searchToggleBtn {
+            top: 195px;
+        }
+
+        #liveToggleBtn {
+            top: 260px;
+        }
+
+        #routeBtn {
+            top: 325px;
+        }
+
+        #editToggleBtn {
+            top: 390px;
+        }
+
+        /* Edit Panel */
         .edit-Lable {
-            right: 80px;
-            width: 260px;
+            position: absolute;
+            top: 390px;
+            right: 90px;
+            z-index: 1100;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-    }
 
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
-    }
-
-    /* Button Hover Effects */
-    .btn {
-        transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-        transform: translateY(-2px);
-    }
-
-    .btn:active {
-        transform: translateY(0);
-    }
-
-    /* Animation for panels */
-    @keyframes slideInRight {
-        from {
+        .edit-Lable.closed {
             opacity: 0;
-            transform: translateX(30px);
+            visibility: hidden;
+            transform: translateX(30px) scale(0.95);
         }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
+        .edit-Lable select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
-        to {
-            opacity: 1;
+
+        .edit-Lable select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Search Label - Desktop */
+        .search-Lable {
+            position: absolute;
+            top: 195px;
+            right: 90px;
+            z-index: 1100;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-Lable.closed {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px) scale(0.95);
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .search-Lable input {
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            padding: 12px 15px;
+            font-size: 14px;
+            flex: 1;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .search-Lable input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-Lable button {
+            border-radius: 12px;
+            padding: 12px 24px;
+            white-space: nowrap;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .search-Lable button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Search Suggestions */
+        .search-suggestions {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            max-height: 320px;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            margin-top: 5px;
+        }
+
+        .search-suggestions.show {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            transform: translateX(4px);
+        }
+
+        .suggestion-item.selected {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        }
+
+        .suggestion-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            border-radius: 10px;
+            color: #2563eb;
+            font-size: 16px;
+        }
+
+        .suggestion-content {
+            flex: 1;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .suggestion-subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .suggestion-type {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        /* Layer Switcher Panel - Desktop */
+        .layer-switcher {
+            position: absolute;
+            top: 125px;
+            right: 90px;
+            z-index: 1100;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .layer-switcher.closed {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px) scale(0.95);
+        }
+
+        .layer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .layer-header div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .layer-header i {
+            color: #2563eb;
+            font-size: 20px;
+        }
+
+        #closeLayerPanel {
+            border: none;
+            background: #eff6ff;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #1e40af;
+            transition: all 0.3s ease;
+        }
+
+        #closeLayerPanel:hover {
+            background: #dbeafe;
+            transform: rotate(90deg);
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .layer-item:hover {
+            background: #eff6ff;
+            transform: translateX(4px);
+        }
+
+        .layer-item input {
+            display: none;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 2px solid #2563eb;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .layer-item input:checked+.checkmark {
+            background: #2563eb;
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .layer-item input:checked+.checkmark::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 13px;
+            top: -1px;
+            left: 3px;
+        }
+
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            z-index: 1300;
+            animation: slideUp 0.3s ease;
+            pointer-events: none;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast-notification.success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .toast-notification.error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .toast-notification.info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        /* Route Info Panel */
+        .route-info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            z-index: 1100;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .route-info-panel.closed {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(30px) scale(0.95);
+        }
+
+        .route-info-panel h5 {
+            margin: 0 0 12px 0;
+            font-weight: 700;
+            font-size: 18px;
+            color: #1e293b;
+        }
+
+        .route-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .route-stat {
+            flex: 1;
+            text-align: center;
+        }
+
+        .route-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #2563eb;
+        }
+
+        .route-stat-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .close-route-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #f1f5f9;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .close-route-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            transform: rotate(90deg);
+        }
+
+        .start-navigation-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .start-navigation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            z-index: 1400;
+            display: none;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        /* Highlight Layer */
+        .highlight-layer {
+            z-index: 1000;
+        }
+
+        /* Shop Forms Styling */
+        .shop-item {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .shop-item:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .remove-shop-btn {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #dc2626;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-shop-btn:hover {
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
+            transform: scale(1.05);
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border-radius: 24px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            border-bottom: none;
+            padding: 20px 24px;
+        }
+
+        .modal-body {
+            padding: 20px 24px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 16px 24px;
+        }
+
+        /* Card Styling for Forms */
+        .card {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            padding: 14px 20px;
+            font-weight: 600;
+            border: none;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Form Control Styling */
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+            color: #475569;
+        }
+
+        /* Error Message Styling */
+        .error-message {
+            font-size: 11px;
+            margin-top: 5px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .is-invalid {
+            border-color: #dc2626 !important;
+        }
+
+        /* MOBILE RESPONSIVE */
+        @media (max-width: 768px) {
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-header {
+                display: block;
+            }
+
+            .mobile-bottom-nav {
+                display: flex;
+            }
+
+            #map {
+                height: calc(90vh - 56px - 72px);
+                margin-bottom: 0;
+            }
+
+            /* Hide floating buttons on mobile */
+            #layerToggleBtn,
+            #searchToggleBtn,
+            #editToggleBtn,
+            #liveToggleBtn,
+            #routeBtn {
+                display: none;
+            }
+
+            /* Panels on mobile - appear above bottom nav */
+            .layer-switcher,
+            .search-Lable,
+            .edit-Lable {
+                position: fixed;
+                top: auto;
+                bottom: 80px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: calc(100% - 24px);
+                border-radius: 20px;
+                padding: 16px;
+                z-index: 1250;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(20px);
+                animation: slideUp 0.3s ease;
+            }
+
+            .search-Lable {
+                bottom: 80px;
+                top: auto;
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+
+            .edit-Lable {
+                bottom: 80px;
+                top: auto;
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+
+            .layer-switcher {
+                bottom: 80px;
+                top: auto;
+                right: 12px;
+                left: 12px;
+            }
+
+            .route-info-panel {
+                left: 12px;
+                right: 12px;
+                bottom: 80px;
+                padding: 16px;
+                max-width: none;
+            }
+
+            .search-suggestions {
+                max-height: 250px;
+            }
+
+            .suggestion-item {
+                padding: 10px 14px;
+            }
+
+            .suggestion-title {
+                font-size: 13px;
+            }
+
+            .suggestion-subtitle {
+                font-size: 11px;
+            }
+
+            .route-stats {
+                gap: 15px;
+            }
+
+            .route-stat-value {
+                font-size: 18px;
+            }
+
+            /* Modal adjustments for mobile */
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            .modal-body {
+                padding: 16px;
+                max-height: 60vh;
+            }
+
+            .card-header {
+                padding: 12px 16px;
+            }
+
+            .card-body {
+                padding: 16px;
+            }
+
+            /* Toast on mobile */
+            .toast-notification {
+                bottom: 90px;
+                font-size: 12px;
+                padding: 10px 20px;
+            }
+
+            /* Shop items on mobile */
+            .shop-item {
+                padding: 16px;
+            }
+        }
+
+        /* Small Mobile */
+        @media (max-width: 480px) {
+            .mobile-nav-btn {
+                padding: 6px 10px;
+            }
+
+            .mobile-nav-btn i {
+                font-size: 18px;
+            }
+
+            .mobile-nav-btn span {
+                font-size: 9px;
+            }
+
+            .search-Lable input {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .search-Lable button {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .edit-Lable select {
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .route-info-panel {
+                padding: 14px;
+            }
+
+            .route-stat-value {
+                font-size: 16px;
+            }
+
+            .route-stat-label {
+                font-size: 10px;
+            }
+
+            .start-navigation-btn {
+                padding: 12px;
+                font-size: 13px;
+            }
+
+            .card-header h6 {
+                font-size: 14px;
+            }
+
+            .form-label {
+                font-size: 12px;
+            }
+
+            .form-control,
+            .form-select {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        /* Tablet Landscape */
+        @media (min-width: 769px) and (max-width: 1024px) {
+
+            #layerToggleBtn,
+            #searchToggleBtn,
+            #editToggleBtn,
+            #liveToggleBtn,
+            #routeBtn {
+                width: 50px;
+                height: 50px;
+                right: 15px;
+            }
+
+            .layer-switcher {
+                right: 80px;
+                width: 260px;
+            }
+
+            .search-Lable {
+                right: 80px;
+                width: 320px;
+            }
+
+            .edit-Lable {
+                right: 80px;
+                width: 260px;
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Button Hover Effects */
+        .btn {
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
             transform: translateY(0);
         }
-    }
 
-    /* Active state for buttons */
-    .btn-active {
-        transform: scale(0.95);
-    }
+        /* Animation for panels */
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
 
-    /* Pulse animation for notifications */
-    @keyframes pulse-ring {
-        0% {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Active state for buttons */
+        .btn-active {
             transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
         }
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+
+        /* Pulse animation for notifications */
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+            }
         }
-        100% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-        }
-    }
-</style>
+    </style>
 @endsection
 
 @section('content')
@@ -2140,7 +2183,7 @@
                 if (header.length) {
                     header.html(
                         `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
-                        );
+                    );
                 }
             }
 
@@ -2274,6 +2317,469 @@
                 });
             });
 
+
+
+
+
+
+            function handlePolygonClick(properties) {
+
+                const gisId = properties["gisid"];
+
+                resetBuildingForm();
+
+                $("#building_gisid").val(gisId);
+
+                let existingData = null;
+
+                // REMOVE OLD MODAL BEFORE APPENDING NEW ONE
+                $("#buildingModal").remove();
+
+                $("body").append(`
+                    <div class="modal fade" id="buildingModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                             <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Building Data Collection</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form id="buildingForm" enctype="multipart/form-data">
+                                    @csrf
+                                    <input type="hidden" id="gisIdInput" name="gisid">
+                                    <div class="modal-body">
+                                        <!-- Two Image Previews Side by Side -->
+                                        <div class="row mb-4">
+                                            <div class="col-md-6">
+                                                <label class="fw-bold mb-2">Image 1 Preview</label>
+                                                <div class="border rounded p-2" style="background: #f8f9fa; min-height: 200px;">
+                                                    <img id="buildingImagePreview" src="" alt="Building Image Preview"
+                                                        class="img-fluid"
+                                                        style="display: none; max-height: 250px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="fw-bold mb-2">Image 2 Preview</label>
+                                                <div class="border rounded p-2" style="background: #f8f9fa; min-height: 200px;">
+                                                    <img id="buildingImagePreview2" src="" alt="Building Image Preview 2"
+                                                        class="img-fluid"
+                                                        style="display: none; max-height: 250px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-3 mb-3">
+                                                <label>Gisid</label>
+                                                <input type="text" class="form-control" name="building_gisid" id="building_gisid"
+                                                    readonly>
+                                                <div id="building_gisid_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Zone</label>
+                                                <select class="form-control" name="building_zone" id="building_zone">
+                                                    <option value="">Select Zone</option>
+                                                    <option value="ZONE-A">ZONE-A</option>
+                                                    <option value="ZONE-B">ZONE-B</option>
+                                                    <option value="ZONE-C">ZONE-C</option>
+                                                    <option value="ZONE-D">ZONE-D</option>
+                                                    <option value="ZONE-E">ZONE-E</option>
+                                                </select>
+                                                <div id="building_zone_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Number of Bills</label>
+                                                <input type="number" class="form-control" name="number_bill" id="number_bill">
+                                                <div id="number_bill_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Number of Shops</label>
+                                                <input type="number" class="form-control" name="number_shop" id="number_shop">
+                                                <div id="number_shop_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Number of Floors</label>
+                                                <input type="number" class="form-control" name="number_floor" id="number_floor">
+                                                <div id="number_floor_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Percentage</label>
+                                                <select class="form-control mt-2" name="percentage" id="percentage">
+                                                    <option value=""></option>
+                                                    <option value="10">10</option>
+                                                    <option value="20">20</option>
+                                                    <option value="30">30</option>
+                                                    <option value="40">40</option>
+                                                    <option value="50">50</option>
+                                                    <option value="60">60</option>
+                                                    <option value="70">70</option>
+                                                    <option value="80">80</option>
+                                                    <option value="85">85</option>
+                                                    <option value="90">90</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                                <div id="percentage_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label>Building Name</label>
+                                                <input type="text" class="form-control" name="building_name" id="building_name">
+                                                <div id="building_name_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label>Road Name</label>
+                                                <select class="form-control" id="road_name" name="road_name">
+                                                    <option value="">Select Road Name</option>
+                                                    @if (isset($uniqueRoadNames))
+                                                    @foreach ($uniqueRoadNames as $roadName)
+                                                    <option value="{{ $roadName }}">{{ $roadName }}</option>
+                                                    @endforeach
+                                                    @endif
+                                                </select>
+                                                <div id="road_name_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label>Phone</label>
+                                                <input type="text" class="form-control" name="phone" id="phone_building">
+                                                <div id="phone_building_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Building Usage</label>
+                                                <select class="form-control" name="building_usage" id="building_usage">
+                                                    <option value="">Select</option>
+                                                    <option value="RESIDENTIAL">Residential</option>
+                                                    <option value="COMMERCIAL">Commercial</option>
+                                                    <option value="INDUSTRIAL">Industrial</option>
+                                                    <option value="INSTITUTIONAL">Institutional</option>
+                                                    <option value="MIXED">Mixed</option>
+                                                    <option value="GOVERNMENT">Government</option>
+                                                    <option value="VACANT">Vacant</option>
+                                                </select>
+                                                <div id="building_usage_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Construction Type</label>
+                                                <select class="form-control" name="construction_type" id="construction_type">
+                                                    <option value="">Select</option>
+                                                    <option value="PERMANENT">Permanent</option>
+                                                    <option value="SEMI_PERMANENT">Semi Permanent</option>
+                                                    <option value="VACANT_LAND">Vaccant Land</option>
+                                                    <option value="SHED">Shed</option>
+                                                    <option value="CAR_SHED">Car Shed</option>
+                                                    <option value="TEMPORARY">Temporary</option>
+                                                </select>
+                                                <div id="construction_type_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Building Type</label>
+                                                <select class="form-control" name="building_type" id="building_type">
+                                                    <option value="">Select</option>
+                                                    <option value="Independent">Independent</option>
+                                                    <option value="Flat">Flat</option>
+                                                    <option value="Kalyana_Mandapam">Kalyana Mandapam</option>
+                                                    <option value="Hotel">Hotel</option>
+                                                    <option value="Cinema_Theatre">Cinema Theatre</option>
+                                                    <option value="Central_Government_Building">Central Government Building</option>
+                                                    <option value="State_Government_Building">State Government Building</option>
+                                                    <option value="Municipality_Corporation">Municipality / Corporation</option>
+                                                    <option value="Educational_Institution">Educational Institution</option>
+                                                    <option value="Hospital">Hospital</option>
+                                                    <option value="Commercial_Complex">Commercial Complex</option>
+                                                    <option value="Shop">Shop</option>
+                                                    <option value="Office">Office</option>
+                                                    <option value="Temple">Temple</option>
+                                                    <option value="Mosque">Mosque</option>
+                                                    <option value="Church">Church</option>
+                                                    <option value="Amma_Unavagam">Amma Unavagam</option>
+                                                    <option value="Public_Toilet">Public Toilet</option>
+                                                    <option value="Vacant Land">Vacant Land</option>
+                                                    <option value="Under Construction">Under Construction</option>
+                                                    <option value="Others">Others</option>
+                                                </select>
+                                                <div id="building_type_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>UGD</label>
+                                                <select class="form-control" name="ugd" id="ugd">
+                                                    <option value="">Select</option>
+                                                    <option value="No_Connection">No Connection</option>
+                                                    <option value="Manhole_Available_but_Connection_Not_Given_to_House">Manhole Available
+                                                        but Connection Not Given to House</option>
+                                                    <option value="Stage_1_Completed">Stage 1 Completed</option>
+                                                    <option value="Stage_1_2_Completed">Stage 1, 2 Completed</option>
+                                                    <option value="Stage_1_2_Completed_but_Not_Connected">Stage 1, 2 Completed but Not
+                                                        Connected</option>
+                                                    <option value="Stage_1_2_3_Completed">Stage 1, 2, 3 Completed</option>
+                                                    <option value="Direct_Connection_Given">Direct Connection Given</option>
+                                                    <option value="1_UGD_Connection_-_3_Stage_Completed">1 UGD Connection - 3 Stage
+                                                        Completed</option>
+                                                    <option value="2_UGD_Connection_-_3_Stage_Completed">2 UGD Connection - 3 Stage
+                                                        Completed</option>
+                                                </select>
+                                                <div id="ugd_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Lift Room</label>
+                                                <select class="form-control" name="liftroom" id="liftroom">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="liftroom_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Head Room</label>
+                                                <select class="form-control" name="headroom" id="headroom">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="headroom_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Overhead Tank</label>
+                                                <select class="form-control" name="overhead_tank" id="overhead_tank">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="overhead_tank_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Rainwater Harvesting</label>
+                                                <select class="form-control" name="rainwater_harvesting" id="rainwater_harvesting">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="rainwater_harvesting_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Parking</label>
+                                                <select class="form-control" name="parking" id="parking">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="parking_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Ramp</label>
+                                                <select class="form-control" name="ramp" id="ramp">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="ramp_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Hoarding</label>
+                                                <select class="form-control" name="hoarding" id="hoarding">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="hoarding_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>CCTV</label>
+                                                <select class="form-control" name="cctv" id="cctv">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="cctv_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Cell Tower</label>
+                                                <select class="form-control" name="cell_tower" id="cell_tower">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="cell_tower_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Solar Panel</label>
+                                                <select class="form-control" name="solar_panel" id="solar_panel">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="solar_panel_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Basement</label>
+                                                <input type="number" class="form-control" name="basement" id="basement">
+                                                <div id="basement_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label>Water Connection</label>
+
+                                                <select class="form-control" name="water_connection" id="water_connection">
+                                                    <option value="No">No</option>
+                                                    <option value="Yes">Yes</option>
+                                                </select>
+                                                <div id="water_connection_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Upload Image</label>
+                                                <input type="file" class="form-control" name="image" id="building_image"
+                                                    accept="image/*">
+                                                <div id="building_image_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label>Upload Image2</label>
+                                                <input type="file" class="form-control" name="image2" id="building_image2"
+                                                    accept="image/*">
+                                                <div id="building_image2_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label>Remarks</label>
+                                                <textarea class="form-control" name="remarks" id="remarks_building"></textarea>
+                                                <div id="remarks_building_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label>Corporation Remarks</label>
+                                                <textarea class="form-control" name="corporationremarks" id="corporationremarks"></textarea>
+                                                <div id="corporationremarks_error" class="error-message text-danger"></div>
+                                            </div>
+                                            <!-- QC Remarks Field with Error Div -->
+                                            <div class="col-md-3 mb-3">
+                                                <label for="qc_remarks" class="form-label">QC Remarks</label>
+                                                <input type="text" name="qc_remarks" class="form-control" id="qc_remarks">
+                                                <div id="qc_remarks_error" class="error-message text-danger"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-2"></i>Close
+                                        </button>
+                                        <button type="submit" class="btn btn-primary" id="buildingsubmitBtn">
+                                            <i class="fas fa-save me-2"></i>Save
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                if (polygonDatas && polygonDatas.length > 0) {
+                    existingData = polygonDatas.find(item => item.gisid == gisId);
+                }
+
+                if (existingData) {
+                    populateBuildingForm(existingData);
+
+                    showFlashMessage(
+                        'Loading existing building data...',
+                        'info'
+                    );
+
+                } else {
+
+                    $("#buildingImagePreview").hide().attr("src", "");
+
+                    $("#buildingImagePreview2").hide().attr("src", "");
+
+                    showFlashMessage(
+                        'Creating new building record...',
+                        'info'
+                    );
+                }
+
+                $("#buildingModal").modal("show");
+            }
+
+            function populateBuildingForm(item) {
+                // Basic Information
+                $("#building_gisid").val(item.gisid || "");
+                $("#number_bill").val(item.number_bill || "");
+                $("#number_shop").val(item.number_shop || "");
+                $("#number_floor").val(item.number_floor || "");
+                $("#building_name").val(item.building_name || "");
+                $("#road_name").val(item.road_name || "");
+                $("#phone_building").val(item.phone || "");
+                $("#zone_building").val(item.zone || "");
+                // Building Details
+                $("#building_usage").val(item.building_usage || "");
+                $("#construction_type").val(item.construction_type || "");
+                $("#building_type").val(item.building_type || "");
+                $("#ugd").val(item.ugd || "");
+                // Amenities (Yes/No fields)
+                $("#liftroom").val(item.liftroom || "No");
+                $("#headroom").val(item.headroom || "No");
+                $("#overhead_tank").val(item.overhead_tank || "No");
+                $("#rainwater_harvesting").val(item.rainwater_harvesting || "No");
+                $("#parking").val(item.parking || "No");
+                $("#ramp").val(item.ramp || "No");
+                $("#hoarding").val(item.hoarding || "No");
+                $("#cctv").val(item.cctv || "No");
+                $("#cell_tower").val(item.cell_tower || "No");
+                $("#solar_panel").val(item.solar_panel || "No");
+
+                // Property Details
+                $("#basement").val(item.basement || "");
+                $("#water_connection").val(item.water_connection || "");
+                $("#percentage").val(item.percentage || "");
+
+                // Remarks
+                $("#remarks_building").val(item.remarks || "");
+                $("#corporationremarks").val(item.corporationremarks || "");
+
+                // Image Previews
+                // Define asset base URL (make sure this is defined globally)
+                const assetUrl = window.assetUrl || "{{ asset('') }}";
+
+                // Show existing first image if exists
+                if (item.image && item.image !== "") {
+                    const imageUrl = item.image.startsWith('http') ? item.image : assetUrl + item.image;
+                    $("#buildingImagePreview").attr("src", imageUrl).show();
+                } else {
+                    $("#buildingImagePreview").hide().attr("src", "");
+                }
+
+                // Show existing second image if exists
+                if (item.image2 && item.image2 !== "") {
+                    const imageUrl2 = item.image2.startsWith('http') ? item.image2 : assetUrl + item.image2;
+                    $("#buildingImagePreview2").attr("src", imageUrl2).show();
+                } else {
+                    $("#buildingImagePreview2").hide().attr("src", "");
+                }
+            }
+
+            function resetBuildingForm() {
+                $("#building_gisid").val("");
+                $("#number_bill").val("");
+                $("#number_shop").val("");
+                $("#number_floor").val("");
+                $("#building_name").val("");
+                $("#road_name").val("");
+                $("#phone_building").val("");
+                $("#building_usage").val("");
+                $("#construction_type").val("");
+                $("#building_type").val("");
+                $("#ugd").val("");
+                $("#liftroom").val("No");
+                $("#headroom").val("No");
+                $("#overhead_tank").val("No");
+                $("#rainwater_harvesting").val("No");
+                $("#parking").val("No");
+                $("#ramp").val("No");
+                $("#hoarding").val("No");
+                $("#cctv").val("No");
+                $("#cell_tower").val("No");
+                $("#solar_panel").val("No");
+                $("#basement").val("");
+                $("#water_connection").val("");
+                $("#percentage").val("");
+                $("#remarks_building").val("");
+                $("#corporationremarks").val("");
+                $("#zone").val("");
+
+                // Reset both image previews
+                $("#buildingImagePreview").hide().attr("src", "");
+                $("#buildingImagePreview2").hide().attr("src", "");
+
+                // Reset file inputs
+                $("#building_image").val("");
+                $("#building_image2").val("");
+
+                // Clear any error messages
+                $(".error-message").html("");
+                $(".is-invalid").removeClass("is-invalid");
+            }
+
             function refreshVectorLayer() {
                 polygonSource.clear();
                 lineSource.clear();
@@ -2318,7 +2824,6 @@
                 highlightSource.clear();
             }
 
-            // ... (rest of the functions - removeDrawInteractions, activateDrawPolygon, activateDrawLine, activateDrawPoint, activateModify, activateDelete, delete functionality, panel toggles, search, live location, route functions remain the same as your original)
 
             // Setup click handler
             function setupOriginalClickHandler() {
@@ -2334,10 +2839,8 @@
                         const properties = feature.getProperties();
                         const geometryType = feature.getGeometry().getType();
                         if (geometryType === "Point") handlePointClick(properties);
-                        else if (geometryType === "Polygon") {
-                            selectedFeature = feature;
-                            showToast(`Selected Polygon: ${properties.gisid}`, 'success');
-                        } else if (geometryType === "LineString" || geometryType === "MultiLineString") {
+                        else if (geometryType === "Polygon") handlePolygonClick(properties);
+                        else if (geometryType === "LineString" || geometryType === "MultiLineString") {
                             selectedFeature = feature;
                             showToast(`Selected Road: ${properties.road_name || properties.gisid}`, 'success');
                         }
@@ -2701,7 +3204,7 @@
                     return;
                 }
                 searchDebounceTimer = setTimeout(() => displaySuggestions(getSearchSuggestions(query)),
-                300);
+                    300);
             });
 
             $('#searchGisidBtn').on('click', function() {
@@ -2747,7 +3250,8 @@
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords
-                        .latitude]);
+                            .latitude
+                        ]);
                         map.getView().animate({
                             center: coords,
                             zoom: 18,
@@ -2866,7 +3370,7 @@
                         toggleLiveLocation();
                         setTimeout(() => {
                             if (currentLocationMarker) calculateAndDisplayRoute(
-                            selectedFeature);
+                                selectedFeature);
                         }, 2500);
                     }
                     return;
@@ -2885,7 +3389,7 @@
             $(document).click(function(event) {
                 if (!$(event.target).closest(
                         '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #editLabel, #editToggleBtn, #searchSuggestions, .mobile-bottom-nav'
-                        ).length) {
+                    ).length) {
                     $('#layerSwitcher, #searchLabel, #editLabel').addClass('closed');
                     $('#searchSuggestions').removeClass('show');
                 }
