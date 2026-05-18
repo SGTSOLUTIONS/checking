@@ -124,6 +124,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             transition: all 0.35s ease;
             display: flex;
+            flex-direction: column;
             gap: 10px;
         }
 
@@ -133,12 +134,25 @@
             transform: translateX(30px) scale(0.95);
         }
 
+        .search-input-wrapper {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
         .search-Lable input {
             border-radius: 12px;
             border: 1px solid #cbd5e1;
             padding: 10px 15px;
             font-size: 14px;
             flex: 1;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-Lable input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
         }
 
         .search-Lable button {
@@ -155,6 +169,73 @@
         .search-Lable button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Search Suggestions */
+        .search-suggestions {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-top: 5px;
+        }
+
+        .search-suggestions.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background: #eff6ff;
+        }
+
+        .suggestion-item.selected {
+            background: #dbeafe;
+        }
+
+        .suggestion-icon {
+            width: 24px;
+            color: #2563eb;
+            font-size: 14px;
+        }
+
+        .suggestion-content {
+            flex: 1;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .suggestion-subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .suggestion-type {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: #475569;
         }
 
         /* Layer Switcher Panel - Desktop */
@@ -461,6 +542,14 @@
                 right: 12px;
                 bottom: 12px;
             }
+
+            .search-suggestions {
+                max-height: 200px;
+            }
+
+            .suggestion-item {
+                padding: 8px 12px;
+            }
         }
     </style>
 @endsection
@@ -504,9 +593,6 @@
                 <div class="route-stat-label">Est. Time</div>
             </div>
         </div>
-        <button class="start-navigation-btn" id="startNavigationBtn">
-            <i class="fas fa-directions me-2"></i>Start Navigation
-        </button>
     </div>
 
     <!-- Floating Action Buttons -->
@@ -528,8 +614,11 @@
 
     <!-- Search Panel -->
     <div id="searchLabel" class="search-Lable closed">
-        <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name...">
-        <button id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
+        <div class="search-input-wrapper">
+            <input type="text" id="searchInput" class="form-control" placeholder="Enter GIS ID or Road Name..." autocomplete="off">
+            <button id="searchGisidBtn"><i class="fas fa-search"></i> Search</button>
+        </div>
+        <div id="searchSuggestions" class="search-suggestions"></div>
     </div>
 
     <!-- Layer Switcher Panel -->
@@ -604,6 +693,230 @@
             let selectedFeature = null;
             let currentRoute = null;
             let isMobile = window.innerWidth <= 768;
+            let searchDebounceTimer = null;
+            let currentSuggestions = [];
+            let selectedSuggestionIndex = -1;
+
+            // Build search index for suggestions
+            let searchIndex = [];
+
+            // Build search index from polygons
+            polygons.forEach(poly => {
+                searchIndex.push({
+                    id: poly.gisid,
+                    type: 'polygon',
+                    title: `GIS ID: ${poly.gisid}`,
+                    subtitle: `Building (${poly.sqfeet || 0} sqft)`,
+                    icon: 'fas fa-building',
+                    data: poly,
+                    searchText: `${poly.gisid} building polygon`
+                });
+            });
+
+            // Build search index from lines/roads
+            lines.forEach(line => {
+                if (line.road_name) {
+                    searchIndex.push({
+                        id: line.gisid,
+                        type: 'line',
+                        title: line.road_name,
+                        subtitle: `Road (GIS ID: ${line.gisid})`,
+                        icon: 'fas fa-road',
+                        data: line,
+                        searchText: `${line.road_name} ${line.gisid} road`
+                    });
+                } else {
+                    searchIndex.push({
+                        id: line.gisid,
+                        type: 'line',
+                        title: `GIS ID: ${line.gisid}`,
+                        subtitle: 'Road',
+                        icon: 'fas fa-road',
+                        data: line,
+                        searchText: `${line.gisid} road`
+                    });
+                }
+            });
+
+            // Build search index from points
+            points.forEach(point => {
+                searchIndex.push({
+                    id: point.gisid,
+                    type: 'point',
+                    title: `GIS ID: ${point.gisid}`,
+                    subtitle: 'Point Location',
+                    icon: 'fas fa-map-marker-alt',
+                    data: point,
+                    searchText: `${point.gisid} point location`
+                });
+            });
+
+            // Search suggestion function
+            function getSearchSuggestions(query) {
+                if (!query || query.length < 2) {
+                    return [];
+                }
+
+                const lowerQuery = query.toLowerCase();
+                const suggestions = searchIndex.filter(item => {
+                    return item.searchText.toLowerCase().includes(lowerQuery) ||
+                           item.title.toLowerCase().includes(lowerQuery) ||
+                           (item.subtitle && item.subtitle.toLowerCase().includes(lowerQuery));
+                });
+
+                // Limit to 10 suggestions
+                return suggestions.slice(0, 10);
+            }
+
+            // Display suggestions
+            function displaySuggestions(suggestions) {
+                const suggestionsContainer = $('#searchSuggestions');
+                suggestionsContainer.empty();
+
+                if (suggestions.length === 0) {
+                    suggestionsContainer.removeClass('show');
+                    return;
+                }
+
+                suggestions.forEach((suggestion, index) => {
+                    const suggestionHtml = `
+                        <div class="suggestion-item" data-index="${index}" data-type="${suggestion.type}" data-id="${suggestion.id}">
+                            <div class="suggestion-icon">
+                                <i class="${suggestion.icon}"></i>
+                            </div>
+                            <div class="suggestion-content">
+                                <div class="suggestion-title">${escapeHtml(suggestion.title)}</div>
+                                <div class="suggestion-subtitle">${escapeHtml(suggestion.subtitle)}</div>
+                            </div>
+                            <div class="suggestion-type">
+                                ${suggestion.type === 'polygon' ? 'Building' : (suggestion.type === 'line' ? 'Road' : 'Point')}
+                            </div>
+                        </div>
+                    `;
+                    suggestionsContainer.append(suggestionHtml);
+                });
+
+                suggestionsContainer.addClass('show');
+                currentSuggestions = suggestions;
+                selectedSuggestionIndex = -1;
+            }
+
+            // Escape HTML to prevent XSS
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Handle suggestion selection
+            function selectSuggestion(suggestion) {
+                $('#searchInput').val(suggestion.title);
+                $('#searchSuggestions').removeClass('show');
+
+                // Navigate to the selected feature
+                navigateToFeature(suggestion.data, suggestion.type);
+            }
+
+            // Navigate to feature function
+            function navigateToFeature(data, type) {
+                try {
+                    let feature;
+
+                    if (type === 'polygon') {
+                        const coordinates = JSON.parse(data.coordinates);
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.Polygon(coordinates),
+                            gisid: data.gisid,
+                            type: "Polygon",
+                            sqfeet: data.sqfeet || "0"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 22
+                        });
+                        selectedFeature = feature;
+                        showToast("Found GIS ID: " + data.gisid, 'success');
+                    }
+                    else if (type === 'line') {
+                        let coords;
+                        if (typeof data.coordinates === 'string') {
+                            coords = JSON.parse(data.coordinates);
+                        } else {
+                            coords = data.coordinates;
+                        }
+
+                        if (coords.length === 1 && Array.isArray(coords[0])) {
+                            coords = coords[0];
+                        }
+
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: data.gisid,
+                            road_name: data.road_name,
+                            type: "Line"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 20
+                        });
+                        selectedFeature = feature;
+                        showToast("Found: " + (data.road_name || data.gisid), 'success');
+                    }
+                    else if (type === 'point') {
+                        const coordinates = JSON.parse(data.coordinates);
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.Point(coordinates),
+                            gisid: data.gisid,
+                            type: "Point"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 22
+                        });
+                        selectedFeature = feature;
+
+                        // Add temporary highlight for point
+                        const highlightLayer = new ol.layer.Vector({
+                            source: new ol.source.Vector(),
+                            style: new ol.style.Style({
+                                image: new ol.style.Circle({
+                                    radius: 15,
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(255, 165, 0, 0.7)'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#ffffff',
+                                        width: 3
+                                    })
+                                })
+                            })
+                        });
+
+                        const highlightMarker = new ol.Feature({
+                            geometry: new ol.geom.Point(coordinates)
+                        });
+
+                        highlightLayer.getSource().addFeature(highlightMarker);
+                        map.addLayer(highlightLayer);
+
+                        setTimeout(() => {
+                            map.removeLayer(highlightLayer);
+                        }, 3000);
+
+                        showToast("Found GIS ID: " + data.gisid, 'success');
+                    }
+
+                    $('#searchLabel').addClass('closed');
+
+                } catch (e) {
+                    console.error('Error navigating to feature:', e);
+                    showToast("Error displaying feature", 'error');
+                }
+            }
 
             // Routes for AJAX calls
             let routes = {
@@ -950,6 +1263,7 @@
             $('#layerToggleBtn').click(function() {
                 $('#layerSwitcher').toggleClass('closed');
                 $('#searchLabel').addClass('closed');
+                $('#searchSuggestions').removeClass('show');
             });
 
             $('#closeLayerPanel').click(function() {
@@ -958,15 +1272,15 @@
 
             $('#closeRouteBtn').click(function() {
                 $('#routeInfoPanel').addClass('closed');
-                // Clear route from map
                 routeSource.clear();
             });
 
-            // Close panels when clicking outside (for mobile)
+            // Close panels when clicking outside
             $(document).click(function(event) {
                 if (!$(event.target).closest(
-                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn').length) {
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #searchSuggestions').length) {
                     $('#layerSwitcher, #searchLabel').addClass('closed');
+                    $('#searchSuggestions').removeClass('show');
                 }
             });
 
@@ -1010,13 +1324,79 @@
                     }, 100);
                 } else {
                     selectedFeature = null;
+                    $('#searchSuggestions').removeClass('show');
                 }
             });
 
-            // Search functionality
+            // Search input with debounce for suggestions
+            $('#searchInput').on('input', function() {
+                const query = $(this).val().trim();
+
+                clearTimeout(searchDebounceTimer);
+
+                if (query.length < 2) {
+                    $('#searchSuggestions').removeClass('show');
+                    return;
+                }
+
+                searchDebounceTimer = setTimeout(() => {
+                    const suggestions = getSearchSuggestions(query);
+                    displaySuggestions(suggestions);
+                }, 300);
+            });
+
+            // Handle keyboard navigation for suggestions
+            $('#searchInput').on('keydown', function(e) {
+                const suggestionsContainer = $('#searchSuggestions');
+                const suggestions = currentSuggestions;
+
+                if (!suggestionsContainer.hasClass('show') || suggestions.length === 0) {
+                    return;
+                }
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                        updateSelectedSuggestion();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                        updateSelectedSuggestion();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < suggestions.length) {
+                            selectSuggestion(suggestions[selectedSuggestionIndex]);
+                        }
+                        break;
+                    case 'Escape':
+                        suggestionsContainer.removeClass('show');
+                        break;
+                }
+            });
+
+            function updateSelectedSuggestion() {
+                $('.suggestion-item').removeClass('selected');
+                if (selectedSuggestionIndex >= 0) {
+                    $(`.suggestion-item[data-index="${selectedSuggestionIndex}"]`).addClass('selected');
+                }
+            }
+
+            // Handle suggestion click
+            $(document).on('click', '.suggestion-item', function() {
+                const index = $(this).data('index');
+                if (index !== undefined && currentSuggestions[index]) {
+                    selectSuggestion(currentSuggestions[index]);
+                }
+            });
+
+            // Search button click
             $("#searchGisidBtn").on('click', function() {
                 var searchvalue = $("#searchInput").val().trim();
                 selectedFeature = null;
+                $('#searchSuggestions').removeClass('show');
 
                 if (!searchvalue) {
                     showToast("Please enter a GIS ID or Road Name", 'error');
@@ -1029,127 +1409,32 @@
                 });
 
                 if (findpolygon) {
-                    try {
-                        var coordinates = JSON.parse(findpolygon.coordinates);
-                        var feature = new ol.Feature({
-                            geometry: new ol.geom.Polygon(coordinates),
-                            gisid: findpolygon.gisid,
-                            type: "Polygon",
-                            sqfeet: findpolygon.sqfeet || "0"
-                        });
-                        map.getView().fit(feature.getGeometry().getExtent(), {
-                            duration: 1000,
-                            padding: [50, 50, 50, 50],
-                            maxZoom: 22
-                        });
-
-                        selectedFeature = feature;
-                        showToast("Found GIS ID: " + findpolygon.gisid, 'success');
-                        $('#searchLabel').addClass('closed');
-                    } catch (e) {
-                        console.error('Error parsing coordinates:', e);
-                        showToast("Error displaying polygon", 'error');
-                    }
-                } else {
-                    // Search in lines/roads
-                    var findLine = lines.find(function(line) {
-                        return line.gisid == searchvalue || (line.road_name && line.road_name
-                            .toLowerCase().includes(searchvalue.toLowerCase()));
-                    });
-
-                    if (findLine) {
-                        try {
-                            let coords;
-                            if (typeof findLine.coordinates === 'string') {
-                                coords = JSON.parse(findLine.coordinates);
-                            } else {
-                                coords = findLine.coordinates;
-                            }
-
-                            if (coords.length === 1 && Array.isArray(coords[0])) {
-                                coords = coords[0];
-                            }
-
-                            var feature = new ol.Feature({
-                                geometry: new ol.geom.LineString(coords),
-                                gisid: findLine.gisid,
-                                road_name: findLine.road_name,
-                                type: "Line"
-                            });
-                            map.getView().fit(feature.getGeometry().getExtent(), {
-                                duration: 1000,
-                                padding: [50, 50, 50, 50],
-                                maxZoom: 20
-                            });
-
-                            selectedFeature = feature;
-                            showToast("Found: " + (findLine.road_name || findLine.gisid), 'success');
-                            $('#searchLabel').addClass('closed');
-                        } catch (e) {
-                            console.error('Error parsing line coordinates:', e);
-                            showToast("Error displaying road", 'error');
-                        }
-                    } else {
-                        // Search in points
-                        var findPoint = points.find(function(point) {
-                            return point.gisid == searchvalue;
-                        });
-
-                        if (findPoint) {
-                            try {
-                                var coordinates = JSON.parse(findPoint.coordinates);
-                                var feature = new ol.Feature({
-                                    geometry: new ol.geom.Point(coordinates),
-                                    gisid: findPoint.gisid,
-                                    type: "Point"
-                                });
-                                map.getView().fit(feature.getGeometry().getExtent(), {
-                                    duration: 1000,
-                                    padding: [50, 50, 50, 50],
-                                    maxZoom: 22
-                                });
-
-                                selectedFeature = feature;
-
-                                // Add a temporary highlight for point
-                                const highlightLayer = new ol.layer.Vector({
-                                    source: new ol.source.Vector(),
-                                    style: new ol.style.Style({
-                                        image: new ol.style.Circle({
-                                            radius: 15,
-                                            fill: new ol.style.Fill({
-                                                color: 'rgba(255, 165, 0, 0.7)'
-                                            }),
-                                            stroke: new ol.style.Stroke({
-                                                color: '#ffffff',
-                                                width: 3
-                                            })
-                                        })
-                                    })
-                                });
-
-                                const highlightMarker = new ol.Feature({
-                                    geometry: new ol.geom.Point(coordinates)
-                                });
-
-                                highlightLayer.getSource().addFeature(highlightMarker);
-                                map.addLayer(highlightLayer);
-
-                                setTimeout(() => {
-                                    map.removeLayer(highlightLayer);
-                                }, 3000);
-
-                                showToast("Found GIS ID: " + findPoint.gisid, 'success');
-                                $('#searchLabel').addClass('closed');
-                            } catch (e) {
-                                console.error('Error parsing point coordinates:', e);
-                                showToast("Error displaying point", 'error');
-                            }
-                        } else {
-                            showToast("GIS ID or Road Name not found", 'error');
-                        }
-                    }
+                    navigateToFeature(findpolygon, 'polygon');
+                    return;
                 }
+
+                // Search in lines/roads
+                var findLine = lines.find(function(line) {
+                    return line.gisid == searchvalue || (line.road_name && line.road_name
+                        .toLowerCase().includes(searchvalue.toLowerCase()));
+                });
+
+                if (findLine) {
+                    navigateToFeature(findLine, 'line');
+                    return;
+                }
+
+                // Search in points
+                var findPoint = points.find(function(point) {
+                    return point.gisid == searchvalue;
+                });
+
+                if (findPoint) {
+                    navigateToFeature(findPoint, 'point');
+                    return;
+                }
+
+                showToast("GIS ID or Road Name not found", 'error');
             });
 
             // Live location button functionality
@@ -1181,12 +1466,10 @@
                             duration: 1000
                         });
 
-                        // Remove old location marker
                         if (currentLocationMarker) {
                             map.removeLayer(currentLocationMarker);
                         }
 
-                        // Create new location marker
                         currentLocationMarker = new ol.layer.Vector({
                             source: new ol.source.Vector(),
                             style: new ol.style.Style({
@@ -1257,7 +1540,6 @@
                     });
                     routeSource.addFeature(routeFeature);
 
-                    // Fit map to route extent
                     const extent = routeFeature.getGeometry().getExtent();
                     map.getView().fit(extent, {
                         padding: [50, 50, 50, 50],
@@ -1283,7 +1565,6 @@
                     try {
                         route = await getRouteFromOSRM(startCoord, endCoord);
                     } catch (error) {
-                        // Fallback to direct line if OSRM fails
                         console.warn('OSRM failed, using direct line:', error);
                         route = {
                             distance: ol.sphere.getDistance(
@@ -1293,7 +1574,7 @@
                             duration: (ol.sphere.getDistance(
                                 ol.proj.fromLonLat(startCoord),
                                 ol.proj.fromLonLat(endCoord)
-                            ) / 1.39), // 5 km/h walking speed
+                            ) / 1.39),
                             geometry: {
                                 type: "LineString",
                                 coordinates: [startCoord, endCoord]
@@ -1331,11 +1612,9 @@
                         return;
                     }
 
-                    // Get current location coordinates
                     const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
                     const geometry = feature.getGeometry();
 
-                    // Get target coordinates (center of feature)
                     let targetCoords;
                     if (geometry.getType() === 'Point') {
                         targetCoords = geometry.getCoordinates();
@@ -1369,7 +1648,6 @@
                     const enableLocation = confirm('Live location is not enabled. Would you like to enable it for route calculation?');
                     if (enableLocation) {
                         toggleLiveLocation();
-                        // Wait for location to be acquired
                         setTimeout(async () => {
                             if (currentLocationMarker) {
                                 await calculateAndDisplayRoute(selectedFeature);
@@ -1382,24 +1660,6 @@
                 }
 
                 await calculateAndDisplayRoute(selectedFeature);
-            });
-
-            // Start navigation button
-            $('#startNavigationBtn').click(function() {
-                if (currentRoute) {
-                    // Create a simple navigation alert
-                    const navMessage = `Navigation Started!\nDistance: ${$('#routeDistance').text()}\nEstimated time: ${$('#routeDuration').text()}`;
-                    alert(navMessage);
-
-                    // On mobile, could open Google Maps
-                    if (isMobile && currentRoute.endCoord) {
-                        const destLonLat = currentRoute.endCoord;
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=${destLonLat[1]},${destLonLat[0]}`;
-                        if (confirm('Open in Google Maps for turn-by-turn navigation?')) {
-                            window.open(url, '_blank');
-                        }
-                    }
-                }
             });
 
             // Handle window resize for mobile detection
@@ -1424,6 +1684,7 @@
                 }
                 if (e.key === 'Escape') {
                     $('#layerSwitcher, #searchLabel, #routeInfoPanel').addClass('closed');
+                    $('#searchSuggestions').removeClass('show');
                 }
             });
 
@@ -1439,6 +1700,7 @@
                 map.on('click', function() {
                     if (window.innerWidth <= 768) {
                         $('#layerSwitcher, #searchLabel').addClass('closed');
+                        $('#searchSuggestions').removeClass('show');
                     }
                 });
             }
