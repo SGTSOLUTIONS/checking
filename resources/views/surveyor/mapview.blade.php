@@ -61,6 +61,7 @@
         /* FLOATING BUTTONS - Desktop */
         #layerToggleBtn,
         #searchToggleBtn,
+        #editToggleBtn,
         #liveToggleBtn,
         #routeBtn {
             position: absolute;
@@ -96,9 +97,13 @@
         #routeBtn {
             top: 325px;
         }
+        #editToggleBtn {
+            top: 385px;
+        }
 
         #layerToggleBtn:hover,
         #searchToggleBtn:hover,
+         #editToggleBtn:hover,
         #liveToggleBtn:hover,
         #routeBtn:hover {
             transform: scale(1.08);
@@ -491,6 +496,7 @@
 
             #layerToggleBtn,
             #searchToggleBtn,
+             #editToggleBtn,
             #liveToggleBtn,
             #routeBtn {
                 right: auto;
@@ -516,7 +522,10 @@
             #routeBtn {
                 top: 244px;
             }
-
+            #editToggleBtn
+            {
+                top: 302px;
+            }
             .layer-switcher {
                 top: 60px;
                 right: 12px;
@@ -611,6 +620,11 @@
     <div id="routeBtn" title="Get Route">
         <i class="fas fa-route"></i>
     </div>
+
+    <div id="editToggleBtn" title="My Location">
+        <i class="fas fa-location-dot"></i>
+    </div>
+
 
     <!-- Search Panel -->
     <div id="searchLabel" class="search-Lable closed">
