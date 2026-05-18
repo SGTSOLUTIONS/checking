@@ -568,7 +568,9 @@
     }
 
     .route-info-panel.closed {
-        transform: translateY(150%);
+         opacity: 0;
+        visibility: hidden;
+        transform: translateX(30px) scale(0.95);
     }
 
     .route-info-panel h5 {
