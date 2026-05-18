@@ -1463,6 +1463,7 @@
                         },
                         success: function(response) {
                             polygons = response.polygons;
+                             points = response.points;
                             refreshVectorLayer();
                             showFlashMessage(response.message, "success");
                             $("#editToolSelect").val("none");
