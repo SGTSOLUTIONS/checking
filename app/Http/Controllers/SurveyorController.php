@@ -102,6 +102,7 @@ class SurveyorController extends Controller
             ->orderBy('road_name')
             ->pluck('road_name');
 
+
         return view('surveyor.mapview', compact(
             'teamMember',
             'ward',

@@ -2326,7 +2326,18 @@
                 // REMOVE OLD MODAL BEFORE APPENDING NEW ONE
                 $("#buildingModal").remove();
 
-                // Use a template string but ensure proper escaping
+                // Get road names from PHP and convert to JavaScript array
+                let roadNames = @json($uniqueRoadNames ?? []);
+
+                // Build road options HTML
+                let roadOptions = '<option value="">Select Road Name</option>';
+                if (roadNames && roadNames.length > 0) {
+                    roadNames.forEach(function(roadName) {
+                        let escapedRoadName = roadName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        roadOptions += `<option value="${escapedRoadName}">${escapedRoadName}</option>`;
+                    });
+                }
+
                 const modalHtml = `
                         <div class="modal fade" id="buildingModal" tabindex="-1" data-bs-backdrop="static">
                             <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -2450,19 +2461,12 @@
                                                             <div id="building_name_error" class="error-message text-danger small"></div>
                                                         </div>
                                                         <div class="col-md-6 mb-3">
-    <label class="form-label">Road Name</label>
-    <select class="form-select" id="road_name" name="road_name">
-        <option value="">Select Road Name</option>
-        @if(isset($uniqueRoadNames) && count($uniqueRoadNames) > 0)
-            @foreach ($uniqueRoadNames as $roadName)
-                <option value="{{ addslashes($roadName) }}">{{ e($roadName) }}</option>
-            @endforeach
-        @else
-            <option value="" disabled>No road names available</option>
-        @endif
-    </select>
-    <div id="road_name_error" class="error-message text-danger small"></div>
-</div>
+                                                            <label class="form-label">Road Name</label>
+                                                            <select class="form-select" id="road_name" name="road_name">
+                                                                ${roadOptions}
+                                                            </select>
+                                                            <div id="road_name_error" class="error-message text-danger small"></div>
+                                                        </div>
                                                         <div class="col-md-6 mb-3">
                                                             <label class="form-label">Phone Number</label>
                                                             <input type="tel" class="form-control" name="phone" id="phone_building" placeholder="10-digit mobile number" maxlength="10">
