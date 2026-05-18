@@ -1306,13 +1306,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Data passed from controller
-            let polygons = @json($polygons);
-            let lines = @json($lines);
-            let points = @json($points);
-            let pointDatas = @json($pointDatas ?? []);
-            let polygonDatas = @json($polygonDatas ?? []);
-            let ward = @json($ward ?? []);
+            // Pass data from controller with JSON_HEX_TAG to prevent XSS and syntax errors
+            let polygons = @json($polygons, JSON_HEX_TAG);
+            let lines = @json($lines, JSON_HEX_TAG);
+            let points = @json($points, JSON_HEX_TAG);
+            let pointDatas = @json($pointDatas ?? [], JSON_HEX_TAG);
+            let polygonDatas = @json($polygonDatas ?? [], JSON_HEX_TAG);
+            let ward = @json($ward ?? [], JSON_HEX_TAG);
             let selectedFeature = null;
             let currentRoute = null;
             let isMobile = window.innerWidth <= 768;
@@ -2317,11 +2317,6 @@
                 });
             });
 
-
-
-
-
-
             function handlePolygonClick(properties) {
                 const gisId = properties["gisid"];
                 resetBuildingForm();
@@ -2458,9 +2453,9 @@
                                             <label class="form-label">Road Name</label>
                                             <select class="form-select" id="road_name" name="road_name">
                                                 <option value="">Select Road Name</option>
-                                                @if (isset($uniqueRoadNames))
+                                                @if (isset($uniqueRoadNames) && is_array($uniqueRoadNames))
                                                     @foreach ($uniqueRoadNames as $roadName)
-                                                        <option value="{{ $roadName }}">{{ $roadName }}</option>
+                                                        <option value="{{ addslashes($roadName) }}">{{ e($roadName) }}</option>
                                                     @endforeach
                                                 @endif
                                             </select>
