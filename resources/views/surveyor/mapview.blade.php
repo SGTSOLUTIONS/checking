@@ -21,8 +21,8 @@
 
     /* MAP CONTAINER */
     #map {
-        width: 90%;
-        height: calc(100vh - 60px);
+        width: 100%;
+        height: calc(90vh - 60px);
         border-radius: 0;
         overflow: hidden;
         border: none;
