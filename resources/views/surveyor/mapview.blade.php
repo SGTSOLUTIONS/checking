@@ -1014,7 +1014,7 @@
             $('#routeBtn').click(function() {
                  alert('success');
                 if(selectedFeature){
-                    alert('success');
+                    console.log(selectedFeature);
                 }
             });
 
