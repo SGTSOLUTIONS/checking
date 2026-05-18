@@ -21,7 +21,7 @@
 
     /* MAP CONTAINER */
     #map {
-        width: 100%;
+        width: 90%;
         height: calc(100vh - 60px);
         border-radius: 0;
         overflow: hidden;
@@ -818,7 +818,7 @@
         }
 
         #map {
-            height: calc(100vh - 56px - 72px);
+            height: calc(90vh - 56px - 72px);
             margin-bottom: 0;
         }
 
