@@ -59,6 +59,60 @@
             font-weight: 600;
         }
 
+        /* Mobile Bottom Navigation Bar */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1200;
+            padding: 8px 12px;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .mobile-nav-btn i {
+            font-size: 22px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .mobile-nav-btn span {
+            font-size: 10px;
+            color: #64748b;
+        }
+
+        .mobile-nav-btn.active {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .mobile-nav-btn.active i,
+        .mobile-nav-btn.active span {
+            color: white;
+        }
+
+        .mobile-nav-btn:active {
+            transform: scale(0.95);
+        }
+
         /* FLOATING BUTTONS - Desktop */
         #layerToggleBtn,
         #searchToggleBtn,
@@ -376,7 +430,7 @@
         /* Toast Notification */
         .toast-notification {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85);
@@ -518,6 +572,36 @@
             z-index: 1000;
         }
 
+        /* Shop Forms Styling */
+        .shop-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .shop-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-shop-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .remove-shop-btn:hover {
+            background: #fecaca;
+            transform: scale(1.05);
+        }
+
         /* MOBILE RESPONSIVE */
         @media (max-width: 768px) {
             .desktop-only {
@@ -528,80 +612,67 @@
                 display: block;
             }
 
-            #map {
-                height: calc(100vh - 56px);
+            .mobile-bottom-nav {
+                display: flex;
             }
 
+            #map {
+                height: calc(100vh - 56px - 70px);
+                margin-bottom: 0;
+            }
+
+            /* Hide floating buttons on mobile */
             #layerToggleBtn,
             #searchToggleBtn,
             #editToggleBtn,
             #liveToggleBtn,
             #routeBtn {
-                right: auto;
+                display: none;
+            }
+
+            /* Panels on mobile */
+            .layer-switcher,
+            .search-Lable,
+            .edit-Lable {
+                position: fixed;
+                top: auto;
+                bottom: 80px;
                 left: 12px;
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
-                border-radius: 12px;
-            }
-
-            #layerToggleBtn {
-                top: 70px;
-            }
-
-            #searchToggleBtn {
-                top: 124px;
-            }
-
-            #liveToggleBtn {
-                top: 178px;
-            }
-
-            #routeBtn {
-                top: 232px;
-            }
-
-            #editToggleBtn {
-                top: 286px;
-            }
-
-            .layer-switcher {
-                top: 60px;
                 right: 12px;
-                left: 12px;
                 width: auto;
                 max-width: calc(100% - 24px);
                 border-radius: 16px;
-                padding: 12px;
+                padding: 15px;
+                z-index: 1250;
+                background: white;
             }
 
             .search-Lable {
-                top: 124px;
+                bottom: 80px;
+                top: auto;
                 right: 12px;
-                left: 60px;
-                width: auto;
-                max-width: calc(100% - 80px);
-                padding: 10px 12px;
-                gap: 8px;
+                left: 12px;
             }
 
             .edit-Lable {
-                top: 286px;
-                right: 60px;
-                left: auto;
-                width: 200px;
-                padding: 10px;
+                bottom: 80px;
+                top: auto;
+                right: 12px;
+                left: 12px;
+                width: auto;
             }
 
-            .edit-Lable select {
-                padding: 8px;
-                font-size: 12px;
+            .layer-switcher {
+                bottom: 80px;
+                top: auto;
+                right: 12px;
+                left: 12px;
             }
 
             .route-info-panel {
                 left: 12px;
                 right: 12px;
-                bottom: 12px;
+                bottom: 80px;
                 padding: 12px;
             }
 
@@ -628,45 +699,40 @@
             .route-stat-value {
                 font-size: 16px;
             }
+
+            /* Modal adjustments for mobile */
+            .modal-dialog {
+                margin: 10px;
+            }
+
+            .modal-body {
+                padding: 15px;
+            }
+
+            .card-header {
+                padding: 10px;
+            }
+
+            /* Toast on mobile */
+            .toast-notification {
+                bottom: 90px;
+                font-size: 12px;
+                padding: 8px 16px;
+            }
         }
 
         /* Small Mobile */
         @media (max-width: 480px) {
-
-            #layerToggleBtn,
-            #searchToggleBtn,
-            #editToggleBtn,
-            #liveToggleBtn,
-            #routeBtn {
-                width: 38px;
-                height: 38px;
-                font-size: 16px;
-                left: 8px;
+            .mobile-nav-btn {
+                padding: 6px 8px;
             }
 
-            #layerToggleBtn {
-                top: 65px;
+            .mobile-nav-btn i {
+                font-size: 18px;
             }
 
-            #searchToggleBtn {
-                top: 113px;
-            }
-
-            #liveToggleBtn {
-                top: 161px;
-            }
-
-            #routeBtn {
-                top: 209px;
-            }
-
-            #editToggleBtn {
-                top: 257px;
-            }
-
-            .search-Lable {
-                left: 52px;
-                padding: 8px 10px;
+            .mobile-nav-btn span {
+                font-size: 9px;
             }
 
             .search-Lable input {
@@ -679,9 +745,13 @@
                 font-size: 12px;
             }
 
-            .edit-Lable {
-                width: 180px;
-                right: 52px;
+            .edit-Lable select {
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .route-info-panel {
+                padding: 10px;
             }
         }
     </style>
@@ -694,6 +764,30 @@
             <i class="fas fa-map-marked-alt me-2"></i>
             Ward {{ $ward->ward_no }} Map
         </h4>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <button class="mobile-nav-btn" id="mobileLayerBtn">
+            <i class="fas fa-layer-group"></i>
+            <span>Layers</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileSearchBtn">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileLocationBtn">
+            <i class="fas fa-location-dot"></i>
+            <span>Location</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileRouteBtn">
+            <i class="fas fa-route"></i>
+            <span>Route</span>
+        </button>
+        <button class="mobile-nav-btn" id="mobileEditBtn">
+            <i class="fas fa-pen-to-square"></i>
+            <span>Edit</span>
+        </button>
     </div>
 
     <!-- Desktop Header -->
@@ -731,7 +825,7 @@
         </button>
     </div>
 
-    <!-- Floating Action Buttons -->
+    <!-- Floating Action Buttons (Desktop only) -->
     <div id="layerToggleBtn" title="Toggle Layers">
         <i class="fas fa-layer-group"></i>
     </div>
@@ -885,9 +979,13 @@
             let selectedSuggestionIndex = -1;
             let draw, modify, select;
             let featureClickHandler = null;
+            let shopTimeout = null;
 
             // Build search index
             let searchIndex = [];
+
+            let currentShopCount = 0;
+            let shopDetailsArray = [];
 
             polygons.forEach(poly => {
                 searchIndex.push({
@@ -1065,10 +1163,13 @@
                 addLineFeature: "{{ route('surveyor.add.line.feature') }}",
                 addPointFeature: "{{ route('surveyor.add.point.feature') }}",
                 surveyorModifyFeature: "{{ route('surveyor.modify.feature') }}",
-                deleteFeature: "{{ route('surveyor.delete.feature') }}"
+                deleteFeature: "{{ route('surveyor.delete.feature') }}",
+                surveyorPointDataUpload: "{{ route('surveyor.point.data.upload') }}"
             };
 
             function showToast(message, type = 'info') {
+                // Remove existing toasts
+                $('.toast-notification').remove();
                 const toast = $(`<div class="toast-notification ${type}">${message}</div>`);
                 $('body').append(toast);
                 setTimeout(() => toast.fadeOut(300, () => toast.remove()), 3000);
@@ -1109,21 +1210,23 @@
             });
 
             // Ward boundary
-            const boundary = ward.boundary[0];
-            const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
-            const boundaryLayer = new ol.layer.Vector({
-                source: new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.Polygon([transformedBoundary])
-                    })]
-                }),
-                style: new ol.style.Style({
-                    stroke: new ol.style.Stroke({
-                        color: "red",
-                        width: 3
+            if (ward.boundary && ward.boundary[0]) {
+                const boundary = ward.boundary[0];
+                const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
+                const boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Polygon([transformedBoundary])
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: "red",
+                            width: 3
+                        })
                     })
-                })
-            });
+                });
+            }
 
             // Style functions
             function createPointStyle(feature) {
@@ -1333,7 +1436,7 @@
             // Initialize map
             const map = new ol.Map({
                 target: 'map',
-                layers: [osmLayer, satelliteLayer, droneLayer, boundaryLayer, polygonLayer, lineLayer,
+                layers: [osmLayer, satelliteLayer, droneLayer, polygonLayer, lineLayer,
                     pointLayer, routeLayer, highlightLayer
                 ],
                 view: new ol.View({
@@ -1343,48 +1446,157 @@
                 })
             });
 
-            // Feature click handler
-            featureClickHandler = function(evt) {
-                if (isModifyMode || isDrawingActive) return;
-                const feature = map.forEachFeatureAtPixel(evt.pixel, function(feat) {
-                    return feat;
-                }, {
-                    layerFilter: function(layer) {
-                        return layer === polygonLayer || layer === lineLayer || layer ===
-                        pointLayer;
+            // Add boundary layer if exists
+            if (ward.boundary && ward.boundary[0]) {
+                const boundary = ward.boundary[0];
+                const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
+                const boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Polygon([transformedBoundary])
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: "red",
+                            width: 3
+                        })
+                    })
+                });
+                map.addLayer(boundaryLayer);
+            }
+
+            function setupOriginalClickHandler() {
+                featureClickHandler = function(evt) {
+                    if (isModifyMode || isDrawingActive) return;
+                    let hasDrawingActive = false;
+                    map.getInteractions().forEach((interaction) => {
+                        if (interaction instanceof ol.interaction.Draw) hasDrawingActive = true;
+                    });
+                    if (hasDrawingActive) return;
+
+                    const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+                    if (feature) {
+                        const properties = feature.getProperties();
+                        const geometryType = feature.getGeometry().getType();
+                        if (geometryType === "Point") handlePointClick(properties);
+                        else if (geometryType === "Polygon") {
+                            selectedFeature = feature;
+                            showToast(`Selected Polygon: ${properties.gisid}`, 'success');
+                        } else if (geometryType === "LineString" || geometryType === "MultiLineString") {
+                            selectedFeature = feature;
+                            showToast(`Selected Road: ${properties.road_name || properties.gisid}`, 'success');
+                        }
+                    }
+                };
+                map.on('click', featureClickHandler);
+            }
+
+            function handlePointClick(properties) {
+                const gisid = properties["gisid"];
+                resetPointFormFields();
+                // Remove existing modal if present
+                $('#pointModal').remove();
+
+                $("body").append(`
+                    <div class="modal fade" id="pointModal" tabindex="-1" data-bs-backdrop="static">
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Point Data Collection - GIS ID: ${gisid}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" enctype="multipart/form-data" id="pointForm">
+                                    @csrf
+                                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">GIS ID</label>
+                                                <input type="text" class="form-control" id="pointgis" name="point_gisid" value="${gisid}" readonly>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Assessment No <span class="text-danger">*</span></label>
+                                                <input type="text" name="assessment" class="form-control" id="assessment" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Owner Name</label>
+                                                <input type="text" name="owner_name" class="form-control" id="owner_name">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Phone Number</label>
+                                                <input type="tel" name="phone_number" class="form-control" id="phone">
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label">Remarks</label>
+                                                <textarea name="remarks" class="form-control" id="remarks" rows="2"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" id="pointSubmit" class="btn btn-primary">Save Point Data</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                const polygonData = polygonDatas.find(data => data.gisid === gisid);
+                const polygonNumOfBill = polygonData ? polygonData.number_bill : null;
+                const matchingPointsCount = pointDatas.filter(data => data.point_gisid === gisid).length;
+
+                if (polygonNumOfBill > matchingPointsCount) {
+                    $("#pointModal").modal("show");
+                } else {
+                    showFlashMessage(`Already this building has ${matchingPointsCount} bills`, "error");
+                }
+            }
+
+            function resetPointFormFields() {
+                $("#pointgis, #assessment, #owner_name, #phone, #remarks").val("");
+                $(".error-message").html("");
+                $(".is-invalid").removeClass("is-invalid");
+            }
+
+            // Point form submission
+            $("#pointForm").off('submit').on('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                $("#pointSubmit").prop("disabled", true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+                $.ajax({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    },
+                    type: "POST",
+                    url: routes.surveyorPointDataUpload,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        showFlashMessage(response.message, "success");
+                        $("#pointModal").modal("hide");
+                        if (response.pointDatas) pointDatas = response.pointDatas;
+                        if (response.points) points = response.points;
+                        refreshVectorLayer();
+                        resetPointFormFields();
+                    },
+                    error: function(xhr) {
+                        let errorMsg = "An error occurred while processing your request.";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        showFlashMessage(errorMsg, "error");
+                    },
+                    complete: function() {
+                        $("#pointSubmit").prop("disabled", false).html('<i class="fas fa-save me-2"></i>Save Point Data');
                     }
                 });
-
-                if (feature) {
-                    selectedFeature = feature;
-                    const gisid = feature.get('gisid');
-                    const type = feature.get('type');
-                    let info = `<div style="position:absolute; bottom:80px; left:20px; right:20px; background:white; border-radius:12px; padding:12px; z-index:1100; max-width:300px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-                        <button onclick="this.parentElement.remove()" style="float:right; background:none; border:none; font-size:18px;">&times;</button>
-                        <strong>GIS ID:</strong> ${gisid}<br>
-                        <strong>Type:</strong> ${type}<br>`;
-                    if (type === 'Polygon') info +=
-                        `<strong>Area:</strong> ${feature.get('sqfeet') || 'N/A'} sqft<br>`;
-                    if (type === 'Line' && feature.get('road_name')) info +=
-                        `<strong>Road:</strong> ${feature.get('road_name')}<br>`;
-                    info +=
-                        `<button id="routeFromInfoBtn" class="btn btn-primary btn-sm mt-2" style="width:100%;">Get Route</button></div>`;
-                    $('body').append(info);
-                    $('#routeFromInfoBtn').click(function() {
-                        $('div:has(> #routeFromInfoBtn)').remove();
-                        calculateAndDisplayRoute(selectedFeature);
-                    });
-                    setTimeout(() => {
-                        $('div:has(> button[onclick])').fadeOut(300, function() {
-                            $(this).remove();
-                        });
-                    }, 10000);
-                    showToast(`Selected: ${type} ${gisid}`, 'success');
-                } else if (selectedFeature) {
-                    selectedFeature = null;
-                }
-            };
-            map.on('click', featureClickHandler);
+            });
 
             function refreshVectorLayer() {
                 polygonSource.clear();
@@ -1430,6 +1642,9 @@
                 highlightSource.clear();
             }
 
+            let isModifyMode = false;
+            let isDrawingActive = false;
+
             function removeDrawInteractions() {
                 map.getInteractions().forEach(interaction => {
                     if (interaction instanceof ol.interaction.Draw || interaction instanceof ol.interaction
@@ -1463,7 +1678,7 @@
                         },
                         success: function(response) {
                             polygons = response.polygons;
-                             points = response.points;
+                            points = response.points;
                             refreshVectorLayer();
                             showFlashMessage(response.message, "success");
                             $("#editToolSelect").val("none");
@@ -1670,7 +1885,7 @@
                 $("#deleteForm")[0].reset();
             });
 
-            // Panel toggles
+            // Panel toggles for desktop
             $('#layerToggleBtn').click(function() {
                 $('#layerSwitcher').toggleClass('closed');
                 $('#searchLabel, #editLabel').addClass('closed');
@@ -1694,6 +1909,50 @@
                 $('#searchLabel, #layerSwitcher').addClass('closed');
             });
 
+            // Mobile bottom navigation handlers
+            $('#mobileLayerBtn').click(function() {
+                $('#layerSwitcher').toggleClass('closed');
+                $('#searchLabel, #editLabel').addClass('closed');
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileSearchBtn').click(function() {
+                $('#searchLabel').toggleClass('closed');
+                $('#layerSwitcher, #editLabel').addClass('closed');
+                if (!$('#searchLabel').hasClass('closed')) setTimeout(() => $('#searchInput').focus(), 100);
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileLocationBtn').click(function() {
+                toggleLiveLocation();
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileRouteBtn').click(function() {
+                if (!selectedFeature) {
+                    showToast('Please search for a location first', 'error');
+                    return;
+                }
+                if (!currentLocationMarker) {
+                    if (confirm('Enable location for route calculation?')) {
+                        toggleLiveLocation();
+                        setTimeout(() => {
+                            if (currentLocationMarker) calculateAndDisplayRoute(selectedFeature);
+                        }, 2500);
+                    }
+                    return;
+                }
+                calculateAndDisplayRoute(selectedFeature);
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileEditBtn').click(function() {
+                $('#editLabel').toggleClass('closed');
+                $('#searchLabel, #layerSwitcher').addClass('closed');
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+
             $('#editToolSelect').on('change', function() {
                 const value = $(this).val();
                 removeDrawInteractions();
@@ -1706,6 +1965,7 @@
                     isModifyMode = false;
                     isDrawingActive = false;
                 }
+                $('#editLabel').addClass('closed');
             });
 
             // Layer toggles
@@ -1717,9 +1977,6 @@
             });
             $('#droneToggle').change(function() {
                 droneLayer.setVisible($(this).is(':checked'));
-            });
-            $('#boundaryToggle').change(function() {
-                boundaryLayer.setVisible($(this).is(':checked'));
             });
             $('#polygonToggle').change(function() {
                 polygonLayer.setVisible($(this).is(':checked'));
@@ -1740,7 +1997,7 @@
                     return;
                 }
                 searchDebounceTimer = setTimeout(() => displaySuggestions(getSearchSuggestions(query)),
-                300);
+                    300);
             });
 
             $('#searchGisidBtn').on('click', function() {
@@ -1776,7 +2033,6 @@
 
             // Live location
             let currentLocationMarker = null;
-            $('#liveToggleBtn').click(toggleLiveLocation);
 
             function toggleLiveLocation() {
                 if (!("geolocation" in navigator)) {
@@ -1787,7 +2043,8 @@
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords
-                        .latitude]);
+                            .latitude
+                        ]);
                         map.getView().animate({
                             center: coords,
                             zoom: 18,
@@ -1822,6 +2079,8 @@
                     }
                 );
             }
+
+            $('#liveToggleBtn').click(toggleLiveLocation);
 
             // Route functions
             async function getRouteFromOSRM(startCoord, endCoord) {
@@ -1887,6 +2146,7 @@
                     $('#routeDuration').text(formatDuration(route.duration / 1.39));
                     $('#destinationName').text(`GIS ID: ${feature.get('gisid') || 'Selected Location'}`);
                     $('#routeInfoPanel').removeClass('closed');
+                    currentRoute = route;
                 } catch (error) {
                     showToast('Error calculating route', 'error');
                 } finally {
@@ -1903,8 +2163,7 @@
                     if (confirm('Enable location for route calculation?')) {
                         toggleLiveLocation();
                         setTimeout(() => {
-                            if (currentLocationMarker) calculateAndDisplayRoute(
-                            selectedFeature);
+                            if (currentLocationMarker) calculateAndDisplayRoute(selectedFeature);
                         }, 2500);
                     }
                     return;
@@ -1915,15 +2174,15 @@
             $('#startNavigationBtn').click(function() {
                 if (currentRoute && isMobile) {
                     window.open(
-                        `https://www.google.com/maps/dir/?api=1&destination=${currentRoute.endCoord[1]},${currentRoute.endCoord[0]}`,
+                        `https://www.google.com/maps/dir/?api=1&destination=${currentRoute.endCoord ? currentRoute.endCoord[1] : ''},${currentRoute.endCoord ? currentRoute.endCoord[0] : ''}`,
                         '_blank');
                 }
             });
 
             $(document).click(function(event) {
                 if (!$(event.target).closest(
-                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #editLabel, #editToggleBtn, #searchSuggestions'
-                        ).length) {
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #editLabel, #editToggleBtn, #searchSuggestions, .mobile-bottom-nav'
+                    ).length) {
                     $('#layerSwitcher, #searchLabel, #editLabel').addClass('closed');
                     $('#searchSuggestions').removeClass('show');
                 }
@@ -1932,6 +2191,7 @@
             $(window).resize(function() {
                 isMobile = window.innerWidth <= 768;
             });
+
             $(document).keydown(function(e) {
                 if (e.key === 'l' || e.key === 'L') {
                     $('#layerSwitcher').toggleClass('closed');
@@ -1949,6 +2209,7 @@
                 }
             });
 
+            setupOriginalClickHandler();
             showToast('Map loaded successfully', 'success');
         });
     </script>
