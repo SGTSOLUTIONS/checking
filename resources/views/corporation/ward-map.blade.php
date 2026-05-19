@@ -46,7 +46,24 @@
         </button>
     </div>
 
-    <!-- Loading Spinner -->
+    <!-- Navigation Header (Mobile Style) -->
+    <div class="navigation-header" id="navigationHeader">
+        <button class="nav-close" id="closeNavigation">&times;</button>
+        <div class="navigation-eta">
+            <div class="eta-time" id="etaTime">-- min</div>
+            <div class="eta-distance" id="etaDistance">-- km</div>
+        </div>
+        <div class="navigation-address" id="destinationAddress">Destination</div>
+    </div>
+
+    <div class="navigation-instruction" id="navigationInstruction">
+        <div class="instruction-icon">
+            <i class="fas fa-arrow-up" id="instructionIcon"></i>
+        </div>
+        <div class="instruction-text" id="instructionText">Continue straight</div>
+        <div class="instruction-distance" id="instructionDistance">in 500 m</div>
+    </div>
+
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner-border text-primary"></div>
         <div>Calculating route...</div>
@@ -54,7 +71,8 @@
 @endsection
 
 @push('styles')
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -65,7 +83,8 @@
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -79,6 +98,7 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
+        /* Action Buttons */
         .action-buttons {
             position: fixed;
             bottom: 20px;
@@ -110,16 +130,46 @@
             min-width: 70px;
         }
 
-        .action-btn i { font-size: 18px; }
-        .btn-label { font-size: 10px; font-weight: 500; }
-        .action-btn:active { transform: scale(0.95); }
-        .action-btn.menu-btn { background: rgba(0, 0, 0, 0.85); }
-        .action-btn.legend-btn { background: rgba(255, 193, 7, 0.9); }
-        .action-btn.search-btn { background: rgba(23, 162, 184, 0.9); }
-        .action-btn.filter-btn { background: rgba(40, 167, 69, 0.9); }
-        .action-btn.location-btn { background: rgba(220, 53, 69, 0.9); }
-        .action-btn.route-btn { background: rgba(111, 66, 193, 0.9); }
-        .action-btn.location-btn.active { background: #28a745; }
+        .action-btn i {
+            font-size: 18px;
+        }
+
+        .btn-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .action-btn.menu-btn {
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .action-btn.legend-btn {
+            background: rgba(255, 193, 7, 0.9);
+        }
+
+        .action-btn.search-btn {
+            background: rgba(23, 162, 184, 0.9);
+        }
+
+        .action-btn.filter-btn {
+            background: rgba(40, 167, 69, 0.9);
+        }
+
+        .action-btn.location-btn {
+            background: rgba(220, 53, 69, 0.9);
+        }
+
+        .action-btn.route-btn {
+            background: rgba(111, 66, 193, 0.9);
+        }
+
+        .action-btn.location-btn.active {
+            background: #28a745;
+        }
 
         @media (min-width: 769px) {
             .action-buttons {
@@ -132,15 +182,20 @@
                 flex-direction: column;
                 gap: 10px;
             }
+
             .action-btn {
                 flex-direction: row;
                 gap: 8px;
                 padding: 10px 16px;
                 min-width: auto;
             }
-            .btn-label { font-size: 12px; }
+
+            .btn-label {
+                font-size: 12px;
+            }
         }
 
+        /* Panels */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -180,23 +235,86 @@
             z-index: 10;
         }
 
-        .layer-switcher, .map-legend, .search-panel, .filter-panel, .route-info {
+        /* Layer Switcher */
+        .layer-switcher {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            min-width: 200px;
             display: none;
         }
 
-        .layer-switcher.open, .map-legend.open, .search-panel.open, .filter-panel.open, .route-info.open {
+        .layer-switcher.open {
             display: block;
             animation: fadeIn 0.3s ease;
         }
 
-        .layer-switcher { position: absolute; top: 100px; right: 20px; min-width: 200px; }
-        .map-legend { position: absolute; bottom: 20px; left: 20px; min-width: 160px; }
-        .search-panel { position: absolute; top: 20px; right: 20px; width: 350px; max-width: calc(100% - 40px); }
-        .filter-panel { position: absolute; top: 100px; right: 20px; width: 300px; }
-        .route-info { position: absolute; bottom: 20px; right: 20px; width: 350px; max-width: calc(100% - 40px); max-height: 500px; }
+        /* Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 160px;
+            display: none;
+        }
+
+        .map-legend.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Search Panel */
+        .search-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
+            display: none;
+        }
+
+        .search-panel.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 300px;
+            display: none;
+        }
+
+        .filter-panel.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Route Info Panel */
+        .route-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
+            display: none;
+            max-height: 500px;
+        }
+
+        .route-info.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
 
         @media (max-width: 768px) {
-            .layer-switcher, .map-legend, .search-panel, .filter-panel, .route-info {
+
+            .layer-switcher,
+            .map-legend,
+            .search-panel,
+            .filter-panel,
+            .route-info {
                 position: fixed;
                 bottom: 100px;
                 right: 20px;
@@ -205,15 +323,33 @@
                 width: auto;
                 max-height: 60vh;
             }
-            .map-legend { left: 20px; right: auto; min-width: 180px; }
-            .search-panel, .route-info { top: auto; bottom: 100px; }
+
+            .map-legend {
+                left: 20px;
+                right: auto;
+                min-width: 180px;
+            }
+
+            .search-panel,
+            .route-info {
+                top: auto;
+                bottom: 100px;
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
+        /* Route Styles */
         .route-summary {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -253,9 +389,18 @@
             flex-shrink: 0;
         }
 
-        .step-content { flex: 1; }
-        .step-instruction { margin-bottom: 4px; }
-        .step-distance { font-size: 11px; color: #ffc107; }
+        .step-content {
+            flex: 1;
+        }
+
+        .step-instruction {
+            margin-bottom: 4px;
+        }
+
+        .step-distance {
+            font-size: 11px;
+            color: #ffc107;
+        }
 
         .btn-start-nav {
             width: 100%;
@@ -269,8 +414,100 @@
             transition: all 0.2s;
         }
 
-        .btn-start-nav:active { transform: scale(0.98); }
+        .btn-start-nav:active {
+            transform: scale(0.98);
+        }
 
+        /* Navigation Header */
+        .navigation-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            z-index: 1003;
+            display: none;
+            color: white;
+        }
+
+        .nav-close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .navigation-eta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .eta-time {
+            font-size: 22px;
+            font-weight: bold;
+            color: #ffc107;
+        }
+
+        .eta-distance {
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        .navigation-address {
+            font-size: 14px;
+            color: #ddd;
+        }
+
+        /* Navigation Instruction */
+        .navigation-instruction {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            z-index: 1003;
+            display: none;
+            color: white;
+            text-align: center;
+        }
+
+        .instruction-icon {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4444;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .instruction-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .instruction-distance {
+            font-size: 14px;
+            color: #ffc107;
+        }
+
+        /* Loading Spinner */
         .loading-spinner {
             position: fixed;
             top: 50%;
@@ -289,8 +526,12 @@
             align-items: center;
         }
 
-        .loading-spinner .spinner-border { width: 40px; height: 40px; }
+        .loading-spinner .spinner-border {
+            width: 40px;
+            height: 40px;
+        }
 
+        /* Center Button */
         .center-btn {
             position: fixed;
             bottom: 20px;
@@ -310,10 +551,18 @@
         }
 
         @media (min-width: 769px) {
-            .center-btn { bottom: auto; top: 160px; left: 20px; }
+            .center-btn {
+                bottom: auto;
+                top: 160px;
+                left: 20px;
+            }
         }
 
-        .layer-group { margin-bottom: 15px; }
+        /* Other styles remain same as before */
+        .layer-group {
+            margin-bottom: 15px;
+        }
+
         .layer-group label {
             display: flex;
             align-items: center;
@@ -324,8 +573,18 @@
             padding: 5px;
             border-radius: 8px;
         }
-        .layer-group label:hover { background: rgba(255, 255, 255, 0.1); }
-        .group-title { font-weight: 600; color: #ffc107; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; }
+
+        .layer-group label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .group-title {
+            font-weight: 600;
+            color: #ffc107;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
 
         .legend-item {
             display: flex;
@@ -334,16 +593,37 @@
             margin-bottom: 12px;
             font-size: 12px;
         }
-        .legend-color { width: 24px; height: 24px; border-radius: 4px; }
-        .legend-color.building { background: rgba(255, 68, 68, 0.5); border: 2px solid #ff4444; }
-        .legend-color.road { background: none; border: 2px solid #ffc107; height: 3px; width: 24px; margin-top: 10px; }
-        .legend-color.boundary { background: none; border: 2px dashed #ff0000; }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+        }
+
+        .legend-color.building {
+            background: rgba(255, 68, 68, 0.5);
+            border: 2px solid #ff4444;
+        }
+
+        .legend-color.road {
+            background: none;
+            border: 2px solid #ffc107;
+            height: 3px;
+            width: 24px;
+            margin-top: 10px;
+        }
+
+        .legend-color.boundary {
+            background: none;
+            border: 2px dashed #ff0000;
+        }
 
         .search-box {
             display: flex;
             gap: 12px;
             margin-bottom: 15px;
         }
+
         .search-box input {
             flex: 1;
             padding: 12px;
@@ -354,6 +634,7 @@
             font-size: 14px;
             outline: none;
         }
+
         .search-box button {
             padding: 12px 24px;
             border-radius: 10px;
@@ -364,7 +645,11 @@
             font-weight: 600;
         }
 
-        .search-results { max-height: 350px; overflow-y: auto; }
+        .search-results {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
         .search-result-item {
             padding: 12px;
             margin-bottom: 10px;
@@ -373,8 +658,20 @@
             cursor: pointer;
             border-left: 3px solid #ffc107;
         }
-        .result-gisid { font-weight: bold; color: #ffc107; font-size: 13px; margin-bottom: 5px; }
-        .result-owner { font-size: 11px; color: #ddd; margin: 3px 0; }
+
+        .result-gisid {
+            font-weight: bold;
+            color: #ffc107;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .result-owner {
+            font-size: 11px;
+            color: #ddd;
+            margin: 3px 0;
+        }
+
         .direction-btn {
             margin-top: 8px;
             padding: 6px 12px;
@@ -386,9 +683,19 @@
             font-size: 11px;
         }
 
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label { display: block; margin-bottom: 6px; font-size: 12px; color: #ffc107; }
-        .filter-group select, .filter-group input {
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        .filter-group select,
+        .filter-group input {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
@@ -396,8 +703,15 @@
             background: rgba(0, 0, 0, 0.5);
             color: white;
         }
-        .filter-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .apply-btn, .reset-btn {
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .apply-btn,
+        .reset-btn {
             flex: 1;
             padding: 10px;
             border-radius: 8px;
@@ -405,8 +719,17 @@
             cursor: pointer;
             font-weight: 600;
         }
-        .apply-btn { background: #28a745; color: white; }
-        .reset-btn { background: #dc3545; color: white; }
+
+        .apply-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .reset-btn {
+            background: #dc3545;
+            color: white;
+        }
+
         .filter-count {
             margin-top: 12px;
             font-size: 12px;
@@ -427,9 +750,15 @@
             overflow: hidden;
             z-index: 1000;
         }
+
         @media (min-width: 769px) {
-            .zoom-controls { bottom: auto; top: 100px; left: 20px; }
+            .zoom-controls {
+                bottom: auto;
+                top: 100px;
+                left: 20px;
+            }
         }
+
         .zoom-btn {
             width: 45px;
             height: 45px;
@@ -439,7 +768,10 @@
             font-size: 18px;
             cursor: pointer;
         }
-        .zoom-btn:first-child { border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+
+        .zoom-btn:first-child {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
         .map-loading {
             position: fixed;
@@ -456,6 +788,7 @@
             gap: 10px;
         }
 
+        /* Popup styles */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
@@ -470,6 +803,7 @@
             z-index: 9999 !important;
             overflow-y: auto;
         }
+
         @media (min-width: 769px) {
             .ol-popup {
                 position: absolute !important;
@@ -489,7 +823,13 @@
             justify-content: space-between;
             align-items: center;
         }
-        .popup-header h4 { margin: 0; font-size: 18px; color: #ff4444; }
+
+        .popup-header h4 {
+            margin: 0;
+            font-size: 18px;
+            color: #ff4444;
+        }
+
         .popup-close {
             background: rgba(255, 255, 255, 0.1);
             border: none;
@@ -499,7 +839,12 @@
             border-radius: 50%;
             cursor: pointer;
         }
-        .popup-tabs { display: flex; background: #141424; }
+
+        .popup-tabs {
+            display: flex;
+            background: #141424;
+        }
+
         .popup-tab {
             flex: 1;
             background: none;
@@ -509,22 +854,43 @@
             cursor: pointer;
             font-weight: 600;
         }
-        .popup-tab.active { color: #ff4444; border-bottom: 3px solid #ff4444; }
-        .popup-tab-content { display: none; padding: 20px; max-height: 55vh; overflow-y: auto; }
-        .popup-tab-content.active { display: block; }
+
+        .popup-tab.active {
+            color: #ff4444;
+            border-bottom: 3px solid #ff4444;
+        }
+
+        .popup-tab-content {
+            display: none;
+            padding: 20px;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        .popup-tab-content.active {
+            display: block;
+        }
+
         .detail-row {
             display: flex;
             margin-bottom: 12px;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
+
         .detail-label {
             font-weight: 600;
             color: #ffc107;
             width: 110px;
             font-size: 12px;
         }
-        .detail-value { color: #eee; flex: 1; font-size: 13px; }
+
+        .detail-value {
+            color: #eee;
+            flex: 1;
+            font-size: 13px;
+        }
+
         .badge {
             display: inline-block;
             padding: 3px 10px;
@@ -532,8 +898,17 @@
             font-size: 10px;
             font-weight: 600;
         }
-        .badge-success { background: #28a745; color: white; }
-        .badge-warning { background: #ffc107; color: #333; }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
         .assessment-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -541,34 +916,66 @@
             border-left: 3px solid #ffc107;
             cursor: pointer;
         }
+
         .assessment-header {
             background: rgba(255, 193, 7, 0.15);
             padding: 12px 15px;
             display: flex;
             justify-content: space-between;
         }
-        .assessment-number { font-weight: 700; font-size: 13px; color: #ffc107; }
-        .assessment-body { padding: 12px 15px; }
+
+        .assessment-number {
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffc107;
+        }
+
+        .assessment-body {
+            padding: 12px 15px;
+        }
+
         .assessment-row {
             display: flex;
             margin-bottom: 8px;
             font-size: 12px;
         }
-        .assessment-label { width: 80px; color: #aaa; }
-        .assessment-value { color: #fff; flex: 1; }
+
+        .assessment-label {
+            width: 80px;
+            color: #aaa;
+        }
+
+        .assessment-value {
+            color: #fff;
+            flex: 1;
+        }
+
         .shop-item {
             background: rgba(255, 68, 68, 0.1);
             border-radius: 10px;
             padding: 12px;
             margin-top: 8px;
         }
-        .shop-name { font-weight: 700; color: #ff4444; font-size: 13px; margin-bottom: 8px; }
+
+        .shop-name {
+            font-weight: 700;
+            color: #ff4444;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: #888;
         }
-        .empty-state i { font-size: 50px; margin-bottom: 15px; opacity: 0.5; }
+
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
         .assessment-form-container {
             margin: 10px;
             padding: 15px;
@@ -583,7 +990,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
-    <script>
+ <script>
         $(document).ready(function() {
             // ==================== DATA FROM SERVER ====================
             let polygonDatas = @json($polygonDatas ?? []);
@@ -608,7 +1015,8 @@
             // ==================== LOCATION VARIABLES ====================
             let currentLocationLayer = null,
                 accuracyLayer = null,
-                currentPosition = null;
+                currentPosition = null,
+                currentPositionLonLat = null; // Store position in LonLat format
             let locationTracking = false,
                 watchId = null;
 
@@ -617,7 +1025,7 @@
             let routeSource = null;
             let routeLayer = null;
             let selectedBuilding = null;
-            let currentLocationMarker = null; // Added for route compatibility
+            let currentLocationMarker = null;
 
             // ==================== SEARCH VARIABLES ====================
             let allBuildings = [];
@@ -642,7 +1050,7 @@
                     'info': '#17a2b8'
                 }[type] || '#17a2b8';
 
-                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
+                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px; z-index: 10000;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
                 $('body').append(flashHtml);
                 setTimeout(() => $(flashHtml).fadeOut(300, function() { $(this).remove(); }), 4000);
             }
@@ -653,11 +1061,13 @@
 
             // ==================== FORMATTING FUNCTIONS ====================
             function formatDistance(meters) {
+                if (!meters || isNaN(meters)) return '0 m';
                 if (meters < 1000) return Math.round(meters) + ' m';
                 return (meters / 1000).toFixed(2) + ' km';
             }
 
             function formatDuration(seconds) {
+                if (!seconds || isNaN(seconds)) return '0 min';
                 const minutes = Math.floor(seconds / 60);
                 if (minutes < 60) return minutes + ' min';
                 const hours = Math.floor(minutes / 60);
@@ -665,17 +1075,50 @@
                 return hours + ' h ' + mins + ' min';
             }
 
-            // ==================== ROUTE FUNCTIONS (Working version from surveyor) ====================
+            // Calculate straight line distance between two coordinates
+            function calculateStraightLineDistance(coord1, coord2) {
+                const [lon1, lat1] = coord1;
+                const [lon2, lat2] = coord2;
+                const R = 6371000; // Earth's radius in meters
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δφ = (lat2 - lat1) * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                          Math.cos(φ1) * Math.cos(φ2) *
+                          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                return R * c;
+            }
+
+            // ==================== ROUTE FUNCTIONS ====================
 
             async function getRouteFromOSRM(startCoord, endCoord) {
+                // Validate coordinates
+                if (!startCoord || !endCoord ||
+                    startCoord.length < 2 || endCoord.length < 2 ||
+                    (Math.abs(startCoord[0]) < 0.0001 && Math.abs(startCoord[1]) < 0.0001) ||
+                    (Math.abs(endCoord[0]) < 0.0001 && Math.abs(endCoord[1]) < 0.0001)) {
+                    throw new Error('Invalid coordinates');
+                }
+
                 const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`;
+
+                console.log('Fetching route from OSRM:', startCoord, 'to:', endCoord);
+
                 const response = await fetch(url);
                 const data = await response.json();
-                if (data.code !== 'Ok' || !data.routes.length) throw new Error('No route found');
+
+                if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+                    throw new Error('No route found');
+                }
                 return data.routes[0];
             }
 
             function drawRouteOnMap(geometry) {
+                // Remove existing route layer
                 if (routeLayer) {
                     map.removeLayer(routeLayer);
                 }
@@ -692,70 +1135,137 @@
                             width: 5,
                             lineDash: [10, 10]
                         })
-                    })
+                    }),
+                    zIndex: 1000
                 });
 
-                if (geometry.type === 'LineString') {
-                    const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                    routeSource.addFeature(new ol.Feature({
-                        geometry: new ol.geom.LineString(coordinates)
-                    }));
-                    map.addLayer(routeLayer);
-                    map.getView().fit(routeSource.getExtent(), {
-                        padding: [50, 50, 50, 50],
-                        duration: 1000
-                    });
+                if (geometry && geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length >= 2) {
+                    // Filter out invalid coordinates and convert to map projection
+                    const coordinates = geometry.coordinates
+                        .filter(coord => coord && coord.length >= 2 && !(Math.abs(coord[0]) < 0.0001 && Math.abs(coord[1]) < 0.0001))
+                        .map(coord => ol.proj.fromLonLat(coord));
+
+                    if (coordinates.length >= 2) {
+                        routeSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(coordinates)
+                        }));
+                        map.addLayer(routeLayer);
+
+                        // Fit map to route extent
+                        const extent = routeSource.getExtent();
+                        if (extent && extent[0] !== Infinity) {
+                            map.getView().fit(extent, {
+                                padding: [50, 50, 50, 50],
+                                duration: 1000
+                            });
+                        }
+                    } else {
+                        console.error('No valid coordinates for route drawing');
+                        showFlashMessage('Could not draw route on map', 'error');
+                    }
+                } else {
+                    console.error('Invalid geometry for route drawing');
                 }
             }
 
             async function calculateAndDisplayRoute(feature) {
-                if (!currentLocationMarker) {
+                // Check if location is available
+                if (!currentLocationMarker || !currentPositionLonLat) {
                     showFlashMessage('Please enable your location first', 'error');
+                    // Try to get location automatically
+                    startLocationTracking();
                     return;
                 }
+
+                if (!feature) {
+                    showFlashMessage('Please select a destination first', 'error');
+                    return;
+                }
+
                 $('#loadingSpinner').show();
+
                 try {
-                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
+                    // Get current coordinates from marker
+                    const markerFeatures = currentLocationMarker.getSource().getFeatures();
+                    if (!markerFeatures || markerFeatures.length === 0) {
+                        throw new Error('Location marker has no coordinates');
+                    }
+
+                    const currentCoords = markerFeatures[0].getGeometry().getCoordinates();
                     const geometry = feature.getGeometry();
-                    let targetCoords = geometry.getType() === 'Point' ? geometry.getCoordinates() : ol.extent.getCenter(geometry.getExtent());
+
+                    if (!geometry) {
+                        throw new Error('Feature has no geometry');
+                    }
+
+                    // Get target coordinates
+                    let targetCoords;
+                    if (geometry.getType() === 'Point') {
+                        targetCoords = geometry.getCoordinates();
+                    } else {
+                        targetCoords = ol.extent.getCenter(geometry.getExtent());
+                    }
+
+                    // Convert to LonLat for OSRM
                     const currentLonLat = ol.proj.toLonLat(currentCoords);
                     const targetLonLat = ol.proj.toLonLat(targetCoords);
+
+                    // Update stored position
+                    currentPositionLonLat = currentLonLat;
+
+                    console.log('Calculating route from:', currentLonLat, 'to:', targetLonLat);
+
                     let route;
                     try {
                         route = await getRouteFromOSRM(currentLonLat, targetLonLat);
                     } catch (e) {
-                        // Fallback to straight line calculation using ol.sphere
+                        console.warn('OSRM route failed, using straight line:', e);
+                        // Fallback to straight line calculation
+                        const distance = calculateStraightLineDistance(currentLonLat, targetLonLat);
                         route = {
-                            distance: ol.sphere.getDistance(ol.proj.fromLonLat(currentLonLat), ol.proj.fromLonLat(targetLonLat)),
+                            distance: distance,
+                            duration: distance / 8.33, // Walking speed ~30 km/h = 8.33 m/s
                             geometry: {
                                 type: "LineString",
                                 coordinates: [currentLonLat, targetLonLat]
                             }
                         };
                     }
+
+                    // Draw route on map
                     drawRouteOnMap(route.geometry);
 
-                    const distance = route.distance;
-                    const duration = route.duration ? route.duration / 1.39 : (distance / 1000 / 30) * 60;
+                    // Calculate duration if not provided
+                    const duration = route.duration || (route.distance / 8.33);
 
+                    // Update route info panel
                     $('#routeSummary').html(`
                         <div><i class="fas fa-map-marker-alt"></i> <strong>Destination:</strong> GIS ID: ${feature.get('gisid') || 'Selected Location'}</div>
-                        <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${formatDistance(distance)}</div>
+                        <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${formatDistance(route.distance)}</div>
                         <div><i class="fas fa-clock"></i> <strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
+                        <div><i class="fas fa-arrow-right"></i> <strong>Status:</strong> ${route.duration ? 'Route found' : 'Straight line (estimated)'}</div>
                     `);
 
                     $('#routeInfo').addClass('open');
                     currentRoute = route;
+                    currentRoute.endCoord = targetLonLat;
+
+                    showFlashMessage('Route calculated successfully', 'success');
 
                 } catch (error) {
-                    console.error('Route error:', error);
-                    showFlashMessage('Error calculating route', 'error');
+                    console.error('Route calculation error:', error);
+                    showFlashMessage('Error calculating route: ' + error.message, 'error');
                 } finally {
                     $('#loadingSpinner').hide();
                 }
             }
 
             function getRouteToBuilding(gisid, targetCoords) {
+                if (!targetCoords || targetCoords.length < 2) {
+                    showFlashMessage('Invalid destination coordinates', 'error');
+                    return;
+                }
+
                 // Create a temporary feature for routing
                 const tempFeature = new ol.Feature({
                     geometry: new ol.geom.Point(ol.proj.fromLonLat(targetCoords)),
@@ -777,37 +1287,55 @@
                 $('#routeInfo').removeClass('open');
             }
 
-            // ==================== LOCATION TRACKING ====================
+            // ==================== LOCATION TRACKING (FIXED) ====================
             function startLocationTracking() {
                 if (!navigator.geolocation) {
                     showFlashMessage("Geolocation not supported", 'error');
                     return;
                 }
 
+                $('#loadingSpinner').show();
                 $('#locationBtn').addClass('active');
                 locationTracking = true;
 
+                // Add center button if not exists
                 if ($('#centerMyLocationBtn').length === 0) {
                     $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
                     $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {
-                    showFlashMessage("Unable to get location: " + err.message, 'error');
-                    locationTracking = false;
-                    $('#locationBtn').removeClass('active');
-                    $('#centerMyLocationBtn').remove();
-                });
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                        currentPositionLonLat = [pos.coords.longitude, pos.coords.latitude];
+                        showFlashMessage('Location acquired successfully', 'success');
+                        $('#loadingSpinner').hide();
+                    },
+                    function(err) {
+                        $('#loadingSpinner').hide();
+                        let errorMsg = "Unable to get location";
+                        if (err.code === err.PERMISSION_DENIED) {
+                            errorMsg = "Please enable location permissions";
+                        } else if (err.code === err.TIMEOUT) {
+                            errorMsg = "Location request timed out";
+                        }
+                        showFlashMessage(errorMsg, 'error');
+                        locationTracking = false;
+                        $('#locationBtn').removeClass('active');
+                        $('#centerMyLocationBtn').remove();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
 
-                watchId = navigator.geolocation.watchPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {}, {
-                    enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 10000
-                });
+                // Start watching position
+                watchId = navigator.geolocation.watchPosition(
+                    function(pos) {
+                        updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                        currentPositionLonLat = [pos.coords.longitude, pos.coords.latitude];
+                    },
+                    function(err) {},
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                );
             }
 
             function stopLocationTracking() {
@@ -821,16 +1349,20 @@
                 currentLocationLayer = null;
                 accuracyLayer = null;
                 currentLocationMarker = null;
+                currentPositionLonLat = null;
             }
 
             function updateLocationOnMap(lon, lat, accuracy) {
                 let coords = ol.proj.fromLonLat([lon, lat]);
                 currentPosition = [lon, lat];
+                currentPositionLonLat = [lon, lat];
 
+                // Remove old layers
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
                 if (currentLocationMarker) map.removeLayer(currentLocationMarker);
 
+                // Accuracy circle
                 accuracyLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -844,6 +1376,7 @@
                 });
                 map.addLayer(accuracyLayer);
 
+                // Location dot
                 currentLocationLayer = new ol.layer.Vector({
                     source: new ol.source.Vector({
                         features: [new ol.Feature({
@@ -860,7 +1393,7 @@
                 });
                 map.addLayer(currentLocationLayer);
 
-                // Also create currentLocationMarker for route function compatibility
+                // Location marker for route compatibility
                 currentLocationMarker = new ol.layer.Vector({
                     source: new ol.source.Vector(),
                     style: new ol.style.Style({
@@ -876,6 +1409,7 @@
                 }));
                 map.addLayer(currentLocationMarker);
 
+                // Center map on first location
                 if (!localStorage.getItem('mapCentered')) {
                     map.getView().setCenter(coords);
                     map.getView().setZoom(18);
@@ -884,10 +1418,13 @@
             }
 
             function centerToMyLocation() {
-                if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(19);
+                if (currentPositionLonLat) {
+                    let coords = ol.proj.fromLonLat(currentPositionLonLat);
+                    map.getView().animate({
+                        center: coords,
+                        zoom: 19,
+                        duration: 1000
+                    });
                     showFlashMessage('Centered on your location', 'info');
                 } else {
                     showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
@@ -1497,6 +2034,23 @@
                     </div>
                 `);
 
+                // Add loading spinner if not exists
+                if ($('#loadingSpinner').length === 0) {
+                    $('body').append('<div id="loadingSpinner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.8); color:white; padding:15px 25px; border-radius:10px; z-index:10000;"><i class="fas fa-spinner fa-spin"></i> Calculating route...</div>');
+                }
+
+                // Add route info panel if not exists
+                if ($('#routeInfo').length === 0) {
+                    $('body').append(`
+                        <div class="route-info-panel panel" id="routeInfo" style="bottom: 20px; left: 20px; right: auto; min-width: 280px;">
+                            <button class="panel-close" id="closeRouteInfo">&times;</button>
+                            <h5><i class="fas fa-route"></i> Route Information</h5>
+                            <div id="routeSummary"></div>
+                            <button id="startNavigationBtn" class="btn-start-nav mt-3" style="width:100%;"><i class="fas fa-directions"></i> Open in Google Maps</button>
+                        </div>
+                    `);
+                }
+
                 // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
                     currentBaseLayer = $(this).val();
@@ -1661,10 +2215,14 @@
                 });
 
                 $('#startNavigationBtn').on('click', function() {
-                    if (currentRoute) {
-                        // Open Google Maps navigation
+                    if (currentRoute && currentRoute.endCoord) {
+                        const [lon, lat] = currentRoute.endCoord;
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
+                    } else if (currentRoute && currentRoute.geometry && currentRoute.geometry.coordinates) {
                         const endCoords = currentRoute.geometry.coordinates.slice(-1)[0];
                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${endCoords[1]},${endCoords[0]}`, '_blank');
+                    } else {
+                        showFlashMessage('No route available for navigation', 'warning');
                     }
                 });
 
