@@ -1483,7 +1483,7 @@ function isValidCoordinate(lon, lat) {
             }
 
             // ==================== BUILD SEARCH INDEX ====================
-            buildSearchIndex() {
+            function buildSearchIndex() {
                 allBuildings = [];
                 $.each(polygonDatas, function(i, building) {
                     let info = {
