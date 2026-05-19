@@ -46,24 +46,7 @@
         </button>
     </div>
 
-    <!-- Navigation Header (Mobile Style) -->
-    <div class="navigation-header" id="navigationHeader">
-        <button class="nav-close" id="closeNavigation">&times;</button>
-        <div class="navigation-eta">
-            <div class="eta-time" id="etaTime">-- min</div>
-            <div class="eta-distance" id="etaDistance">-- km</div>
-        </div>
-        <div class="navigation-address" id="destinationAddress">Destination</div>
-    </div>
-
-    <div class="navigation-instruction" id="navigationInstruction">
-        <div class="instruction-icon">
-            <i class="fas fa-arrow-up" id="instructionIcon"></i>
-        </div>
-        <div class="instruction-text" id="instructionText">Continue straight</div>
-        <div class="instruction-distance" id="instructionDistance">in 500 m</div>
-    </div>
-
+    <!-- Loading Spinner -->
     <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner-border text-primary"></div>
         <div>Calculating route...</div>
@@ -287,73 +270,6 @@
         }
 
         .btn-start-nav:active { transform: scale(0.98); }
-
-        .navigation-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            z-index: 1003;
-            display: none;
-            color: white;
-        }
-
-        .nav-close {
-            position: absolute;
-            right: 15px;
-            top: 15px;
-            background: none;
-            border: none;
-            color: #ff4444;
-            font-size: 24px;
-            cursor: pointer;
-        }
-
-        .navigation-eta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .eta-time { font-size: 22px; font-weight: bold; color: #ffc107; }
-        .eta-distance { font-size: 16px; color: #aaa; }
-        .navigation-address { font-size: 14px; color: #ddd; }
-
-        .navigation-instruction {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 16px;
-            z-index: 1003;
-            display: none;
-            color: white;
-            text-align: center;
-        }
-
-        .instruction-icon {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4444;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        .instruction-text { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
-        .instruction-distance { font-size: 14px; color: #ffc107; }
 
         .loading-spinner {
             position: fixed;
@@ -698,14 +614,10 @@
 
             // ==================== ROUTE VARIABLES ====================
             let currentRoute = null;
-            let routeSteps = [];
-            let navigationMode = false;
-            let navigationInterval = null;
-            let currentStepIndex = 0;
             let routeSource = null;
             let routeLayer = null;
-            let destinationMarker = null;
             let selectedBuilding = null;
+            let currentLocationMarker = null; // Added for route compatibility
 
             // ==================== SEARCH VARIABLES ====================
             let allBuildings = [];
@@ -753,150 +665,105 @@
                 return hours + ' h ' + mins + ' min';
             }
 
-            // ==================== ROUTE FUNCTIONS ====================
+            // ==================== ROUTE FUNCTIONS (Working version from surveyor) ====================
 
-            // Get route from OSRM
             async function getRouteFromOSRM(startCoord, endCoord) {
-                const [startLon, startLat] = startCoord;
-                const [endLon, endLat] = endCoord;
-                const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
-
+                const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`;
                 const response = await fetch(url);
                 const data = await response.json();
-
-                if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-                    throw new Error('No route found');
-                }
-
+                if (data.code !== 'Ok' || !data.routes.length) throw new Error('No route found');
                 return data.routes[0];
             }
 
-            // Get route to building
-            async function getRouteToBuilding(gisid, targetCoords) {
-                if (!currentPosition) {
-                    showFlashMessage('Please enable location tracking first', 'warning');
-                    startLocationTracking();
-                    setTimeout(() => {
-                        if (currentPosition) {
-                            getRouteToBuilding(gisid, targetCoords);
-                        }
-                    }, 3000);
-                    return;
+            function drawRouteOnMap(geometry) {
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+                if (routeSource) {
+                    routeSource.clear();
                 }
 
+                routeSource = new ol.source.Vector();
+                routeLayer = new ol.layer.Vector({
+                    source: routeSource,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#2563eb',
+                            width: 5,
+                            lineDash: [10, 10]
+                        })
+                    })
+                });
+
+                if (geometry.type === 'LineString') {
+                    const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                    routeSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates)
+                    }));
+                    map.addLayer(routeLayer);
+                    map.getView().fit(routeSource.getExtent(), {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                }
+            }
+
+            async function calculateAndDisplayRoute(feature) {
+                if (!currentLocationMarker) {
+                    showFlashMessage('Please enable your location first', 'error');
+                    return;
+                }
                 $('#loadingSpinner').show();
-
                 try {
-                    const startCoord = ol.proj.toLonLat([currentPosition[0], currentPosition[1]]);
-                    const targetCoord = ol.proj.toLonLat(targetCoords);
+                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
+                    const geometry = feature.getGeometry();
+                    let targetCoords = geometry.getType() === 'Point' ? geometry.getCoordinates() : ol.extent.getCenter(geometry.getExtent());
+                    const currentLonLat = ol.proj.toLonLat(currentCoords);
+                    const targetLonLat = ol.proj.toLonLat(targetCoords);
+                    let route;
+                    try {
+                        route = await getRouteFromOSRM(currentLonLat, targetLonLat);
+                    } catch (e) {
+                        // Fallback to straight line calculation using ol.sphere
+                        route = {
+                            distance: ol.sphere.getDistance(ol.proj.fromLonLat(currentLonLat), ol.proj.fromLonLat(targetLonLat)),
+                            geometry: {
+                                type: "LineString",
+                                coordinates: [currentLonLat, targetLonLat]
+                            }
+                        };
+                    }
+                    drawRouteOnMap(route.geometry);
 
-                    const route = await getRouteFromOSRM(startCoord, targetCoord);
+                    const distance = route.distance;
+                    const duration = route.duration ? route.duration / 1.39 : (distance / 1000 / 30) * 60;
 
-                    drawRouteOnMap(route);
-                    displayRouteInfo(route, gisid);
-
-                    currentRoute = route;
-                    selectedBuilding = { gisid: gisid, coords: targetCoords };
+                    $('#routeSummary').html(`
+                        <div><i class="fas fa-map-marker-alt"></i> <strong>Destination:</strong> GIS ID: ${feature.get('gisid') || 'Selected Location'}</div>
+                        <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${formatDistance(distance)}</div>
+                        <div><i class="fas fa-clock"></i> <strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
+                    `);
 
                     $('#routeInfo').addClass('open');
+                    currentRoute = route;
 
                 } catch (error) {
                     console.error('Route error:', error);
-                    showFlashMessage('Could not find a valid route to this building', 'error');
+                    showFlashMessage('Error calculating route', 'error');
                 } finally {
                     $('#loadingSpinner').hide();
                 }
             }
 
-            // Draw route on map
-            function drawRouteOnMap(route) {
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                }
-
-                if (routeSource) {
-                    routeSource.clear();
-                }
-
-                const coordinates = route.geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-
-                routeSource = new ol.source.Vector({
-                    features: [new ol.Feature({
-                        geometry: new ol.geom.LineString(coordinates)
-                    })]
+            function getRouteToBuilding(gisid, targetCoords) {
+                // Create a temporary feature for routing
+                const tempFeature = new ol.Feature({
+                    geometry: new ol.geom.Point(ol.proj.fromLonLat(targetCoords)),
+                    gisid: gisid
                 });
-
-                routeLayer = new ol.layer.Vector({
-                    source: routeSource,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#4CAF50',
-                            width: 5,
-                            lineDash: [10, 5]
-                        })
-                    }),
-                    zIndex: 100
-                });
-
-                map.addLayer(routeLayer);
-
-                // Fit map to route bounds
-                const extent = routeSource.getExtent();
-                map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 800 });
+                calculateAndDisplayRoute(tempFeature);
             }
 
-            // Display route information
-            function displayRouteInfo(route, gisid) {
-                const distance = formatDistance(route.distance);
-                const duration = formatDuration(route.duration);
-
-                $('#routeSummary').html(`
-                    <div><i class="fas fa-map-marker-alt"></i> <strong>Destination:</strong> GIS ID: ${gisid}</div>
-                    <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${distance}</div>
-                    <div><i class="fas fa-clock"></i> <strong>Estimated Time:</strong> ${duration}</div>
-                `);
-
-                // Extract turn-by-turn directions
-                routeSteps = [];
-                const steps = route.legs[0].steps;
-
-                $('#directionsList').empty();
-
-                steps.forEach((step, index) => {
-                    const instruction = step.maneuver.instruction;
-                    const stepDistance = formatDistance(step.distance);
-                    const stepDuration = formatDuration(step.duration);
-
-                    let icon = 'fa-arrow-right';
-                    if (instruction.toLowerCase().includes('left')) icon = 'fa-arrow-left';
-                    if (instruction.toLowerCase().includes('right')) icon = 'fa-arrow-right';
-                    if (instruction.toLowerCase().includes('straight')) icon = 'fa-arrow-up';
-                    if (instruction.toLowerCase().includes('destination')) icon = 'fa-flag-checkered';
-
-                    const stepElement = $(`
-                        <div class="direction-step">
-                            <div class="step-number">${index + 1}</div>
-                            <div class="step-content">
-                                <div class="step-instruction"><i class="fas ${icon} me-2"></i> ${instruction}</div>
-                                <div class="step-distance">${stepDistance} • ${stepDuration}</div>
-                            </div>
-                        </div>
-                    `);
-
-                    $('#directionsList').append(stepElement);
-
-                    routeSteps.push({
-                        instruction: instruction,
-                        distance: stepDistance,
-                        duration: stepDuration,
-                        icon: icon,
-                        coordinates: step.maneuver.location,
-                        distance_meters: step.distance
-                    });
-                });
-            }
-
-            // Clear route
             function clearRoute() {
                 if (routeLayer) {
                     map.removeLayer(routeLayer);
@@ -906,95 +773,126 @@
                     routeSource.clear();
                     routeSource = null;
                 }
-                if (destinationMarker) {
-                    map.removeLayer(destinationMarker);
-                    destinationMarker = null;
-                }
                 currentRoute = null;
-                routeSteps = [];
                 $('#routeInfo').removeClass('open');
-                stopNavigation();
             }
 
-            // Start navigation
-            function startNavigation() {
-                if (!currentRoute || !routeSteps.length) {
-                    showFlashMessage('No route available for navigation', 'error');
+            // ==================== LOCATION TRACKING ====================
+            function startLocationTracking() {
+                if (!navigator.geolocation) {
+                    showFlashMessage("Geolocation not supported", 'error');
                     return;
                 }
 
-                navigationMode = true;
-                currentStepIndex = 0;
+                $('#locationBtn').addClass('active');
+                locationTracking = true;
 
-                $('#routeInfo').removeClass('open');
-                $('#navigationHeader').show();
-                $('#navigationInstruction').show();
-
-                const destination = selectedBuilding ? selectedBuilding.gisid : 'Destination';
-                $('#destinationAddress').text('GIS ID: ' + destination);
-
-                updateNavigationDisplay();
-
-                // Start tracking position for navigation
-                if (navigationInterval) {
-                    clearInterval(navigationInterval);
+                if ($('#centerMyLocationBtn').length === 0) {
+                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
+                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
-                navigationInterval = setInterval(() => {
-                    if (navigationMode && currentPosition) {
-                        checkNextStep();
-                    }
-                }, 3000);
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                }, function(err) {
+                    showFlashMessage("Unable to get location: " + err.message, 'error');
+                    locationTracking = false;
+                    $('#locationBtn').removeClass('active');
+                    $('#centerMyLocationBtn').remove();
+                });
+
+                watchId = navigator.geolocation.watchPosition(function(pos) {
+                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
+                }, function(err) {}, {
+                    enableHighAccuracy: true,
+                    maximumAge: 5000,
+                    timeout: 10000
+                });
             }
 
-            // Update navigation display
-            function updateNavigationDisplay() {
-                if (!currentRoute || !routeSteps.length) return;
+            function stopLocationTracking() {
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
+                if (accuracyLayer) map.removeLayer(accuracyLayer);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                locationTracking = false;
+                $('#locationBtn').removeClass('active');
+                $('#centerMyLocationBtn').remove();
+                currentLocationLayer = null;
+                accuracyLayer = null;
+                currentLocationMarker = null;
+            }
 
-                const totalDistance = currentRoute.distance;
-                const totalDuration = currentRoute.duration;
+            function updateLocationOnMap(lon, lat, accuracy) {
+                let coords = ol.proj.fromLonLat([lon, lat]);
+                currentPosition = [lon, lat];
 
-                $('#etaTime').text(formatDuration(totalDuration));
-                $('#etaDistance').text(formatDistance(totalDistance));
+                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
+                if (accuracyLayer) map.removeLayer(accuracyLayer);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
 
-                if (currentStepIndex < routeSteps.length) {
-                    const currentStep = routeSteps[currentStepIndex];
-                    $('#instructionText').text(currentStep.instruction);
-                    $('#instructionDistance').text(currentStep.distance);
+                accuracyLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Circle(coords, accuracy)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
+                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
+                    })
+                });
+                map.addLayer(accuracyLayer);
 
-                    let iconClass = 'fa-arrow-up';
-                    if (currentStep.instruction.toLowerCase().includes('left')) iconClass = 'fa-arrow-left';
-                    if (currentStep.instruction.toLowerCase().includes('right')) iconClass = 'fa-arrow-right';
-                    if (currentStep.instruction.toLowerCase().includes('destination')) iconClass = 'fa-flag-checkered';
-                    $('#instructionIcon').removeClass().addClass(`fas ${iconClass}`);
+                currentLocationLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 12,
+                            fill: new ol.style.Fill({ color: '#ff4444' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                        })
+                    })
+                });
+                map.addLayer(currentLocationLayer);
+
+                // Also create currentLocationMarker for route function compatibility
+                currentLocationMarker = new ol.layer.Vector({
+                    source: new ol.source.Vector(),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 12,
+                            fill: new ol.style.Fill({ color: '#ff4444' }),
+                            stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
+                        })
+                    })
+                });
+                currentLocationMarker.getSource().addFeature(new ol.Feature({
+                    geometry: new ol.geom.Point(coords)
+                }));
+                map.addLayer(currentLocationMarker);
+
+                if (!localStorage.getItem('mapCentered')) {
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(18);
+                    localStorage.setItem('mapCentered', 'true');
                 }
             }
 
-            // Check if we've reached the next step
-            function checkNextStep() {
-                if (!currentPosition || !routeSteps.length || currentStepIndex >= routeSteps.length) return;
-
-                // Simplified step checking - in production you'd check distance to next step coordinates
-                if (currentStepIndex < routeSteps.length - 1) {
-                    currentStepIndex++;
-                    updateNavigationDisplay();
-                } else if (currentStepIndex === routeSteps.length - 1) {
-                    // Reached destination
-                    stopNavigation();
-                    showFlashMessage('You have arrived at your destination!', 'success');
+            function centerToMyLocation() {
+                if (currentPosition) {
+                    let coords = ol.proj.fromLonLat(currentPosition);
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(19);
+                    showFlashMessage('Centered on your location', 'info');
+                } else {
+                    showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
+                    startLocationTracking();
                 }
-            }
-
-            // Stop navigation
-            function stopNavigation() {
-                navigationMode = false;
-                if (navigationInterval) {
-                    clearInterval(navigationInterval);
-                    navigationInterval = null;
-                }
-                $('#navigationHeader').hide();
-                $('#navigationInstruction').hide();
-                currentStepIndex = 0;
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -1040,105 +938,6 @@
                     }
                     allBuildings.push(info);
                 });
-            }
-
-            // ==================== LOCATION TRACKING ====================
-            function startLocationTracking() {
-                if (!navigator.geolocation) {
-                    alert("Geolocation not supported");
-                    return;
-                }
-
-                $('#locationBtn').addClass('active');
-                locationTracking = true;
-
-                if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
-                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
-                }
-
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {
-                    alert("Unable to get location: " + err.message);
-                    locationTracking = false;
-                    $('#locationBtn').removeClass('active');
-                    $('#centerMyLocationBtn').remove();
-                });
-
-                watchId = navigator.geolocation.watchPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                }, function(err) {}, {
-                    enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 10000
-                });
-            }
-
-            function stopLocationTracking() {
-                if (watchId) navigator.geolocation.clearWatch(watchId);
-                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
-                if (accuracyLayer) map.removeLayer(accuracyLayer);
-                locationTracking = false;
-                $('#locationBtn').removeClass('active');
-                $('#centerMyLocationBtn').remove();
-                currentLocationLayer = null;
-                accuracyLayer = null;
-            }
-
-            function updateLocationOnMap(lon, lat, accuracy) {
-                let coords = ol.proj.fromLonLat([lon, lat]);
-                currentPosition = [lon, lat];
-
-                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
-                if (accuracyLayer) map.removeLayer(accuracyLayer);
-
-                accuracyLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
-                    })
-                });
-                map.addLayer(accuracyLayer);
-
-                currentLocationLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(coords)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({ color: '#ff4444' }),
-                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                        })
-                    })
-                });
-                map.addLayer(currentLocationLayer);
-
-                if (!localStorage.getItem('mapCentered')) {
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(18);
-                    localStorage.setItem('mapCentered', 'true');
-                }
-            }
-
-            function centerToMyLocation() {
-                if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(19);
-                    showFlashMessage('Centered on your location', 'info');
-                } else {
-                    showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
-                    startLocationTracking();
-                }
             }
 
             // ==================== SEARCH FUNCTIONS ====================
@@ -1455,7 +1254,7 @@
                             ps.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Polygon(c),
                                 gisid: p.gisid,
-                                sqfeet: p.sqfeet,
+                                sqfeet: p.sqfeet || "0",
                                 visible: true
                             }));
                         }
@@ -1862,11 +1661,11 @@
                 });
 
                 $('#startNavigationBtn').on('click', function() {
-                    startNavigation();
-                });
-
-                $('#closeNavigation').on('click', function() {
-                    stopNavigation();
+                    if (currentRoute) {
+                        // Open Google Maps navigation
+                        const endCoords = currentRoute.geometry.coordinates.slice(-1)[0];
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${endCoords[1]},${endCoords[0]}`, '_blank');
+                    }
                 });
 
                 // Close panels when clicking outside
