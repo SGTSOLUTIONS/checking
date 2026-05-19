@@ -1194,101 +1194,178 @@
             }
 
             async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
-                $('#loadingSpinner').css('display', 'flex');
+    $('#loadingSpinner').css('display', 'flex');
 
-                try {
-                    const route = await getRouteFromOSRM(startCoord, endCoord);
-                    const totalDistance = route.distance;
-                    const totalDuration = route.duration;
+    try {
+        // Validate end coordinates
+        if (!endCoord || endCoord.length < 2) {
+            throw new Error('Invalid destination coordinates');
+        }
 
-                    routeSteps = parseOSRMSteps(route);
-                    currentRoute = {
-                        distance: totalDistance,
-                        duration: totalDuration,
-                        geometry: route.geometry,
-                        endCoord: endCoord,
-                        placeName: destinationName,
-                        gisid: buildingGisid
-                    };
-
-                    drawRouteOnMap(route.geometry);
-
-                    // Display route info using the panel structure from the HTML
-                    $('#routeSummary').html(`
-                        <div><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>
-                        <div><strong>Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
-                        <div><strong>Destination:</strong> ${destinationName}</div>
-                    `);
-
-                    // Display turn-by-turn directions
-                    const directionsList = $('#directionsList');
-                    directionsList.empty();
-                    routeSteps.forEach((step, index) => {
-                        directionsList.append(`
-                            <div class="direction-step">
-                                <div class="step-number">${index + 1}</div>
-                                <div class="step-content">
-                                    <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
-                                    <div class="step-distance">${step.distance}</div>
-                                </div>
-                            </div>
-                        `);
-                    });
-
-                    // Add destination marker
-                    if (destinationMarker) map.removeLayer(destinationMarker);
-                    const destLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Point(ol.proj.fromLonLat(endCoord))
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            image: new ol.style.Circle({
-                                radius: 14,
-                                fill: new ol.style.Fill({ color: '#ff4444' }),
-                                stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                            })
-                        })
-                    });
-                    map.addLayer(destLayer);
-                    destinationMarker = destLayer;
-
-                    $('#routeInfo').addClass('open');
-                    showToast('Route calculated successfully!', 'success');
-
-                } catch (error) {
-                    console.error('Route calculation error:', error);
-                    showToast('Error calculating route: ' + error.message, 'error');
-                } finally {
-                    $('#loadingSpinner').hide();
-                }
+        // Ensure end coordinates are in geographic format (lon/lat)
+        let endLon, endLat;
+        if (Math.abs(endCoord[0]) > 180 || Math.abs(endCoord[1]) > 90) {
+            // Convert from projected to geographic
+            try {
+                const projectedPoint = new ol.geom.Point([endCoord[0], endCoord[1]]);
+                const geographicPoint = projectedPoint.clone();
+                geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+                endLon = geographicPoint.getCoordinates()[0];
+                endLat = geographicPoint.getCoordinates()[1];
+                console.log("Converted end coordinates from projected to geographic:", endCoord, "->", endLon, endLat);
+            } catch(e) {
+                throw new Error('Failed to convert destination coordinates');
             }
+        } else {
+            endLon = parseFloat(endCoord[0]);
+            endLat = parseFloat(endCoord[1]);
+        }
 
+        const endGeographic = [endLon, endLat];
+
+        // Ensure start coordinates are in geographic format
+        let startLon, startLat;
+        if (Math.abs(startCoord[0]) > 180 || Math.abs(startCoord[1]) > 90) {
+            // Convert from projected to geographic
+            try {
+                const projectedPoint = new ol.geom.Point([startCoord[0], startCoord[1]]);
+                const geographicPoint = projectedPoint.clone();
+                geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+                startLon = geographicPoint.getCoordinates()[0];
+                startLat = geographicPoint.getCoordinates()[1];
+            } catch(e) {
+                startLon = startCoord[0];
+                startLat = startCoord[1];
+            }
+        } else {
+            startLon = startCoord[0];
+            startLat = startCoord[1];
+        }
+
+        const startGeographic = [startLon, startLat];
+
+        console.log("Route from:", startGeographic, "to:", endGeographic);
+
+        const route = await getRouteFromOSRM(startGeographic, endGeographic);
+        const totalDistance = route.distance;
+        const totalDuration = route.duration;
+
+        routeSteps = parseOSRMSteps(route);
+        currentRoute = {
+            distance: totalDistance,
+            duration: totalDuration,
+            geometry: route.geometry,
+            endCoord: endGeographic,
+            placeName: destinationName,
+            gisid: buildingGisid
+        };
+
+        drawRouteOnMap(route.geometry);
+
+        // Display route info
+        $('#routeSummary').html(`
+            <div><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>
+            <div><strong>Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
+            <div><strong>Destination:</strong> ${destinationName}</div>
+        `);
+
+        // Display turn-by-turn directions
+        const directionsList = $('#directionsList');
+        directionsList.empty();
+        routeSteps.forEach((step, index) => {
+            directionsList.append(`
+                <div class="direction-step">
+                    <div class="step-number">${index + 1}</div>
+                    <div class="step-content">
+                        <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
+                        <div class="step-distance">${step.distance}</div>
+                    </div>
+                </div>
+            `);
+        });
+
+        // Add destination marker in projected coordinates for display
+        const destProjected = ol.proj.fromLonLat(endGeographic);
+        if (destinationMarker) map.removeLayer(destinationMarker);
+        const destLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                features: [new ol.Feature({
+                    geometry: new ol.geom.Point(destProjected)
+                })]
+            }),
+            style: new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 14,
+                    fill: new ol.style.Fill({ color: '#ff4444' }),
+                    stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                })
+            })
+        });
+        map.addLayer(destLayer);
+        destinationMarker = destLayer;
+
+        $('#routeInfo').addClass('open');
+        showToast('Route calculated successfully!', 'success');
+
+    } catch (error) {
+        console.error('Route calculation error:', error);
+        showToast('Error calculating route: ' + error.message, 'error');
+    } finally {
+        $('#loadingSpinner').hide();
+    }
+}
             // ==================== GET ROUTE TO BUILDING (MISSING FUNCTION) ====================
-            function getRouteToBuilding(gisid, targetCoords) {
-                if (!targetCoords || targetCoords.length < 2) {
-                    showToast('Invalid building coordinates', 'error');
-                    return;
-                }
+           function getRouteToBuilding(gisid, targetCoords) {
+    // Validate target coordinates
+    if (!targetCoords || targetCoords.length < 2) {
+        showToast('Invalid building coordinates', 'error');
+        return;
+    }
 
-                const lon = parseFloat(targetCoords[0]);
-                const lat = parseFloat(targetCoords[1]);
+    let lon, lat;
 
-                if (isNaN(lon) || isNaN(lat)) {
-                    showToast('Invalid coordinate values', 'error');
-                    return;
-                }
+    // Check if coordinates are in projected format (Web Mercator) or geographic
+    // Projected coordinates are typically larger than 180 for longitude
+    if (Math.abs(targetCoords[0]) > 180 || Math.abs(targetCoords[1]) > 90) {
+        // Coordinates are in projected format (EPSG:3857) - convert to lon/lat
+        try {
+            const projectedPoint = new ol.geom.Point([targetCoords[0], targetCoords[1]]);
+            const geographicPoint = projectedPoint.clone();
+            geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+            lon = geographicPoint.getCoordinates()[0];
+            lat = geographicPoint.getCoordinates()[1];
+            console.log("Converted from projected to geographic:", targetCoords, "->", lon, lat);
+        } catch(e) {
+            console.error("Error converting coordinates:", e);
+            showToast('Error converting building coordinates', 'error');
+            return;
+        }
+    } else {
+        // Coordinates are already in geographic format
+        lon = parseFloat(targetCoords[0]);
+        lat = parseFloat(targetCoords[1]);
+    }
 
-                if (!currentPosition) {
-                    showToast('Please enable your location first', 'warning');
-                    startLocationTracking();
-                    return;
-                }
+    if (isNaN(lon) || isNaN(lat)) {
+        showToast('Invalid coordinate values', 'error');
+        return;
+    }
 
-                console.log("Getting route to building:", gisid, "at coordinates:", lon, lat);
-                calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
-            }
+    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+        showToast('Invalid coordinate range. Please try another building.', 'error');
+        console.error("Coordinates out of range:", lon, lat);
+        return;
+    }
+
+    if (!currentPosition) {
+        showToast('Please enable your location first', 'warning');
+        startLocationTracking();
+        return;
+    }
+
+    console.log("Getting route to building:", gisid, "at geographic coordinates:", lon, lat);
+    calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
+}
 
             function clearRoute() {
                 if (routeLayer) {
@@ -1316,47 +1393,48 @@
             }
 
             // ==================== BUILD SEARCH INDEX ====================
-            function buildSearchIndex() {
-                allBuildings = [];
-                $.each(polygonDatas, function(i, building) {
-                    let info = {
-                        gisid: building.gisid,
-                        building_usage: building.building_usage,
-                        building_type: building.building_type,
-                        road_name: building.road_name,
-                        zone: building.zone,
-                        number_floor: building.number_floor,
-                        coordinates: null,
-                        assessments: []
-                    };
+           function buildSearchIndex() {
+    allBuildings = [];
+    $.each(polygonDatas, function(i, building) {
+        let info = {
+            gisid: building.gisid,
+            building_usage: building.building_usage,
+            building_type: building.building_type,
+            road_name: building.road_name,
+            zone: building.zone,
+            number_floor: building.number_floor,
+            coordinates: null,
+            assessments: []
+        };
 
-                    $.each(polygons, function(j, poly) {
-                        if (poly.gisid == building.gisid) {
-                            try {
-                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
-                                if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0, cy = 0, count = 0;
-                                    $.each(coords[0], function(k, c) {
-                                        if (c && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[1])) {
-                                            cx += c[0];
-                                            cy += c[1];
-                                            count++;
-                                        }
-                                    });
-                                    if (count > 0) {
-                                        info.coordinates = [cx / count, cy / count];
-                                    }
-                                }
-                            } catch(e) {
-                                console.error("Error parsing coordinates:", e);
+        $.each(polygons, function(j, poly) {
+            if (poly.gisid == building.gisid) {
+                try {
+                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
+                    if (coords && coords[0] && coords[0][0]) {
+                        let cx = 0, cy = 0, count = 0;
+                        $.each(coords[0], function(k, c) {
+                            if (c && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[1])) {
+                                cx += c[0];
+                                cy += c[1];
+                                count++;
                             }
-                            return false;
+                        });
+                        if (count > 0) {
+                            // Store the center coordinates in their original format (projected)
+                            info.coordinates = [cx / count, cy / count];
                         }
-                    });
-                    allBuildings.push(info);
-                });
-                console.log("Search index built with", allBuildings.length, "buildings");
+                    }
+                } catch(e) {
+                    console.error("Error parsing coordinates for building:", building.gisid, e);
+                }
+                return false;
             }
+        });
+        allBuildings.push(info);
+    });
+    console.log("Search index built with", allBuildings.length, "buildings");
+}
 
             // ==================== LOCATION TRACKING ====================
             function startLocationTracking() {
