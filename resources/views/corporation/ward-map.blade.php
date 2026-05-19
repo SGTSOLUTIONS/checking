@@ -1957,7 +1957,7 @@
                             text: `${gisid}\n${sqfeet || 0} sqft`,
                             font: 'bold 11px Arial',
                             fill: new ol.style.Fill({
-                                color: 'rgba(0,0,0)'
+                                color: '#fff'
                             }),
                             stroke: new ol.style.Stroke({
                                 color: '#000',
