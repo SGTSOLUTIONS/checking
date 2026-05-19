@@ -1304,1194 +1304,2253 @@
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-   <script>
+    <script>
         $(document).ready(function() {
-            // ==================== DATA FROM SERVER ====================
-            let polygonDatas = @json($polygonDatas ?? []);
-            let polygons = @json($polygons ?? []);
-            let lines = @json($lines ?? []);
-            let wardData = {
-                ward_no: @json($ward->ward_no ?? ''),
-                drone_image: @json($ward->drone_image ?? null),
-                extent_left: @json($ward->extent_left ?? null),
-                extent_bottom: @json($ward->extent_bottom ?? null),
-                extent_right: @json($ward->extent_right ?? null),
-                extent_top: @json($ward->extent_top ?? null),
-                boundary: @json($ward->boundary ?? null)
+            // Pass data from controller with JSON_HEX_TAG to prevent XSS and syntax errors
+            let polygons = @json($polygons, JSON_HEX_TAG);
+            let lines = @json($lines, JSON_HEX_TAG);
+            let points = @json($points, JSON_HEX_TAG);
+            let pointDatas = @json($pointDatas ?? [], JSON_HEX_TAG);
+            let polygonDatas = @json($polygonDatas ?? [], JSON_HEX_TAG);
+            let ward = @json($ward ?? [], JSON_HEX_TAG);
+            let selectedFeature = null;
+            let currentRoute = null;
+            let isMobile = window.innerWidth <= 768;
+            let searchDebounceTimer = null;
+            let currentSuggestions = [];
+            let selectedSuggestionIndex = -1;
+            let draw, modify, select;
+            let featureClickHandler = null;
+            let shopTimeout = null;
+            let currentShopCount = 0;
+            let shopDetailsArray = [];
+
+            // Build search index
+            let searchIndex = [];
+
+            polygons.forEach(poly => {
+                searchIndex.push({
+                    id: poly.gisid,
+                    type: 'polygon',
+                    title: `GIS ID: ${poly.gisid}`,
+                    subtitle: `Building (${poly.sqfeet || 0} sqft)`,
+                    icon: 'fas fa-building',
+                    data: poly,
+                    searchText: `${poly.gisid} building polygon ${poly.sqfeet}`
+                });
+            });
+
+            lines.forEach(line => {
+                if (line.road_name) {
+                    searchIndex.push({
+                        id: line.gisid,
+                        type: 'line',
+                        title: line.road_name,
+                        subtitle: `Road (GIS ID: ${line.gisid})`,
+                        icon: 'fas fa-road',
+                        data: line,
+                        searchText: `${line.road_name} ${line.gisid} road`
+                    });
+                } else {
+                    searchIndex.push({
+                        id: line.gisid,
+                        type: 'line',
+                        title: `GIS ID: ${line.gisid}`,
+                        subtitle: 'Road',
+                        icon: 'fas fa-road',
+                        data: line,
+                        searchText: `${line.gisid} road`
+                    });
+                }
+            });
+
+            points.forEach(point => {
+                searchIndex.push({
+                    id: point.gisid,
+                    type: 'point',
+                    title: `GIS ID: ${point.gisid}`,
+                    subtitle: 'Point Location',
+                    icon: 'fas fa-map-marker-alt',
+                    data: point,
+                    searchText: `${point.gisid} point location`
+                });
+            });
+
+            // Routes
+            let routes = {
+                addPolygonFeature: "{{ route('surveyor.add.polygon.feature') }}",
+                addLineFeature: "{{ route('surveyor.add.line.feature') }}",
+                addPointFeature: "{{ route('surveyor.add.point.feature') }}",
+                surveyorModifyFeature: "{{ route('surveyor.modify.feature') }}",
+                deleteFeature: "{{ route('surveyor.delete.feature') }}",
+                surveyorPointDataUpload: "{{ route('surveyor.point.data.upload') }}"
             };
 
-            // ==================== MAP VARIABLES ====================
-            let map, polygonLayer, lineLayer, imageLayer, boundaryLayer, osmLayer, satelliteLayer;
-            let currentBaseLayer = 'osm';
-            let popupOverlay, popupElement;
-            let currentActiveTab = 'building';
+            function showToast(message, type = 'info') {
+                $('.toast-notification').remove();
+                const toast = $(`<div class="toast-notification ${type}">${message}</div>`);
+                $('body').append(toast);
+                setTimeout(() => toast.fadeOut(300, () => toast.remove()), 3000);
+            }
 
-            // ==================== LOCATION VARIABLES ====================
-            let currentLocationLayer = null,
-                accuracyLayer = null,
-                currentPosition = null,
-                currentPositionLonLat = null;
-            let locationTracking = false,
-                watchId = null;
+            function showFlashMessage(message, type) {
+                showToast(message, type);
+            }
 
-            // ==================== ROUTE VARIABLES ====================
-            let currentRoute = null;
-            let routeSource = null;
-            let routeLayer = null;
-            let selectedBuilding = null;
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function getSearchSuggestions(query) {
+                if (!query || query.length < 2) return [];
+                const lowerQuery = query.toLowerCase();
+                return searchIndex.filter(item =>
+                    item.searchText.toLowerCase().includes(lowerQuery) ||
+                    item.title.toLowerCase().includes(lowerQuery)
+                ).slice(0, 10);
+            }
+
+            function displaySuggestions(suggestions) {
+                const container = $('#searchSuggestions');
+                container.empty();
+                if (suggestions.length === 0) {
+                    container.removeClass('show');
+                    return;
+                }
+                suggestions.forEach((suggestion, index) => {
+                    container.append(`
+                        <div class="suggestion-item" data-index="${index}">
+                            <div class="suggestion-icon"><i class="${suggestion.icon}"></i></div>
+                            <div class="suggestion-content">
+                                <div class="suggestion-title">${escapeHtml(suggestion.title)}</div>
+                                <div class="suggestion-subtitle">${escapeHtml(suggestion.subtitle)}</div>
+                            </div>
+                            <div class="suggestion-type">${suggestion.type === 'polygon' ? 'Building' : (suggestion.type === 'line' ? 'Road' : 'Point')}</div>
+                        </div>
+                    `);
+                });
+                container.addClass('show');
+                currentSuggestions = suggestions;
+            }
+
+            function selectSuggestion(suggestion) {
+                $('#searchInput').val(suggestion.title);
+                $('#searchSuggestions').removeClass('show');
+                navigateToFeature(suggestion.data, suggestion.type);
+            }
+
+            function navigateToFeature(data, type) {
+                try {
+                    let feature;
+                    if (type === 'polygon') {
+                        const coords = JSON.parse(data.coordinates);
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.Polygon(coords),
+                            gisid: data.gisid,
+                            type: "Polygon",
+                            sqfeet: data.sqfeet || "0"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 22
+                        });
+                        selectedFeature = feature;
+                        showToast("Found GIS ID: " + data.gisid, 'success');
+                    } else if (type === 'line') {
+                        let coords = typeof data.coordinates === 'string' ? JSON.parse(data.coordinates) : data
+                            .coordinates;
+                        if (coords.length === 1 && Array.isArray(coords[0])) coords = coords[0];
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: data.gisid,
+                            road_name: data.road_name,
+                            type: "Line"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 20
+                        });
+                        selectedFeature = feature;
+                        showToast("Found: " + (data.road_name || data.gisid), 'success');
+                    } else if (type === 'point') {
+                        const coords = JSON.parse(data.coordinates);
+                        feature = new ol.Feature({
+                            geometry: new ol.geom.Point(coords),
+                            gisid: data.gisid,
+                            type: "Point"
+                        });
+                        map.getView().fit(feature.getGeometry().getExtent(), {
+                            duration: 1000,
+                            padding: [50, 50, 50, 50],
+                            maxZoom: 22
+                        });
+                        selectedFeature = feature;
+                        const highlightLayer = new ol.layer.Vector({
+                            source: new ol.source.Vector(),
+                            style: new ol.style.Style({
+                                image: new ol.style.Circle({
+                                    radius: 15,
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(255, 165, 0, 0.7)'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#ffffff',
+                                        width: 3
+                                    })
+                                })
+                            })
+                        });
+                        highlightLayer.getSource().addFeature(new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        }));
+                        map.addLayer(highlightLayer);
+                        setTimeout(() => map.removeLayer(highlightLayer), 3000);
+                        showToast("Found GIS ID: " + data.gisid, 'success');
+                    }
+                    $('#searchLabel').addClass('closed');
+                } catch (e) {
+                    console.error('Error:', e);
+                    showToast("Error displaying feature", 'error');
+                }
+            }
+
+            // Drone image config
+            let droneImageURL = "{{ asset($ward->drone_image) }}";
+            let imageExtent = [
+                {{ $ward->extent_left ?? 0 }},
+                {{ $ward->extent_bottom ?? 0 }},
+                {{ $ward->extent_right ?? 0 }},
+                {{ $ward->extent_top ?? 0 }}
+            ];
+
+            // Create layers
+            const osmLayer = new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                visible: true
+            });
+            const satelliteLayer = new ol.layer.Tile({
+                source: new ol.source.OSM({
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                }),
+                visible: false
+            });
+            const droneLayer = new ol.layer.Image({
+                source: new ol.source.ImageStatic({
+                    url: droneImageURL,
+                    imageExtent: imageExtent,
+                    imageSmoothing: false
+                }),
+                opacity: 0.90,
+                visible: true
+            });
+
+            // Style functions
+            function createPointStyle(feature) {
+                const gisid = feature.get("gisid");
+                const pointCount = pointDatas.filter(d => d.point_gisid == gisid).length;
+                const polygonData = polygonDatas.find(d => d.gisid == gisid);
+                let color = "blue";
+                if (polygonData) {
+                    color = pointCount > 0 ? (polygonData.number_bill == pointCount ? "green" : "red") : "blue";
+                }
+                return new ol.style.Style({
+                    image: new ol.style.Circle({
+                        radius: 8,
+                        fill: new ol.style.Fill({
+                            color: color
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 2
+                        })
+                    }),
+                    text: new ol.style.Text({
+                        text: gisid ? String(gisid) : "",
+                        scale: 1.3,
+                        offsetY: -15,
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
+                    })
+                });
+            }
+
+            function createPolygonStyle(feature) {
+                const gisid = feature.get("gisid");
+                const sqft = feature.get("sqfeet") || "0";
+                const polygonData = polygonDatas.find(d => d.gisid == gisid);
+                const color = polygonData ? "red" : "blue";
+                const geometry = feature.getGeometry();
+                const centerPoint = geometry.getInteriorPoint();
+                return [
+                    new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: color,
+                            width: 4,
+                            lineJoin: "round",
+                            lineCap: "round"
+                        })
+                    }),
+                    new ol.style.Style({
+                        geometry: centerPoint,
+                        text: new ol.style.Text({
+                            text: sqft + " SQFT",
+                            font: "bold 14px Arial",
+                            fill: new ol.style.Fill({
+                                color: "#000"
+                            }),
+                            backgroundFill: new ol.style.Fill({
+                                color: "#fff"
+                            }),
+                            backgroundStroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            }),
+                            padding: [4, 6, 4, 6],
+                            overflow: true,
+                            textAlign: "center",
+                            offsetY: 0
+                        }),
+                        image: new ol.style.Circle({
+                            radius: 4,
+                            fill: new ol.style.Fill({
+                                color: "yellow"
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: "#000",
+                                width: 1
+                            })
+                        })
+                    })
+                ];
+            }
+
+            function createLineStyle(feature) {
+                const road_name = feature.get("road_name");
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: "yellow",
+                        width: 4,
+                        lineJoin: "round",
+                        lineCap: "round"
+                    }),
+                    text: new ol.style.Text({
+                        text: road_name ? String(road_name) : "",
+                        font: "bold 14px Calibri, sans-serif",
+                        placement: "line",
+                        overflow: true,
+                        fill: new ol.style.Fill({
+                            color: "#000"
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: "#fff",
+                            width: 3
+                        })
+                    })
+                });
+            }
+
+            // Vector sources
+            const polygonSource = new ol.source.Vector();
+            polygons.forEach(poly => {
+                try {
+                    let coords = JSON.parse(poly.coordinates);
+                    polygonSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.Polygon(coords),
+                        gisid: poly.gisid,
+                        type: "Polygon",
+                        sqfeet: poly.sqfeet || "0"
+                    }));
+                } catch (e) {
+                    console.error('Polygon parse error:', e);
+                }
+            });
+
+            const lineSource = new ol.source.Vector();
+            lines.forEach(l => {
+                try {
+                    let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
+                        .coordinates;
+                    if (coords.length === 1 && Array.isArray(coords[0]) && coords[0].length > 0 && Array
+                        .isArray(coords[0][0])) coords = coords[0];
+                    if (coords && coords.length >= 2) {
+                        lineSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.LineString(coords),
+                            gisid: l.gisid,
+                            type: "Line",
+                            road_name: l.road_name || null
+                        }));
+                    }
+                } catch (e) {
+                    console.error('Line parse error:', e);
+                }
+            });
+
+            const pointSource = new ol.source.Vector();
+            points.forEach(p => {
+                try {
+                    let coords = JSON.parse(p.coordinates);
+                    pointSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.Point(coords),
+                        gisid: p.gisid,
+                        type: "Point"
+                    }));
+                } catch (e) {
+                    console.error('Point parse error:', e);
+                }
+            });
+
+            const polygonLayer = new ol.layer.Vector({
+                source: polygonSource,
+                style: createPolygonStyle,
+                visible: true
+            });
+            const lineLayer = new ol.layer.Vector({
+                source: lineSource,
+                style: createLineStyle,
+                visible: true
+            });
+            const pointLayer = new ol.layer.Vector({
+                source: pointSource,
+                style: createPointStyle,
+                visible: true
+            });
+
+            // Route layer
+            const routeSource = new ol.source.Vector();
+            const routeLayer = new ol.layer.Vector({
+                source: routeSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#2563eb',
+                        width: 5,
+                        lineDash: [10, 10]
+                    })
+                })
+            });
+
+            // Highlight layer for delete preview
+            const highlightSource = new ol.source.Vector();
+            const highlightLayer = new ol.layer.Vector({
+                source: highlightSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#ff0000',
+                        width: 4
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255,0,0,0.2)'
+                    })
+                })
+            });
+            highlightLayer.setZIndex(1000);
+
+            // Initialize map
+            const map = new ol.Map({
+                target: 'map',
+                layers: [osmLayer, satelliteLayer, droneLayer, polygonLayer, lineLayer, pointLayer,
+                    routeLayer, highlightLayer
+                ],
+                view: new ol.View({
+                    projection: "EPSG:3857",
+                    center: ol.extent.getCenter(imageExtent),
+                    zoom: 17
+                })
+            });
+
+            // Add boundary layer if exists
+            if (ward.boundary && ward.boundary[0]) {
+                const boundary = ward.boundary[0];
+                const transformedBoundary = boundary.map(pt => ol.proj.fromLonLat(pt));
+                const boundaryLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Polygon([transformedBoundary])
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: "red",
+                            width: 3
+                        })
+                    })
+                });
+                map.addLayer(boundaryLayer);
+            }
+
+            // COMPLETE handlePointClick function with ALL form fields
+            function handlePointClick(properties) {
+                const gisid = properties["gisid"];
+                resetPointFormFields();
+                $('#pointModal').remove();
+
+                $("body").append(`
+                    <div class="modal fade" id="pointModal" tabindex="-1" data-bs-backdrop="static">
+                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Point Data Collection - GIS ID: ${gisid}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" enctype="multipart/form-data" id="pointForm">
+                                    @csrf
+                                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                        <!-- Basic Information Card -->
+                                        <div class="card mb-3">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="type" class="form-label">Assessment Type <span class="text-danger">*</span></label>
+                                                        <select name="type" id="type" class="form-control" required>
+                                                            <option value="OLD">OLD</option>
+                                                            <option value="NEW">NEW</option>
+                                                            <option value="OTHER WARD">OTHER WARD</option>
+                                                            <option value="NO_TAX">NO TAX</option>
+                                                            <option value="VACCAND">VACCAND</option>
+                                                        </select>
+                                                        <div id="type_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3" id="suveyedbtn"></div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="pointgis" class="form-label">GIS ID <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" id="pointgis" name="point_gisid" value="${gisid}" readonly>
+                                                        <div id="point_gisid_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="assessment" class="form-label">Assessment No <span class="text-danger">*</span></label>
+                                                        <input type="text" name="assessment" class="form-control" id="assessment">
+                                                        <div id="assessment_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="old_assessment" class="form-label">Old Assessment</label>
+                                                        <input type="text" name="old_assessment" class="form-control" id="old_assessment">
+                                                        <div id="old_assessment_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="owner_name" class="form-label">Owner Name</label>
+                                                        <input type="text" name="owner_name" class="form-control" id="owner_name">
+                                                        <div id="owner_name_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="present_owner_name" class="form-label">Present Owner Name</label>
+                                                        <input type="text" name="present_owner_name" class="form-control" id="present_owner_name">
+                                                        <div id="present_owner_name_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="no_of_shop" class="form-label">Number of Shops</label>
+                                                        <input type="number" name="no_of_shop" class="form-control" id="no_of_shop" min="0" step="1" value="0">
+                                                        <div id="no_of_shop_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="no_of_persons" class="form-label">Number of Persons</label>
+                                                        <input type="number" name="no_of_persons" class="form-control" id="no_of_persons" min="0" step="1" value="0">
+                                                        <div id="no_of_persons_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Property Details Card -->
+                                        <div class="card mb-3">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                                                <h6 class="mb-0"><i class="fas fa-building"></i> Property Details</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="floor" class="form-label">Floor</label>
+                                                        <input type="number" name="floor" class="form-control" id="floor" min="0" step="1">
+                                                        <div id="floor_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="old_door_no" class="form-label">Old Door No</label>
+                                                        <input type="text" name="old_door_no" class="form-control" id="old_door_no">
+                                                        <div id="old_door_no_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="new_door_no" class="form-label">New Door No</label>
+                                                        <input type="text" name="new_door_no" class="form-control" id="new_door_no">
+                                                        <div id="new_door_no_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="bill_usage" class="form-label">Bill Usage</label>
+                                                        <select name="bill_usage" id="bill_usage" class="form-control">
+                                                            <option value="">SELECT USAGE</option>
+                                                            <option value="RESIDENTIAL">RESIDENTIAL</option>
+                                                            <option value="COMMERCIAL">COMMERCIAL</option>
+                                                            <option value="EDUCATIONAL INSTITUTIONS">EDUCATIONAL INSTITUTIONS</option>
+                                                            <option value="GOVERNMENT BUILDING">GOVERNMENT BUILDING</option>
+                                                            <option value="INDUSTRIAL">INDUSTRIAL</option>
+                                                            <option value="OFFICE / LODGE / THEATER / RESTAURANTS">OFFICE / LODGE / THEATER / RESTAURANTS</option>
+                                                            <option value="STAR HOTEL">STAR HOTEL</option>
+                                                        </select>
+                                                        <div id="bill_usage_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="eb" class="form-label">EB Number</label>
+                                                        <input type="text" name="eb" class="form-control" id="eb">
+                                                        <div id="eb_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Shop Details Container -->
+                                        <div id="shopDetailsContainer"></div>
+
+                                        <!-- Tax Details Card -->
+                                        <div class="card mb-3">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: #333;">
+                                                <h6 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Tax Details</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="water_tax" class="form-label">Water Tax</label>
+                                                        <input type="text" name="water_tax" class="form-control" id="water_tax" step="0.01" min="0">
+                                                        <div id="water_tax_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="old_water_tax" class="form-label">Old Water Tax</label>
+                                                        <input type="text" name="old_water_tax" class="form-control" id="old_water_tax" step="0.01" min="0">
+                                                        <div id="old_water_tax_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="professional_tax" class="form-label">Professional Tax</label>
+                                                        <input type="text" name="professional_tax" class="form-control" id="professional_tax">
+                                                        <div id="professional_tax_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="gst" class="form-label">GST</label>
+                                                        <input type="text" name="gst" class="form-control" id="gst" placeholder="GST Number">
+                                                        <div id="gst_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="trade_income" class="form-label">Trade Income</label>
+                                                        <input type="number" name="trade_income" class="form-control" id="trade_income" step="0.01" min="0">
+                                                        <div id="trade_income_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Documents Card -->
+                                        <div class="card mb-3">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white;">
+                                                <h6 class="mb-0"><i class="fas fa-id-card"></i> Documents & Contact</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="aadhar_no" class="form-label">Aadhar Number</label>
+                                                        <input type="text" name="aadhar_no" class="form-control" id="aadhar_no" maxlength="12" pattern="[0-9]{12}" placeholder="12-digit Aadhar">
+                                                        <div id="aadhar_no_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="ration_no" class="form-label">Ration Number</label>
+                                                        <input type="text" name="ration_no" class="form-control" id="ration_no">
+                                                        <div id="ration_no_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-4 mb-3">
+                                                        <label for="phone" class="form-label">Phone Number</label>
+                                                        <input type="tel" name="phone_number" class="form-control" id="phone" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile">
+                                                        <div id="phone_number_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quality Check Card -->
+                                        <div class="card mb-3 d-none" id="qualityCheckCard">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #6f42c1, #5a32a3); color: white;">
+                                                <h6 class="mb-0"><i class="fas fa-check-circle"></i> Quality Check</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="qc_area" class="form-label">QC Area</label>
+                                                        <input type="text" name="qc_area" class="form-control" id="qc_area">
+                                                        <div id="qc_area_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="qc_usage" class="form-label">QC Usage</label>
+                                                        <select name="qc_usage" id="qc_usage" class="form-control">
+                                                            <option value="">Select Usage</option>
+                                                            <option value="Residential">Residential</option>
+                                                            <option value="Commercial">Commercial</option>
+                                                            <option value="Mixed">Mixed</option>
+                                                        </select>
+                                                        <div id="qc_usage_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="qc_name" class="form-label">QC Name</label>
+                                                        <input type="text" name="qc_name" class="form-control" id="qc_name" placeholder="QC Officer Name">
+                                                        <div id="qc_name_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-3 mb-3">
+                                                        <label for="qc_remarks" class="form-label">QC Remarks</label>
+                                                        <input type="text" name="qc_remarks" class="form-control" id="qc_remarks">
+                                                        <div id="qc_remarks_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Remarks Card -->
+                                        <div class="card mb-3">
+                                            <div class="card-header" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white;">
+                                                <h6 class="mb-0"><i class="fas fa-comment"></i> Remarks</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="establishment_remarks" class="form-label">Establishment Remarks</label>
+                                                        <textarea name="establishment_remarks" class="form-control" id="establishment_remarks" rows="2" placeholder="Enter establishment remarks..."></textarea>
+                                                        <div id="establishment_remarks_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <label for="remarks" class="form-label">Office Remarks</label>
+                                                        <textarea name="remarks" class="form-control" id="remarks" rows="2" placeholder="Enter general remarks..."></textarea>
+                                                        <div id="remarks_error" class="error-message text-danger small"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dynamic Shop Details Append Area -->
+                                        <div id="append"></div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            <i class="fas fa-times me-2"></i>Close
+                                        </button>
+                                        <button type="submit" id="pointSubmit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Point Data
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                const polygonData = polygonDatas.find(data => data.gisid === gisid);
+                const polygonNumOfBill = polygonData ? polygonData.number_bill : null;
+                const matchingPointsCount = pointDatas.filter(data => data.point_gisid === gisid).length;
+
+                if (polygonNumOfBill > matchingPointsCount) {
+                    $("#pointgis").val(gisid);
+                    initDynamicShopDetails();
+                    $("#pointModal").modal("show");
+                } else {
+                    showFlashMessage(`Already this building has ${matchingPointsCount} bills`, "error");
+                }
+            }
+
+            function resetPointFormFields() {
+                $("#pointgis, #assessment, #old_assessment, #owner_name, #present_owner_name, #worker_name, #building_data_id,#no_of_persons")
+                    .val("");
+                $("#floor, #old_door_no, #new_door_no, #plot_area, #eb, #otsarea").val("");
+                $("#water_tax, #old_water_tax, #halfyeartax, #balance, #professional_tax, #gst, #trade_income").val(
+                    "");
+                $("#aadhar_no, #ration_no, #phone").val("");
+                $("#qc_area, #qc_name, #qc_remarks").val("");
+                $("#establishment_remarks, #remarks").val("");
+                $("#type").val("OLD");
+                $("#bill_usage, #shop_category, #qc_usage").val("");
+
+                const appendArea = $('#append');
+                const container = $('#shopDetailsContainer');
+                if (container.length) {
+                    const shops = container.find('.shop-item');
+                    if (shops.length > 0) {
+                        shops.fadeOut(300, function() {
+                            container.empty();
+                            currentShopCount = 0;
+                            $('#no_of_shop').val(0);
+                            appendArea.find('.card.mb-3').fadeOut(300, function() {
+                                $(this).remove();
+                            });
+                        });
+                    } else {
+                        appendArea.empty();
+                        currentShopCount = 0;
+                        $('#no_of_shop').val(0);
+                    }
+                } else {
+                    appendArea.empty();
+                    currentShopCount = 0;
+                    $('#no_of_shop').val(0);
+                }
+                $(".error-message").html("");
+                $(".is-invalid").removeClass("is-invalid");
+            }
+
+            function initDynamicShopDetails() {
+                $('#no_of_shop').off('change keyup').on('change keyup', function() {
+                    if (shopTimeout) clearTimeout(shopTimeout);
+                    shopTimeout = setTimeout(() => {
+                        let shopCount = parseInt($(this).val()) || 0;
+                        if (shopCount < 0) shopCount = 0;
+                        if ($(this).val() !== shopCount.toString()) $(this).val(shopCount);
+                        generateShopForms(shopCount);
+                    }, 300);
+                });
+                $(document).on('click', '.remove-shop-btn', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const shopId = $(this).data('shop-id');
+                    const currentCount = parseInt($('#no_of_shop').val()) || 0;
+                    if (currentCount > 0) {
+                        const newCount = currentCount - 1;
+                        $('#no_of_shop').val(newCount).trigger('change');
+                    }
+                });
+            }
+
+            function generateShopForms(shopCount) {
+                const appendArea = $('#append');
+                if (currentShopCount === shopCount) return;
+                if (shopCount === 0) {
+                    const container = $('#shopDetailsContainer');
+                    if (container.length) {
+                        const shops = container.find('.shop-item');
+                        if (shops.length > 0) {
+                            shops.fadeOut(300, function() {
+                                container.empty();
+                                currentShopCount = 0;
+                                $('#no_of_shop').val(0);
+                                appendArea.find('.card.mb-3').fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                            });
+                        } else {
+                            appendArea.empty();
+                            currentShopCount = 0;
+                        }
+                    } else {
+                        appendArea.empty();
+                        currentShopCount = 0;
+                    }
+                    return;
+                }
+                let container = $('#shopDetailsContainer');
+                if (container.length === 0) {
+                    const shopCard = $(`
+                        <div class="card mb-3">
+                            <div class="card-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; display: flex; justify-content: space-between; align-items: center;">
+                                <h6 class="mb-0"><i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount > 1 ? 's' : ''})</h6>
+                                <button type="button" class="btn btn-sm btn-light" id="addAllShopsBtn" style="border-radius: 20px;">
+                                    <i class="fas fa-plus"></i> Add All
+                                </button>
+                            </div>
+                            <div class="card-body" id="shopDetailsContainer"></div>
+                        </div>
+                    `);
+                    appendArea.append(shopCard);
+                    container = $('#shopDetailsContainer');
+                    $('#addAllShopsBtn').off('click').on('click', function() {
+                        const newCount = currentShopCount + 1;
+                        $('#no_of_shop').val(newCount).trigger('change');
+                    });
+                }
+                if (shopCount > currentShopCount) {
+                    for (let i = currentShopCount + 1; i <= shopCount; i++) {
+                        addShopForm(i, container);
+                    }
+                } else if (shopCount < currentShopCount) {
+                    for (let i = currentShopCount; i > shopCount; i--) {
+                        removeShopForm(i, container);
+                    }
+                }
+                currentShopCount = shopCount;
+                const header = appendArea.find('.card-header h6');
+                if (header.length) {
+                    header.html(
+                        `<i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount !== 1 ? 's' : ''})`
+                    );
+                }
+            }
+
+            function addShopForm(shopNumber, container) {
+                const shopHtml = `
+                    <div class="shop-item" data-shop-id="${shopNumber}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0"><i class="fas fa-store me-2"></i>Shop ${shopNumber}</h6>
+                            <button type="button" class="remove-shop-btn" data-shop-id="${shopNumber}">
+                                <i class="fas fa-trash me-1"></i> Remove
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Prof Tax Assessment</label>
+                                <input type="text" name="prof_tax_assessment_${shopNumber}" class="form-control" placeholder="Enter prof tax assessment">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Old Prof Tax Assessment</label>
+                                <input type="text" name="old_prof_tax_assessment_${shopNumber}" class="form-control" placeholder="Enter old prof tax assessment">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Floor</label>
+                                <input type="text" name="shop_floor_${shopNumber}" class="form-control" placeholder="Enter floor number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Name</label>
+                                <input type="text" name="shop_name_${shopNumber}" class="form-control" placeholder="Enter shop name">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Owner Name</label>
+                                <input type="text" name="shop_owner_name_${shopNumber}" class="form-control" placeholder="Enter owner name">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Category</label>
+                                <select name="shop_category_${shopNumber}" class="form-control">
+                                    <option value="">Select Category</option>
+                                    <option value="Grocery">Grocery</option>
+                                    <option value="Clothing">Clothing</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Restaurant">Restaurant</option>
+                                    <option value="Pharmacy">Pharmacy</option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Mobile</label>
+                                <input type="tel" name="shop_mobile_${shopNumber}" class="form-control" placeholder="Mobile number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">License Number</label>
+                                <input type="text" name="license_${shopNumber}" class="form-control" placeholder="License number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Number of Employees</label>
+                                <input type="number" name="number_of_employee_${shopNumber}" class="form-control" placeholder="Employee count">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(shopHtml);
+            }
+
+            function removeShopForm(shopNumber, container) {
+                $(`.shop-item[data-shop-id="${shopNumber}"]`).fadeOut(300, function() {
+                    $(this).remove();
+                });
+            }
+
+            // Point form submission with ALL data
+            $("#pointForm").off('submit').on('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const shopCount = parseInt($('#no_of_shop').val()) || 0;
+                formData.append('total_shops', shopCount);
+                for (let i = 1; i <= shopCount; i++) {
+                    formData.append(`prof_tax_assessment_${i}`, $(`input[name="prof_tax_assessment_${i}"]`)
+                        .val() || '');
+                    formData.append(`old_prof_tax_assessment_${i}`, $(
+                        `input[name="old_prof_tax_assessment_${i}"]`).val() || '');
+                    formData.append(`shop_floor_${i}`, $(`input[name="shop_floor_${i}"]`).val() || '');
+                    formData.append(`shop_name_${i}`, $(`input[name="shop_name_${i}"]`).val() || '');
+                    formData.append(`shop_owner_name_${i}`, $(`input[name="shop_owner_name_${i}"]`).val() ||
+                        '');
+                    formData.append(`shop_category_${i}`, $(`select[name="shop_category_${i}"]`).val() ||
+                        '');
+                    formData.append(`shop_mobile_${i}`, $(`input[name="shop_mobile_${i}"]`).val() || '');
+                    formData.append(`license_${i}`, $(`input[name="license_${i}"]`).val() || '');
+                    formData.append(`number_of_employee_${i}`, $(`input[name="number_of_employee_${i}"]`)
+                        .val() || '');
+                }
+                $("#pointSubmit").prop("disabled", true).html(
+                    '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+                $.ajax({
+                    headers: {
+                        "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                    },
+                    type: "POST",
+                    url: routes.surveyorPointDataUpload,
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        showFlashMessage(response.message, "success");
+                        $("#pointModal").modal("hide");
+                        if (response.pointDatas) pointDatas = response.pointDatas;
+                        if (response.points) points = response.points;
+                        refreshVectorLayer();
+                        resetPointFormFields();
+                        $('#append').empty();
+                        $('#no_of_shop').val('');
+                        currentShopCount = 0;
+                    },
+                    error: function(xhr) {
+                        let errorMsg = "An error occurred while processing your request.";
+                        if (xhr.responseJSON && xhr.responseJSON.msg) errorMsg = xhr
+                            .responseJSON.msg;
+                        showFlashMessage(errorMsg, "error");
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            $.each(xhr.responseJSON.errors, function(key, value) {
+                                $("#" + key).addClass("is-invalid");
+                                $("#" + key + "_error").text(value[0]);
+                            });
+                        }
+                    },
+                    complete: function() {
+                        $("#pointSubmit").prop("disabled", false).html(
+                            '<i class="fas fa-save me-2"></i>Save Point Data');
+                    }
+                });
+            });
+
+            function handlePolygonClick(properties) {
+                const gisId = properties["gisid"];
+                resetBuildingForm();
+                $("#building_gisid").val(gisId);
+                let existingData = null;
+
+                // REMOVE OLD MODAL BEFORE APPENDING NEW ONE
+                $("#buildingModal").remove();
+
+                // Get road names from PHP and convert to JavaScript array
+                let roadNames = @json($uniqueRoadNames ?? []);
+
+                // Build road options HTML
+                let roadOptions = '<option value="">Select Road Name</option>';
+                if (roadNames && roadNames.length > 0) {
+                    roadNames.forEach(function(roadName) {
+                        let escapedRoadName = roadName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        roadOptions += `<option value="${escapedRoadName}">${escapedRoadName}</option>`;
+                    });
+                }
+
+                const modalHtml = `
+        <div class="modal fade" id="buildingModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-bottom: none;">
+                        <h5 class="modal-title">
+                            <i class="fas fa-building me-2"></i>Building Data Collection - GIS ID: ${gisId}
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="buildingForm" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" id="gisIdInput" name="gisid" value="${gisId}">
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #f8fafc;">
+
+                            <!-- Image Upload Section with Previews -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-image me-2"></i>Building Images</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="fw-bold mb-2"><i class="fas fa-camera me-1"></i>Image 1</label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px;">
+                                                <img id="buildingImagePreview" src="" alt="Building Image Preview" class="img-fluid" style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                <div id="noImagePlaceholder" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
+                                                    <p>No image selected</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <label class="btn btn-outline-primary btn-sm w-100">
+                                                    <i class="fas fa-upload me-1"></i> Choose Image
+                                                    <input type="file" name="image" id="building_image" accept="image/*" style="display: none;">
+                                                </label>
+                                            </div>
+                                            <div id="building_image_error" class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="fw-bold mb-2"><i class="fas fa-camera me-1"></i>Image 2</label>
+                                            <div class="image-preview-container border rounded p-3" style="background: #ffffff; min-height: 220px;">
+                                                <img id="buildingImagePreview2" src="" alt="Building Image Preview 2" class="img-fluid" style="display: none; max-height: 200px; width: 100%; object-fit: contain; border-radius: 8px;">
+                                                <div id="noImagePlaceholder2" class="text-center text-muted" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px;">
+                                                    <i class="fas fa-cloud-upload-alt fa-3x mb-2" style="color: #cbd5e1;"></i>
+                                                    <p>No image selected</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <label class="btn btn-outline-primary btn-sm w-100">
+                                                    <i class="fas fa-upload me-1"></i> Choose Image
+                                                    <input type="file" name="image2" id="building_image2" accept="image/*" style="display: none;">
+                                                </label>
+                                            </div>
+                                            <div id="building_image2_error" class="error-message text-danger small mt-1"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Basic Information Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">GIS ID <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="building_gisid" id="building_gisid" value="${gisId}" readonly>
+                                            <div id="building_gisid_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Zone</label>
+                                            <select class="form-select" name="building_zone" id="building_zone">
+                                                <option value="">Select Zone</option>
+                                                <option value="ZONE-A">ZONE-A</option>
+                                                <option value="ZONE-B">ZONE-B</option>
+                                                <option value="ZONE-C">ZONE-C</option>
+                                                <option value="ZONE-D">ZONE-D</option>
+                                                <option value="ZONE-E">ZONE-E</option>
+                                            </select>
+                                            <div id="building_zone_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Bills</label>
+                                            <input type="number" class="form-control" name="number_bill" id="number_bill" min="0">
+                                            <div id="number_bill_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Shops</label>
+                                            <input type="number" class="form-control" name="number_shop" id="number_shop" min="0">
+                                            <div id="number_shop_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Number of Floors</label>
+                                            <input type="number" class="form-control" name="number_floor" id="number_floor" min="0">
+                                            <div id="number_floor_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Percentage</label>
+                                            <select class="form-select" name="percentage" id="percentage">
+                                                <option value="">Select Percentage</option>
+                                                <option value="10">10%</option>
+                                                <option value="20">20%</option>
+                                                <option value="30">30%</option>
+                                                <option value="40">40%</option>
+                                                <option value="50">50%</option>
+                                                <option value="60">60%</option>
+                                                <option value="70">70%</option>
+                                                <option value="80">80%</option>
+                                                <option value="85">85%</option>
+                                                <option value="90">90%</option>
+                                                <option value="100">100%</option>
+                                            </select>
+                                            <div id="percentage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Building Name</label>
+                                            <input type="text" class="form-control" name="building_name" id="building_name" placeholder="Enter building name">
+                                            <div id="building_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Road Name</label>
+                                            <select class="form-select" id="road_name" name="road_name">
+                                                ${roadOptions}
+                                            </select>
+                                            <div id="road_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-control" name="phone" id="phone_building" placeholder="10-digit mobile number" maxlength="10">
+                                            <div id="phone_building_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Building Details Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-building me-2"></i>Building Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Building Usage</label>
+                                            <select class="form-select" name="building_usage" id="building_usage">
+                                                <option value="">Select Usage</option>
+                                                <option value="RESIDENTIAL">Residential</option>
+                                                <option value="COMMERCIAL">Commercial</option>
+                                                <option value="INDUSTRIAL">Industrial</option>
+                                                <option value="INSTITUTIONAL">Institutional</option>
+                                                <option value="MIXED">Mixed</option>
+                                                <option value="GOVERNMENT">Government</option>
+                                                <option value="VACANT">Vacant</option>
+                                            </select>
+                                            <div id="building_usage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Construction Type</label>
+                                            <select class="form-select" name="construction_type" id="construction_type">
+                                                <option value="">Select Type</option>
+                                                <option value="PERMANENT">Permanent</option>
+                                                <option value="SEMI_PERMANENT">Semi Permanent</option>
+                                                <option value="VACANT_LAND">Vacant Land</option>
+                                                <option value="SHED">Shed</option>
+                                                <option value="CAR_SHED">Car Shed</option>
+                                                <option value="TEMPORARY">Temporary</option>
+                                            </select>
+                                            <div id="construction_type_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Building Type</label>
+                                            <select class="form-select" name="building_type" id="building_type">
+                                                <option value="">Select Type</option>
+                                                <option value="Independent">Independent</option>
+                                                <option value="Flat">Flat</option>
+                                                <option value="Kalyana_Mandapam">Kalyana Mandapam</option>
+                                                <option value="Hotel">Hotel</option>
+                                                <option value="Cinema_Theatre">Cinema Theatre</option>
+                                                <option value="Central_Government_Building">Central Government Building</option>
+                                                <option value="State_Government_Building">State Government Building</option>
+                                                <option value="Municipality_Corporation">Municipality / Corporation</option>
+                                                <option value="Educational_Institution">Educational Institution</option>
+                                                <option value="Hospital">Hospital</option>
+                                                <option value="Commercial_Complex">Commercial Complex</option>
+                                                <option value="Shop">Shop</option>
+                                                <option value="Office">Office</option>
+                                                <option value="Temple">Temple</option>
+                                                <option value="Mosque">Mosque</option>
+                                                <option value="Church">Church</option>
+                                                <option value="Amma_Unavagam">Amma Unavagam</option>
+                                                <option value="Public_Toilet">Public Toilet</option>
+                                                <option value="Vacant Land">Vacant Land</option>
+                                                <option value="Under Construction">Under Construction</option>
+                                                <option value="Others">Others</option>
+                                            </select>
+                                            <div id="building_type_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">UGD Status</label>
+                                            <select class="form-select" name="ugd" id="ugd">
+                                                <option value="">Select Status</option>
+                                                <option value="No_Connection">No Connection</option>
+                                                <option value="Manhole_Available_but_Connection_Not_Given_to_House">Manhole Available but Connection Not Given</option>
+                                                <option value="Stage_1_Completed">Stage 1 Completed</option>
+                                                <option value="Stage_1_2_Completed">Stage 1 & 2 Completed</option>
+                                                <option value="Stage_1_2_Completed_but_Not_Connected">Stage 1 & 2 Completed but Not Connected</option>
+                                                <option value="Stage_1_2_3_Completed">Stage 1, 2 & 3 Completed</option>
+                                                <option value="Direct_Connection_Given">Direct Connection Given</option>
+                                                <option value="1_UGD_Connection_-_3_Stage_Completed">1 UGD Connection - 3 Stage Completed</option>
+                                                <option value="2_UGD_Connection_-_3_Stage_Completed">2 UGD Connection - 3 Stage Completed</option>
+                                            </select>
+                                            <div id="ugd_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Amenities Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: #333;">
+                                    <h6 class="mb-0"><i class="fas fa-umbrella me-2"></i>Amenities</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Lift Room</label>
+                                            <select class="form-select" name="liftroom" id="liftroom">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="liftroom_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Head Room</label>
+                                            <select class="form-select" name="headroom" id="headroom">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="headroom_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Overhead Tank</label>
+                                            <select class="form-select" name="overhead_tank" id="overhead_tank">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="overhead_tank_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Rainwater Harvesting</label>
+                                            <select class="form-select" name="rainwater_harvesting" id="rainwater_harvesting">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="rainwater_harvesting_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Parking</label>
+                                            <select class="form-select" name="parking" id="parking">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="parking_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Ramp</label>
+                                            <select class="form-select" name="ramp" id="ramp">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="ramp_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Hoarding</label>
+                                            <select class="form-select" name="hoarding" id="hoarding">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="hoarding_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">CCTV</label>
+                                            <select class="form-select" name="cctv" id="cctv">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="cctv_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Cell Tower</label>
+                                            <select class="form-select" name="cell_tower" id="cell_tower">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="cell_tower_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Solar Panel</label>
+                                            <select class="form-select" name="solar_panel" id="solar_panel">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="solar_panel_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Basement</label>
+                                            <input type="number" class="form-control" name="basement" id="basement" min="0" placeholder="Number of basements">
+                                            <div id="basement_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label class="form-label">Water Connection</label>
+                                            <select class="form-select" name="water_connection" id="water_connection">
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                            <div id="water_connection_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Card -->
+                            <div class="card mb-4">
+                                <div class="card-header" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-comment me-2"></i>Remarks</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">General Remarks</label>
+                                            <textarea class="form-control" name="remarks" id="remarks_building" rows="3" placeholder="Enter general remarks..."></textarea>
+                                            <div id="remarks_building_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Corporation Remarks</label>
+                                            <textarea class="form-control" name="corporationremarks" id="corporationremarks" rows="3" placeholder="Enter corporation remarks..."></textarea>
+                                            <div id="corporationremarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">QC Remarks</label>
+                                            <textarea class="form-control" name="qc_remarks" id="qc_remarks" rows="2" placeholder="Enter QC remarks..."></textarea>
+                                            <div id="qc_remarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0;">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Close
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="buildingsubmitBtn">
+                                <i class="fas fa-save me-2"></i>Save Building Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+                $("body").append(modalHtml);
+
+                // Add image preview functionality after modal is added
+                setupImagePreview();
+                setupBuildingFormSubmission();
+
+                if (polygonDatas && polygonDatas.length > 0) {
+                    existingData = polygonDatas.find(item => item.gisid == gisId);
+                }
+
+                if (existingData) {
+                    populateBuildingForm(existingData);
+                    showFlashMessage('Loading existing building data...', 'info');
+                } else {
+                    $("#buildingImagePreview").hide().attr("src", "");
+                    $("#buildingImagePreview2").hide().attr("src", "");
+                    showFlashMessage('Creating new building record...', 'info');
+                }
+
+                $("#buildingModal").modal("show");
+            }
+
+            function setupImagePreview() {
+                // Image 1 preview
+                $('#building_image').off('change').on('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            $('#buildingImagePreview').attr('src', event.target.result).show();
+                            $('#noImagePlaceholder').hide();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#buildingImagePreview').hide().attr('src', '');
+                        $('#noImagePlaceholder').show();
+                    }
+                });
+
+                // Image 2 preview
+                $('#building_image2').off('change').on('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            $('#buildingImagePreview2').attr('src', event.target.result).show();
+                            $('#noImagePlaceholder2').hide();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        $('#buildingImagePreview2').hide().attr('src', '');
+                        $('#noImagePlaceholder2').show();
+                    }
+                });
+            }
+
+            function setupBuildingFormSubmission() {
+                $("#buildingForm").off('submit').on('submit', function(e) {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+
+                    $("#buildingsubmitBtn").prop("disabled", true).html(
+                        '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+                    $.ajax({
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        type: "POST",
+                        url: "{{ route('surveyor.polygon.datas.upload') }}",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            showFlashMessage(response.message, "success");
+                            $("#buildingModal").modal("hide");
+                            if (response.polygonDatas) {
+                                polygonDatas = response.polygonDatas;
+                            }
+                            if (response.polygons) {
+                                polygons = response.polygons;
+                            }
+                            refreshVectorLayer();
+                            resetBuildingForm();
+                        },
+                        error: function(xhr) {
+                            let errorMsg = "An error occurred while saving building data";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMsg = xhr.responseJSON.message;
+                            }
+                            showFlashMessage(errorMsg, "error");
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    $("#" + key + "_error").html(value[0]);
+                                    $("#" + key).addClass("is-invalid");
+                                });
+                            }
+                        },
+                        complete: function() {
+                            $("#buildingsubmitBtn").prop("disabled", false).html(
+                                '<i class="fas fa-save me-2"></i>Save Building Data');
+                        }
+                    });
+                });
+            }
+
+            function populateBuildingForm(item) {
+                // Basic Information
+                $("#building_gisid").val(item.gisid || "");
+                $("#number_bill").val(item.number_bill || "");
+                $("#number_shop").val(item.number_shop || "");
+                $("#number_floor").val(item.number_floor || "");
+                $("#building_name").val(item.building_name || "");
+                $("#road_name").val(item.road_name || "");
+                $("#phone_building").val(item.phone || "");
+                $("#building_zone").val(item.zone || item.building_zone || "");
+                $("#percentage").val(item.percentage || "");
+
+                // Building Details
+                $("#building_usage").val(item.building_usage || "");
+                $("#construction_type").val(item.construction_type || "");
+                $("#building_type").val(item.building_type || "");
+                $("#ugd").val(item.ugd || "");
+
+                // Amenities (Yes/No fields)
+                $("#liftroom").val(item.liftroom || "No");
+                $("#headroom").val(item.headroom || "No");
+                $("#overhead_tank").val(item.overhead_tank || "No");
+                $("#rainwater_harvesting").val(item.rainwater_harvesting || "No");
+                $("#parking").val(item.parking || "No");
+                $("#ramp").val(item.ramp || "No");
+                $("#hoarding").val(item.hoarding || "No");
+                $("#cctv").val(item.cctv || "No");
+                $("#cell_tower").val(item.cell_tower || "No");
+                $("#solar_panel").val(item.solar_panel || "No");
+
+                // Property Details
+                $("#basement").val(item.basement || "");
+                $("#water_connection").val(item.water_connection || "No");
+
+                // Remarks
+                $("#remarks_building").val(item.remarks || "");
+                $("#corporationremarks").val(item.corporationremarks || "");
+                $("#qc_remarks").val(item.qc_remarks || "");
+
+                // Image Previews
+                const assetUrl = window.assetUrl || "{{ asset('') }}";
+
+                if (item.image && item.image !== "") {
+                    const imageUrl = item.image.startsWith('http') ? item.image : assetUrl + item.image;
+                    $("#buildingImagePreview").attr("src", imageUrl).show();
+                    $("#noImagePlaceholder").hide();
+                } else {
+                    $("#buildingImagePreview").hide().attr("src", "");
+                    $("#noImagePlaceholder").show();
+                }
+
+                if (item.image2 && item.image2 !== "") {
+                    const imageUrl2 = item.image2.startsWith('http') ? item.image2 : assetUrl + item.image2;
+                    $("#buildingImagePreview2").attr("src", imageUrl2).show();
+                    $("#noImagePlaceholder2").hide();
+                } else {
+                    $("#buildingImagePreview2").hide().attr("src", "");
+                    $("#noImagePlaceholder2").show();
+                }
+            }
+
+            function resetBuildingForm() {
+                $("#building_gisid").val("");
+                $("#number_bill").val("");
+                $("#number_shop").val("");
+                $("#number_floor").val("");
+                $("#building_name").val("");
+                $("#road_name").val("");
+                $("#phone_building").val("");
+                $("#building_zone").val("");
+                $("#percentage").val("");
+
+                $("#building_usage").val("");
+                $("#construction_type").val("");
+                $("#building_type").val("");
+                $("#ugd").val("");
+
+                $("#liftroom").val("No");
+                $("#headroom").val("No");
+                $("#overhead_tank").val("No");
+                $("#rainwater_harvesting").val("No");
+                $("#parking").val("No");
+                $("#ramp").val("No");
+                $("#hoarding").val("No");
+                $("#cctv").val("No");
+                $("#cell_tower").val("No");
+                $("#solar_panel").val("No");
+
+                $("#basement").val("");
+                $("#water_connection").val("No");
+
+                $("#remarks_building").val("");
+                $("#corporationremarks").val("");
+                $("#qc_remarks").val("");
+
+                $("#buildingImagePreview").hide().attr("src", "");
+                $("#buildingImagePreview2").hide().attr("src", "");
+
+                $("#building_image").val("");
+                $("#building_image2").val("");
+
+                $(".error-message").html("");
+                $(".is-invalid").removeClass("is-invalid");
+            }
+
+            function refreshVectorLayer() {
+                polygonSource.clear();
+                lineSource.clear();
+                pointSource.clear();
+                polygons.forEach(poly => {
+                    try {
+                        let coords = JSON.parse(poly.coordinates);
+                        polygonSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Polygon(coords),
+                            gisid: poly.gisid,
+                            type: "Polygon",
+                            sqfeet: poly.sqfeet || "0"
+                        }));
+                    } catch (e) {}
+                });
+                lines.forEach(l => {
+                    try {
+                        let coords = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
+                            .coordinates;
+                        if (coords.length === 1 && Array.isArray(coords[0]) && coords[0].length > 0 && Array
+                            .isArray(coords[0][0])) coords = coords[0];
+                        if (coords && coords.length >= 2) {
+                            lineSource.addFeature(new ol.Feature({
+                                geometry: new ol.geom.LineString(coords),
+                                gisid: l.gisid,
+                                type: "Line",
+                                road_name: l.road_name || null
+                            }));
+                        }
+                    } catch (e) {}
+                });
+                points.forEach(p => {
+                    try {
+                        let coords = JSON.parse(p.coordinates);
+                        pointSource.addFeature(new ol.Feature({
+                            geometry: new ol.geom.Point(coords),
+                            gisid: p.gisid,
+                            type: "Point"
+                        }));
+                    } catch (e) {}
+                });
+                highlightSource.clear();
+            }
+
+
+            // Setup click handler
+            function setupOriginalClickHandler() {
+                featureClickHandler = function(evt) {
+                    if (isModifyMode || isDrawingActive) return;
+                    let hasDrawingActive = false;
+                    map.getInteractions().forEach((interaction) => {
+                        if (interaction instanceof ol.interaction.Draw) hasDrawingActive = true;
+                    });
+                    if (hasDrawingActive) return;
+                    const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
+                    if (feature) {
+                        const properties = feature.getProperties();
+                        const geometryType = feature.getGeometry().getType();
+                        if (geometryType === "Point") handlePointClick(properties);
+                        else if (geometryType === "Polygon") handlePolygonClick(properties);
+                        else if (geometryType === "LineString" || geometryType === "MultiLineString") {
+                            selectedFeature = feature;
+                            showToast(`Selected Road: ${properties.road_name || properties.gisid}`, 'success');
+                        }
+                    }
+                };
+                map.on('click', featureClickHandler);
+            }
+
+            let isModifyMode = false;
+            let isDrawingActive = false;
+
+            function removeDrawInteractions() {
+                map.getInteractions().forEach(interaction => {
+                    if (interaction instanceof ol.interaction.Draw || interaction instanceof ol.interaction
+                        .Modify || interaction instanceof ol.interaction.Select) {
+                        map.removeInteraction(interaction);
+                    }
+                });
+                isModifyMode = false;
+                isDrawingActive = false;
+            }
+
+            function activateDrawPolygon() {
+                removeDrawInteractions();
+                isDrawingActive = true;
+                draw = new ol.interaction.Draw({
+                    source: polygonSource,
+                    type: "Polygon"
+                });
+                map.addInteraction(draw);
+                draw.on("drawend", function(event) {
+                    const coordinates = event.feature.getGeometry().getCoordinates();
+                    $.ajax({
+                        url: routes.addPolygonFeature,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        data: {
+                            type: "Polygon",
+                            coordinates: JSON.stringify(coordinates)
+                        },
+                        success: function(response) {
+                            polygons = response.polygons;
+                            points = response.points;
+                            refreshVectorLayer();
+                            showFlashMessage(response.message, "success");
+                            $("#editToolSelect").val("none");
+                            removeDrawInteractions();
+                        },
+                        error: function() {
+                            showFlashMessage("An error occurred.", "error");
+                            removeDrawInteractions();
+                        }
+                    });
+                });
+            }
+
+            function activateDrawLine() {
+                removeDrawInteractions();
+                isDrawingActive = true;
+                draw = new ol.interaction.Draw({
+                    source: lineSource,
+                    type: "LineString"
+                });
+                map.addInteraction(draw);
+                draw.on("drawend", function(event) {
+                    const coordinates = event.feature.getGeometry().getCoordinates();
+                    $.ajax({
+                        url: routes.addLineFeature,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        data: {
+                            type: "Line",
+                            coordinates: JSON.stringify(coordinates)
+                        },
+                        success: function(response) {
+                            lines = response.lines;
+                            refreshVectorLayer();
+                            showFlashMessage(response.message, "success");
+                            $("#editToolSelect").val("none");
+                            removeDrawInteractions();
+                        },
+                        error: function() {
+                            showFlashMessage("An error occurred.", "error");
+                            removeDrawInteractions();
+                        }
+                    });
+                });
+            }
+
+            function activateDrawPoint() {
+                removeDrawInteractions();
+                isDrawingActive = true;
+                draw = new ol.interaction.Draw({
+                    source: pointSource,
+                    type: "Point"
+                });
+                map.addInteraction(draw);
+                draw.on("drawend", function(event) {
+                    const coordinates = event.feature.getGeometry().getCoordinates();
+                    $.ajax({
+                        url: routes.addPointFeature,
+                        type: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                        },
+                        data: {
+                            type: "Point",
+                            coordinates: JSON.stringify(coordinates)
+                        },
+                        success: function(response) {
+                            points = response.points;
+                            refreshVectorLayer();
+                            showFlashMessage(response.message, "success");
+                            $("#editToolSelect").val("none");
+                            removeDrawInteractions();
+                        },
+                        error: function() {
+                            showFlashMessage("An error occurred.", "error");
+                            removeDrawInteractions();
+                        }
+                    });
+                });
+            }
+
+            function activateModify() {
+                removeDrawInteractions();
+                isModifyMode = true;
+                select = new ol.interaction.Select({
+                    layers: [polygonLayer, lineLayer, pointLayer],
+                    condition: ol.events.condition.click
+                });
+                modify = new ol.interaction.Modify({
+                    features: select.getFeatures()
+                });
+                map.addInteraction(select);
+                map.addInteraction(modify);
+                modify.on('modifyend', function(evt) {
+                    evt.features.forEach(function(feature) {
+                        const geometry = feature.getGeometry();
+                        const coordinates = geometry.getCoordinates();
+                        const type = feature.get('type');
+                        const gisid = feature.get('gisid');
+                        $.ajax({
+                            url: routes.surveyorModifyFeature,
+                            type: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
+                            },
+                            data: {
+                                gisid: gisid,
+                                type: type,
+                                coordinates: JSON.stringify(coordinates)
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    showFlashMessage('Feature updated successfully',
+                                        'success');
+                                    if (response.polygons) polygons = response.polygons;
+                                    if (response.lines) lines = response.lines;
+                                    if (response.points) points = response.points;
+                                    refreshVectorLayer();
+                                } else showFlashMessage(response.message, 'error');
+                            },
+                            error: function() {
+                                showFlashMessage('Error updating feature', 'error');
+                                refreshVectorLayer();
+                            }
+                        });
+                    });
+                });
+            }
+
+            function activateDelete() {
+                removeDrawInteractions();
+                $("#editToolSelect").val("none");
+                $("#deleteModal").modal("show");
+            }
+
+            // Delete functionality
+            $("#deleteForm").submit(function(e) {
+                e.preventDefault();
+                const gisid = $("#deleteGisIdInput").val().trim();
+                if (!gisid) {
+                    showFlashMessage("Please enter a GIS ID", "error");
+                    return;
+                }
+                $.ajax({
+                    url: routes.deleteFeature,
+                    type: "POST",
+                    data: {
+                        gisid: gisid,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            showFlashMessage(response.message, "success");
+                            $("#deleteModal").modal("hide");
+                            if (response.polygons) polygons = response.polygons;
+                            if (response.lines) lines = response.lines;
+                            if (response.points) points = response.points;
+                            refreshVectorLayer();
+                            highlightSource.clear();
+                            $("#deleteForm")[0].reset();
+                        } else showFlashMessage(response.message, "error");
+                    },
+                    error: function() {
+                        showFlashMessage("An error occurred", "error");
+                    }
+                });
+            });
+
+            $("#deleteGisIdInput").on('input', function() {
+                const gisid = $(this).val().trim();
+                if (!gisid) {
+                    highlightSource.clear();
+                    return;
+                }
+                let found = false;
+                pointSource.forEachFeature(f => {
+                    if (f.get('gisid') && f.get('gisid').toString() === gisid) {
+                        highlightSource.clear();
+                        highlightSource.addFeature(f.clone());
+                        found = true;
+                    }
+                });
+                if (!found) lineSource.forEachFeature(f => {
+                    if (f.get('gisid') && f.get('gisid').toString() === gisid) {
+                        highlightSource.clear();
+                        highlightSource.addFeature(f.clone());
+                        found = true;
+                    }
+                });
+                if (!found) polygonSource.forEachFeature(f => {
+                    if (f.get('gisid') && f.get('gisid').toString() === gisid) {
+                        highlightSource.clear();
+                        highlightSource.addFeature(f.clone());
+                        found = true;
+                    }
+                });
+                if (!found) highlightSource.clear();
+            });
+
+            $("#deleteModal").on('hidden.bs.modal', function() {
+                highlightSource.clear();
+                $("#deleteForm")[0].reset();
+            });
+
+            // Panel toggles for desktop
+            $('#layerToggleBtn').click(function() {
+                $('#layerSwitcher').toggleClass('closed');
+                $('#searchLabel, #editLabel').addClass('closed');
+            });
+            $('#closeLayerPanel').click(function() {
+                $('#layerSwitcher').addClass('closed');
+            });
+            $('#closeRouteBtn').click(function() {
+                $('#routeInfoPanel').addClass('closed');
+                routeSource.clear();
+            });
+            $('#searchToggleBtn').click(function(e) {
+                e.stopPropagation();
+                $('#searchLabel').toggleClass('closed');
+                $('#layerSwitcher, #editLabel').addClass('closed');
+                if (!$('#searchLabel').hasClass('closed')) setTimeout(() => $('#searchInput').focus(), 100);
+            });
+            $('#editToggleBtn').click(function(e) {
+                e.stopPropagation();
+                $('#editLabel').toggleClass('closed');
+                $('#searchLabel, #layerSwitcher').addClass('closed');
+            });
+
+            // Mobile bottom navigation handlers
+            $('#mobileLayerBtn').click(function() {
+                $('#layerSwitcher').toggleClass('closed');
+                $('#searchLabel, #editLabel').addClass('closed');
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileSearchBtn').click(function() {
+                $('#searchLabel').toggleClass('closed');
+                $('#layerSwitcher, #editLabel').addClass('closed');
+                if (!$('#searchLabel').hasClass('closed')) setTimeout(() => $('#searchInput').focus(), 100);
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileLocationBtn').click(function() {
+                toggleLiveLocation();
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileRouteBtn').click(function() {
+                if (!selectedFeature) {
+                    showToast('Please search for a location first', 'error');
+                    return;
+                }
+                if (!currentLocationMarker) {
+                    if (confirm('Enable location for route calculation?')) {
+                        toggleLiveLocation();
+                        setTimeout(() => {
+                            if (currentLocationMarker) calculateAndDisplayRoute(selectedFeature);
+                        }, 2500);
+                    }
+                    return;
+                }
+                calculateAndDisplayRoute(selectedFeature);
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+            $('#mobileEditBtn').click(function() {
+                $('#editLabel').toggleClass('closed');
+                $('#searchLabel, #layerSwitcher').addClass('closed');
+                $(this).addClass('active').siblings().removeClass('active');
+                setTimeout(() => $(this).removeClass('active'), 200);
+            });
+
+            $('#editToolSelect').on('change', function() {
+                const value = $(this).val();
+                removeDrawInteractions();
+                if (value === "Polygon") activateDrawPolygon();
+                else if (value === "Line") activateDrawLine();
+                else if (value === "Point") activateDrawPoint();
+                else if (value === "Modify") activateModify();
+                else if (value === "Delete") activateDelete();
+                else {
+                    isModifyMode = false;
+                    isDrawingActive = false;
+                }
+                $('#editLabel').addClass('closed');
+            });
+
+            // Layer toggles
+            $('#osmToggle').change(function() {
+                osmLayer.setVisible($(this).is(':checked'));
+            });
+            $('#satelliteToggle').change(function() {
+                satelliteLayer.setVisible($(this).is(':checked'));
+            });
+            $('#droneToggle').change(function() {
+                droneLayer.setVisible($(this).is(':checked'));
+            });
+            $('#polygonToggle').change(function() {
+                polygonLayer.setVisible($(this).is(':checked'));
+            });
+            $('#lineToggle').change(function() {
+                lineLayer.setVisible($(this).is(':checked'));
+            });
+            $('#pointToggle').change(function() {
+                pointLayer.setVisible($(this).is(':checked'));
+            });
+
+            // Search input
+            $('#searchInput').on('input', function() {
+                const query = $(this).val().trim();
+                clearTimeout(searchDebounceTimer);
+                if (query.length < 2) {
+                    $('#searchSuggestions').removeClass('show');
+                    return;
+                }
+                searchDebounceTimer = setTimeout(() => displaySuggestions(getSearchSuggestions(query)),
+                    300);
+            });
+
+            $('#searchGisidBtn').on('click', function() {
+                const searchvalue = $("#searchInput").val().trim();
+                if (!searchvalue) {
+                    showToast("Please enter a GIS ID or Road Name", 'error');
+                    return;
+                }
+                let found = polygons.find(p => p.gisid == searchvalue);
+                if (found) {
+                    navigateToFeature(found, 'polygon');
+                    return;
+                }
+                found = lines.find(l => l.gisid == searchvalue || (l.road_name && l.road_name.toLowerCase()
+                    .includes(searchvalue.toLowerCase())));
+                if (found) {
+                    navigateToFeature(found, 'line');
+                    return;
+                }
+                found = points.find(p => p.gisid == searchvalue);
+                if (found) {
+                    navigateToFeature(found, 'point');
+                    return;
+                }
+                showToast("GIS ID or Road Name not found", 'error');
+            });
+
+            $(document).on('click', '.suggestion-item', function() {
+                const index = $(this).data('index');
+                if (index !== undefined && currentSuggestions[index]) selectSuggestion(currentSuggestions[
+                    index]);
+            });
+
+            // Live location
             let currentLocationMarker = null;
 
-            // ==================== SEARCH VARIABLES ====================
-            let allBuildings = [];
-
-            // ==================== HELPER FUNCTIONS ====================
-            function showLoading(show) {
-                if (show) {
-                    if ($('#mapLoading').length === 0) {
-                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
+            function toggleLiveLocation() {
+                if (!("geolocation" in navigator)) {
+                    showToast("Geolocation not supported", 'error');
+                    return;
+                }
+                showToast('Fetching your location...', 'info');
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords
+                            .latitude
+                        ]);
+                        map.getView().animate({
+                            center: coords,
+                            zoom: 18,
+                            duration: 1000
+                        });
+                        if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                        currentLocationMarker = new ol.layer.Vector({
+                            source: new ol.source.Vector(),
+                            style: new ol.style.Style({
+                                image: new ol.style.Circle({
+                                    radius: 12,
+                                    fill: new ol.style.Fill({
+                                        color: '#ff4444'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#ffffff',
+                                        width: 3
+                                    })
+                                })
+                            })
+                        });
+                        currentLocationMarker.getSource().addFeature(new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        }));
+                        map.addLayer(currentLocationMarker);
+                        showToast('Location found!', 'success');
+                    },
+                    function(error) {
+                        let msg = "Error getting location";
+                        if (error.code === error.PERMISSION_DENIED) msg = "Please enable location permissions";
+                        showToast(msg, 'error');
                     }
-                    $('#mapLoading').show();
-                } else {
-                    $('#mapLoading').hide();
-                }
+                );
             }
+            $('#liveToggleBtn').click(toggleLiveLocation);
 
-            function showFlashMessage(message, type = 'info') {
-                const alertClass = {
-                    'success': '#28a745',
-                    'error': '#dc3545',
-                    'warning': '#ffc107',
-                    'info': '#17a2b8'
-                }[type] || '#17a2b8';
-
-                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px; z-index: 10000;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
-                $('body').append(flashHtml);
-                setTimeout(() => $(flashHtml).fadeOut(300, function() { $(this).remove(); }), 4000);
-            }
-
-            function closeAllPanels() {
-                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfo').removeClass('open');
-            }
-
-            // ==================== FORMATTING FUNCTIONS ====================
-            function formatDistance(meters) {
-                if (!meters || isNaN(meters)) return '0 m';
-                if (meters < 1000) return Math.round(meters) + ' m';
-                return (meters / 1000).toFixed(2) + ' km';
-            }
-
-            function formatDuration(seconds) {
-                if (!seconds || isNaN(seconds)) return '0 min';
-                const minutes = Math.floor(seconds / 60);
-                if (minutes < 60) return minutes + ' min';
-                const hours = Math.floor(minutes / 60);
-                const mins = minutes % 60;
-                return hours + ' h ' + mins + ' min';
-            }
-
-            // Calculate straight line distance between two coordinates
-            function calculateStraightLineDistance(coord1, coord2) {
-                const [lon1, lat1] = coord1;
-                const [lon2, lat2] = coord2;
-                const R = 6371000;
-                const φ1 = lat1 * Math.PI / 180;
-                const φ2 = lat2 * Math.PI / 180;
-                const Δφ = (lat2 - lat1) * Math.PI / 180;
-                const Δλ = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return R * c;
-            }
-
-            // ==================== ROUTE FUNCTIONS ====================
-
+            // Route functions
             async function getRouteFromOSRM(startCoord, endCoord) {
-                // Validate coordinates
-                if (!startCoord || !endCoord || startCoord.length < 2 || endCoord.length < 2) {
-                    throw new Error('Invalid coordinates');
-                }
-
-                const url = `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`;
-                console.log('Fetching route from OSRM:', url);
-
+                const url =
+                    `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`;
                 const response = await fetch(url);
                 const data = await response.json();
-
-                if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
-                    throw new Error('No route found');
-                }
+                if (data.code !== 'Ok' || !data.routes.length) throw new Error('No route found');
                 return data.routes[0];
             }
 
             function drawRouteOnMap(geometry) {
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                }
-                if (routeSource) {
-                    routeSource.clear();
-                }
-
-                routeSource = new ol.source.Vector();
-                routeLayer = new ol.layer.Vector({
-                    source: routeSource,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#2563eb',
-                            width: 5,
-                            lineDash: [10, 10]
-                        })
-                    }),
-                    zIndex: 1000
-                });
-
-                if (geometry && geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length >= 2) {
-                    const coordinates = geometry.coordinates
-                        .filter(coord => coord && coord.length >= 2 && !(Math.abs(coord[0]) < 0.0001 && Math.abs(coord[1]) < 0.0001))
-                        .map(coord => ol.proj.fromLonLat(coord));
-
-                    if (coordinates.length >= 2) {
-                        routeSource.addFeature(new ol.Feature({
-                            geometry: new ol.geom.LineString(coordinates)
-                        }));
-                        map.addLayer(routeLayer);
-
-                        const extent = routeSource.getExtent();
-                        if (extent && extent[0] !== Infinity) {
-                            map.getView().fit(extent, {
-                                padding: [50, 50, 50, 50],
-                                duration: 1000
-                            });
-                        }
-                    }
+                routeSource.clear();
+                if (geometry.type === 'LineString') {
+                    const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                    routeSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates)
+                    }));
+                    map.getView().fit(routeSource.getExtent(), {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
                 }
             }
 
+            function formatDistance(meters) {
+                return meters >= 1000 ? (meters / 1000).toFixed(1) + ' km' : Math.round(meters) + ' m';
+            }
+
+            function formatDuration(seconds) {
+                return seconds >= 60 ? Math.floor(seconds / 60) + ' min' : Math.floor(seconds) + ' sec';
+            }
+
             async function calculateAndDisplayRoute(feature) {
-                if (!currentLocationMarker || !currentPositionLonLat) {
-                    showFlashMessage('Please enable your location first', 'warning');
-                    startLocationTracking();
+                if (!currentLocationMarker) {
+                    showToast('Please enable your location first', 'error');
                     return;
                 }
-
-                if (!feature) {
-                    showFlashMessage('Please select a destination first', 'error');
-                    return;
-                }
-
                 $('#loadingSpinner').show();
-
                 try {
-                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry().getCoordinates();
-                    const currentLonLat = ol.proj.toLonLat(currentCoords);
-
+                    const currentCoords = currentLocationMarker.getSource().getFeatures()[0].getGeometry()
+                        .getCoordinates();
                     const geometry = feature.getGeometry();
-                    let targetCoords;
-                    if (geometry.getType() === 'Point') {
-                        targetCoords = geometry.getCoordinates();
-                    } else {
-                        const extent = geometry.getExtent();
-                        targetCoords = [(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2];
-                    }
-
+                    let targetCoords = geometry.getType() === 'Point' ? geometry.getCoordinates() : ol.extent
+                        .getCenter(geometry.getExtent());
+                    const currentLonLat = ol.proj.toLonLat(currentCoords);
                     const targetLonLat = ol.proj.toLonLat(targetCoords);
-                    currentPositionLonLat = currentLonLat;
-
                     let route;
                     try {
                         route = await getRouteFromOSRM(currentLonLat, targetLonLat);
                     } catch (e) {
-                        console.warn('OSRM route failed, using straight line:', e.message);
-                        const distance = calculateStraightLineDistance(currentLonLat, targetLonLat);
                         route = {
-                            distance: distance,
-                            duration: (distance / 1000 / 30) * 60,
+                            distance: ol.sphere.getDistance(ol.proj.fromLonLat(currentLonLat), ol.proj
+                                .fromLonLat(targetLonLat)),
                             geometry: {
                                 type: "LineString",
                                 coordinates: [currentLonLat, targetLonLat]
                             }
                         };
                     }
-
                     drawRouteOnMap(route.geometry);
-
-                    $('#routeSummary').html(`
-                        <div><i class="fas fa-map-marker-alt"></i> <strong>Destination:</strong> GIS ID: ${feature.get('gisid') || 'Selected Location'}</div>
-                        <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${formatDistance(route.distance)}</div>
-                        <div><i class="fas fa-clock"></i> <strong>Estimated Time:</strong> ${formatDuration(route.duration)}</div>
-                    `);
-
-                    $('#routeInfo').addClass('open');
+                    $('#routeDistance').text(formatDistance(route.distance));
+                    $('#routeDuration').text(formatDuration(route.duration / 1.39));
+                    $('#destinationName').text(`GIS ID: ${feature.get('gisid') || 'Selected Location'}`);
+                    $('#routeInfoPanel').removeClass('closed');
                     currentRoute = route;
-                    currentRoute.endCoord = targetLonLat;
-
-                    showFlashMessage('Route calculated successfully', 'success');
-
                 } catch (error) {
-                    console.error('Route error:', error);
-                    showFlashMessage('Error calculating route: ' + error.message, 'error');
+                    showToast('Error calculating route', 'error');
                 } finally {
                     $('#loadingSpinner').hide();
                 }
             }
 
-            function getRouteToBuilding(gisid, targetCoords) {
-                if (!targetCoords || targetCoords.length < 2 || isNaN(targetCoords[0]) || isNaN(targetCoords[1])) {
-                    showFlashMessage('Invalid building coordinates. Please try another building.', 'error');
+            $('#routeBtn').click(async function() {
+                if (!selectedFeature) {
+                    showToast('Please search for a location first', 'error');
                     return;
                 }
-
-                const tempFeature = new ol.Feature({
-                    geometry: new ol.geom.Point(ol.proj.fromLonLat(targetCoords)),
-                    gisid: gisid
-                });
-                calculateAndDisplayRoute(tempFeature);
-            }
-
-            function clearRoute() {
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                    routeLayer = null;
-                }
-                if (routeSource) {
-                    routeSource.clear();
-                    routeSource = null;
-                }
-                currentRoute = null;
-                $('#routeInfo').removeClass('open');
-            }
-
-            // ==================== LOCATION TRACKING ====================
-            function startLocationTracking() {
-                if (!navigator.geolocation) {
-                    showFlashMessage("Geolocation not supported", 'error');
+                if (!currentLocationMarker) {
+                    if (confirm('Enable location for route calculation?')) {
+                        toggleLiveLocation();
+                        setTimeout(() => {
+                            if (currentLocationMarker) calculateAndDisplayRoute(
+                                selectedFeature);
+                        }, 2500);
+                    }
                     return;
                 }
-
-                $('#loadingSpinner').show();
-                $('#locationBtn').addClass('active');
-                locationTracking = true;
-
-                if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
-                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                    function(pos) {
-                        updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                        currentPositionLonLat = [pos.coords.longitude, pos.coords.latitude];
-                        showFlashMessage('Location acquired successfully', 'success');
-                        $('#loadingSpinner').hide();
-                    },
-                    function(err) {
-                        $('#loadingSpinner').hide();
-                        let errorMsg = "Unable to get location";
-                        if (err.code === err.PERMISSION_DENIED) {
-                            errorMsg = "Please enable location permissions";
-                        } else if (err.code === err.TIMEOUT) {
-                            errorMsg = "Location request timed out";
-                        }
-                        showFlashMessage(errorMsg, 'error');
-                        locationTracking = false;
-                        $('#locationBtn').removeClass('active');
-                        $('#centerMyLocationBtn').remove();
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
-
-                watchId = navigator.geolocation.watchPosition(
-                    function(pos) {
-                        updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                        currentPositionLonLat = [pos.coords.longitude, pos.coords.latitude];
-                    },
-                    function(err) {},
-                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-                );
-            }
-
-            function stopLocationTracking() {
-                if (watchId) navigator.geolocation.clearWatch(watchId);
-                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
-                if (accuracyLayer) map.removeLayer(accuracyLayer);
-                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
-                locationTracking = false;
-                $('#locationBtn').removeClass('active');
-                $('#centerMyLocationBtn').remove();
-                currentLocationLayer = null;
-                accuracyLayer = null;
-                currentLocationMarker = null;
-                currentPositionLonLat = null;
-            }
-
-            function updateLocationOnMap(lon, lat, accuracy) {
-                let coords = ol.proj.fromLonLat([lon, lat]);
-                currentPosition = [lon, lat];
-                currentPositionLonLat = [lon, lat];
-
-                if (currentLocationLayer) map.removeLayer(currentLocationLayer);
-                if (accuracyLayer) map.removeLayer(accuracyLayer);
-                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
-
-                accuracyLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
-                    })
-                });
-                map.addLayer(accuracyLayer);
-
-                currentLocationLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(coords)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({ color: '#ff4444' }),
-                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                        })
-                    })
-                });
-                map.addLayer(currentLocationLayer);
-
-                currentLocationMarker = new ol.layer.Vector({
-                    source: new ol.source.Vector(),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({ color: '#ff4444' }),
-                            stroke: new ol.style.Stroke({ color: '#ffffff', width: 3 })
-                        })
-                    })
-                });
-                currentLocationMarker.getSource().addFeature(new ol.Feature({
-                    geometry: new ol.geom.Point(coords)
-                }));
-                map.addLayer(currentLocationMarker);
-
-                if (!localStorage.getItem('mapCentered')) {
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(18);
-                    localStorage.setItem('mapCentered', 'true');
-                }
-            }
-
-            function centerToMyLocation() {
-                if (currentPositionLonLat) {
-                    let coords = ol.proj.fromLonLat(currentPositionLonLat);
-                    map.getView().animate({ center: coords, zoom: 19, duration: 1000 });
-                    showFlashMessage('Centered on your location', 'info');
-                } else {
-                    showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
-                    startLocationTracking();
-                }
-            }
-
-            // ==================== BUILD SEARCH INDEX ====================
-            function buildSearchIndex() {
-                allBuildings = [];
-                $.each(polygonDatas, function(i, building) {
-                    let info = {
-                        gisid: building.gisid,
-                        building_usage: building.building_usage,
-                        building_type: building.building_type,
-                        road_name: building.road_name,
-                        zone: building.zone,
-                        number_floor: building.number_floor,
-                        coordinates: null,
-                        assessments: []
-                    };
-
-                    $.each(polygons, function(j, poly) {
-                        if (poly.gisid == building.gisid) {
-                            try {
-                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
-                                if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0, cy = 0;
-                                    $.each(coords[0], function(k, c) {
-                                        cx += c[0];
-                                        cy += c[1];
-                                    });
-                                    info.coordinates = [cx / coords[0].length, cy / coords[0].length];
-                                }
-                            } catch(e) {}
-                            return false;
-                        }
-                    });
-
-                    if (building.pointdata) {
-                        $.each(building.pointdata, function(j, a) {
-                            info.assessments.push({
-                                assessment_no: a.assessment,
-                                owner_name: a.owner_name || a.present_owner_name,
-                                phone: a.phone_number
-                            });
-                        });
-                    }
-                    allBuildings.push(info);
-                });
-            }
-
-            // ==================== SEARCH FUNCTIONS ====================
-            function searchBuildings(text) {
-                if (!text || !text.trim()) {
-                    $('#searchResults').html('<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
-                    return;
-                }
-
-                let term = text.toLowerCase().trim();
-                let results = [];
-
-                $.each(allBuildings, function(i, b) {
-                    let match = false, type = '', val = '';
-
-                    if (b.gisid && b.gisid.toLowerCase().includes(term)) {
-                        match = true; type = 'GIS ID'; val = b.gisid;
-                    } else if (b.building_usage && b.building_usage.toLowerCase().includes(term)) {
-                        match = true; type = 'Building Usage'; val = b.building_usage;
-                    } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
-                        match = true; type = 'Road Name'; val = b.road_name;
-                    } else {
-                        $.each(b.assessments, function(j, a) {
-                            if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
-                                match = true; type = 'Assessment No'; val = a.assessment_no;
-                                return false;
-                            }
-                            if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
-                                match = true; type = 'Owner Name'; val = a.owner_name;
-                                return false;
-                            }
-                            if (a.phone && a.phone.toLowerCase().includes(term)) {
-                                match = true; type = 'Phone'; val = a.phone;
-                                return false;
-                            }
-                        });
-                    }
-
-                    if (match) {
-                        results.push({
-                            gisid: b.gisid,
-                            matchType: type,
-                            matchValue: val,
-                            building: b,
-                            coordinates: b.coordinates
-                        });
-                    }
-                });
-
-                let $res = $('#searchResults').empty();
-                if (!results.length) {
-                    $res.html('<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
-                    return;
-                }
-
-                $.each(results, function(i, r) {
-                    let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
-                    let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
-                    $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
-                        <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
-                        <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
-                    </div>`);
-                });
-
-                $('.search-result-item').off('click').on('click', function(e) {
-                    if (!$(e.target).hasClass('direction-btn')) {
-                        zoomToBuilding($(this).data('gisid'));
-                        closeAllPanels();
-                    }
-                });
-
-                $('.direction-btn').off('click').on('click', function(e) {
-                    e.stopPropagation();
-                    let p = $(this).closest('.search-result-item');
-                    let lon = parseFloat(p.data('lon'));
-                    let lat = parseFloat(p.data('lat'));
-                    if (lon && lat && !isNaN(lon) && !isNaN(lat)) {
-                        selectedBuilding = {
-                            gisid: p.data('gisid'),
-                            coords: [lon, lat]
-                        };
-                        getRouteToBuilding(p.data('gisid'), [lon, lat]);
-                        closeAllPanels();
-                    } else {
-                        showFlashMessage("Coordinates not available for this building", 'error');
-                    }
-                });
-            }
-
-            function zoomToBuilding(gisid) {
-                if (!polygonLayer) return;
-                let features = polygonLayer.getSource().getFeatures();
-                let f = null;
-                for (let i = 0; i < features.length; i++) {
-                    if (features[i].get('gisid') == gisid) {
-                        f = features[i];
-                        break;
-                    }
-                }
-                if (f) {
-                    let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, { padding: [50, 50, 50, 50], duration: 800 });
-                    showPopup(gisid, ol.extent.getCenter(e));
-                } else {
-                    showFlashMessage("Building not found on map", 'error');
-                }
-            }
-
-            // ==================== POPUP FUNCTIONS ====================
-            function createPopup() {
-                popupElement = $('<div>', { class: 'ol-popup', style: 'display:none' })[0];
-                $('body').append(popupElement);
-                return new ol.Overlay({
-                    element: popupElement,
-                    positioning: 'bottom-center',
-                    stopEvent: true,
-                    offset: [0, -10]
-                });
-            }
-
-            window.closePopup = function() {
-                $('.ol-popup').hide();
-            };
-
-            window.switchTab = function(t) {
-                $('.popup-tab-content, .popup-tab').removeClass('active');
-                $('#tab-' + t).addClass('active');
-                $('.popup-tab[data-tab="' + t + '"]').addClass('active');
-                currentActiveTab = t;
-            };
-
-            function showPopup(gisid, coord) {
-                let pd = polygonDatas.find(p => p.gisid == gisid);
-                if (!pd) return;
-
-                let assessments = pd.pointdata || [];
-                let shops = [];
-                $.each(assessments, function(i, a) {
-                    if (a.shops) {
-                        $.each(a.shops, function(j, s) {
-                            shops.push({ ...s, assessmentNumber: a.assessment || 'Bill ' + (i + 1) });
-                        });
-                    }
-                });
-
-                let buildingHtml = `<div class="building-details-content">${[
-                    ['fingerprint', 'GIS ID', pd.gisid],
-                    ['building', 'Building Usage', pd.building_usage],
-                    ['home', 'Building Type', pd.building_type],
-                    ['layer-group', 'Floors', pd.number_floor],
-                    ['receipt', 'Total Bills', pd.number_bill],
-                    ['store', 'Total Shops', pd.total_shops],
-                    ['road', 'Road Name', pd.road_name],
-                    ['map-pin', 'Zone', pd.zone]
-                ].map(([i,l,v]) => `<div class="detail-row"><div class="detail-label"><i class="fas fa-${i}"></i> ${l}:</div><div class="detail-value">${v || 'N/A'}</div></div>`).join('')}</div>`;
-
-                let assessmentsHtml = !assessments.length ?
-                    '<div class="empty-state"><i class="fas fa-receipt"></i><p>No assessments</p></div>' :
-                    assessments.map((a, i) =>
-                        `<div class="assessment-card" data-id="${a.id || ''}" data-assessment="${a.assessment || ''}">
-                            <div class="assessment-header">
-                                <span class="assessment-number"><i class="fas fa-file-invoice"></i> ${a.assessment || 'Assessment ' + (i+1)}</span>
-                                <span class="badge ${(a.qcsqfeet || a.qcusage) ? 'badge-success' : 'badge-warning'}">${(a.qcsqfeet || a.qcusage) ? 'QC Done' : 'QC Pending'}</span>
-                            </div>
-                            <div class="assessment-body">
-                                ${[['Owner', a.owner_name || a.present_owner_name], ['Phone', a.phone_number], ['Floor', a.floor], ['Usage', a.bill_usage], ['Shops', (a.shops || []).length]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                            </div>
-                        </div>`
-                    ).join('');
-
-                let shopsHtml = !shops.length ?
-                    '<div class="empty-state"><i class="fas fa-store"></i><p>No shops</p></div>' :
-                    shops.map(s => `
-                        <div class="shop-item">
-                            <div class="shop-name"><i class="fas fa-store"></i> ${s.shop_name || 'Shop'}</div>
-                            ${[['Category', s.shop_category], ['Owner', s.shop_owner_name], ['Mobile', s.shop_mobile]].map(([l,v]) => `<div class="assessment-row"><div class="assessment-label">${l}:</div><div class="assessment-value">${v || 'N/A'}</div></div>`).join('')}
-                        </div>
-                    `).join('');
-
-                let html = `
-                    <div class="popup-header">
-                        <h4><i class="fas fa-building"></i> Building Details</h4>
-                        <button class="popup-close" onclick="closePopup()">&times;</button>
-                    </div>
-                    <div class="popup-tabs">
-                        <button class="popup-tab ${currentActiveTab == 'building' ? 'active' : ''}" data-tab="building" onclick="switchTab('building')"><i class="fas fa-info-circle"></i> Building</button>
-                        <button class="popup-tab ${currentActiveTab == 'assessments' ? 'active' : ''}" data-tab="assessments" onclick="switchTab('assessments')"><i class="fas fa-receipt"></i> Assessments (${assessments.length})</button>
-                        <button class="popup-tab ${currentActiveTab == 'shops' ? 'active' : ''}" data-tab="shops" onclick="switchTab('shops')"><i class="fas fa-store"></i> Shops (${shops.length})</button>
-                    </div>
-                    <div id="tab-building" class="popup-tab-content ${currentActiveTab == 'building' ? 'active' : ''}">${buildingHtml}</div>
-                    <div id="tab-assessments" class="popup-tab-content ${currentActiveTab == 'assessments' ? 'active' : ''}"><div style="padding:12px">${assessmentsHtml}</div></div>
-                    <div id="tab-shops" class="popup-tab-content ${currentActiveTab == 'shops' ? 'active' : ''}"><div style="padding:16px">${shopsHtml}</div></div>
-                    <div style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <button class="btn-start-nav" id="routeFromPopupBtn"><i class="fas fa-route"></i> Get Directions to this Building</button>
-                    </div>`;
-
-                $(popupElement).html(html).show();
-                if ($(window).width() > 768 && popupOverlay) {
-                    popupOverlay.setPosition(coord);
-                }
-
-                $('#routeFromPopupBtn').off('click').on('click', function() {
-                    closePopup();
-                    getRouteToBuilding(pd.gisid, [coord[0], coord[1]]);
-                });
-
-                $('.assessment-card').off('click').on('click', function() {
-                    let id = $(this).data('id');
-                    let num = $(this).data('assessment');
-                    $(this).after(`
-                        <div class="assessment-form-container">
-                            <button class="close-form-btn" style="float:right; background:none; border:none; color:#ff4444; font-size:20px;">&times;</button>
-                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                            <form class="qc-form">
-                                <input type="hidden" name="assessment_id" value="${id}">
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Square Feet:</label>
-                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Usage:</label>
-                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                        <option value="">Select</option>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Industrial">Industrial</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">Tax Amount (₹):</label>
-                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
-                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    `);
-
-                    $('.qc-form').on('submit', function(e) {
-                        e.preventDefault();
-                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
-                            $(this).find('select[name="qc_usage"]').val() &&
-                            $(this).find('input[name="tax_amount"]').val();
-                        let $badge = $(this).closest('.assessment-card').find('.badge');
-                        if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
-                        } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
-                        }
-                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
-                        $('.assessment-form-container').remove();
-                    });
-
-                    $('.close-form-btn, .cancel-form-btn').on('click', function() {
-                        $('.assessment-form-container').remove();
-                    });
-                });
-            }
-
-            // ==================== POLYGON STYLE FUNCTION ====================
-            function polygonStyleFunction(feature) {
-                let gisid = feature.get('gisid');
-                let sqfeet = feature.get('sqfeet');
-                let geometry = feature.getGeometry();
-                let center;
-
-                try {
-                    center = geometry.getInteriorPoint();
-                    if (!center) {
-                        let extent = geometry.getExtent();
-                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                    }
-                } catch(e) {
-                    let extent = geometry.getExtent();
-                    center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                }
-
-                let isVisible = feature.get('visible');
-                if (isVisible === false) return null;
-
-                return [
-                    new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
-                    }),
-                    new ol.style.Style({
-                        geometry: center,
-                        text: new ol.style.Text({
-                            text: `${gisid}\n${sqfeet || 0} sqft`,
-                            font: 'bold 11px Arial',
-                            fill: new ol.style.Fill({ color: '#fff' }),
-                            stroke: new ol.style.Stroke({ color: '#000', width: 2 }),
-                            backgroundFill: new ol.style.Fill({ color: 'rgba(0,0,0,0.7)' }),
-                            padding: [4, 8, 4, 8]
-                        })
-                    })
-                ];
-            }
-
-            // ==================== REFRESH LAYERS ====================
-            function refreshLayers() {
-                if (polygonLayer) map.removeLayer(polygonLayer);
-                if (lineLayer) map.removeLayer(lineLayer);
-
-                let ps = new ol.source.Vector();
-                $.each(polygons, function(i, p) {
-                    try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
-                        if (c && c.length) {
-                            ps.addFeature(new ol.Feature({
-                                geometry: new ol.geom.Polygon(c),
-                                gisid: p.gisid,
-                                sqfeet: p.sqfeet || "0",
-                                visible: true
-                            }));
-                        }
-                    } catch(e) {
-                        console.error("Error parsing polygon:", e);
-                    }
-                });
-
-                polygonLayer = new ol.layer.Vector({
-                    source: ps,
-                    style: polygonStyleFunction,
-                    visible: true
-                });
-
-                let ls = new ol.source.Vector();
-                $.each(lines, function(i, l) {
-                    try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
-                        if (c && c.length) {
-                            if (c.length === 1 && Array.isArray(c[0][0])) {
-                                c = c[0];
-                            }
-                            ls.addFeature(new ol.Feature({
-                                geometry: new ol.geom.LineString(c),
-                                gisid: l.gisid
-                            }));
-                        }
-                    } catch(e) {
-                        console.error("Error parsing line:", e);
-                    }
-                });
-
-                lineLayer = new ol.layer.Vector({
-                    source: ls,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 })
-                    }),
-                    visible: true
-                });
-
-                map.addLayer(polygonLayer);
-                map.addLayer(lineLayer);
-
-                map.on('click', function(e) {
-                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
-                    if (feature && feature.get('gisid')) {
-                        showPopup(feature.get('gisid'), e.coordinate);
-                    } else if (popupElement) {
-                        $(popupElement).hide();
-                    }
-                });
-
-                map.on('pointermove', function(e) {
-                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
-                    $('#map').css('cursor', hasFeature ? 'pointer' : '');
-                });
-
-                showLoading(false);
-            }
-
-            // ==================== MAP INITIALIZATION ====================
-            function initMap() {
-                showLoading(true);
-
-                osmLayer = new ol.layer.Tile({
-                    source: new ol.source.OSM(),
-                    visible: true
-                });
-
-                satelliteLayer = new ol.layer.Tile({
-                    source: new ol.source.XYZ({
-                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                    }),
-                    visible: false
-                });
-
-                let droneImg = wardData.drone_image;
-                let hasDrone = false;
-
-                if (droneImg && droneImg !== 'null' && droneImg !== '') {
-                    try {
-                        let imageUrl = droneImg;
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
-                            imageUrl = '/' + imageUrl.replace(/^\/+/, '');
-                        }
-
-                        imageLayer = new ol.layer.Image({
-                            source: new ol.source.ImageStatic({
-                                url: imageUrl,
-                                imageExtent: [
-                                    parseFloat(wardData.extent_left),
-                                    parseFloat(wardData.extent_bottom),
-                                    parseFloat(wardData.extent_right),
-                                    parseFloat(wardData.extent_top)
-                                ],
-                                projection: 'EPSG:3857'
-                            }),
-                            visible: true,
-                            opacity: 0.8
-                        });
-                        hasDrone = true;
-                    } catch(e) {
-                        console.error("Error loading drone image:", e);
-                    }
-                }
-
-                let bound = wardData.boundary;
-                let boundExt = null;
-
-                if (bound && bound.length && bound[0].length) {
-                    try {
-                        let bc = bound[0].map(c => ol.proj.fromLonLat(c));
-                        boundaryLayer = new ol.layer.Vector({
-                            source: new ol.source.Vector({
-                                features: [new ol.Feature({
-                                    geometry: new ol.geom.Polygon([bc])
-                                })]
-                            }),
-                            style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }),
-                                fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.05)' })
-                            }),
-                            visible: true
-                        });
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-                    } catch(e) {
-                        console.error("Error parsing boundary:", e);
-                    }
-                }
-
-                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-                let zoom = 18;
-
-                if (bound && bound[0] && bound[0].length) {
-                    try {
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
-                        zoom = 18;
-                    } catch(e) {}
-                }
-
-                map = new ol.Map({
-                    target: 'map',
-                    layers: [osmLayer, satelliteLayer],
-                    view: new ol.View({
-                        center: center,
-                        zoom: zoom
-                    })
-                });
-
-                popupOverlay = createPopup();
-                map.addOverlay(popupOverlay);
-
-                if (imageLayer) map.addLayer(imageLayer);
-                if (boundaryLayer) map.addLayer(boundaryLayer);
-
-                setTimeout(() => {
-                    if (boundExt) {
-                        map.getView().fit(boundExt, { padding: [50, 50, 50, 50], duration: 1000 });
-                    }
-                }, 500);
-
-                // Add panels to DOM
-                $('body').append(`
-                    <div class="layer-switcher panel" id="layerSwitcher">
-                        <button class="panel-close" onclick="$('#layerSwitcher').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                        <div class="layer-group">
-                            <div class="group-title">Base Maps</div>
-                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
-                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-                        </div>
-                        <div class="layer-group">
-                            <div class="group-title">Overlays</div>
-                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
-                        </div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="map-legend panel" id="mapLegend">
-                        <button class="panel-close" onclick="$('#mapLegend').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                        <div class="legend-item"><div class="legend-color building"></div><span>Buildings (click for details)</span></div>
-                        <div class="legend-item"><div class="legend-color road"></div><span>Roads</span></div>
-                        <div class="legend-item"><div class="legend-color boundary"></div><span>Ward Boundary</span></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="search-panel panel" id="searchPanel">
-                        <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-search"></i> Search Building</h5>
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
-                            <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
-                        </div>
-                        <div id="searchResults" class="search-results"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="filter-panel panel" id="filterPanel">
-                        <button class="panel-close" onclick="$('#filterPanel').removeClass('open')">&times;</button>
-                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
-                        <div class="filter-group">
-                            <label>QC Status</label>
-                            <select id="filterType">
-                                <option value="all">All Buildings</option>
-                                <option value="completed">QC Complete</option>
-                                <option value="pending">QC Pending</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Min Floors</label>
-                            <input type="number" id="filterMinFloors" placeholder="Min">
-                        </div>
-                        <div class="filter-group">
-                            <label>Max Floors</label>
-                            <input type="number" id="filterMaxFloors" placeholder="Max">
-                        </div>
-                        <div class="filter-actions">
-                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
-                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
-                        </div>
-                        <div class="filter-count" id="filterCount"></div>
-                    </div>
-                `);
-
-                $('body').append(`
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
-                    </div>
-                `);
-
-                // Event listeners
-                $('input[name="baseLayer"]').on('change', function() {
-                    currentBaseLayer = $(this).val();
-                    osmLayer.setVisible(currentBaseLayer === 'osm');
-                    satelliteLayer.setVisible(currentBaseLayer === 'satellite');
-                });
-
-                $('#toggleBuildings').on('change', function() {
-                    if (polygonLayer) polygonLayer.setVisible($(this).is(':checked'));
-                });
-
-                $('#toggleRoads').on('change', function() {
-                    if (lineLayer) lineLayer.setVisible($(this).is(':checked'));
-                });
-
-                $('#toggleBoundary').on('change', function() {
-                    if (boundaryLayer) boundaryLayer.setVisible($(this).is(':checked'));
-                });
-
-                if (hasDrone) {
-                    $('#toggleDrone').on('change', function() {
-                        if (imageLayer) imageLayer.setVisible($(this).is(':checked'));
-                    });
-                }
-
-                $('#doSearchBtn').on('click', function() {
-                    searchBuildings($('#searchInput').val());
-                });
-
-                $('#searchInput').on('keypress', function(e) {
-                    if (e.which === 13) {
-                        searchBuildings($(this).val());
-                    }
-                });
-
-                $('#applyFilterBtn').on('click', function() {
-                    let type = $('#filterType').val();
-                    let minF = $('#filterMinFloors').val();
-                    let maxF = $('#filterMaxFloors').val();
-                    let src = polygonLayer.getSource();
-                    let fts = src.getFeatures();
-                    let cnt = 0;
-
-                    $.each(fts, function(i, f) {
-                        let g = f.get('gisid');
-                        let b = polygonDatas.find(p => p.gisid == g);
-                        let show = true;
-
-                        if (type === 'completed' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (!has) show = false;
-                        } else if (type === 'pending' && b) {
-                            let has = false;
-                            if (b.pointdata) {
-                                $.each(b.pointdata, function(k, a) {
-                                    if (a.qcsqfeet || a.qcusage) {
-                                        has = true;
-                                        return false;
-                                    }
-                                });
-                            }
-                            if (has) show = false;
-                        }
-
-                        if (show && b && (minF || maxF)) {
-                            let fl = parseInt(b.number_floor) || 0;
-                            if (minF && fl < parseInt(minF)) show = false;
-                            if (maxF && fl > parseInt(maxF)) show = false;
-                        }
-
-                        f.set('visible', show);
-                        if (show) cnt++;
-                    });
-
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${cnt} of ${fts.length} buildings`);
-                    closeAllPanels();
-                });
-
-                $('#resetFilterBtn').on('click', function() {
-                    $('#filterType').val('all');
-                    $('#filterMinFloors, #filterMaxFloors').val('');
-                    let src = polygonLayer.getSource();
-                    $.each(src.getFeatures(), function(i, f) {
-                        f.set('visible', true);
-                    });
-                    polygonLayer.setStyle(polygonStyleFunction);
-                    polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
-                    closeAllPanels();
-                });
-
-                $('#zoomInBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() + 1);
-                });
-
-                $('#zoomOutBtn').on('click', function() {
-                    map.getView().setZoom(map.getView().getZoom() - 1);
-                });
-
-                // Button handlers
-                $('#menuBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#layerSwitcher').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#layerSwitcher').addClass('open');
-                });
-
-                $('#legendBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#mapLegend').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#mapLegend').addClass('open');
-                });
-
-                $('#openSearchBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#searchPanel').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) {
-                        $('#searchPanel').addClass('open');
-                        setTimeout(() => $('#searchInput').focus(), 300);
-                    }
-                });
-
-                $('#filterBtn').on('click', function(e) {
-                    e.stopPropagation();
-                    let isOpen = $('#filterPanel').hasClass('open');
-                    closeAllPanels();
-                    if (!isOpen) $('#filterPanel').addClass('open');
-                });
-
-                $('#locationBtn').on('click', function() {
-                    if (locationTracking) {
-                        stopLocationTracking();
-                        clearRoute();
-                    } else {
-                        startLocationTracking();
-                    }
-                });
-
-                $('#routeBtn').on('click', function() {
-                    if (selectedBuilding) {
-                        getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords);
-                    } else {
-                        showFlashMessage('Please search and select a building first', 'warning');
-                        $('#openSearchBtn').click();
-                    }
-                });
-
-                $('#closeRouteInfo').on('click', function() {
-                    clearRoute();
-                });
-
-                $('#startNavigationBtn').on('click', function() {
-                    if (currentRoute && currentRoute.endCoord) {
-                        const [lon, lat] = currentRoute.endCoord;
-                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`, '_blank');
-                    } else if (currentRoute && currentRoute.geometry && currentRoute.geometry.coordinates) {
-                        const endCoords = currentRoute.geometry.coordinates.slice(-1)[0];
-                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${endCoords[1]},${endCoords[0]}`, '_blank');
-                    } else {
-                        showFlashMessage('No route available for navigation', 'warning');
-                    }
-                });
-
-                // Close panels when clicking outside
-                $(document).on('click touchstart', function(e) {
-                    if (!$(e.target).closest('.panel').length &&
-                        !$(e.target).closest('.action-btn').length &&
-                        !$(e.target).closest('#centerMyLocationBtn').length) {
-                        closeAllPanels();
-                    }
-                });
-
-                refreshLayers();
-            }
-
-            // Start the application
-            initMap();
-            buildSearchIndex();
-
-            $(window).on('resize', function() {
-                setTimeout(() => {
-                    if (map) map.updateSize();
-                }, 100);
+                await calculateAndDisplayRoute(selectedFeature);
             });
+
+            $('#startNavigationBtn').click(function() {
+                if (currentRoute && isMobile) {
+                    window.open(
+                        `https://www.google.com/maps/dir/?api=1&destination=${currentRoute.endCoord ? currentRoute.endCoord[1] : ''},${currentRoute.endCoord ? currentRoute.endCoord[0] : ''}`,
+                        '_blank');
+                }
+            });
+
+            $(document).click(function(event) {
+                if (!$(event.target).closest(
+                        '#layerSwitcher, #layerToggleBtn, #searchLabel, #searchToggleBtn, #routeInfoPanel, #routeBtn, #editLabel, #editToggleBtn, #searchSuggestions, .mobile-bottom-nav'
+                    ).length) {
+                    $('#layerSwitcher, #searchLabel, #editLabel').addClass('closed');
+                    $('#searchSuggestions').removeClass('show');
+                }
+            });
+
+            $(window).resize(function() {
+                isMobile = window.innerWidth <= 768;
+            });
+            $(document).keydown(function(e) {
+                if (e.key === 'l' || e.key === 'L') {
+                    $('#layerSwitcher').toggleClass('closed');
+                    $('#searchLabel, #editLabel').addClass('closed');
+                }
+                if (e.key === 's' || e.key === 'S') {
+                    $('#searchLabel').toggleClass('closed');
+                    $('#layerSwitcher, #editLabel').addClass('closed');
+                    if (!$('#searchLabel').hasClass('closed')) setTimeout(() => $('#searchInput').focus(),
+                        100);
+                }
+                if (e.key === 'Escape') {
+                    $('#layerSwitcher, #searchLabel, #routeInfoPanel, #editLabel').addClass('closed');
+                    $('#searchSuggestions').removeClass('show');
+                }
+            });
+
+            setupOriginalClickHandler();
+            showToast('Map loaded successfully', 'success');
         });
     </script>
 @endsection
