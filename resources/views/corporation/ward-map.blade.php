@@ -71,8 +71,7 @@
 @endsection
 
 @push('styles')
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -83,8 +82,7 @@
             box-sizing: border-box;
         }
 
-        html,
-        body {
+        html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -98,7 +96,6 @@
             touch-action: pan-x pan-y pinch-zoom;
         }
 
-        /* Action Buttons */
         .action-buttons {
             position: fixed;
             bottom: 20px;
@@ -130,46 +127,16 @@
             min-width: 70px;
         }
 
-        .action-btn i {
-            font-size: 18px;
-        }
-
-        .btn-label {
-            font-size: 10px;
-            font-weight: 500;
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-
-        .action-btn.menu-btn {
-            background: rgba(0, 0, 0, 0.85);
-        }
-
-        .action-btn.legend-btn {
-            background: rgba(255, 193, 7, 0.9);
-        }
-
-        .action-btn.search-btn {
-            background: rgba(23, 162, 184, 0.9);
-        }
-
-        .action-btn.filter-btn {
-            background: rgba(40, 167, 69, 0.9);
-        }
-
-        .action-btn.location-btn {
-            background: rgba(220, 53, 69, 0.9);
-        }
-
-        .action-btn.route-btn {
-            background: rgba(111, 66, 193, 0.9);
-        }
-
-        .action-btn.location-btn.active {
-            background: #28a745;
-        }
+        .action-btn i { font-size: 18px; }
+        .btn-label { font-size: 10px; font-weight: 500; }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.menu-btn { background: rgba(0, 0, 0, 0.85); }
+        .action-btn.legend-btn { background: rgba(255, 193, 7, 0.9); }
+        .action-btn.search-btn { background: rgba(23, 162, 184, 0.9); }
+        .action-btn.filter-btn { background: rgba(40, 167, 69, 0.9); }
+        .action-btn.location-btn { background: rgba(220, 53, 69, 0.9); }
+        .action-btn.route-btn { background: rgba(111, 66, 193, 0.9); }
+        .action-btn.location-btn.active { background: #28a745; }
 
         @media (min-width: 769px) {
             .action-buttons {
@@ -182,20 +149,15 @@
                 flex-direction: column;
                 gap: 10px;
             }
-
             .action-btn {
                 flex-direction: row;
                 gap: 8px;
                 padding: 10px 16px;
                 min-width: auto;
             }
-
-            .btn-label {
-                font-size: 12px;
-            }
+            .btn-label { font-size: 12px; }
         }
 
-        /* Panels */
         .panel {
             background: rgba(0, 0, 0, 0.92);
             backdrop-filter: blur(12px);
@@ -235,86 +197,23 @@
             z-index: 10;
         }
 
-        /* Layer Switcher */
-        .layer-switcher {
-            position: absolute;
-            top: 100px;
-            right: 20px;
-            min-width: 200px;
+        .layer-switcher, .map-legend, .search-panel, .filter-panel, .route-info {
             display: none;
         }
 
-        .layer-switcher.open {
+        .layer-switcher.open, .map-legend.open, .search-panel.open, .filter-panel.open, .route-info.open {
             display: block;
             animation: fadeIn 0.3s ease;
         }
 
-        /* Legend */
-        .map-legend {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            min-width: 160px;
-            display: none;
-        }
-
-        .map-legend.open {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Search Panel */
-        .search-panel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 350px;
-            max-width: calc(100% - 40px);
-            display: none;
-        }
-
-        .search-panel.open {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Filter Panel */
-        .filter-panel {
-            position: absolute;
-            top: 100px;
-            right: 20px;
-            width: 300px;
-            display: none;
-        }
-
-        .filter-panel.open {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* Route Info Panel */
-        .route-info {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 350px;
-            max-width: calc(100% - 40px);
-            display: none;
-            max-height: 500px;
-        }
-
-        .route-info.open {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
+        .layer-switcher { position: absolute; top: 100px; right: 20px; min-width: 200px; }
+        .map-legend { position: absolute; bottom: 20px; left: 20px; min-width: 160px; }
+        .search-panel { position: absolute; top: 20px; right: 20px; width: 350px; max-width: calc(100% - 40px); }
+        .filter-panel { position: absolute; top: 100px; right: 20px; width: 300px; }
+        .route-info { position: absolute; bottom: 20px; right: 20px; width: 350px; max-width: calc(100% - 40px); max-height: 500px; }
 
         @media (max-width: 768px) {
-
-            .layer-switcher,
-            .map-legend,
-            .search-panel,
-            .filter-panel,
-            .route-info {
+            .layer-switcher, .map-legend, .search-panel, .filter-panel, .route-info {
                 position: fixed;
                 bottom: 100px;
                 right: 20px;
@@ -323,33 +222,15 @@
                 width: auto;
                 max-height: 60vh;
             }
-
-            .map-legend {
-                left: 20px;
-                right: auto;
-                min-width: 180px;
-            }
-
-            .search-panel,
-            .route-info {
-                top: auto;
-                bottom: 100px;
-            }
+            .map-legend { left: 20px; right: auto; min-width: 180px; }
+            .search-panel, .route-info { top: auto; bottom: 100px; }
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Route Styles */
         .route-summary {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -389,18 +270,9 @@
             flex-shrink: 0;
         }
 
-        .step-content {
-            flex: 1;
-        }
-
-        .step-instruction {
-            margin-bottom: 4px;
-        }
-
-        .step-distance {
-            font-size: 11px;
-            color: #ffc107;
-        }
+        .step-content { flex: 1; }
+        .step-instruction { margin-bottom: 4px; }
+        .step-distance { font-size: 11px; color: #ffc107; }
 
         .btn-start-nav {
             width: 100%;
@@ -414,11 +286,8 @@
             transition: all 0.2s;
         }
 
-        .btn-start-nav:active {
-            transform: scale(0.98);
-        }
+        .btn-start-nav:active { transform: scale(0.98); }
 
-        /* Navigation Header */
         .navigation-header {
             position: fixed;
             top: 0;
@@ -449,23 +318,10 @@
             margin-bottom: 8px;
         }
 
-        .eta-time {
-            font-size: 22px;
-            font-weight: bold;
-            color: #ffc107;
-        }
+        .eta-time { font-size: 22px; font-weight: bold; color: #ffc107; }
+        .eta-distance { font-size: 16px; color: #aaa; }
+        .navigation-address { font-size: 14px; color: #ddd; }
 
-        .eta-distance {
-            font-size: 16px;
-            color: #aaa;
-        }
-
-        .navigation-address {
-            font-size: 14px;
-            color: #ddd;
-        }
-
-        /* Navigation Instruction */
         .navigation-instruction {
             position: fixed;
             bottom: 100px;
@@ -496,18 +352,9 @@
             font-size: 20px;
         }
 
-        .instruction-text {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
+        .instruction-text { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .instruction-distance { font-size: 14px; color: #ffc107; }
 
-        .instruction-distance {
-            font-size: 14px;
-            color: #ffc107;
-        }
-
-        /* Loading Spinner */
         .loading-spinner {
             position: fixed;
             top: 50%;
@@ -526,12 +373,8 @@
             align-items: center;
         }
 
-        .loading-spinner .spinner-border {
-            width: 40px;
-            height: 40px;
-        }
+        .loading-spinner .spinner-border { width: 40px; height: 40px; }
 
-        /* Center Button */
         .center-btn {
             position: fixed;
             bottom: 20px;
@@ -551,18 +394,10 @@
         }
 
         @media (min-width: 769px) {
-            .center-btn {
-                bottom: auto;
-                top: 160px;
-                left: 20px;
-            }
+            .center-btn { bottom: auto; top: 160px; left: 20px; }
         }
 
-        /* Other styles remain same as before */
-        .layer-group {
-            margin-bottom: 15px;
-        }
-
+        .layer-group { margin-bottom: 15px; }
         .layer-group label {
             display: flex;
             align-items: center;
@@ -573,18 +408,8 @@
             padding: 5px;
             border-radius: 8px;
         }
-
-        .layer-group label:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .group-title {
-            font-weight: 600;
-            color: #ffc107;
-            font-size: 12px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
+        .layer-group label:hover { background: rgba(255, 255, 255, 0.1); }
+        .group-title { font-weight: 600; color: #ffc107; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; }
 
         .legend-item {
             display: flex;
@@ -593,37 +418,16 @@
             margin-bottom: 12px;
             font-size: 12px;
         }
-
-        .legend-color {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-        }
-
-        .legend-color.building {
-            background: rgba(255, 68, 68, 0.5);
-            border: 2px solid #ff4444;
-        }
-
-        .legend-color.road {
-            background: none;
-            border: 2px solid #ffc107;
-            height: 3px;
-            width: 24px;
-            margin-top: 10px;
-        }
-
-        .legend-color.boundary {
-            background: none;
-            border: 2px dashed #ff0000;
-        }
+        .legend-color { width: 24px; height: 24px; border-radius: 4px; }
+        .legend-color.building { background: rgba(255, 68, 68, 0.5); border: 2px solid #ff4444; }
+        .legend-color.road { background: none; border: 2px solid #ffc107; height: 3px; width: 24px; margin-top: 10px; }
+        .legend-color.boundary { background: none; border: 2px dashed #ff0000; }
 
         .search-box {
             display: flex;
             gap: 12px;
             margin-bottom: 15px;
         }
-
         .search-box input {
             flex: 1;
             padding: 12px;
@@ -634,7 +438,6 @@
             font-size: 14px;
             outline: none;
         }
-
         .search-box button {
             padding: 12px 24px;
             border-radius: 10px;
@@ -645,11 +448,7 @@
             font-weight: 600;
         }
 
-        .search-results {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
+        .search-results { max-height: 350px; overflow-y: auto; }
         .search-result-item {
             padding: 12px;
             margin-bottom: 10px;
@@ -658,20 +457,8 @@
             cursor: pointer;
             border-left: 3px solid #ffc107;
         }
-
-        .result-gisid {
-            font-weight: bold;
-            color: #ffc107;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        .result-owner {
-            font-size: 11px;
-            color: #ddd;
-            margin: 3px 0;
-        }
-
+        .result-gisid { font-weight: bold; color: #ffc107; font-size: 13px; margin-bottom: 5px; }
+        .result-owner { font-size: 11px; color: #ddd; margin: 3px 0; }
         .direction-btn {
             margin-top: 8px;
             padding: 6px 12px;
@@ -683,19 +470,9 @@
             font-size: 11px;
         }
 
-        .filter-group {
-            margin-bottom: 15px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 12px;
-            color: #ffc107;
-        }
-
-        .filter-group select,
-        .filter-group input {
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label { display: block; margin-bottom: 6px; font-size: 12px; color: #ffc107; }
+        .filter-group select, .filter-group input {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
@@ -703,15 +480,8 @@
             background: rgba(0, 0, 0, 0.5);
             color: white;
         }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .apply-btn,
-        .reset-btn {
+        .filter-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .apply-btn, .reset-btn {
             flex: 1;
             padding: 10px;
             border-radius: 8px;
@@ -719,17 +489,8 @@
             cursor: pointer;
             font-weight: 600;
         }
-
-        .apply-btn {
-            background: #28a745;
-            color: white;
-        }
-
-        .reset-btn {
-            background: #dc3545;
-            color: white;
-        }
-
+        .apply-btn { background: #28a745; color: white; }
+        .reset-btn { background: #dc3545; color: white; }
         .filter-count {
             margin-top: 12px;
             font-size: 12px;
@@ -750,15 +511,9 @@
             overflow: hidden;
             z-index: 1000;
         }
-
         @media (min-width: 769px) {
-            .zoom-controls {
-                bottom: auto;
-                top: 100px;
-                left: 20px;
-            }
+            .zoom-controls { bottom: auto; top: 100px; left: 20px; }
         }
-
         .zoom-btn {
             width: 45px;
             height: 45px;
@@ -768,10 +523,7 @@
             font-size: 18px;
             cursor: pointer;
         }
-
-        .zoom-btn:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
+        .zoom-btn:first-child { border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
 
         .map-loading {
             position: fixed;
@@ -788,7 +540,6 @@
             gap: 10px;
         }
 
-        /* Popup styles */
         .ol-popup {
             position: fixed !important;
             bottom: 0 !important;
@@ -803,7 +554,6 @@
             z-index: 9999 !important;
             overflow-y: auto;
         }
-
         @media (min-width: 769px) {
             .ol-popup {
                 position: absolute !important;
@@ -823,13 +573,7 @@
             justify-content: space-between;
             align-items: center;
         }
-
-        .popup-header h4 {
-            margin: 0;
-            font-size: 18px;
-            color: #ff4444;
-        }
-
+        .popup-header h4 { margin: 0; font-size: 18px; color: #ff4444; }
         .popup-close {
             background: rgba(255, 255, 255, 0.1);
             border: none;
@@ -839,12 +583,7 @@
             border-radius: 50%;
             cursor: pointer;
         }
-
-        .popup-tabs {
-            display: flex;
-            background: #141424;
-        }
-
+        .popup-tabs { display: flex; background: #141424; }
         .popup-tab {
             flex: 1;
             background: none;
@@ -854,43 +593,22 @@
             cursor: pointer;
             font-weight: 600;
         }
-
-        .popup-tab.active {
-            color: #ff4444;
-            border-bottom: 3px solid #ff4444;
-        }
-
-        .popup-tab-content {
-            display: none;
-            padding: 20px;
-            max-height: 55vh;
-            overflow-y: auto;
-        }
-
-        .popup-tab-content.active {
-            display: block;
-        }
-
+        .popup-tab.active { color: #ff4444; border-bottom: 3px solid #ff4444; }
+        .popup-tab-content { display: none; padding: 20px; max-height: 55vh; overflow-y: auto; }
+        .popup-tab-content.active { display: block; }
         .detail-row {
             display: flex;
             margin-bottom: 12px;
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-
         .detail-label {
             font-weight: 600;
             color: #ffc107;
             width: 110px;
             font-size: 12px;
         }
-
-        .detail-value {
-            color: #eee;
-            flex: 1;
-            font-size: 13px;
-        }
-
+        .detail-value { color: #eee; flex: 1; font-size: 13px; }
         .badge {
             display: inline-block;
             padding: 3px 10px;
@@ -898,17 +616,8 @@
             font-size: 10px;
             font-weight: 600;
         }
-
-        .badge-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .badge-warning {
-            background: #ffc107;
-            color: #333;
-        }
-
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #333; }
         .assessment-card {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
@@ -916,66 +625,34 @@
             border-left: 3px solid #ffc107;
             cursor: pointer;
         }
-
         .assessment-header {
             background: rgba(255, 193, 7, 0.15);
             padding: 12px 15px;
             display: flex;
             justify-content: space-between;
         }
-
-        .assessment-number {
-            font-weight: 700;
-            font-size: 13px;
-            color: #ffc107;
-        }
-
-        .assessment-body {
-            padding: 12px 15px;
-        }
-
+        .assessment-number { font-weight: 700; font-size: 13px; color: #ffc107; }
+        .assessment-body { padding: 12px 15px; }
         .assessment-row {
             display: flex;
             margin-bottom: 8px;
             font-size: 12px;
         }
-
-        .assessment-label {
-            width: 80px;
-            color: #aaa;
-        }
-
-        .assessment-value {
-            color: #fff;
-            flex: 1;
-        }
-
+        .assessment-label { width: 80px; color: #aaa; }
+        .assessment-value { color: #fff; flex: 1; }
         .shop-item {
             background: rgba(255, 68, 68, 0.1);
             border-radius: 10px;
             padding: 12px;
             margin-top: 8px;
         }
-
-        .shop-name {
-            font-weight: 700;
-            color: #ff4444;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
+        .shop-name { font-weight: 700; color: #ff4444; font-size: 13px; margin-bottom: 8px; }
         .empty-state {
             text-align: center;
             padding: 40px 20px;
             color: #888;
         }
-
-        .empty-state i {
-            font-size: 50px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
+        .empty-state i { font-size: 50px; margin-bottom: 15px; opacity: 0.5; }
         .assessment-form-container {
             margin: 10px;
             padding: 15px;
@@ -1018,7 +695,6 @@
                 currentPosition = null;
             let locationTracking = false,
                 watchId = null;
-            let currentLocationMarker = null; // ADDED: Missing variable
 
             // ==================== ROUTE VARIABLES ====================
             let currentRoute = null;
@@ -1038,9 +714,7 @@
             function showLoading(show) {
                 if (show) {
                     if ($('#mapLoading').length === 0) {
-                        $('body').append(
-                            '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                            );
+                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
                     }
                     $('#mapLoading').show();
                 } else {
@@ -1054,285 +728,261 @@
                     'error': '#dc3545',
                     'warning': '#ffc107',
                     'info': '#17a2b8'
-                } [type] || '#17a2b8';
+                }[type] || '#17a2b8';
 
-                const flashHtml = `
-                    <div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px; z-index: 10000;">
-                        ${message}
-                        <button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
+                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
                 $('body').append(flashHtml);
-                setTimeout(() => $(flashHtml).fadeOut(300, function() {
-                    $(this).remove();
-                }), 4000);
-            }
-
-            function showToast(message, type = 'info') {
-                showFlashMessage(message, type);
+                setTimeout(() => $(flashHtml).fadeOut(300, function() { $(this).remove(); }), 4000);
             }
 
             function closeAllPanels() {
-                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfoPanel').removeClass('open');
+                $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfo').removeClass('open');
             }
 
-            // ==================== ROUTE FUNCTIONS (Fixed) ====================
-
-            // Format distance for display
+            // ==================== FORMATTING FUNCTIONS ====================
             function formatDistance(meters) {
-                if (!meters) return '0 m';
                 if (meters < 1000) return Math.round(meters) + ' m';
-                return (meters / 1000).toFixed(1) + ' km';
+                return (meters / 1000).toFixed(2) + ' km';
             }
 
-            // Format duration for display
             function formatDuration(seconds) {
-                if (!seconds) return '0 min';
-                if (seconds < 60) return Math.floor(seconds) + ' sec';
                 const minutes = Math.floor(seconds / 60);
                 if (minutes < 60) return minutes + ' min';
                 const hours = Math.floor(minutes / 60);
                 const mins = minutes % 60;
-                return hours + 'h ' + mins + 'm';
+                return hours + ' h ' + mins + ' min';
             }
 
-            // Get route from OSRM (Open Source Routing Machine)
+            // ==================== ROUTE FUNCTIONS ====================
+
+            // Get route from OSRM
             async function getRouteFromOSRM(startCoord, endCoord) {
-                try {
-                    const [startLon, startLat] = startCoord;
-                    const [endLon, endLat] = endCoord;
-                    const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+                const [startLon, startLat] = startCoord;
+                const [endLon, endLat] = endCoord;
+                const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
 
-                    console.log('Fetching route from OSRM:', url);
-                    const response = await fetch(url);
-                    const data = await response.json();
+                const response = await fetch(url);
+                const data = await response.json();
 
-                    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-                        throw new Error('No route found');
-                    }
-
-                    return data.routes[0];
-                } catch (error) {
-                    console.warn('OSRM route failed, using straight line:', error);
-                    // Return a straight line route as fallback
-                    return {
-                        distance: calculateDistance(startCoord, endCoord),
-                        duration: calculateDistance(startCoord, endCoord) / 8.33, // Assuming ~30 km/h walking speed
-                        geometry: {
-                            type: "LineString",
-                            coordinates: [startCoord, endCoord]
-                        }
-                    };
+                if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+                    throw new Error('No route found');
                 }
+
+                return data.routes[0];
             }
 
-            // Calculate distance between two coordinates in meters
-            function calculateDistance(coord1, coord2) {
-                const [lon1, lat1] = coord1;
-                const [lon2, lat2] = coord2;
-                const R = 6371000; // Earth's radius in meters
-                const φ1 = lat1 * Math.PI / 180;
-                const φ2 = lat2 * Math.PI / 180;
-                const Δφ = (lat2 - lat1) * Math.PI / 180;
-                const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                          Math.cos(φ1) * Math.cos(φ2) *
-                          Math.sin(Δλ/2) * Math.sin(Δλ/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-                return R * c;
-            }
-
-            // Draw route on map
-            function drawRouteOnMap(geometry) {
-                // Remove existing route layer if it exists
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                }
-
-                // Create source and layer for the route
-                routeSource = new ol.source.Vector();
-
-                // Convert GeoJSON geometry to OpenLayers format
-                let coordinates = geometry.coordinates;
-                if (geometry.type === 'LineString') {
-                    // Convert coordinates from [lon, lat] to map projection
-                    const transformedCoords = coordinates.map(coord => ol.proj.fromLonLat(coord));
-                    const routeFeature = new ol.Feature({
-                        geometry: new ol.geom.LineString(transformedCoords)
-                    });
-                    routeSource.addFeature(routeFeature);
-                }
-
-                routeLayer = new ol.layer.Vector({
-                    source: routeSource,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 5,
-                            lineDash: [10, 5]
-                        })
-                    }),
-                    zIndex: 10
-                });
-
-                map.addLayer(routeLayer);
-
-                // Fit the map view to the route extent
-                const extent = routeSource.getExtent();
-                if (extent && extent[0] !== Infinity) {
-                    map.getView().fit(extent, {
-                        padding: [50, 50, 50, 50],
-                        duration: 800
-                    });
-                }
-            }
-
-            // Clear route from map
-            function clearRoute() {
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                    routeLayer = null;
-                }
-                if (destinationMarker) {
-                    map.removeLayer(destinationMarker);
-                    destinationMarker = null;
-                }
-                if (routeSource) {
-                    routeSource = null;
-                }
-                currentRoute = null;
-                $('#routeInfoPanel').addClass('closed');
-                stopNavigation();
-            }
-
-            // Get route to selected building
-            async function getRouteToBuilding(gisid, coordinates) {
+            // Get route to building
+            async function getRouteToBuilding(gisid, targetCoords) {
                 if (!currentPosition) {
-                    showToast('Please enable your location first', 'error');
+                    showFlashMessage('Please enable location tracking first', 'warning');
                     startLocationTracking();
+                    setTimeout(() => {
+                        if (currentPosition) {
+                            getRouteToBuilding(gisid, targetCoords);
+                        }
+                    }, 3000);
                     return;
                 }
 
                 $('#loadingSpinner').show();
 
                 try {
-                    // Add destination marker
-                    if (destinationMarker) {
-                        map.removeLayer(destinationMarker);
-                    }
+                    const startCoord = ol.proj.toLonLat([currentPosition[0], currentPosition[1]]);
+                    const targetCoord = ol.proj.toLonLat(targetCoords);
 
-                    const destCoords = ol.proj.fromLonLat(coordinates);
-                    destinationMarker = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Point(destCoords)
-                            })]
-                        }),
-                        style: new ol.style.Style({
-                            image: new ol.style.Circle({
-                                radius: 12,
-                                fill: new ol.style.Fill({
-                                    color: '#ff4444'
-                                }),
-                                stroke: new ol.style.Stroke({
-                                    color: '#fff',
-                                    width: 3
-                                })
-                            })
-                        })
-                    });
-                    map.addLayer(destinationMarker);
+                    const route = await getRouteFromOSRM(startCoord, targetCoord);
 
-                    // Get route from OSRM
-                    const route = await getRouteFromOSRM(currentPosition, coordinates);
-
-                    // Draw route on map
-                    drawRouteOnMap(route.geometry);
-
-                    // Update route info panel
-                    $('#routeDistance').text(formatDistance(route.distance));
-                    $('#routeDuration').text(formatDuration(route.duration));
-                    $('#destinationName').text(`GIS ID: ${gisid}`);
-                    $('#routeInfoPanel').removeClass('closed');
+                    drawRouteOnMap(route);
+                    displayRouteInfo(route, gisid);
 
                     currentRoute = route;
+                    selectedBuilding = { gisid: gisid, coords: targetCoords };
 
-                    // Extract turn-by-turn directions if available
-                    if (route.legs && route.legs[0] && route.legs[0].steps) {
-                        routeSteps = route.legs[0].steps.map(step => ({
-                            instruction: step.maneuver.instruction || step.name || 'Continue',
-                            distance: formatDistance(step.distance),
-                            duration: formatDuration(step.duration),
-                            icon: getDirectionIcon(step.maneuver.type)
-                        }));
-                        displayTurnByTurnDirections();
-                    }
+                    $('#routeInfo').addClass('open');
 
                 } catch (error) {
-                    console.error('Route calculation error:', error);
-                    showToast('Error calculating route: ' + error.message, 'error');
+                    console.error('Route error:', error);
+                    showFlashMessage('Could not find a valid route to this building', 'error');
                 } finally {
                     $('#loadingSpinner').hide();
                 }
             }
 
-            // Get icon for direction type
-            function getDirectionIcon(type) {
-                const icons = {
-                    'depart': 'fas fa-play',
-                    'turn': 'fas fa-turn-up',
-                    'continue': 'fas fa-arrow-right',
-                    'arrive': 'fas fa-flag-checkered'
-                };
-                return icons[type] || 'fas fa-arrow-right';
-            }
-
-            // Display turn-by-turn directions
-            function displayTurnByTurnDirections() {
-                const directionsList = $('#directionsList');
-                if (!directionsList.length) return;
-
-                directionsList.empty();
-
-                if (!routeSteps || routeSteps.length === 0) {
-                    directionsList.html('<div class="empty-state">No turn-by-turn directions available</div>');
-                    return;
+            // Draw route on map
+            function drawRouteOnMap(route) {
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
                 }
 
-                routeSteps.forEach((step, index) => {
+                if (routeSource) {
+                    routeSource.clear();
+                }
+
+                const coordinates = route.geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+
+                routeSource = new ol.source.Vector({
+                    features: [new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates)
+                    })]
+                });
+
+                routeLayer = new ol.layer.Vector({
+                    source: routeSource,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#4CAF50',
+                            width: 5,
+                            lineDash: [10, 5]
+                        })
+                    }),
+                    zIndex: 100
+                });
+
+                map.addLayer(routeLayer);
+
+                // Fit map to route bounds
+                const extent = routeSource.getExtent();
+                map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 800 });
+            }
+
+            // Display route information
+            function displayRouteInfo(route, gisid) {
+                const distance = formatDistance(route.distance);
+                const duration = formatDuration(route.duration);
+
+                $('#routeSummary').html(`
+                    <div><i class="fas fa-map-marker-alt"></i> <strong>Destination:</strong> GIS ID: ${gisid}</div>
+                    <div><i class="fas fa-road"></i> <strong>Distance:</strong> ${distance}</div>
+                    <div><i class="fas fa-clock"></i> <strong>Estimated Time:</strong> ${duration}</div>
+                `);
+
+                // Extract turn-by-turn directions
+                routeSteps = [];
+                const steps = route.legs[0].steps;
+
+                $('#directionsList').empty();
+
+                steps.forEach((step, index) => {
+                    const instruction = step.maneuver.instruction;
+                    const stepDistance = formatDistance(step.distance);
+                    const stepDuration = formatDuration(step.duration);
+
+                    let icon = 'fa-arrow-right';
+                    if (instruction.toLowerCase().includes('left')) icon = 'fa-arrow-left';
+                    if (instruction.toLowerCase().includes('right')) icon = 'fa-arrow-right';
+                    if (instruction.toLowerCase().includes('straight')) icon = 'fa-arrow-up';
+                    if (instruction.toLowerCase().includes('destination')) icon = 'fa-flag-checkered';
+
                     const stepElement = $(`
                         <div class="direction-step">
                             <div class="step-number">${index + 1}</div>
                             <div class="step-content">
-                                <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
-                                <div class="step-distance">${step.distance}</div>
+                                <div class="step-instruction"><i class="fas ${icon} me-2"></i> ${instruction}</div>
+                                <div class="step-distance">${stepDistance} • ${stepDuration}</div>
                             </div>
                         </div>
                     `);
-                    directionsList.append(stepElement);
+
+                    $('#directionsList').append(stepElement);
+
+                    routeSteps.push({
+                        instruction: instruction,
+                        distance: stepDistance,
+                        duration: stepDuration,
+                        icon: icon,
+                        coordinates: step.maneuver.location,
+                        distance_meters: step.distance
+                    });
                 });
             }
 
-            // Start turn-by-turn navigation
+            // Clear route
+            function clearRoute() {
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                    routeLayer = null;
+                }
+                if (routeSource) {
+                    routeSource.clear();
+                    routeSource = null;
+                }
+                if (destinationMarker) {
+                    map.removeLayer(destinationMarker);
+                    destinationMarker = null;
+                }
+                currentRoute = null;
+                routeSteps = [];
+                $('#routeInfo').removeClass('open');
+                stopNavigation();
+            }
+
+            // Start navigation
             function startNavigation() {
-                if (!currentRoute || !currentRoute.legs || !currentRoute.legs[0].steps) {
-                    showToast('No route available for navigation', 'error');
+                if (!currentRoute || !routeSteps.length) {
+                    showFlashMessage('No route available for navigation', 'error');
                     return;
                 }
 
                 navigationMode = true;
                 currentStepIndex = 0;
-                $('#startNavigationBtn').hide();
-                $('#stopNavigationBtn').show();
-                $('#navigationPanel').show();
 
-                // Update navigation panel with first instruction
-                updateNavigationStep();
+                $('#routeInfo').removeClass('open');
+                $('#navigationHeader').show();
+                $('#navigationInstruction').show();
 
-                // Start interval to check position relative to next step
-                navigationInterval = setInterval(checkNavigationProgress, 3000);
+                const destination = selectedBuilding ? selectedBuilding.gisid : 'Destination';
+                $('#destinationAddress').text('GIS ID: ' + destination);
+
+                updateNavigationDisplay();
+
+                // Start tracking position for navigation
+                if (navigationInterval) {
+                    clearInterval(navigationInterval);
+                }
+
+                navigationInterval = setInterval(() => {
+                    if (navigationMode && currentPosition) {
+                        checkNextStep();
+                    }
+                }, 3000);
+            }
+
+            // Update navigation display
+            function updateNavigationDisplay() {
+                if (!currentRoute || !routeSteps.length) return;
+
+                const totalDistance = currentRoute.distance;
+                const totalDuration = currentRoute.duration;
+
+                $('#etaTime').text(formatDuration(totalDuration));
+                $('#etaDistance').text(formatDistance(totalDistance));
+
+                if (currentStepIndex < routeSteps.length) {
+                    const currentStep = routeSteps[currentStepIndex];
+                    $('#instructionText').text(currentStep.instruction);
+                    $('#instructionDistance').text(currentStep.distance);
+
+                    let iconClass = 'fa-arrow-up';
+                    if (currentStep.instruction.toLowerCase().includes('left')) iconClass = 'fa-arrow-left';
+                    if (currentStep.instruction.toLowerCase().includes('right')) iconClass = 'fa-arrow-right';
+                    if (currentStep.instruction.toLowerCase().includes('destination')) iconClass = 'fa-flag-checkered';
+                    $('#instructionIcon').removeClass().addClass(`fas ${iconClass}`);
+                }
+            }
+
+            // Check if we've reached the next step
+            function checkNextStep() {
+                if (!currentPosition || !routeSteps.length || currentStepIndex >= routeSteps.length) return;
+
+                // Simplified step checking - in production you'd check distance to next step coordinates
+                if (currentStepIndex < routeSteps.length - 1) {
+                    currentStepIndex++;
+                    updateNavigationDisplay();
+                } else if (currentStepIndex === routeSteps.length - 1) {
+                    // Reached destination
+                    stopNavigation();
+                    showFlashMessage('You have arrived at your destination!', 'success');
+                }
             }
 
             // Stop navigation
@@ -1342,35 +992,9 @@
                     clearInterval(navigationInterval);
                     navigationInterval = null;
                 }
-                $('#startNavigationBtn').show();
-                $('#stopNavigationBtn').hide();
-                $('#navigationPanel').hide();
-            }
-
-            // Update navigation display with current step
-            function updateNavigationStep() {
-                if (!routeSteps[currentStepIndex]) return;
-
-                const step = routeSteps[currentStepIndex];
-                $('#navInstruction').html(`<i class="${step.icon} me-2"></i>${step.instruction}`);
-                $('#navDistance').text(step.distance);
-                $('#stepCounter').text(`${currentStepIndex + 1}/${routeSteps.length}`);
-            }
-
-            // Check if user has reached the next navigation point
-            function checkNavigationProgress() {
-                if (!navigationMode || !currentPosition) return;
-
-                // Simple proximity check (would need more sophisticated logic in production)
-                // This is a simplified version
-                if (currentStepIndex < routeSteps.length - 1) {
-                    currentStepIndex++;
-                    updateNavigationStep();
-                } else if (currentStepIndex === routeSteps.length - 1) {
-                    // Arrived at destination
-                    showToast('You have arrived at your destination!', 'success');
-                    stopNavigation();
-                }
+                $('#navigationHeader').hide();
+                $('#navigationInstruction').hide();
+                currentStepIndex = 0;
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -1391,20 +1015,16 @@
                     $.each(polygons, function(j, poly) {
                         if (poly.gisid == building.gisid) {
                             try {
-                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly
-                                    .coordinates) : poly.coordinates;
+                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                                 if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0,
-                                        cy = 0;
+                                    let cx = 0, cy = 0;
                                     $.each(coords[0], function(k, c) {
                                         cx += c[0];
                                         cy += c[1];
                                     });
-                                    info.coordinates = [cx / coords[0].length, cy / coords[0]
-                                        .length
-                                    ];
+                                    info.coordinates = [cx / coords[0].length, cy / coords[0].length];
                                 }
-                            } catch (e) {}
+                            } catch(e) {}
                             return false;
                         }
                     });
@@ -1422,7 +1042,7 @@
                 });
             }
 
-            // ==================== LOCATION TRACKING (Fixed) ====================
+            // ==================== LOCATION TRACKING ====================
             function startLocationTracking() {
                 if (!navigator.geolocation) {
                     alert("Geolocation not supported");
@@ -1432,17 +1052,13 @@
                 $('#locationBtn').addClass('active');
                 locationTracking = true;
 
-                // Add center button
                 if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append(
-                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
-                    );
+                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
                     $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                    currentPosition = [pos.coords.longitude, pos.coords.latitude];
                 }, function(err) {
                     alert("Unable to get location: " + err.message);
                     locationTracking = false;
@@ -1452,7 +1068,6 @@
 
                 watchId = navigator.geolocation.watchPosition(function(pos) {
                     updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                    currentPosition = [pos.coords.longitude, pos.coords.latitude];
                 }, function(err) {}, {
                     enableHighAccuracy: true,
                     maximumAge: 5000,
@@ -1469,11 +1084,11 @@
                 $('#centerMyLocationBtn').remove();
                 currentLocationLayer = null;
                 accuracyLayer = null;
-                currentLocationMarker = null;
             }
 
             function updateLocationOnMap(lon, lat, accuracy) {
                 let coords = ol.proj.fromLonLat([lon, lat]);
+                currentPosition = [lon, lat];
 
                 if (currentLocationLayer) map.removeLayer(currentLocationLayer);
                 if (accuracyLayer) map.removeLayer(accuracyLayer);
@@ -1485,13 +1100,8 @@
                         })]
                     }),
                     style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 2
-                        }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255,68,68,0.15)'
-                        })
+                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
+                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
                     })
                 });
                 map.addLayer(accuracyLayer);
@@ -1505,18 +1115,12 @@
                     style: new ol.style.Style({
                         image: new ol.style.Circle({
                             radius: 12,
-                            fill: new ol.style.Fill({
-                                color: '#ff4444'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#fff',
-                                width: 3
-                            })
+                            fill: new ol.style.Fill({ color: '#ff4444' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
                         })
                     })
                 });
                 map.addLayer(currentLocationLayer);
-                currentLocationMarker = currentLocationLayer;
 
                 if (!localStorage.getItem('mapCentered')) {
                     map.getView().setCenter(coords);
@@ -1540,8 +1144,7 @@
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
                 if (!text || !text.trim()) {
-                    $('#searchResults').html(
-                        '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
+                    $('#searchResults').html('<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
                     return;
                 }
 
@@ -1549,40 +1152,26 @@
                 let results = [];
 
                 $.each(allBuildings, function(i, b) {
-                    let match = false,
-                        type = '',
-                        val = '';
+                    let match = false, type = '', val = '';
 
                     if (b.gisid && b.gisid.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'GIS ID';
-                        val = b.gisid;
+                        match = true; type = 'GIS ID'; val = b.gisid;
                     } else if (b.building_usage && b.building_usage.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'Building Usage';
-                        val = b.building_usage;
+                        match = true; type = 'Building Usage'; val = b.building_usage;
                     } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
-                        match = true;
-                        type = 'Road Name';
-                        val = b.road_name;
+                        match = true; type = 'Road Name'; val = b.road_name;
                     } else {
                         $.each(b.assessments, function(j, a) {
                             if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Assessment No';
-                                val = a.assessment_no;
+                                match = true; type = 'Assessment No'; val = a.assessment_no;
                                 return false;
                             }
                             if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Owner Name';
-                                val = a.owner_name;
+                                match = true; type = 'Owner Name'; val = a.owner_name;
                                 return false;
                             }
                             if (a.phone && a.phone.toLowerCase().includes(term)) {
-                                match = true;
-                                type = 'Phone';
-                                val = a.phone;
+                                match = true; type = 'Phone'; val = a.phone;
                                 return false;
                             }
                         });
@@ -1601,8 +1190,7 @@
 
                 let $res = $('#searchResults').empty();
                 if (!results.length) {
-                    $res.html(
-                        '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
+                    $res.html('<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
                     return;
                 }
 
@@ -1654,10 +1242,7 @@
                 }
                 if (f) {
                     let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, {
-                        padding: [50, 50, 50, 50],
-                        duration: 800
-                    });
+                    map.getView().fit(e, { padding: [50, 50, 50, 50], duration: 800 });
                     showPopup(gisid, ol.extent.getCenter(e));
                 } else {
                     showFlashMessage("Building not found on map", 'error');
@@ -1666,10 +1251,7 @@
 
             // ==================== POPUP FUNCTIONS ====================
             function createPopup() {
-                popupElement = $('<div>', {
-                    class: 'ol-popup',
-                    style: 'display:none'
-                })[0];
+                popupElement = $('<div>', { class: 'ol-popup', style: 'display:none' })[0];
                 $('body').append(popupElement);
                 return new ol.Overlay({
                     element: popupElement,
@@ -1699,16 +1281,12 @@
                 $.each(assessments, function(i, a) {
                     if (a.shops) {
                         $.each(a.shops, function(j, s) {
-                            shops.push({
-                                ...s,
-                                assessmentNumber: a.assessment || 'Bill ' + (i + 1)
-                            });
+                            shops.push({ ...s, assessmentNumber: a.assessment || 'Bill ' + (i + 1) });
                         });
                     }
                 });
 
-                let buildingHtml =
-                    `<div class="building-details-content">${[
+                let buildingHtml = `<div class="building-details-content">${[
                     ['fingerprint', 'GIS ID', pd.gisid],
                     ['building', 'Building Usage', pd.building_usage],
                     ['home', 'Building Type', pd.building_type],
@@ -1810,14 +1388,11 @@
                             $(this).find('input[name="tax_amount"]').val();
                         let $badge = $(this).closest('.assessment-card').find('.badge');
                         if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html(
-                                '<i class="fas fa-check-circle"></i> QC Complete');
+                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
                         } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html(
-                                '<i class="fas fa-clock"></i> QC Pending');
+                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
                         }
-                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' :
-                            'QC Pending'), 'info');
+                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
                         $('.assessment-form-container').remove();
                     });
 
@@ -1840,7 +1415,7 @@
                         let extent = geometry.getExtent();
                         center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                     }
-                } catch (e) {
+                } catch(e) {
                     let extent = geometry.getExtent();
                     center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                 }
@@ -1850,29 +1425,17 @@
 
                 return [
                     new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ff4444',
-                            width: 2
-                        }),
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255,68,68,0.15)'
-                        })
+                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
+                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
                     }),
                     new ol.style.Style({
                         geometry: center,
                         text: new ol.style.Text({
                             text: `${gisid}\n${sqfeet || 0} sqft`,
                             font: 'bold 11px Arial',
-                            fill: new ol.style.Fill({
-                                color: '#fff'
-                            }),
-                            stroke: new ol.style.Stroke({
-                                color: '#000',
-                                width: 2
-                            }),
-                            backgroundFill: new ol.style.Fill({
-                                color: 'rgba(0,0,0,0.7)'
-                            }),
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: '#000', width: 2 }),
+                            backgroundFill: new ol.style.Fill({ color: 'rgba(0,0,0,0.7)' }),
                             padding: [4, 8, 4, 8]
                         })
                     })
@@ -1887,8 +1450,7 @@
                 let ps = new ol.source.Vector();
                 $.each(polygons, function(i, p) {
                     try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
-                            .coordinates;
+                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
                         if (c && c.length) {
                             ps.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Polygon(c),
@@ -1897,7 +1459,7 @@
                                 visible: true
                             }));
                         }
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing polygon:", e);
                     }
                 });
@@ -1911,8 +1473,7 @@
                 let ls = new ol.source.Vector();
                 $.each(lines, function(i, l) {
                     try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
-                            .coordinates;
+                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
                         if (c && c.length) {
                             if (c.length === 1 && Array.isArray(c[0][0])) {
                                 c = c[0];
@@ -1922,7 +1483,7 @@
                                 gisid: l.gisid
                             }));
                         }
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing line:", e);
                     }
                 });
@@ -1930,10 +1491,7 @@
                 lineLayer = new ol.layer.Vector({
                     source: ls,
                     style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#ffc107',
-                            width: 3
-                        })
+                        stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 })
                     }),
                     visible: true
                 });
@@ -1942,9 +1500,7 @@
                 map.addLayer(lineLayer);
 
                 map.on('click', function(e) {
-                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
+                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
                     if (feature && feature.get('gisid')) {
                         showPopup(feature.get('gisid'), e.coordinate);
                     } else if (popupElement) {
@@ -1953,9 +1509,7 @@
                 });
 
                 map.on('pointermove', function(e) {
-                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) {
-                        return f;
-                    });
+                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
                     $('#map').css('cursor', hasFeature ? 'pointer' : '');
                 });
 
@@ -2003,7 +1557,7 @@
                             opacity: 0.8
                         });
                         hasDrone = true;
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error loading drone image:", e);
                     }
                 }
@@ -2021,23 +1575,15 @@
                                 })]
                             }),
                             style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({
-                                    color: '#ff0000',
-                                    width: 3,
-                                    lineDash: [10, 5]
-                                }),
-                                fill: new ol.style.Fill({
-                                    color: 'rgba(255,0,0,0.05)'
-                                })
+                                stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }),
+                                fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.05)' })
                             }),
                             visible: true
                         });
                         let lons = bound[0].map(p => p[0]);
                         let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
-                            .max(...lats)
-                        ]);
-                    } catch (e) {
+                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
+                    } catch(e) {
                         console.error("Error parsing boundary:", e);
                     }
                 }
@@ -2049,10 +1595,9 @@
                     try {
                         let lons = bound[0].map(p => p[0]);
                         let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
-                            lats) + Math.max(...lats)) / 2]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
                         zoom = 18;
-                    } catch (e) {}
+                    } catch(e) {}
                 }
 
                 map = new ol.Map({
@@ -2072,10 +1617,7 @@
 
                 setTimeout(() => {
                     if (boundExt) {
-                        map.getView().fit(boundExt, {
-                            padding: [50, 50, 50, 50],
-                            duration: 1000
-                        });
+                        map.getView().fit(boundExt, { padding: [50, 50, 50, 50], duration: 1000 });
                     }
                 }, 500);
 
@@ -2149,64 +1691,12 @@
                     </div>
                 `);
 
-                // Add Route Info Panel
-                $('body').append(`
-                    <div class="route-info-panel panel closed" id="routeInfoPanel">
-                        <button class="panel-close" id="closeRouteInfo">&times;</button>
-                        <h5><i class="fas fa-route"></i> Route Information</h5>
-                        <div class="route-details">
-                            <div class="route-detail">
-                                <i class="fas fa-road"></i>
-                                <span>Distance: <strong id="routeDistance">0 m</strong></span>
-                            </div>
-                            <div class="route-detail">
-                                <i class="fas fa-clock"></i>
-                                <span>Duration: <strong id="routeDuration">0 min</strong></span>
-                            </div>
-                            <div class="route-detail">
-                                <i class="fas fa-flag-checkered"></i>
-                                <span>Destination: <strong id="destinationName">-</strong></span>
-                            </div>
-                        </div>
-                        <div class="directions-container">
-                            <h6><i class="fas fa-turn-up"></i> Turn-by-Turn Directions</h6>
-                            <div id="directionsList" class="directions-list"></div>
-                        </div>
-                        <div class="route-actions">
-                            <button id="startNavigationBtn" class="nav-btn"><i class="fas fa-play"></i> Start Navigation</button>
-                        </div>
-                    </div>
-                `);
-
-                // Add Navigation Panel
-                $('body').append(`
-                    <div class="navigation-panel" id="navigationPanel" style="display:none;">
-                        <div class="nav-header">
-                            <i class="fas fa-directions"></i>
-                            <span>Navigation Mode</span>
-                            <button id="stopNavigationBtn" class="stop-nav-btn"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div class="nav-content">
-                            <div class="nav-instruction" id="navInstruction">-</div>
-                            <div class="nav-meta">
-                                <span><i class="fas fa-road"></i> <span id="navDistance">0 m</span></span>
-                                <span><i class="fas fa-step-forward"></i> <span id="stepCounter">0/0</span></span>
-                            </div>
-                        </div>
-                    </div>
-                `);
-
                 $('body').append(`
                     <div class="zoom-controls">
                         <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
                         <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
                     </div>
                 `);
-
-                // Add loading spinner if not exists
-                if ($('#loadingSpinner').length === 0) {
-                    $('body').append('<div id="loadingSpinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i> Calculating route...</div>');
-                }
 
                 // Event listeners
                 $('input[name="baseLayer"]').on('change', function() {
@@ -2305,8 +1795,7 @@
                     });
                     polygonLayer.setStyle(polygonStyleFunction);
                     polygonLayer.changed();
-                    $('#filterCount').text(
-                        `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
+                    $('#filterCount').text(`Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
                     closeAllPanels();
                 });
 
@@ -2376,7 +1865,7 @@
                     startNavigation();
                 });
 
-                $('#stopNavigationBtn').on('click', function() {
+                $('#closeNavigation').on('click', function() {
                     stopNavigation();
                 });
 
