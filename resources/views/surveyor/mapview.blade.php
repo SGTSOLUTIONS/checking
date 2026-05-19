@@ -911,7 +911,7 @@
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="loading-spinner"></div>
 
-    <!-- Simplified Route Info Panel (No Navigation Button) -->
+    {{-- <!-- Simplified Route Info Panel (No Navigation Button) -->
     <div id="routeInfoPanel" class="route-info-panel closed">
         <button class="close-route-btn" id="closeRouteBtn">&times;</button>
         <h5><i class="fas fa-route me-2"></i>Route Information</h5>
@@ -925,7 +925,7 @@
                 <div class="route-stat-label">Est. Time</div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Unified Action Buttons - Changes layout based on screen size -->
     <div class="action-buttons">
