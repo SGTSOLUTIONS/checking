@@ -570,7 +570,7 @@
             }
         }
 
-        /* Route Info Panel */
+        /* Route Info Panel - Simplified (No Navigation Button) */
         .route-info-panel {
             position: fixed;
             bottom: 20px;
@@ -578,11 +578,11 @@
             right: 20px;
             background: white;
             border-radius: 20px;
-            padding: 20px;
+            padding: 16px 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             z-index: 1100;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 400px;
+            max-width: 350px;
         }
 
         @media (max-width: 768px) {
@@ -591,6 +591,7 @@
                 right: 12px;
                 bottom: 80px;
                 max-width: none;
+                padding: 12px 16px;
             }
         }
 
@@ -599,18 +600,15 @@
         }
 
         .route-info-panel h5 {
-            margin: 0 0 12px 0;
+            margin: 0 0 8px 0;
             font-weight: 700;
-            font-size: 18px;
+            font-size: 16px;
             color: #1e293b;
         }
 
         .route-stats {
             display: flex;
             gap: 20px;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e2e8f0;
         }
 
         .route-stat {
@@ -619,7 +617,7 @@
         }
 
         .route-stat-value {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 800;
             color: #2563eb;
         }
@@ -634,14 +632,14 @@
 
         .close-route-btn {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 10px;
+            right: 10px;
             background: #f1f5f9;
             border: none;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 10px;
-            font-size: 18px;
+            font-size: 16px;
             cursor: pointer;
             color: #64748b;
             transition: all 0.3s ease;
@@ -651,24 +649,6 @@
             background: #fee2e2;
             color: #dc2626;
             transform: rotate(90deg);
-        }
-
-        .start-navigation-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-
-        .start-navigation-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
         }
 
         /* Toast Notification */
@@ -931,6 +911,22 @@
     <!-- Loading Spinner -->
     <div id="loadingSpinner" class="loading-spinner"></div>
 
+    <!-- Simplified Route Info Panel (No Navigation Button) -->
+    <div id="routeInfoPanel" class="route-info-panel closed">
+        <button class="close-route-btn" id="closeRouteBtn">&times;</button>
+        <h5><i class="fas fa-route me-2"></i>Route Information</h5>
+        <div class="route-stats">
+            <div class="route-stat">
+                <div class="route-stat-value" id="routeDistance">0 km</div>
+                <div class="route-stat-label">Distance</div>
+            </div>
+            <div class="route-stat">
+                <div class="route-stat-value" id="routeDuration">0 min</div>
+                <div class="route-stat-label">Est. Time</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Unified Action Buttons - Changes layout based on screen size -->
     <div class="action-buttons">
         <div class="action-btn" id="layerBtn" title="Toggle Layers">
@@ -953,25 +949,6 @@
             <i class="fas fa-pen-to-square"></i>
             <span>Edit</span>
         </div>
-    </div>
-
-    <!-- Route Info Panel -->
-    <div id="routeInfoPanel" class="route-info-panel closed">
-        <button class="close-route-btn" id="closeRouteBtn">&times;</button>
-        <h5><i class="fas fa-route me-2"></i>Route to Destination</h5>
-        <div id="destinationName" style="font-size: 14px; color: #64748b; margin-bottom: 10px;"></div>
-        <div class="route-stats">
-            <div class="route-stat">
-                <div class="route-stat-value" id="routeDistance">0 km</div>
-                <div class="route-stat-label">Distance</div>
-            </div>
-            <div class="route-stat">
-                <div class="route-stat-value" id="routeDuration">0 min</div>
-                <div class="route-stat-label">Est. Time</div>
-            </div>
-        </div>
-        <button class="start-navigation-btn" id="startNavigationBtn"><i class="fas fa-directions me-2"></i>Start
-            Navigation</button>
     </div>
 
     <!-- Search Panel -->
@@ -1672,7 +1649,7 @@
                     for (let i = 1; i <= shopCount; i++) {
                         formData.append(`shop_name_${i}`, $(`input[name="shop_name_${i}"]`).val() || '');
                         formData.append(`shop_owner_name_${i}`, $(`input[name="shop_owner_name_${i}"]`)
-                        .val() || '');
+                            .val() || '');
                     }
                     $("#pointSubmit").prop("disabled", true).html(
                         '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
@@ -1722,7 +1699,7 @@
                     if (shopCount > 0) {
                         const container = $(
                             `<div class="card mb-3"><div class="card-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;"><h6 class="mb-0"><i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount > 1 ? 's' : ''})</h6></div><div class="card-body" id="shopDetailsContainer"></div></div>`
-                            );
+                        );
                         appendArea.append(container);
                         const shopContainer = $('#shopDetailsContainer');
                         for (let i = 1; i <= shopCount; i++) {
@@ -2301,7 +2278,7 @@
                     return;
                 }
                 searchDebounceTimer = setTimeout(() => displaySuggestions(getSearchSuggestions(query)),
-                300);
+                    300);
             });
 
             $('#searchGisidBtn').on('click', function() {
@@ -2347,7 +2324,8 @@
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const coords = ol.proj.fromLonLat([position.coords.longitude, position.coords
-                        .latitude]);
+                            .latitude
+                        ]);
                         map.getView().animate({
                             center: coords,
                             zoom: 18,
@@ -2446,7 +2424,6 @@
                     drawRouteOnMap(route.geometry);
                     $('#routeDistance').text(formatDistance(route.distance));
                     $('#routeDuration').text(formatDuration(route.duration / 1.39));
-                    $('#destinationName').text(`GIS ID: ${feature.get('gisid') || 'Selected Location'}`);
                     $('#routeInfoPanel').removeClass('closed');
                     currentRoute = route;
                 } catch (error) {
@@ -2466,7 +2443,7 @@
                         toggleLiveLocation();
                         setTimeout(() => {
                             if (currentLocationMarker) calculateAndDisplayRoute(
-                            selectedFeature);
+                                selectedFeature);
                         }, 2500);
                     }
                     return;
@@ -2474,19 +2451,11 @@
                 await calculateAndDisplayRoute(selectedFeature);
             });
 
-            $('#startNavigationBtn').click(function() {
-                if (currentRoute && isMobile) {
-                    window.open(
-                        `https://www.google.com/maps/dir/?api=1&destination=${currentRoute.endCoord ? currentRoute.endCoord[1] : ''},${currentRoute.endCoord ? currentRoute.endCoord[0] : ''}`,
-                        '_blank');
-                }
-            });
-
             // ==================== CLOSE PANELS ON OUTSIDE CLICK ====================
             $(document).click(function(event) {
                 if (!$(event.target).closest(
                         '.action-buttons, #layerSwitcher, #searchLabel, #editLabel, #routeInfoPanel, #searchSuggestions'
-                        ).length) {
+                    ).length) {
                     $('#layerSwitcher, #searchLabel, #editLabel').addClass('closed');
                     $('#searchSuggestions').removeClass('show');
                 }
