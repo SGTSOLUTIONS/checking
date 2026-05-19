@@ -1956,16 +1956,16 @@
                         text: new ol.style.Text({
                             text: `${gisid}\n${sqfeet || 0} sqft`,
                             font: 'bold 11px Arial',
-                            // fill: new ol.style.Fill({
-                            //     color: '#fff'
-                            // }),
+                            fill: new ol.style.Fill({
+                                color: 'rgba(0,0,0)'
+                            }),
                             stroke: new ol.style.Stroke({
                                 color: '#000',
                                 width: 2
                             }),
-                            backgroundFill: new ol.style.Fill({
-                                color: 'rgba(0,0,0,0.7)'
-                            }),
+                            // backgroundFill: new ol.style.Fill({
+                            //     color: 'rgba(0,0,0,0.7)'
+                            // }),
                             padding: [4, 8, 4, 8]
                         })
                     })
