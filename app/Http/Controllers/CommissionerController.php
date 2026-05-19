@@ -904,6 +904,7 @@ class CommissionerController extends Controller
 
         // Table names
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+         $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
         $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
 
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
@@ -999,7 +1000,9 @@ class CommissionerController extends Controller
 
         $ward = $warddetail;
 
-        return view('corporation.ward-map', compact('ward', 'polygons', 'lines', 'polygonDatas'));
+        $points = DB::($pointsTableName)->get();
+
+        return view('corporation.ward-map', compact('ward', 'polygons', 'lines', 'polygonDatas','points'));
     }
 
     private function getPointDataTable($corporationId, $wardNo, $zone)
