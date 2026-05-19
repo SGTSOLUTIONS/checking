@@ -990,7 +990,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
 
-   <script>
+    <script>
         $(document).ready(function() {
             // ==================== DATA FROM SERVER ====================
             let polygonDatas = @json($polygonDatas ?? []);
@@ -1038,7 +1038,9 @@
             function showLoading(show) {
                 if (show) {
                     if ($('#mapLoading').length === 0) {
-                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
+                        $('body').append(
+                            '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
+                        );
                     }
                     $('#mapLoading').show();
                 } else {
@@ -1052,11 +1054,14 @@
                     'error': '#dc3545',
                     'warning': '#ffc107',
                     'info': '#17a2b8'
-                }[type] || '#17a2b8';
+                } [type] || '#17a2b8';
 
-                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
+                const flashHtml =
+                    `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
                 $('body').append(flashHtml);
-                setTimeout(() => $(flashHtml).fadeOut(300, function() { $(this).remove(); }), 4000);
+                setTimeout(() => $(flashHtml).fadeOut(300, function() {
+                    $(this).remove();
+                }), 4000);
             }
 
             function closeAllPanels() {
@@ -1084,7 +1089,8 @@
                 try {
                     const [startLon, startLat] = startCoord;
                     const [endLon, endLat] = endCoord;
-                    const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+                    const url =
+                        `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
 
                     console.log('Fetching route:', url);
                     const response = await fetch(url);
@@ -1115,11 +1121,17 @@
                     },
                     legs: [{
                         steps: [{
-                            maneuver: { type: "depart", instruction: "Start from your location" },
+                            maneuver: {
+                                type: "depart",
+                                instruction: "Start from your location"
+                            },
                             distance: distance,
                             duration: duration
                         }, {
-                            maneuver: { type: "arrive", instruction: "Arrive at destination" },
+                            maneuver: {
+                                type: "arrive",
+                                instruction: "Arrive at destination"
+                            },
                             distance: 0,
                             duration: 0
                         }]
@@ -1134,8 +1146,12 @@
                         let instruction = step.maneuver.instruction || step.maneuver.type;
                         let icon = 'fas fa-arrow-right';
                         switch (step.maneuver.type) {
-                            case 'depart': icon = 'fas fa-play'; break;
-                            case 'arrive': icon = 'fas fa-flag-checkered'; break;
+                            case 'depart':
+                                icon = 'fas fa-play';
+                                break;
+                            case 'arrive':
+                                icon = 'fas fa-flag-checkered';
+                                break;
                             case 'turn':
                                 if (step.maneuver.modifier === 'left') icon = 'fas fa-arrow-left';
                                 else if (step.maneuver.modifier === 'right') icon = 'fas fa-arrow-right';
@@ -1194,86 +1210,87 @@
             }
 
             async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
-    $('#loadingSpinner').css('display', 'flex');
+                $('#loadingSpinner').css('display', 'flex');
 
-    try {
-        // Validate end coordinates
-        if (!endCoord || endCoord.length < 2) {
-            throw new Error('Invalid destination coordinates');
-        }
+                try {
+                    // Validate end coordinates
+                    if (!endCoord || endCoord.length < 2) {
+                        throw new Error('Invalid destination coordinates');
+                    }
 
-        // Ensure end coordinates are in geographic format (lon/lat)
-        let endLon, endLat;
-        if (Math.abs(endCoord[0]) > 180 || Math.abs(endCoord[1]) > 90) {
-            // Convert from projected to geographic
-            try {
-                const projectedPoint = new ol.geom.Point([endCoord[0], endCoord[1]]);
-                const geographicPoint = projectedPoint.clone();
-                geographicPoint.transform('EPSG:3857', 'EPSG:4326');
-                endLon = geographicPoint.getCoordinates()[0];
-                endLat = geographicPoint.getCoordinates()[1];
-                console.log("Converted end coordinates from projected to geographic:", endCoord, "->", endLon, endLat);
-            } catch(e) {
-                throw new Error('Failed to convert destination coordinates');
-            }
-        } else {
-            endLon = parseFloat(endCoord[0]);
-            endLat = parseFloat(endCoord[1]);
-        }
+                    // Ensure end coordinates are in geographic format (lon/lat)
+                    let endLon, endLat;
+                    if (Math.abs(endCoord[0]) > 180 || Math.abs(endCoord[1]) > 90) {
+                        // Convert from projected to geographic
+                        try {
+                            const projectedPoint = new ol.geom.Point([endCoord[0], endCoord[1]]);
+                            const geographicPoint = projectedPoint.clone();
+                            geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+                            endLon = geographicPoint.getCoordinates()[0];
+                            endLat = geographicPoint.getCoordinates()[1];
+                            console.log("Converted end coordinates from projected to geographic:", endCoord,
+                                "->", endLon, endLat);
+                        } catch (e) {
+                            throw new Error('Failed to convert destination coordinates');
+                        }
+                    } else {
+                        endLon = parseFloat(endCoord[0]);
+                        endLat = parseFloat(endCoord[1]);
+                    }
 
-        const endGeographic = [endLon, endLat];
+                    const endGeographic = [endLon, endLat];
 
-        // Ensure start coordinates are in geographic format
-        let startLon, startLat;
-        if (Math.abs(startCoord[0]) > 180 || Math.abs(startCoord[1]) > 90) {
-            // Convert from projected to geographic
-            try {
-                const projectedPoint = new ol.geom.Point([startCoord[0], startCoord[1]]);
-                const geographicPoint = projectedPoint.clone();
-                geographicPoint.transform('EPSG:3857', 'EPSG:4326');
-                startLon = geographicPoint.getCoordinates()[0];
-                startLat = geographicPoint.getCoordinates()[1];
-            } catch(e) {
-                startLon = startCoord[0];
-                startLat = startCoord[1];
-            }
-        } else {
-            startLon = startCoord[0];
-            startLat = startCoord[1];
-        }
+                    // Ensure start coordinates are in geographic format
+                    let startLon, startLat;
+                    if (Math.abs(startCoord[0]) > 180 || Math.abs(startCoord[1]) > 90) {
+                        // Convert from projected to geographic
+                        try {
+                            const projectedPoint = new ol.geom.Point([startCoord[0], startCoord[1]]);
+                            const geographicPoint = projectedPoint.clone();
+                            geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+                            startLon = geographicPoint.getCoordinates()[0];
+                            startLat = geographicPoint.getCoordinates()[1];
+                        } catch (e) {
+                            startLon = startCoord[0];
+                            startLat = startCoord[1];
+                        }
+                    } else {
+                        startLon = startCoord[0];
+                        startLat = startCoord[1];
+                    }
 
-        const startGeographic = [startLon, startLat];
+                    const startGeographic = [startLon, startLat];
 
-        console.log("Route from:", startGeographic, "to:", endGeographic);
+                    console.log("Route from:", startGeographic, "to:", endGeographic);
 
-        const route = await getRouteFromOSRM(startGeographic, endGeographic);
-        const totalDistance = route.distance;
-        const totalDuration = route.duration;
+                    const route = await getRouteFromOSRM(startGeographic, endGeographic);
+                    const totalDistance = route.distance;
+                    const totalDuration = route.duration;
 
-        routeSteps = parseOSRMSteps(route);
-        currentRoute = {
-            distance: totalDistance,
-            duration: totalDuration,
-            geometry: route.geometry,
-            endCoord: endGeographic,
-            placeName: destinationName,
-            gisid: buildingGisid
-        };
+                    routeSteps = parseOSRMSteps(route);
+                    currentRoute = {
+                        distance: totalDistance,
+                        duration: totalDuration,
+                        geometry: route.geometry,
+                        endCoord: endGeographic,
+                        placeName: destinationName,
+                        gisid: buildingGisid
+                    };
 
-        drawRouteOnMap(route.geometry);
+                    drawRouteOnMap(route.geometry);
 
-        // Display route info
-        $('#routeSummary').html(`
+                    // Display route info
+                    $('#routeSummary').html(`
             <div><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>
             <div><strong>Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
             <div><strong>Destination:</strong> ${destinationName}</div>
         `);
 
-        // Display turn-by-turn directions
-        const directionsList = $('#directionsList');
-        directionsList.empty();
-        routeSteps.forEach((step, index) => {
-            directionsList.append(`
+                    // Display turn-by-turn directions
+                    const directionsList = $('#directionsList');
+                    directionsList.empty();
+                    routeSteps.forEach((step, index) => {
+                        directionsList.append(`
                 <div class="direction-step">
                     <div class="step-number">${index + 1}</div>
                     <div class="step-content">
@@ -1282,90 +1299,95 @@
                     </div>
                 </div>
             `);
-        });
+                    });
 
-        // Add destination marker in projected coordinates for display
-        const destProjected = ol.proj.fromLonLat(endGeographic);
-        if (destinationMarker) map.removeLayer(destinationMarker);
-        const destLayer = new ol.layer.Vector({
-            source: new ol.source.Vector({
-                features: [new ol.Feature({
-                    geometry: new ol.geom.Point(destProjected)
-                })]
-            }),
-            style: new ol.style.Style({
-                image: new ol.style.Circle({
-                    radius: 14,
-                    fill: new ol.style.Fill({ color: '#ff4444' }),
-                    stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                })
-            })
-        });
-        map.addLayer(destLayer);
-        destinationMarker = destLayer;
+                    // Add destination marker in projected coordinates for display
+                    const destProjected = ol.proj.fromLonLat(endGeographic);
+                    if (destinationMarker) map.removeLayer(destinationMarker);
+                    const destLayer = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.Point(destProjected)
+                            })]
+                        }),
+                        style: new ol.style.Style({
+                            image: new ol.style.Circle({
+                                radius: 14,
+                                fill: new ol.style.Fill({
+                                    color: '#ff4444'
+                                }),
+                                stroke: new ol.style.Stroke({
+                                    color: '#fff',
+                                    width: 3
+                                })
+                            })
+                        })
+                    });
+                    map.addLayer(destLayer);
+                    destinationMarker = destLayer;
 
-        $('#routeInfo').addClass('open');
-        showToast('Route calculated successfully!', 'success');
+                    $('#routeInfo').addClass('open');
+                    showToast('Route calculated successfully!', 'success');
 
-    } catch (error) {
-        console.error('Route calculation error:', error);
-        showToast('Error calculating route: ' + error.message, 'error');
-    } finally {
-        $('#loadingSpinner').hide();
-    }
-}
+                } catch (error) {
+                    console.error('Route calculation error:', error);
+                    showToast('Error calculating route: ' + error.message, 'error');
+                } finally {
+                    $('#loadingSpinner').hide();
+                }
+            }
             // ==================== GET ROUTE TO BUILDING (MISSING FUNCTION) ====================
-           function getRouteToBuilding(gisid, targetCoords) {
-    // Validate target coordinates
-    if (!targetCoords || targetCoords.length < 2) {
-        showToast('Invalid building coordinates', 'error');
-        return;
-    }
+            function getRouteToBuilding(gisid, targetCoords) {
+                // Validate target coordinates
+                if (!targetCoords || targetCoords.length < 2) {
+                    showToast('Invalid building coordinates', 'error');
+                    return;
+                }
 
-    let lon, lat;
+                let lon, lat;
 
-    // Check if coordinates are in projected format (Web Mercator) or geographic
-    // Projected coordinates are typically larger than 180 for longitude
-    if (Math.abs(targetCoords[0]) > 180 || Math.abs(targetCoords[1]) > 90) {
-        // Coordinates are in projected format (EPSG:3857) - convert to lon/lat
-        try {
-            const projectedPoint = new ol.geom.Point([targetCoords[0], targetCoords[1]]);
-            const geographicPoint = projectedPoint.clone();
-            geographicPoint.transform('EPSG:3857', 'EPSG:4326');
-            lon = geographicPoint.getCoordinates()[0];
-            lat = geographicPoint.getCoordinates()[1];
-            console.log("Converted from projected to geographic:", targetCoords, "->", lon, lat);
-        } catch(e) {
-            console.error("Error converting coordinates:", e);
-            showToast('Error converting building coordinates', 'error');
-            return;
-        }
-    } else {
-        // Coordinates are already in geographic format
-        lon = parseFloat(targetCoords[0]);
-        lat = parseFloat(targetCoords[1]);
-    }
+                // Check if coordinates are in projected format (Web Mercator) or geographic
+                // Projected coordinates are typically larger than 180 for longitude
+                if (Math.abs(targetCoords[0]) > 180 || Math.abs(targetCoords[1]) > 90) {
+                    // Coordinates are in projected format (EPSG:3857) - convert to lon/lat
+                    try {
+                        const projectedPoint = new ol.geom.Point([targetCoords[0], targetCoords[1]]);
+                        const geographicPoint = projectedPoint.clone();
+                        geographicPoint.transform('EPSG:3857', 'EPSG:4326');
+                        lon = geographicPoint.getCoordinates()[0];
+                        lat = geographicPoint.getCoordinates()[1];
+                        console.log("Converted from projected to geographic:", targetCoords, "->", lon, lat);
+                    } catch (e) {
+                        console.error("Error converting coordinates:", e);
+                        showToast('Error converting building coordinates', 'error');
+                        return;
+                    }
+                } else {
+                    // Coordinates are already in geographic format
+                    lon = parseFloat(targetCoords[0]);
+                    lat = parseFloat(targetCoords[1]);
+                }
 
-    if (isNaN(lon) || isNaN(lat)) {
-        showToast('Invalid coordinate values', 'error');
-        return;
-    }
+                if (isNaN(lon) || isNaN(lat)) {
+                    showToast('Invalid coordinate values', 'error');
+                    return;
+                }
 
-    if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
-        showToast('Invalid coordinate range. Please try another building.', 'error');
-        console.error("Coordinates out of range:", lon, lat);
-        return;
-    }
+                if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+                    showToast('Invalid coordinate range. Please try another building.', 'error');
+                    console.error("Coordinates out of range:", lon, lat);
+                    return;
+                }
 
-    if (!currentPosition) {
-        showToast('Please enable your location first', 'warning');
-        startLocationTracking();
-        return;
-    }
+                if (!currentPosition) {
+                    showToast('Please enable your location first', 'warning');
+                    startLocationTracking();
+                    return;
+                }
 
-    console.log("Getting route to building:", gisid, "at geographic coordinates:", lon, lat);
-    calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
-}
+                console.log("Getting route to building:", gisid, "at geographic coordinates:", lon, lat);
+                calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
+            }
 
             function clearRoute() {
                 if (routeLayer) {
@@ -1386,55 +1408,85 @@
             function startNavigation() {
                 if (currentRoute && currentRoute.endCoord) {
                     const [lon, lat] = currentRoute.endCoord;
-                    window.open(`https://www.google.com/maps/dir/${currentPosition[1]},${currentPosition[0]}/${lat},${lon}`, '_blank');
+                    window.open(
+                        `https://www.google.com/maps/dir/${currentPosition[1]},${currentPosition[0]}/${lat},${lon}`,
+                        '_blank');
                 } else {
                     showToast('No route available for navigation', 'warning');
                 }
             }
 
             // ==================== BUILD SEARCH INDEX ====================
-           function buildSearchIndex() {
-    allBuildings = [];
-    $.each(polygonDatas, function(i, building) {
-        let info = {
-            gisid: building.gisid,
-            building_usage: building.building_usage,
-            building_type: building.building_type,
-            road_name: building.road_name,
-            zone: building.zone,
-            number_floor: building.number_floor,
-            coordinates: null,
-            assessments: []
-        };
+            function buildSearchIndex() {
+                allBuildings = [];
+                $.each(polygonDatas, function(i, building) {
+                    let info = {
+                        gisid: building.gisid,
+                        building_usage: building.building_usage,
+                        building_type: building.building_type,
+                        road_name: building.road_name,
+                        zone: building.zone,
+                        number_floor: building.number_floor,
+                        coordinates: null,
+                        assessments: []
+                    };
 
-        $.each(polygons, function(j, poly) {
-            if (poly.gisid == building.gisid) {
-                try {
-                    let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
-                    if (coords && coords[0] && coords[0][0]) {
-                        let cx = 0, cy = 0, count = 0;
-                        $.each(coords[0], function(k, c) {
-                            if (c && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[1])) {
-                                cx += c[0];
-                                cy += c[1];
-                                count++;
-                            }
+                    // Populate assessments from pointdata
+                    if (building.pointdata && building.pointdata.length) {
+                        $.each(building.pointdata, function(j, assessment) {
+                            info.assessments.push({
+                                id: assessment.id,
+                                assessment: assessment.assessment, // Try this field
+                                assessment_number: assessment.assessment_number, // Try this
+                                assessment_no: assessment.assessment_no, // Try this
+                                bill_no: assessment.bill_no, // Try this
+                                bill_number: assessment.bill_number, // Try this
+                                owner_name: assessment.owner_name,
+                                present_owner_name: assessment.present_owner_name,
+                                phone: assessment.phone,
+                                phone_number: assessment.phone_number,
+                                bill_usage: assessment.bill_usage,
+                                floor: assessment.floor,
+                                qcsqfeet: assessment.qcsqfeet,
+                                qcusage: assessment.qcusage
+                            });
                         });
-                        if (count > 0) {
-                            // Store the center coordinates in their original format (projected)
-                            info.coordinates = [cx / count, cy / count];
-                        }
                     }
-                } catch(e) {
-                    console.error("Error parsing coordinates for building:", building.gisid, e);
-                }
-                return false;
+
+                    $.each(polygons, function(j, poly) {
+                        if (poly.gisid == building.gisid) {
+                            try {
+                                let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly
+                                    .coordinates) : poly.coordinates;
+                                if (coords && coords[0] && coords[0][0]) {
+                                    let cx = 0,
+                                        cy = 0,
+                                        count = 0;
+                                    $.each(coords[0], function(k, c) {
+                                        if (c && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[
+                                                1])) {
+                                            cx += c[0];
+                                            cy += c[1];
+                                            count++;
+                                        }
+                                    });
+                                    if (count > 0) {
+                                        info.coordinates = [cx / count, cy / count];
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Error parsing coordinates for building:", building
+                                    .gisid, e);
+                            }
+                            return false;
+                        }
+                    });
+                    allBuildings.push(info);
+                });
+                console.log("Search index built with", allBuildings.length, "buildings");
+                console.log("Sample building with assessments:", allBuildings.find(b => b.assessments && b
+                    .assessments.length > 0));
             }
-        });
-        allBuildings.push(info);
-    });
-    console.log("Search index built with", allBuildings.length, "buildings");
-}
 
             // ==================== LOCATION TRACKING ====================
             function startLocationTracking() {
@@ -1447,7 +1499,9 @@
                 locationTracking = true;
 
                 if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
+                    $('body').append(
+                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
+                    );
                     $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
@@ -1496,8 +1550,13 @@
                         })]
                     }),
                     style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255,68,68,0.15)'
+                        })
                     })
                 });
                 map.addLayer(accuracyLayer);
@@ -1511,8 +1570,13 @@
                     style: new ol.style.Style({
                         image: new ol.style.Circle({
                             radius: 12,
-                            fill: new ol.style.Fill({ color: '#ff4444' }),
-                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                            fill: new ol.style.Fill({
+                                color: '#ff4444'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#fff',
+                                width: 3
+                            })
                         })
                     })
                 });
@@ -1540,7 +1604,8 @@
             // ==================== SEARCH FUNCTIONS ====================
             function searchBuildings(text) {
                 if (!text || !text.trim()) {
-                    $('#searchResults').html('<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
+                    $('#searchResults').html(
+                        '<div class="empty-state"><i class="fas fa-search"></i><p>Enter search term</p></div>');
                     return;
                 }
 
@@ -1548,28 +1613,59 @@
                 let results = [];
 
                 $.each(allBuildings, function(i, b) {
-                    let match = false, type = '', val = '';
+                    let match = false,
+                        type = '',
+                        val = '';
 
                     if (b.gisid && b.gisid.toLowerCase().includes(term)) {
-                        match = true; type = 'GIS ID'; val = b.gisid;
+                        match = true;
+                        type = 'GIS ID';
+                        val = b.gisid;
                     } else if (b.building_usage && b.building_usage.toLowerCase().includes(term)) {
-                        match = true; type = 'Building Usage'; val = b.building_usage;
+                        match = true;
+                        type = 'Building Usage';
+                        val = b.building_usage;
                     } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
-                        match = true; type = 'Road Name'; val = b.road_name;
+                        match = true;
+                        type = 'Road Name';
+                        val = b.road_name;
                     } else if (b.zone && b.zone.toLowerCase().includes(term)) {
-                        match = true; type = 'Zone'; val = b.zone;
+                        match = true;
+                        type = 'Zone';
+                        val = b.zone;
                     } else {
+                        // Check assessments - FIXED to handle both assessment and assessment_number fields
                         $.each(b.assessments, function(j, a) {
-                            if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
-                                match = true; type = 'Assessment No'; val = a.assessment_no;
+                            // Try multiple possible field names for assessment number
+                            let assessmentNum = a.assessment || a.assessment_number || a
+                                .assessment_no || a.bill_no || a.bill_number;
+                            let ownerName = a.owner_name || a.present_owner_name;
+                            let phone = a.phone || a.phone_number || a.mobile;
+
+                            if (assessmentNum && assessmentNum.toString().toLowerCase().includes(
+                                    term)) {
+                                match = true;
+                                type = 'Assessment No';
+                                val = assessmentNum;
                                 return false;
                             }
-                            if (a.owner_name && a.owner_name.toLowerCase().includes(term)) {
-                                match = true; type = 'Owner Name'; val = a.owner_name;
+                            if (ownerName && ownerName.toLowerCase().includes(term)) {
+                                match = true;
+                                type = 'Owner Name';
+                                val = ownerName;
                                 return false;
                             }
-                            if (a.phone && a.phone.toLowerCase().includes(term)) {
-                                match = true; type = 'Phone'; val = a.phone;
+                            if (phone && phone.toLowerCase().includes(term)) {
+                                match = true;
+                                type = 'Phone';
+                                val = phone;
+                                return false;
+                            }
+                            // Also check assessment usage/type if needed
+                            if (a.bill_usage && a.bill_usage.toLowerCase().includes(term)) {
+                                match = true;
+                                type = 'Usage';
+                                val = a.bill_usage;
                                 return false;
                             }
                         });
@@ -1588,7 +1684,8 @@
 
                 let $res = $('#searchResults').empty();
                 if (!results.length) {
-                    $res.html('<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
+                    $res.html(
+                        '<div class="empty-state"><i class="fas fa-search"></i><p>No buildings found</p></div>');
                     return;
                 }
 
@@ -1596,11 +1693,11 @@
                     let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
                     let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
                     $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
-                        <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${escapeHtml(r.matchValue)}</div>
-                        <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
-                    </div>`);
+            <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
+            <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${escapeHtml(r.matchValue)}</div>
+            <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
+            <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
+        </div>`);
                 });
 
                 $('.search-result-item').off('click').on('click', function(e) {
@@ -1650,7 +1747,10 @@
                 }
                 if (f) {
                     let e = f.getGeometry().getExtent();
-                    map.getView().fit(e, { padding: [50, 50, 50, 50], duration: 800 });
+                    map.getView().fit(e, {
+                        padding: [50, 50, 50, 50],
+                        duration: 800
+                    });
                     showPopup(gisid, ol.extent.getCenter(e));
                 } else {
                     showToast("Building not found on map", 'error');
@@ -1659,7 +1759,10 @@
 
             // ==================== POPUP FUNCTIONS ====================
             function createPopup() {
-                popupElement = $('<div>', { class: 'ol-popup', style: 'display:none' })[0];
+                popupElement = $('<div>', {
+                    class: 'ol-popup',
+                    style: 'display:none'
+                })[0];
                 $('body').append(popupElement);
                 return new ol.Overlay({
                     element: popupElement,
@@ -1689,12 +1792,16 @@
                 $.each(assessments, function(i, a) {
                     if (a.shops) {
                         $.each(a.shops, function(j, s) {
-                            shops.push({ ...s, assessmentNumber: a.assessment || 'Bill ' + (i + 1) });
+                            shops.push({
+                                ...s,
+                                assessmentNumber: a.assessment || 'Bill ' + (i + 1)
+                            });
                         });
                     }
                 });
 
-                let buildingHtml = `<div class="building-details-content">${[
+                let buildingHtml =
+                    `<div class="building-details-content">${[
                     ['fingerprint', 'GIS ID', pd.gisid],
                     ['building', 'Building Usage', pd.building_usage],
                     ['home', 'Building Type', pd.building_type],
@@ -1796,11 +1903,14 @@
                             $(this).find('input[name="tax_amount"]').val();
                         let $badge = $(this).closest('.assessment-card').find('.badge');
                         if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
+                            $badge.removeClass('badge-warning').addClass('badge-success').html(
+                                '<i class="fas fa-check-circle"></i> QC Complete');
                         } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
+                            $badge.removeClass('badge-success').addClass('badge-warning').html(
+                                '<i class="fas fa-clock"></i> QC Pending');
                         }
-                        showToast('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
+                        showToast('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'),
+                            'info');
                         $('.assessment-form-container').remove();
                     });
 
@@ -1823,7 +1933,7 @@
                         let extent = geometry.getExtent();
                         center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                     }
-                } catch(e) {
+                } catch (e) {
                     let extent = geometry.getExtent();
                     center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                 }
@@ -1833,17 +1943,29 @@
 
                 return [
                     new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
+                        stroke: new ol.style.Stroke({
+                            color: '#ff4444',
+                            width: 2
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255,68,68,0.15)'
+                        })
                     }),
                     new ol.style.Style({
                         geometry: center,
                         text: new ol.style.Text({
                             text: `${gisid}\n${sqfeet || 0} sqft`,
                             font: 'bold 11px Arial',
-                            fill: new ol.style.Fill({ color: '#fff' }),
-                            stroke: new ol.style.Stroke({ color: '#000', width: 2 }),
-                            backgroundFill: new ol.style.Fill({ color: 'rgba(0,0,0,0.7)' }),
+                            fill: new ol.style.Fill({
+                                color: '#fff'
+                            }),
+                            stroke: new ol.style.Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            backgroundFill: new ol.style.Fill({
+                                color: 'rgba(0,0,0,0.7)'
+                            }),
                             padding: [4, 8, 4, 8]
                         })
                     })
@@ -1858,7 +1980,8 @@
                 let ps = new ol.source.Vector();
                 $.each(polygons, function(i, p) {
                     try {
-                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
+                        let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p
+                            .coordinates;
                         if (c && c.length) {
                             ps.addFeature(new ol.Feature({
                                 geometry: new ol.geom.Polygon(c),
@@ -1867,7 +1990,7 @@
                                 visible: true
                             }));
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.error("Error parsing polygon:", e);
                     }
                 });
@@ -1881,7 +2004,8 @@
                 let ls = new ol.source.Vector();
                 $.each(lines, function(i, l) {
                     try {
-                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
+                        let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l
+                            .coordinates;
                         if (c && c.length) {
                             if (c.length === 1 && Array.isArray(c[0][0])) {
                                 c = c[0];
@@ -1891,7 +2015,7 @@
                                 gisid: l.gisid
                             }));
                         }
-                    } catch(e) {
+                    } catch (e) {
                         console.error("Error parsing line:", e);
                     }
                 });
@@ -1899,7 +2023,10 @@
                 lineLayer = new ol.layer.Vector({
                     source: ls,
                     style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ffc107', width: 3 })
+                        stroke: new ol.style.Stroke({
+                            color: '#ffc107',
+                            width: 3
+                        })
                     }),
                     visible: true
                 });
@@ -1908,7 +2035,9 @@
                 map.addLayer(lineLayer);
 
                 map.on('click', function(e) {
-                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
+                    let feature = map.forEachFeatureAtPixel(e.pixel, function(f) {
+                        return f;
+                    });
                     if (feature && feature.get('gisid')) {
                         showPopup(feature.get('gisid'), e.coordinate);
                     } else if (popupElement) {
@@ -1917,7 +2046,9 @@
                 });
 
                 map.on('pointermove', function(e) {
-                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
+                    let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) {
+                        return f;
+                    });
                     $('#map').css('cursor', hasFeature ? 'pointer' : '');
                 });
 
@@ -1965,7 +2096,7 @@
                             opacity: 0.8
                         });
                         hasDrone = true;
-                    } catch(e) {
+                    } catch (e) {
                         console.error("Error loading drone image:", e);
                     }
                 }
@@ -1983,15 +2114,23 @@
                                 })]
                             }),
                             style: new ol.style.Style({
-                                stroke: new ol.style.Stroke({ color: '#ff0000', width: 3, lineDash: [10, 5] }),
-                                fill: new ol.style.Fill({ color: 'rgba(255,0,0,0.05)' })
+                                stroke: new ol.style.Stroke({
+                                    color: '#ff0000',
+                                    width: 3,
+                                    lineDash: [10, 5]
+                                }),
+                                fill: new ol.style.Fill({
+                                    color: 'rgba(255,0,0,0.05)'
+                                })
                             }),
                             visible: true
                         });
                         let lons = bound[0].map(p => p[0]);
                         let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-                    } catch(e) {
+                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math
+                            .max(...lats)
+                        ]);
+                    } catch (e) {
                         console.error("Error parsing boundary:", e);
                     }
                 }
@@ -2003,9 +2142,10 @@
                     try {
                         let lons = bound[0].map(p => p[0]);
                         let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...
+                            lats) + Math.max(...lats)) / 2]);
                         zoom = 18;
-                    } catch(e) {}
+                    } catch (e) {}
                 }
 
                 map = new ol.Map({
@@ -2025,7 +2165,10 @@
 
                 setTimeout(() => {
                     if (boundExt) {
-                        map.getView().fit(boundExt, { padding: [50, 50, 50, 50], duration: 1000 });
+                        map.getView().fit(boundExt, {
+                            padding: [50, 50, 50, 50],
+                            duration: 1000
+                        });
                     }
                 }, 500);
 
@@ -2203,7 +2346,8 @@
                     });
                     polygonLayer.setStyle(polygonStyleFunction);
                     polygonLayer.changed();
-                    $('#filterCount').text(`Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
+                    $('#filterCount').text(
+                        `Showing ${src.getFeatures().length} of ${src.getFeatures().length} buildings`);
                     closeAllPanels();
                 });
 
@@ -2296,4 +2440,4 @@
             });
         });
     </script>
-    @endpush
+@endpush
