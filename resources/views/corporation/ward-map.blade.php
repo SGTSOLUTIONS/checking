@@ -1038,9 +1038,7 @@
             function showLoading(show) {
                 if (show) {
                     if ($('#mapLoading').length === 0) {
-                        $('body').append(
-                            '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                            );
+                        $('body').append('<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>');
                     }
                     $('#mapLoading').show();
                 } else {
@@ -1048,34 +1046,33 @@
                 }
             }
 
-            function showFlashMessage(message, type = 'info') {
+            function showToast(message, type = 'info') {
                 const alertClass = {
                     'success': '#28a745',
                     'error': '#dc3545',
                     'warning': '#ffc107',
                     'info': '#17a2b8'
-                } [type] || '#17a2b8';
+                }[type] || '#17a2b8';
 
-                const flashHtml =
-                    `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
+                const flashHtml = `<div class="alert alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 250px;">${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button></div>`;
                 $('body').append(flashHtml);
-                setTimeout(() => $(flashHtml).fadeOut(300, function() {
-                    $(this).remove();
-                }), 4000);
+                setTimeout(() => $(flashHtml).fadeOut(300, function() { $(this).remove(); }), 4000);
             }
 
             function closeAllPanels() {
                 $('#layerSwitcher, #mapLegend, #searchPanel, #filterPanel, #routeInfo').removeClass('open');
             }
 
-            // ==================== ROUTE FUNCTIONS ====================
+            // ==================== ROUTE FUNCTIONS (SURVEYOR VERSION - WORKING) ====================
 
             function formatDistance(meters) {
-                if (meters < 1000) return meters.toFixed(0) + ' m';
+                if (!meters || isNaN(meters)) return '0 m';
+                if (meters < 1000) return Math.round(meters) + ' m';
                 return (meters / 1000).toFixed(2) + ' km';
             }
 
             function formatDuration(seconds) {
+                if (!seconds || isNaN(seconds)) return '0 min';
                 const minutes = Math.floor(seconds / 60);
                 if (minutes < 60) return minutes + ' min';
                 const hours = Math.floor(minutes / 60);
@@ -1087,16 +1084,15 @@
                 try {
                     const [startLon, startLat] = startCoord;
                     const [endLon, endLat] = endCoord;
-                    const url =
-                        `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
+                    const url = `https://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full&geometries=geojson&steps=true`;
 
+                    console.log('Fetching route:', url);
                     const response = await fetch(url);
                     const data = await response.json();
 
                     if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
                         throw new Error('No route found');
                     }
-
                     return data.routes[0];
                 } catch (error) {
                     console.warn('OSRM route failed, using straight line:', error);
@@ -1133,14 +1129,10 @@
 
             function parseOSRMSteps(route) {
                 const steps = [];
-                let accumulatedDistance = 0;
-
                 if (route.legs && route.legs[0] && route.legs[0].steps) {
                     route.legs[0].steps.forEach((step) => {
-                        accumulatedDistance += step.distance;
                         let instruction = step.maneuver.instruction || step.maneuver.type;
                         let icon = 'fas fa-arrow-right';
-
                         switch (step.maneuver.type) {
                             case 'depart': icon = 'fas fa-play'; break;
                             case 'arrive': icon = 'fas fa-flag-checkered'; break;
@@ -1150,10 +1142,9 @@
                                 else icon = 'fas fa-turn-up';
                                 break;
                         }
-
                         steps.push({
                             instruction: instruction,
-                            distance: formatDistance(accumulatedDistance),
+                            distance: formatDistance(step.distance),
                             icon: icon,
                             type: step.maneuver.type
                         });
@@ -1163,61 +1154,43 @@
             }
 
             function drawRouteOnMap(geometry) {
-                if (!routeLayer) {
-                    routeSource = new ol.source.Vector();
-                    routeLayer = new ol.layer.Vector({
-                        source: routeSource,
-                        style: new ol.style.Style({
-                            stroke: new ol.style.Stroke({
-                                color: '#0066cc',
-                                width: 5,
-                                lineDash: [10, 8]
-                            })
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+                if (routeSource) {
+                    routeSource.clear();
+                }
+
+                routeSource = new ol.source.Vector();
+                routeLayer = new ol.layer.Vector({
+                    source: routeSource,
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({
+                            color: '#0066cc',
+                            width: 5,
+                            lineDash: [10, 8]
                         })
-                    });
-                    map.addLayer(routeLayer);
-                }
-
-                routeSource.clear();
-                const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                routeSource.addFeature(new ol.Feature({
-                    geometry: new ol.geom.LineString(coordinates)
-                }));
-
-                if (routeSource.getFeatures().length > 0) {
-                    map.getView().fit(routeSource.getFeatures()[0].getGeometry().getExtent(), {
-                        padding: [80, 80, 80, 80],
-                        duration: 800,
-                        maxZoom: 18
-                    });
-                }
-            }
-
-            function displayRouteInfo(distance, duration, destinationName) {
-                const summaryHtml = `
-                    <div><strong>Total Distance:</strong> ${formatDistance(distance)}</div>
-                    <div><strong>Estimated Time:</strong> ${formatDuration(duration)}</div>
-                    <div><strong>Destination:</strong> ${destinationName}</div>
-                `;
-                $('#routeSummary').html(summaryHtml);
-            }
-
-            function displayTurnByTurnDirections() {
-                const directionsList = $('#directionsList');
-                directionsList.empty();
-
-                routeSteps.forEach((step, index) => {
-                    const stepElement = $(`
-                        <div class="direction-step">
-                            <div class="step-number">${index + 1}</div>
-                            <div class="step-content">
-                                <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
-                                <div class="step-distance">${step.distance}</div>
-                            </div>
-                        </div>
-                    `);
-                    directionsList.append(stepElement);
+                    })
                 });
+
+                if (geometry && geometry.type === 'LineString' && geometry.coordinates) {
+                    const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
+                    routeSource.addFeature(new ol.Feature({
+                        geometry: new ol.geom.LineString(coordinates)
+                    }));
+                    map.addLayer(routeLayer);
+
+                    if (routeSource.getFeatures().length > 0) {
+                        const extent = routeSource.getExtent();
+                        if (extent && extent[0] !== Infinity) {
+                            map.getView().fit(extent, {
+                                padding: [80, 80, 80, 80],
+                                duration: 800,
+                                maxZoom: 18
+                            });
+                        }
+                    }
+                }
             }
 
             async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
@@ -1239,9 +1212,30 @@
                     };
 
                     drawRouteOnMap(route.geometry);
-                    displayRouteInfo(totalDistance, totalDuration, destinationName);
-                    displayTurnByTurnDirections();
 
+                    // Display route info using the panel structure from the HTML
+                    $('#routeSummary').html(`
+                        <div><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>
+                        <div><strong>Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
+                        <div><strong>Destination:</strong> ${destinationName}</div>
+                    `);
+
+                    // Display turn-by-turn directions
+                    const directionsList = $('#directionsList');
+                    directionsList.empty();
+                    routeSteps.forEach((step, index) => {
+                        directionsList.append(`
+                            <div class="direction-step">
+                                <div class="step-number">${index + 1}</div>
+                                <div class="step-content">
+                                    <div class="step-instruction"><i class="${step.icon} me-2"></i>${step.instruction}</div>
+                                    <div class="step-distance">${step.distance}</div>
+                                </div>
+                            </div>
+                        `);
+                    });
+
+                    // Add destination marker
                     if (destinationMarker) map.removeLayer(destinationMarker);
                     const destLayer = new ol.layer.Vector({
                         source: new ol.source.Vector({
@@ -1261,21 +1255,20 @@
                     destinationMarker = destLayer;
 
                     $('#routeInfo').addClass('open');
-                    showFlashMessage('Route calculated successfully!', 'success');
+                    showToast('Route calculated successfully!', 'success');
 
                 } catch (error) {
                     console.error('Route calculation error:', error);
-                    showFlashMessage('Error calculating route: ' + error.message, 'error');
+                    showToast('Error calculating route: ' + error.message, 'error');
                 } finally {
                     $('#loadingSpinner').hide();
                 }
             }
 
-            // ==================== MISSING FUNCTION - ADD THIS! ====================
+            // ==================== GET ROUTE TO BUILDING (MISSING FUNCTION) ====================
             function getRouteToBuilding(gisid, targetCoords) {
-                // Validate target coordinates
                 if (!targetCoords || targetCoords.length < 2) {
-                    showFlashMessage('Invalid building coordinates', 'error');
+                    showToast('Invalid building coordinates', 'error');
                     return;
                 }
 
@@ -1283,18 +1276,17 @@
                 const lat = parseFloat(targetCoords[1]);
 
                 if (isNaN(lon) || isNaN(lat)) {
-                    showFlashMessage('Invalid coordinate values', 'error');
+                    showToast('Invalid coordinate values', 'error');
                     return;
                 }
 
                 if (!currentPosition) {
-                    showFlashMessage('Please enable your location first', 'warning');
+                    showToast('Please enable your location first', 'warning');
                     startLocationTracking();
                     return;
                 }
 
                 console.log("Getting route to building:", gisid, "at coordinates:", lon, lat);
-
                 calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
             }
 
@@ -1312,28 +1304,14 @@
                 }
                 currentRoute = null;
                 $('#routeInfo').removeClass('open');
-                stopNavigation();
             }
 
             function startNavigation() {
-                if (!currentRoute || !currentPosition) {
-                    showFlashMessage('No route available for navigation', 'error');
-                    return;
-                }
-
-                const endCoords = currentRoute.endCoord;
-                if (endCoords) {
-                    window.open(`https://www.google.com/maps/dir/${currentPosition[1]},${currentPosition[0]}/${endCoords[1]},${endCoords[0]}`, '_blank');
+                if (currentRoute && currentRoute.endCoord) {
+                    const [lon, lat] = currentRoute.endCoord;
+                    window.open(`https://www.google.com/maps/dir/${currentPosition[1]},${currentPosition[0]}/${lat},${lon}`, '_blank');
                 } else {
-                    showFlashMessage('Destination coordinates not available', 'error');
-                }
-            }
-
-            function stopNavigation() {
-                navigationMode = false;
-                if (navigationInterval) {
-                    clearInterval(navigationInterval);
-                    navigationInterval = null;
+                    showToast('No route available for navigation', 'warning');
                 }
             }
 
@@ -1357,8 +1335,7 @@
                             try {
                                 let coords = typeof poly.coordinates === 'string' ? JSON.parse(poly.coordinates) : poly.coordinates;
                                 if (coords && coords[0] && coords[0][0]) {
-                                    let cx = 0, cy = 0;
-                                    let count = 0;
+                                    let cx = 0, cy = 0, count = 0;
                                     $.each(coords[0], function(k, c) {
                                         if (c && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[1])) {
                                             cx += c[0];
@@ -1376,16 +1353,6 @@
                             return false;
                         }
                     });
-
-                    if (building.pointdata) {
-                        $.each(building.pointdata, function(j, a) {
-                            info.assessments.push({
-                                assessment_no: a.assessment,
-                                owner_name: a.owner_name || a.present_owner_name,
-                                phone: a.phone_number
-                            });
-                        });
-                    }
                     allBuildings.push(info);
                 });
                 console.log("Search index built with", allBuildings.length, "buildings");
@@ -1402,9 +1369,7 @@
                 locationTracking = true;
 
                 if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append(
-                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
-                    );
+                    $('body').append('<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>');
                     $('#centerMyLocationBtn').on('click', centerToMyLocation);
                 }
 
@@ -1487,9 +1452,9 @@
                     let coords = ol.proj.fromLonLat(currentPosition);
                     map.getView().setCenter(coords);
                     map.getView().setZoom(19);
-                    showFlashMessage('Centered on your location', 'info');
+                    showToast('Centered on your location', 'info');
                 } else {
-                    showFlashMessage('Location not available. Please enable location tracking first.', 'warning');
+                    showToast('Location not available. Please enable location tracking first.', 'warning');
                     startLocationTracking();
                 }
             }
@@ -1513,6 +1478,8 @@
                         match = true; type = 'Building Usage'; val = b.building_usage;
                     } else if (b.road_name && b.road_name.toLowerCase().includes(term)) {
                         match = true; type = 'Road Name'; val = b.road_name;
+                    } else if (b.zone && b.zone.toLowerCase().includes(term)) {
+                        match = true; type = 'Zone'; val = b.zone;
                     } else {
                         $.each(b.assessments, function(j, a) {
                             if (a.assessment_no && a.assessment_no.toLowerCase().includes(term)) {
@@ -1552,7 +1519,7 @@
                     let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
                     $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
                         <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${r.matchValue}</div>
+                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${escapeHtml(r.matchValue)}</div>
                         <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
                         <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
                     </div>`);
@@ -1581,9 +1548,16 @@
                         getRouteToBuilding(p.data('gisid'), [lon, lat]);
                         closeAllPanels();
                     } else {
-                        showFlashMessage("Coordinates not available for this building", 'error');
+                        showToast("Coordinates not available for this building", 'error');
                     }
                 });
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
 
             function zoomToBuilding(gisid) {
@@ -1601,7 +1575,7 @@
                     map.getView().fit(e, { padding: [50, 50, 50, 50], duration: 800 });
                     showPopup(gisid, ol.extent.getCenter(e));
                 } else {
-                    showFlashMessage("Building not found on map", 'error');
+                    showToast("Building not found on map", 'error');
                 }
             }
 
@@ -1748,7 +1722,7 @@
                         } else {
                             $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
                         }
-                        showFlashMessage('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
+                        showToast('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
                         $('.assessment-form-container').remove();
                     });
 
@@ -1771,7 +1745,7 @@
                         let extent = geometry.getExtent();
                         center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                     }
-                } catch (e) {
+                } catch(e) {
                     let extent = geometry.getExtent();
                     center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
                 }
@@ -1815,7 +1789,7 @@
                                 visible: true
                             }));
                         }
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing polygon:", e);
                     }
                 });
@@ -1839,7 +1813,7 @@
                                 gisid: l.gisid
                             }));
                         }
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing line:", e);
                     }
                 });
@@ -1913,7 +1887,7 @@
                             opacity: 0.8
                         });
                         hasDrone = true;
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error loading drone image:", e);
                     }
                 }
@@ -1939,7 +1913,7 @@
                         let lons = bound[0].map(p => p[0]);
                         let lats = bound[0].map(p => p[1]);
                         boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-                    } catch (e) {
+                    } catch(e) {
                         console.error("Error parsing boundary:", e);
                     }
                 }
@@ -1953,7 +1927,7 @@
                         let lats = bound[0].map(p => p[1]);
                         center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
                         zoom = 18;
-                    } catch (e) {}
+                    } catch(e) {}
                 }
 
                 map = new ol.Map({
@@ -2208,7 +2182,7 @@
                     if (selectedBuilding) {
                         getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords);
                     } else {
-                        showFlashMessage('Please search and select a building first', 'warning');
+                        showToast('Please search and select a building first', 'warning');
                         $('#openSearchBtn').click();
                     }
                 });
@@ -2244,4 +2218,4 @@
             });
         });
     </script>
-@endpush
+    @endpush
