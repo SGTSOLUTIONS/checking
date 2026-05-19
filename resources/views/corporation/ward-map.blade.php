@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <!-- Route Info Panel -->
+    {{-- <!-- Route Info Panel -->
     <div class="route-info panel" id="routeInfo">
         <button class="panel-close" id="closeRouteInfo">&times;</button>
         <h5><i class="fas fa-route"></i> Route Information</h5>
@@ -44,7 +44,7 @@
         <button class="btn-start-nav" id="startNavigationBtn">
             <i class="fas fa-play"></i> Start Navigation
         </button>
-    </div>
+    </div> --}}
 
     <!-- Navigation Header (Mobile Style) -->
     <div class="navigation-header" id="navigationHeader">
