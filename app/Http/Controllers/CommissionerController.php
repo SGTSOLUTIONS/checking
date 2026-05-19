@@ -999,8 +999,7 @@ class CommissionerController extends Controller
 
 
         $ward = $warddetail;
-
-        $points = DB::($pointsTableName)->get();
+$points = DB::table($pointsTableName)->get();
 
         return view('corporation.ward-map', compact('ward', 'polygons', 'lines', 'polygonDatas','points'));
     }
