@@ -2054,7 +2054,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Shop Mobile</label>
+                                <label class="form-label">S hop Mobile</label>
                                 <input type="tel" name="shop_mobile_${i}" class="form-control" placeholder="Mobile number">
                             </div>
                             <div class="col-md-4 mb-3">
