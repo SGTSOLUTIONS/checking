@@ -1597,42 +1597,258 @@
 
             function showPointModal(gisid) {
                 $("body").append(`
-                    <div class="modal fade" id="pointModal" tabindex="-1" data-bs-backdrop="static">
-                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                            <div class="modal-content">
-                                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
-                                    <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Point Data Collection - GIS ID: ${gisid}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                </div>
-                                <form method="POST" enctype="multipart/form-data" id="pointForm">
-                                    @csrf
-                                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                                        <div class="card mb-3">
-                                            <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;"><h6 class="mb-0"><i class="fas fa-info-circle"></i> Basic Information</h6></div>
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Assessment Type</label><select name="type" id="type" class="form-control"><option value="OLD">OLD</option><option value="NEW">NEW</option><option value="OTHER WARD">OTHER WARD</option><option value="NO_TAX">NO TAX</option><option value="VACCAND">VACCAND</option></select></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">GIS ID</label><input type="text" class="form-control" id="pointgis" name="point_gisid" value="${gisid}" readonly></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Assessment No</label><input type="text" name="assessment" class="form-control" id="assessment"></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Old Assessment</label><input type="text" name="old_assessment" class="form-control" id="old_assessment"></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Owner Name</label><input type="text" name="owner_name" class="form-control" id="owner_name"></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Present Owner Name</label><input type="text" name="present_owner_name" class="form-control" id="present_owner_name"></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Number of Shops</label><input type="number" name="no_of_shop" class="form-control" id="no_of_shop" min="0" value="0"></div>
-                                                    <div class="col-md-6 mb-3"><label class="form-label">Number of Persons</label><input type="number" name="no_of_persons" class="form-control" id="no_of_persons" min="0" value="0"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div id="append"></div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>
-                                        <button type="submit" id="pointSubmit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Point Data</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+        <div class="modal fade" id="pointModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                        <h5 class="modal-title"><i class="fas fa-map-marker-alt me-2"></i>Point Data Collection - GIS ID: ${gisid}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                `);
+                    <form method="POST" enctype="multipart/form-data" id="pointForm">
+                        @csrf
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                            <!-- Basic Information Card -->
+                            <div class="card mb-3">
+                                <div class="card-header" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="type" class="form-label">Assessment Type <span class="text-danger">*</span></label>
+                                            <select name="type" id="type" class="form-control" required>
+                                                <option value="OLD">OLD</option>
+                                                <option value="NEW">NEW</option>
+                                                <option value="OTHER WARD">OTHER WARD</option>
+                                                <option value="NO_TAX">NO TAX</option>
+                                                <option value="VACCAND">VACCAND</option>
+                                            </select>
+                                            <div id="type_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3" id="suveyedbtn"></div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="pointgis" class="form-label">GIS ID <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="pointgis" name="point_gisid" value="${gisid}" readonly>
+                                            <div id="point_gisid_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="assessment" class="form-label">Assessment No <span class="text-danger">*</span></label>
+                                            <input type="text" name="assessment" class="form-control" id="assessment">
+                                            <div id="assessment_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="old_assessment" class="form-label">Old Assessment</label>
+                                            <input type="text" name="old_assessment" class="form-control" id="old_assessment">
+                                            <div id="old_assessment_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="owner_name" class="form-label">Owner Name</label>
+                                            <input type="text" name="owner_name" class="form-control" id="owner_name">
+                                            <div id="owner_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="present_owner_name" class="form-label">Present Owner Name</label>
+                                            <input type="text" name="present_owner_name" class="form-control" id="present_owner_name">
+                                            <div id="present_owner_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="no_of_shop" class="form-label">Number of Shops</label>
+                                            <input type="number" name="no_of_shop" class="form-control" id="no_of_shop" min="0" step="1" value="0">
+                                            <div id="no_of_shop_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="no_of_persons" class="form-label">Number of Persons</label>
+                                            <input type="number" name="no_of_persons" class="form-control" id="no_of_persons" min="0" step="1" value="0">
+                                            <div id="no_of_persons_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Property Details Card -->
+                            <div class="card mb-3">
+                                <div class="card-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-building"></i> Property Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="floor" class="form-label">Floor</label>
+                                            <input type="number" name="floor" class="form-control" id="floor" min="0" step="1">
+                                            <div id="floor_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="old_door_no" class="form-label">Old Door No</label>
+                                            <input type="text" name="old_door_no" class="form-control" id="old_door_no">
+                                            <div id="old_door_no_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="new_door_no" class="form-label">New Door No</label>
+                                            <input type="text" name="new_door_no" class="form-control" id="new_door_no">
+                                            <div id="new_door_no_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="bill_usage" class="form-label">Bill Usage</label>
+                                            <select name="bill_usage" id="bill_usage" class="form-control">
+                                                <option value="">SELECT USAGE</option>
+                                                <option value="RESIDENTIAL">RESIDENTIAL</option>
+                                                <option value="COMMERCIAL">COMMERCIAL</option>
+                                                <option value="EDUCATIONAL INSTITUTIONS">EDUCATIONAL INSTITUTIONS</option>
+                                                <option value="GOVERNMENT BUILDING">GOVERNMENT BUILDING</option>
+                                                <option value="INDUSTRIAL">INDUSTRIAL</option>
+                                                <option value="OFFICE / LODGE / THEATER / RESTAURANTS">OFFICE / LODGE / THEATER / RESTAURANTS</option>
+                                                <option value="STAR HOTEL">STAR HOTEL</option>
+                                            </select>
+                                            <div id="bill_usage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="eb" class="form-label">EB Number</label>
+                                            <input type="text" name="eb" class="form-control" id="eb">
+                                            <div id="eb_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Shop Details Container -->
+                            <div id="shopDetailsContainer"></div>
+
+                            <!-- Tax Details Card -->
+                            <div class="card mb-3">
+                                <div class="card-header" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: #333;">
+                                    <h6 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Tax Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="water_tax" class="form-label">Water Tax</label>
+                                            <input type="text" name="water_tax" class="form-control" id="water_tax" step="0.01" min="0">
+                                            <div id="water_tax_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="old_water_tax" class="form-label">Old Water Tax</label>
+                                            <input type="text" name="old_water_tax" class="form-control" id="old_water_tax" step="0.01" min="0">
+                                            <div id="old_water_tax_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="professional_tax" class="form-label">Professional Tax</label>
+                                            <input type="text" name="professional_tax" class="form-control" id="professional_tax">
+                                            <div id="professional_tax_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="gst" class="form-label">GST</label>
+                                            <input type="text" name="gst" class="form-control" id="gst" placeholder="GST Number">
+                                            <div id="gst_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="trade_income" class="form-label">Trade Income</label>
+                                            <input type="number" name="trade_income" class="form-control" id="trade_income" step="0.01" min="0">
+                                            <div id="trade_income_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Documents Card -->
+                            <div class="card mb-3">
+                                <div class="card-header" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-id-card"></i> Documents & Contact</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="aadhar_no" class="form-label">Aadhar Number</label>
+                                            <input type="text" name="aadhar_no" class="form-control" id="aadhar_no" maxlength="12" pattern="[0-9]{12}" placeholder="12-digit Aadhar">
+                                            <div id="aadhar_no_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="ration_no" class="form-label">Ration Number</label>
+                                            <input type="text" name="ration_no" class="form-control" id="ration_no">
+                                            <div id="ration_no_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="phone" class="form-label">Phone Number</label>
+                                            <input type="tel" name="phone_number" class="form-control" id="phone" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile">
+                                            <div id="phone_number_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quality Check Card -->
+                            <div class="card mb-3 d-none" id="qualityCheckCard">
+                                <div class="card-header" style="background: linear-gradient(135deg, #6f42c1, #5a32a3); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Quality Check</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="qc_area" class="form-label">QC Area</label>
+                                            <input type="text" name="qc_area" class="form-control" id="qc_area">
+                                            <div id="qc_area_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="qc_usage" class="form-label">QC Usage</label>
+                                            <select name="qc_usage" id="qc_usage" class="form-control">
+                                                <option value="">Select Usage</option>
+                                                <option value="Residential">Residential</option>
+                                                <option value="Commercial">Commercial</option>
+                                                <option value="Mixed">Mixed</option>
+                                            </select>
+                                            <div id="qc_usage_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="qc_name" class="form-label">QC Name</label>
+                                            <input type="text" name="qc_name" class="form-control" id="qc_name" placeholder="QC Officer Name">
+                                            <div id="qc_name_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="qc_remarks" class="form-label">QC Remarks</label>
+                                            <input type="text" name="qc_remarks" class="form-control" id="qc_remarks">
+                                            <div id="qc_remarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remarks Card -->
+                            <div class="card mb-3">
+                                <div class="card-header" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white;">
+                                    <h6 class="mb-0"><i class="fas fa-comment"></i> Remarks</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="establishment_remarks" class="form-label">Establishment Remarks</label>
+                                            <textarea name="establishment_remarks" class="form-control" id="establishment_remarks" rows="2" placeholder="Enter establishment remarks..."></textarea>
+                                            <div id="establishment_remarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="remarks" class="form-label">Office Remarks</label>
+                                            <textarea name="remarks" class="form-control" id="remarks" rows="2" placeholder="Enter general remarks..."></textarea>
+                                            <div id="remarks_error" class="error-message text-danger small"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Shop Details Append Area -->
+                            <div id="append"></div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Close
+                            </button>
+                            <button type="submit" id="pointSubmit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Save Point Data
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `);
 
                 $("#pointgis").val(gisid);
                 initDynamicShopDetails();
@@ -1646,13 +1862,68 @@
                     const formData = new FormData(this);
                     const shopCount = parseInt($('#no_of_shop').val()) || 0;
                     formData.append('total_shops', shopCount);
+
+                    // Collect all form data
+                    formData.append('type', $('#type').val());
+                    formData.append('point_gisid', $('#pointgis').val());
+                    formData.append('assessment', $('#assessment').val());
+                    formData.append('old_assessment', $('#old_assessment').val());
+                    formData.append('owner_name', $('#owner_name').val());
+                    formData.append('present_owner_name', $('#present_owner_name').val());
+                    formData.append('no_of_shop', $('#no_of_shop').val());
+                    formData.append('no_of_persons', $('#no_of_persons').val());
+
+                    // Property Details
+                    formData.append('floor', $('#floor').val());
+                    formData.append('old_door_no', $('#old_door_no').val());
+                    formData.append('new_door_no', $('#new_door_no').val());
+                    formData.append('bill_usage', $('#bill_usage').val());
+                    formData.append('eb', $('#eb').val());
+
+                    // Tax Details
+                    formData.append('water_tax', $('#water_tax').val());
+                    formData.append('old_water_tax', $('#old_water_tax').val());
+                    formData.append('professional_tax', $('#professional_tax').val());
+                    formData.append('gst', $('#gst').val());
+                    formData.append('trade_income', $('#trade_income').val());
+
+                    // Documents
+                    formData.append('aadhar_no', $('#aadhar_no').val());
+                    formData.append('ration_no', $('#ration_no').val());
+                    formData.append('phone_number', $('#phone').val());
+
+                    // Quality Check
+                    formData.append('qc_area', $('#qc_area').val());
+                    formData.append('qc_usage', $('#qc_usage').val());
+                    formData.append('qc_name', $('#qc_name').val());
+                    formData.append('qc_remarks', $('#qc_remarks').val());
+
+                    // Remarks
+                    formData.append('establishment_remarks', $('#establishment_remarks').val());
+                    formData.append('remarks', $('#remarks').val());
+
+                    // Shop details
                     for (let i = 1; i <= shopCount; i++) {
                         formData.append(`shop_name_${i}`, $(`input[name="shop_name_${i}"]`).val() || '');
                         formData.append(`shop_owner_name_${i}`, $(`input[name="shop_owner_name_${i}"]`)
-                            .val() || '');
+                        .val() || '');
+                        formData.append(`shop_category_${i}`, $(`select[name="shop_category_${i}"]`)
+                        .val() || '');
+                        formData.append(`shop_mobile_${i}`, $(`input[name="shop_mobile_${i}"]`).val() ||
+                        '');
+                        formData.append(`prof_tax_assessment_${i}`, $(
+                            `input[name="prof_tax_assessment_${i}"]`).val() || '');
+                        formData.append(`old_prof_tax_assessment_${i}`, $(
+                            `input[name="old_prof_tax_assessment_${i}"]`).val() || '');
+                        formData.append(`shop_floor_${i}`, $(`input[name="shop_floor_${i}"]`).val() || '');
+                        formData.append(`license_${i}`, $(`input[name="license_${i}"]`).val() || '');
+                        formData.append(`number_of_employee_${i}`, $(
+                            `input[name="number_of_employee_${i}"]`).val() || '');
                     }
+
                     $("#pointSubmit").prop("disabled", true).html(
                         '<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
                     $.ajax({
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content")
@@ -1670,8 +1941,17 @@
                             refreshVectorLayer();
                             resetPointFormFields();
                         },
-                        error: function() {
-                            showFlashMessage("An error occurred", "error");
+                        error: function(xhr) {
+                            let errorMsg = "An error occurred";
+                            if (xhr.responseJSON && xhr.responseJSON.message) errorMsg = xhr
+                                .responseJSON.message;
+                            showFlashMessage(errorMsg, "error");
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    $("#" + key + "_error").text(value[0]);
+                                    $("#" + key).addClass("is-invalid");
+                                });
+                            }
                         },
                         complete: function() {
                             $("#pointSubmit").prop("disabled", false).html(
@@ -1682,12 +1962,35 @@
             }
 
             function resetPointFormFields() {
+                // Basic Information
                 $("#pointgis, #assessment, #old_assessment, #owner_name, #present_owner_name, #no_of_persons").val(
                     "");
                 $("#no_of_shop").val(0);
                 $("#type").val("OLD");
+
+                // Property Details
+                $("#floor, #old_door_no, #new_door_no, #eb").val("");
+                $("#bill_usage").val("");
+
+                // Tax Details
+                $("#water_tax, #old_water_tax, #professional_tax, #gst, #trade_income").val("");
+
+                // Documents
+                $("#aadhar_no, #ration_no, #phone").val("");
+
+                // Quality Check
+                $("#qc_area, #qc_name, #qc_remarks").val("");
+                $("#qc_usage").val("");
+
+                // Remarks
+                $("#establishment_remarks, #remarks").val("");
+
+                // Shop Details
                 $('#append').empty();
+                $('#shopDetailsContainer').empty();
+
                 $(".error-message").html("");
+                $(".is-invalid").removeClass("is-invalid");
                 currentShopCount = 0;
             }
 
@@ -1697,24 +2000,85 @@
                     const appendArea = $('#append');
                     appendArea.empty();
                     if (shopCount > 0) {
-                        const container = $(
-                            `<div class="card mb-3"><div class="card-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;"><h6 class="mb-0"><i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount > 1 ? 's' : ''})</h6></div><div class="card-body" id="shopDetailsContainer"></div></div>`
-                        );
+                        const container = $(`
+                <div class="card mb-3">
+                    <div class="card-header" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                        <h6 class="mb-0"><i class="fas fa-store"></i> Shop Details (${shopCount} Shop${shopCount > 1 ? 's' : ''})</h6>
+                    </div>
+                    <div class="card-body" id="shopDetailsContainer"></div>
+                </div>
+            `);
                         appendArea.append(container);
                         const shopContainer = $('#shopDetailsContainer');
                         for (let i = 1; i <= shopCount; i++) {
                             shopContainer.append(`
-                                <div class="shop-item" data-shop-id="${i}">
-                                    <h6 class="mb-3"><i class="fas fa-store me-2"></i>Shop ${i}</h6>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3"><label class="form-label">Shop Name</label><input type="text" name="shop_name_${i}" class="form-control" placeholder="Enter shop name"></div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Shop Owner Name</label><input type="text" name="shop_owner_name_${i}" class="form-control" placeholder="Enter owner name"></div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Shop Category</label><select name="shop_category_${i}" class="form-control"><option value="">Select Category</option><option value="Grocery">Grocery</option><option value="Clothing">Clothing</option><option value="Electronics">Electronics</option><option value="Restaurant">Restaurant</option></select></div>
-                                        <div class="col-md-6 mb-3"><label class="form-label">Phone</label><input type="tel" name="shop_mobile_${i}" class="form-control" placeholder="Mobile number"></div>
-                                    </div>
-                                </div>
-                            `);
+                    <div class="shop-item" data-shop-id="${i}">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0"><i class="fas fa-store me-2"></i>Shop ${i}</h6>
+                            <button type="button" class="remove-shop-btn" data-shop-id="${i}">
+                                <i class="fas fa-trash me-1"></i> Remove
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Prof Tax Assessment</label>
+                                <input type="text" name="prof_tax_assessment_${i}" class="form-control" placeholder="Enter prof tax assessment">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Old Prof Tax Assessment</label>
+                                <input type="text" name="old_prof_tax_assessment_${i}" class="form-control" placeholder="Enter old prof tax assessment">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Floor</label>
+                                <input type="text" name="shop_floor_${i}" class="form-control" placeholder="Enter floor number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Name</label>
+                                <input type="text" name="shop_name_${i}" class="form-control" placeholder="Enter shop name">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Owner Name</label>
+                                <input type="text" name="shop_owner_name_${i}" class="form-control" placeholder="Enter owner name">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Category</label>
+                                <select name="shop_category_${i}" class="form-control">
+                                    <option value="">Select Category</option>
+                                    <option value="Grocery">Grocery</option>
+                                    <option value="Clothing">Clothing</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Restaurant">Restaurant</option>
+                                    <option value="Pharmacy">Pharmacy</option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Shop Mobile</label>
+                                <input type="tel" name="shop_mobile_${i}" class="form-control" placeholder="Mobile number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">License Number</label>
+                                <input type="text" name="license_${i}" class="form-control" placeholder="License number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Number of Employees</label>
+                                <input type="number" name="number_of_employee_${i}" class="form-control" placeholder="Employee count">
+                            </div>
+                        </div>
+                    </div>
+                `);
                         }
+
+                        // Add remove button functionality
+                        $('.remove-shop-btn').off('click').on('click', function() {
+                            const shopId = $(this).data('shop-id');
+                            $(`.shop-item[data-shop-id="${shopId}"]`).fadeOut(300, function() {
+                                $(this).remove();
+                                const currentCount = parseInt($('#no_of_shop').val()) || 0;
+                                $('#no_of_shop').val(currentCount - 1).trigger('change');
+                            });
+                        });
                     }
                 });
             }
