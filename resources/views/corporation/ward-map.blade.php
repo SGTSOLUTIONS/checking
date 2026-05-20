@@ -36,7 +36,7 @@
     </div>
 
     <!-- Route Info Panel -->
-    <div class="route-info panel" id="routeInfo" style="display: none;">
+    <div class="route-info panel" id="routeInfo">
         <button class="panel-close" id="closeRouteInfo">&times;</button>
         <h5><i class="fas fa-route"></i> Route Information</h5>
         <div id="routeSummary" class="route-summary"></div>
@@ -46,7 +46,7 @@
         </button>
     </div>
 
-    <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+    <div class="loading-spinner" id="loadingSpinner">
         <div class="spinner-border text-primary"></div>
         <div>Calculating route...</div>
     </div>
@@ -311,12 +311,12 @@
             right: 20px;
             width: 350px;
             max-width: calc(100% - 40px);
-            display: none !important;
+            display: none;
             max-height: 500px;
         }
 
         .route-info.open {
-            display: block !important;
+            display: block;
             animation: fadeIn 0.3s ease;
         }
 
@@ -415,6 +415,7 @@
             padding: 20px 30px;
             border-radius: 16px;
             z-index: 2000;
+            display: none;
             text-align: center;
             color: white;
             gap: 12px;
@@ -766,11 +767,6 @@
                 boundary: @json($ward->boundary ?? null)
             };
 
-            console.log('Ward Data:', wardData);
-            console.log('Polygons count:', polygons.length);
-            console.log('Lines count:', lines.length);
-            console.log('Polygon Datas count:', polygonDatas.length);
-
             // ==================== MAP VARIABLES ====================
             let map, polygonLayer, lineLayer, imageLayer, boundaryLayer, osmLayer, satelliteLayer;
             let currentBaseLayer = 'osm';
@@ -781,15 +777,17 @@
             let currentLocationLayer = null;
             let accuracyLayer = null;
             let currentPosition = null;
+            let currentPositionCoords = null; // Store as [lon, lat]
             let locationTracking = false;
             let watchId = null;
 
             // ==================== ROUTE VARIABLES ====================
             let currentRoute = null;
-            let routeSteps = [];
             let routeSource = null;
             let routeLayer = null;
+            let startMarker = null;
             let destinationMarker = null;
+            let selectedFeature = null;
             let selectedBuilding = null;
 
             // ==================== SEARCH VARIABLES ====================
@@ -804,10 +802,6 @@
                 'MIXED': '#FF5722',
                 'GOVERNMENT': '#607D8B',
                 'VACANT': '#9E9E9E',
-                'EDUCATIONAL': '#00BCD4',
-                'HOSPITAL': '#E91E63',
-                'HOTEL': '#795548',
-                'RELIGIOUS': '#FFC107',
                 'default': '#ff4444'
             };
 
@@ -823,19 +817,6 @@
             }
 
             // ==================== HELPER FUNCTIONS ====================
-            function showLoading(show) {
-                if (show) {
-                    if ($('#mapLoading').length === 0) {
-                        $('body').append(
-                            '<div id="mapLoading" class="map-loading"><i class="fas fa-spinner fa-spin"></i> Loading map...</div>'
-                        );
-                    }
-                    $('#mapLoading').show();
-                } else {
-                    $('#mapLoading').hide();
-                }
-            }
-
             function showToast(message, type = 'info') {
                 const alertClass = {
                     'success': '#28a745',
@@ -844,26 +825,15 @@
                     'info': '#17a2b8'
                 } [type] || '#17a2b8';
 
-                const flashHtml = $('<div>', {
-                    class: 'alert alert-dismissible fade show position-fixed',
-                    css: {
-                        top: '20px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        zIndex: 10000,
-                        background: alertClass,
-                        color: 'white',
-                        padding: '12px 20px',
-                        borderRadius: '10px',
-                        minWidth: '200px',
-                        textAlign: 'center'
-                    },
-                    html: `${message}<button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px;" data-bs-dismiss="alert"></button>`
-                });
-                $('body').append(flashHtml);
-                setTimeout(() => {
-                    flashHtml.fadeOut(300, function() { $(this).remove(); });
-                }, 3000);
+                const toastId = 'toast_' + Date.now();
+                const toastHtml = $(`
+                    <div id="${toastId}" class="alert fade show position-fixed" style="top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; background: ${alertClass}; color: white; padding: 12px 20px; border-radius: 10px; min-width: 200px; text-align: center;">
+                        ${message}
+                        <button type="button" class="btn-close btn-close-white" style="float: right; margin-left: 10px; background: none; border: none; color: white; font-size: 20px;" onclick="$('#${toastId}').remove()">&times;</button>
+                    </div>
+                `);
+                $('body').append(toastHtml);
+                setTimeout(() => toastHtml.fadeOut(300, function() { $(this).remove(); }), 3000);
             }
 
             function closeAllPanels() {
@@ -886,7 +856,7 @@
                 return hours + 'h ' + mins + 'm';
             }
 
-            // ==================== ROUTE FUNCTIONS ====================
+            // ==================== ROUTE FUNCTIONS - FIXED ====================
             async function getRouteFromOSRM(startCoord, endCoord) {
                 try {
                     const [startLon, startLat] = startCoord;
@@ -903,35 +873,44 @@
                     return data.routes[0];
                 } catch (error) {
                     console.warn('OSRM route failed:', error);
-                    return getStraightLineRoute(startCoord, endCoord);
+                    // Return straight line route as fallback
+                    const distance = calculateDistance(startCoord, endCoord);
+                    return {
+                        distance: distance,
+                        duration: distance / 8.33, // ~30 km/h in m/s
+                        geometry: {
+                            type: "LineString",
+                            coordinates: [startCoord, endCoord]
+                        },
+                        legs: [{
+                            steps: [{
+                                maneuver: { type: "depart", instruction: "Start from your location" },
+                                distance: distance,
+                                duration: distance / 8.33
+                            }, {
+                                maneuver: { type: "arrive", instruction: "Arrive at destination" },
+                                distance: 0,
+                                duration: 0
+                            }]
+                        }]
+                    };
                 }
             }
 
-            function getStraightLineRoute(startCoord, endCoord) {
-                const start = ol.proj.fromLonLat(startCoord);
-                const end = ol.proj.fromLonLat(endCoord);
-                const distance = ol.sphere.getDistance(start, end);
-                const duration = (distance / 1000 / 30) * 60;
-
-                return {
-                    distance: distance,
-                    duration: duration,
-                    geometry: {
-                        type: "LineString",
-                        coordinates: [startCoord, endCoord]
-                    },
-                    legs: [{
-                        steps: [{
-                            maneuver: { type: "depart", instruction: "Start from your location" },
-                            distance: distance,
-                            duration: duration
-                        }, {
-                            maneuver: { type: "arrive", instruction: "Arrive at destination" },
-                            distance: 0,
-                            duration: 0
-                        }]
-                    }]
-                };
+            function calculateDistance(coord1, coord2) {
+                // Haversine formula for distance between two points in meters
+                const [lon1, lat1] = coord1;
+                const [lon2, lat2] = coord2;
+                const R = 6371000; // Earth's radius in meters
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δφ = (lat2 - lat1) * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                          Math.cos(φ1) * Math.cos(φ2) *
+                          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
             }
 
             function parseOSRMSteps(route) {
@@ -939,15 +918,18 @@
                 if (route.legs && route.legs[0] && route.legs[0].steps) {
                     route.legs[0].steps.forEach((step, idx) => {
                         let instruction = step.maneuver.instruction || step.maneuver.type;
+                        instruction = instruction.replace(/\([^)]*\)/g, '').trim();
+
                         let icon = 'fas fa-arrow-right';
                         switch (step.maneuver.type) {
-                            case 'depart': icon = 'fas fa-play'; break;
-                            case 'arrive': icon = 'fas fa-flag-checkered'; break;
+                            case 'depart': icon = 'fas fa-play'; instruction = 'Start from your location'; break;
+                            case 'arrive': icon = 'fas fa-flag-checkered'; instruction = 'Arrive at destination'; break;
                             case 'turn':
                                 if (step.maneuver.modifier === 'left') icon = 'fas fa-arrow-left';
                                 else if (step.maneuver.modifier === 'right') icon = 'fas fa-arrow-right';
                                 else icon = 'fas fa-turn-up';
                                 break;
+                            case 'roundabout': icon = 'fas fa-exchange-alt'; break;
                         }
                         steps.push({
                             instruction: instruction,
@@ -961,6 +943,7 @@
             }
 
             function drawRouteOnMap(geometry) {
+                // Clear existing route layers
                 if (routeLayer) {
                     map.removeLayer(routeLayer);
                     routeLayer = null;
@@ -970,159 +953,210 @@
                 }
 
                 routeSource = new ol.source.Vector();
-                routeLayer = new ol.layer.Vector({
-                    source: routeSource,
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({
-                            color: '#0066cc',
-                            width: 5,
-                            lineDash: [10, 8]
-                        })
-                    })
-                });
 
-                if (geometry && geometry.type === 'LineString' && geometry.coordinates) {
+                if (geometry && geometry.type === 'LineString' && geometry.coordinates && geometry.coordinates.length >= 2) {
+                    // Convert coordinates from [lon, lat] to projected coordinates
                     const coordinates = geometry.coordinates.map(coord => ol.proj.fromLonLat(coord));
-                    routeSource.addFeature(new ol.Feature({
+
+                    const routeFeature = new ol.Feature({
                         geometry: new ol.geom.LineString(coordinates)
-                    }));
-                    map.addLayer(routeLayer);
-
-                    if (routeSource.getFeatures().length > 0) {
-                        const extent = routeSource.getExtent();
-                        if (extent && extent[0] !== Infinity) {
-                            map.getView().fit(extent, {
-                                padding: [80, 80, 80, 80],
-                                duration: 800,
-                                maxZoom: 18
-                            });
-                        }
-                    }
-                }
-            }
-
-            async function calculateAndDisplayRoute(startCoord, endCoord, destinationName, buildingGisid = null) {
-                $('#loadingSpinner').css('display', 'flex');
-
-                try {
-                    if (!endCoord || endCoord.length < 2) {
-                        throw new Error('Invalid destination coordinates');
-                    }
-
-                    let endLon = parseFloat(endCoord[0]);
-                    let endLat = parseFloat(endCoord[1]);
-                    let startLon = parseFloat(startCoord[0]);
-                    let startLat = parseFloat(startCoord[1]);
-
-                    if (isNaN(endLon) || isNaN(endLat) || isNaN(startLon) || isNaN(startLat)) {
-                        throw new Error('Invalid coordinate values');
-                    }
-
-                    const startGeographic = [startLon, startLat];
-                    const endGeographic = [endLon, endLat];
-
-                    console.log("Route from:", startGeographic, "to:", endGeographic);
-
-                    const route = await getRouteFromOSRM(startGeographic, endGeographic);
-                    const totalDistance = route.distance;
-                    const totalDuration = route.duration;
-
-                    routeSteps = parseOSRMSteps(route);
-                    currentRoute = {
-                        distance: totalDistance,
-                        duration: totalDuration,
-                        geometry: route.geometry,
-                        endCoord: endGeographic,
-                        placeName: destinationName,
-                        gisid: buildingGisid
-                    };
-
-                    drawRouteOnMap(route.geometry);
-
-                    $('#routeSummary').html(`
-                        <div><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>
-                        <div><strong>Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
-                        <div><strong>Destination:</strong> ${destinationName}</div>
-                    `);
-
-                    const directionsList = $('#directionsList');
-                    directionsList.empty();
-                    routeSteps.forEach((step, index) => {
-                        directionsList.append(`
-                            <div class="direction-step">
-                                <div class="step-number">${index + 1}</div>
-                                <div class="step-content">
-                                    <div class="step-instruction"><i class="${step.icon} me-2"></i> ${step.instruction}</div>
-                                    <div class="step-distance">${step.distance}</div>
-                                </div>
-                            </div>
-                        `);
                     });
+                    routeSource.addFeature(routeFeature);
 
-                    // Add destination marker
-                    if (destinationMarker) {
-                        map.removeLayer(destinationMarker);
-                        destinationMarker = null;
-                    }
-
-                    const destProjected = ol.proj.fromLonLat(endGeographic);
-                    const destLayer = new ol.layer.Vector({
-                        source: new ol.source.Vector({
-                            features: [new ol.Feature({
-                                geometry: new ol.geom.Point(destProjected)
-                            })]
-                        }),
+                    routeLayer = new ol.layer.Vector({
+                        source: routeSource,
                         style: new ol.style.Style({
-                            image: new ol.style.Circle({
-                                radius: 14,
-                                fill: new ol.style.Fill({ color: '#ff4444' }),
-                                stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                            stroke: new ol.style.Stroke({
+                                color: '#0066cc',
+                                width: 6,
+                                lineDash: [10, 8]
                             })
                         })
                     });
-                    map.addLayer(destLayer);
-                    destinationMarker = destLayer;
+                    map.addLayer(routeLayer);
 
-                    $('#routeInfo').addClass('open');
-                    showToast('Route calculated successfully!', 'success');
+                    // Fit map to show the route
+                    const extent = routeSource.getExtent();
+                    if (extent && extent[0] !== Infinity) {
+                        map.getView().fit(extent, {
+                            padding: [80, 80, 80, 80],
+                            duration: 800,
+                            maxZoom: 18
+                        });
+                    }
+
+                    return true;
+                }
+                return false;
+            }
+
+            function addStartMarker(coords) {
+                if (startMarker) {
+                    map.removeLayer(startMarker);
+                    startMarker = null;
+                }
+
+                const projectedCoords = ol.proj.fromLonLat(coords);
+                const startLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Point(projectedCoords)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 14,
+                            fill: new ol.style.Fill({ color: '#28a745' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                        }),
+                        text: new ol.style.Text({
+                            text: 'Start',
+                            font: 'bold 12px Arial',
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: '#000', width: 2 }),
+                            offsetY: -20
+                        })
+                    })
+                });
+                map.addLayer(startLayer);
+                startMarker = startLayer;
+            }
+
+            function addDestinationMarker(coords, name) {
+                if (destinationMarker) {
+                    map.removeLayer(destinationMarker);
+                    destinationMarker = null;
+                }
+
+                const projectedCoords = ol.proj.fromLonLat(coords);
+                const destLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Point(projectedCoords)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 14,
+                            fill: new ol.style.Fill({ color: '#ff4444' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                        }),
+                        text: new ol.style.Text({
+                            text: name || 'Destination',
+                            font: 'bold 12px Arial',
+                            fill: new ol.style.Fill({ color: '#fff' }),
+                            stroke: new ol.style.Stroke({ color: '#000', width: 2 }),
+                            offsetY: -20
+                        })
+                    })
+                });
+                map.addLayer(destLayer);
+                destinationMarker = destLayer;
+            }
+
+            async function calculateAndDisplayRoute(targetCoords, targetName) {
+                // Check if location is enabled
+                if (!currentPositionCoords) {
+                    showToast('Please enable your location first by clicking the Location button', 'warning');
+                    return false;
+                }
+
+                if (!targetCoords || targetCoords.length < 2) {
+                    showToast('Invalid destination coordinates', 'error');
+                    return false;
+                }
+
+                $('#loadingSpinner').css('display', 'flex');
+
+                try {
+                    const startCoord = currentPositionCoords;
+                    const endCoord = [parseFloat(targetCoords[0]), parseFloat(targetCoords[1])];
+
+                    if (isNaN(endCoord[0]) || isNaN(endCoord[1])) {
+                        throw new Error('Invalid coordinate values');
+                    }
+
+                    console.log('Calculating route from', startCoord, 'to', endCoord);
+
+                    // Get route from OSRM
+                    const route = await getRouteFromOSRM(startCoord, endCoord);
+
+                    // Draw route on map
+                    const routeDrawn = drawRouteOnMap(route.geometry);
+
+                    if (routeDrawn) {
+                        // Add start marker
+                        addStartMarker(startCoord);
+
+                        // Add destination marker
+                        addDestinationMarker(endCoord, targetName);
+
+                        // Parse steps for directions
+                        const steps = parseOSRMSteps(route);
+                        const totalDistance = route.distance;
+                        const totalDuration = route.duration;
+
+                        // Update route info panel
+                        $('#routeSummary').html(`
+                            <div><strong><i class="fas fa-road"></i> Total Distance:</strong> ${formatDistance(totalDistance)}</div>
+                            <div><strong><i class="fas fa-clock"></i> Estimated Time:</strong> ${formatDuration(totalDuration)}</div>
+                            <div><strong><i class="fas fa-flag-checkered"></i> Destination:</strong> ${targetName}</div>
+                        `);
+
+                        const directionsList = $('#directionsList');
+                        directionsList.empty();
+
+                        if (steps.length > 0) {
+                            steps.forEach((step, index) => {
+                                directionsList.append(`
+                                    <div class="direction-step">
+                                        <div class="step-number">${index + 1}</div>
+                                        <div class="step-content">
+                                            <div class="step-instruction"><i class="${step.icon} me-2"></i> ${step.instruction}</div>
+                                            <div class="step-distance">${step.distance}</div>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        } else {
+                            directionsList.html('<div class="text-center p-3">Direct route calculated</div>');
+                        }
+
+                        // Store current route
+                        currentRoute = {
+                            startCoord: startCoord,
+                            endCoord: endCoord,
+                            distance: totalDistance,
+                            duration: totalDuration,
+                            name: targetName
+                        };
+
+                        // Show route info panel
+                        $('#routeInfo').addClass('open');
+                        showToast('Route calculated successfully!', 'success');
+
+                        return true;
+                    } else {
+                        throw new Error('Could not draw route on map');
+                    }
 
                 } catch (error) {
                     console.error('Route calculation error:', error);
                     showToast('Error calculating route: ' + error.message, 'error');
+                    return false;
                 } finally {
                     $('#loadingSpinner').hide();
                 }
-            }
-
-            function getRouteToBuilding(gisid, targetCoords) {
-                console.log('getRouteToBuilding called with:', gisid, targetCoords);
-
-                if (!targetCoords || targetCoords.length < 2) {
-                    showToast('Invalid building coordinates', 'error');
-                    return;
-                }
-
-                let lon = parseFloat(targetCoords[0]);
-                let lat = parseFloat(targetCoords[1]);
-
-                if (isNaN(lon) || isNaN(lat)) {
-                    showToast('Invalid coordinate values', 'error');
-                    return;
-                }
-
-                if (!currentPosition) {
-                    showToast('Please enable your location first by clicking the Location button', 'warning');
-                    return;
-                }
-
-                console.log("Getting route to building:", gisid, "at coordinates:", lon, lat);
-                calculateAndDisplayRoute(currentPosition, [lon, lat], `GIS ID: ${gisid}`, gisid);
             }
 
             function clearRoute() {
                 if (routeLayer) {
                     map.removeLayer(routeLayer);
                     routeLayer = null;
+                }
+                if (startMarker) {
+                    map.removeLayer(startMarker);
+                    startMarker = null;
                 }
                 if (destinationMarker) {
                     map.removeLayer(destinationMarker);
@@ -1133,16 +1167,188 @@
                 }
                 currentRoute = null;
                 $('#routeInfo').removeClass('open');
+                showToast('Route cleared', 'info');
             }
 
             function startNavigation() {
-                if (currentRoute && currentRoute.endCoord) {
-                    const [lon, lat] = currentRoute.endCoord;
-                    const url = `https://www.google.com/maps/dir/${currentPosition[1]},${currentPosition[0]}/${lat},${lon}`;
+                if (currentRoute && currentRoute.endCoord && currentRoute.startCoord) {
+                    const [endLon, endLat] = currentRoute.endCoord;
+                    const [startLon, startLat] = currentRoute.startCoord;
+                    const url = `https://www.google.com/maps/dir/${startLat},${startLon}/${endLat},${endLon}`;
                     window.open(url, '_blank');
                 } else {
                     showToast('No route available for navigation', 'warning');
                 }
+            }
+
+            // ==================== LOCATION TRACKING ====================
+            function startLocationTracking() {
+                if (!navigator.geolocation) {
+                    showToast("Geolocation not supported", 'error');
+                    return;
+                }
+
+                $('#locationBtn').addClass('active');
+                locationTracking = true;
+
+                if ($('#centerMyLocationBtn').length === 0) {
+                    $('body').append(
+                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
+                    );
+                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
+                }
+
+                // Get current position
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lon = pos.coords.longitude;
+                    const lat = pos.coords.latitude;
+                    currentPositionCoords = [lon, lat];
+                    updateLocationOnMap(lon, lat, pos.coords.accuracy);
+                    showToast('Location obtained successfully!', 'success');
+                }, function(err) {
+                    console.error('Geolocation error:', err);
+                    let message = "Unable to get location";
+                    switch(err.code) {
+                        case err.PERMISSION_DENIED:
+                            message = "Location permission denied. Please enable location access.";
+                            break;
+                        case err.POSITION_UNAVAILABLE:
+                            message = "Location information unavailable";
+                            break;
+                        case err.TIMEOUT:
+                            message = "Location request timed out";
+                            break;
+                    }
+                    showToast(message, 'error');
+                    locationTracking = false;
+                    $('#locationBtn').removeClass('active');
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+
+                // Watch position for updates
+                watchId = navigator.geolocation.watchPosition(function(pos) {
+                    const lon = pos.coords.longitude;
+                    const lat = pos.coords.latitude;
+                    currentPositionCoords = [lon, lat];
+                    updateLocationOnMap(lon, lat, pos.coords.accuracy);
+                }, function(err) {
+                    console.error('Watch position error:', err);
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 5000,
+                    timeout: 10000
+                });
+            }
+
+            function stopLocationTracking() {
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                if (currentLocationLayer) {
+                    map.removeLayer(currentLocationLayer);
+                    currentLocationLayer = null;
+                }
+                if (accuracyLayer) {
+                    map.removeLayer(accuracyLayer);
+                    accuracyLayer = null;
+                }
+                locationTracking = false;
+                $('#locationBtn').removeClass('active');
+                $('#centerMyLocationBtn').remove();
+                currentPositionCoords = null;
+                showToast('Location tracking stopped', 'info');
+            }
+
+            function updateLocationOnMap(lon, lat, accuracy) {
+                const coords = ol.proj.fromLonLat([lon, lat]);
+
+                if (currentLocationLayer) {
+                    map.removeLayer(currentLocationLayer);
+                }
+                if (accuracyLayer) {
+                    map.removeLayer(accuracyLayer);
+                }
+
+                // Accuracy circle
+                accuracyLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Circle(coords, accuracy)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
+                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
+                    })
+                });
+                map.addLayer(accuracyLayer);
+
+                // Location marker
+                currentLocationLayer = new ol.layer.Vector({
+                    source: new ol.source.Vector({
+                        features: [new ol.Feature({
+                            geometry: new ol.geom.Point(coords)
+                        })]
+                    }),
+                    style: new ol.style.Style({
+                        image: new ol.style.Circle({
+                            radius: 12,
+                            fill: new ol.style.Fill({ color: '#ff4444' }),
+                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
+                        })
+                    })
+                });
+                map.addLayer(currentLocationLayer);
+
+                // Center map on first location
+                if (!localStorage.getItem('mapCentered')) {
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(18);
+                    localStorage.setItem('mapCentered', 'true');
+                }
+            }
+
+            function centerToMyLocation() {
+                if (currentPositionCoords) {
+                    const coords = ol.proj.fromLonLat(currentPositionCoords);
+                    map.getView().setCenter(coords);
+                    map.getView().setZoom(19);
+                    showToast('Centered on your location', 'info');
+                } else {
+                    showToast('Location not available. Please enable location tracking first.', 'warning');
+                    startLocationTracking();
+                }
+            }
+
+            // ==================== GET ROUTE TO BUILDING ====================
+            async function getRouteToBuilding(gisid, targetCoords, buildingName) {
+                if (!targetCoords || targetCoords.length < 2) {
+                    showToast('Invalid building coordinates', 'error');
+                    return;
+                }
+
+                const lon = parseFloat(targetCoords[0]);
+                const lat = parseFloat(targetCoords[1]);
+
+                if (isNaN(lon) || isNaN(lat)) {
+                    showToast('Invalid coordinate values', 'error');
+                    return;
+                }
+
+                if (!currentPositionCoords) {
+                    showToast('Please enable your location first by clicking the Location button', 'warning');
+                    startLocationTracking();
+                    // Wait for location and try again
+                    setTimeout(() => {
+                        if (currentPositionCoords) {
+                            calculateAndDisplayRoute([lon, lat], buildingName || `GIS ID: ${gisid}`);
+                        }
+                    }, 2000);
+                    return;
+                }
+
+                await calculateAndDisplayRoute([lon, lat], buildingName || `GIS ID: ${gisid}`);
             }
 
             // ==================== BUILD SEARCH INDEX ====================
@@ -1168,14 +1374,12 @@
                                 owner_name: assessment.owner_name || assessment.present_owner_name,
                                 phone: assessment.phone || assessment.phone_number,
                                 bill_usage: assessment.bill_usage,
-                                floor: assessment.floor,
-                                qcsqfeet: assessment.qcsqfeet,
-                                qcusage: assessment.qcusage
+                                floor: assessment.floor
                             });
                         });
                     }
 
-                    // Find coordinates from polygons
+                    // Get coordinates from polygons
                     $.each(polygons, function(j, poly) {
                         if (poly.gisid == building.gisid) {
                             try {
@@ -1194,7 +1398,7 @@
                                     }
                                 }
                             } catch (e) {
-                                console.error("Error parsing coordinates for building:", building.gisid, e);
+                                console.error("Error parsing coordinates:", e);
                             }
                             return false;
                         }
@@ -1207,7 +1411,6 @@
             // ==================== POLYGON STYLE FUNCTION ====================
             function polygonStyleFunction(feature) {
                 let gisid = feature.get('gisid');
-                let sqfeet = feature.get('sqfeet');
                 let geometry = feature.getGeometry();
 
                 let buildingData = polygonDatas.find(p => p.gisid == gisid);
@@ -1217,10 +1420,6 @@
                 let center;
                 try {
                     center = geometry.getInteriorPoint();
-                    if (!center) {
-                        let extent = geometry.getExtent();
-                        center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
-                    }
                 } catch (e) {
                     let extent = geometry.getExtent();
                     center = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
@@ -1251,140 +1450,6 @@
                         })
                     })
                 ];
-            }
-
-            // ==================== LOCATION TRACKING ====================
-            function startLocationTracking() {
-                if (!navigator.geolocation) {
-                    showToast("Geolocation not supported", 'error');
-                    return;
-                }
-
-                $('#locationBtn').addClass('active');
-                locationTracking = true;
-
-                if ($('#centerMyLocationBtn').length === 0) {
-                    $('body').append(
-                        '<button id="centerMyLocationBtn" class="center-btn"><i class="fas fa-crosshairs"></i> Center to My Location</button>'
-                    );
-                    $('#centerMyLocationBtn').on('click', centerToMyLocation);
-                }
-
-                navigator.geolocation.getCurrentPosition(function(pos) {
-                    console.log('Location obtained:', pos.coords.longitude, pos.coords.latitude);
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                    currentPosition = [pos.coords.longitude, pos.coords.latitude];
-                    showToast('Location obtained successfully!', 'success');
-                }, function(err) {
-                    console.error('Geolocation error:', err);
-                    let message = "Unable to get location";
-                    switch(err.code) {
-                        case err.PERMISSION_DENIED:
-                            message = "Location permission denied. Please enable location access.";
-                            break;
-                        case err.POSITION_UNAVAILABLE:
-                            message = "Location information unavailable";
-                            break;
-                        case err.TIMEOUT:
-                            message = "Location request timed out";
-                            break;
-                    }
-                    showToast(message, 'error');
-                    locationTracking = false;
-                    $('#locationBtn').removeClass('active');
-                    $('#centerMyLocationBtn').remove();
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                });
-
-                watchId = navigator.geolocation.watchPosition(function(pos) {
-                    updateLocationOnMap(pos.coords.longitude, pos.coords.latitude, pos.coords.accuracy);
-                    currentPosition = [pos.coords.longitude, pos.coords.latitude];
-                }, function(err) {
-                    console.error('Watch position error:', err);
-                }, {
-                    enableHighAccuracy: true,
-                    maximumAge: 5000,
-                    timeout: 10000
-                });
-            }
-
-            function stopLocationTracking() {
-                if (watchId) navigator.geolocation.clearWatch(watchId);
-                if (currentLocationLayer) {
-                    map.removeLayer(currentLocationLayer);
-                    currentLocationLayer = null;
-                }
-                if (accuracyLayer) {
-                    map.removeLayer(accuracyLayer);
-                    accuracyLayer = null;
-                }
-                locationTracking = false;
-                $('#locationBtn').removeClass('active');
-                $('#centerMyLocationBtn').remove();
-                currentPosition = null;
-            }
-
-            function updateLocationOnMap(lon, lat, accuracy) {
-                let coords = ol.proj.fromLonLat([lon, lat]);
-                currentPosition = [lon, lat];
-
-                if (currentLocationLayer) {
-                    map.removeLayer(currentLocationLayer);
-                }
-                if (accuracyLayer) {
-                    map.removeLayer(accuracyLayer);
-                }
-
-                accuracyLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Circle(coords, accuracy)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        stroke: new ol.style.Stroke({ color: '#ff4444', width: 2 }),
-                        fill: new ol.style.Fill({ color: 'rgba(255,68,68,0.15)' })
-                    })
-                });
-                map.addLayer(accuracyLayer);
-
-                currentLocationLayer = new ol.layer.Vector({
-                    source: new ol.source.Vector({
-                        features: [new ol.Feature({
-                            geometry: new ol.geom.Point(coords)
-                        })]
-                    }),
-                    style: new ol.style.Style({
-                        image: new ol.style.Circle({
-                            radius: 12,
-                            fill: new ol.style.Fill({ color: '#ff4444' }),
-                            stroke: new ol.style.Stroke({ color: '#fff', width: 3 })
-                        })
-                    })
-                });
-                map.addLayer(currentLocationLayer);
-
-                // Center map on first location
-                if (!localStorage.getItem('mapCentered')) {
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(18);
-                    localStorage.setItem('mapCentered', 'true');
-                }
-            }
-
-            function centerToMyLocation() {
-                if (currentPosition) {
-                    let coords = ol.proj.fromLonLat(currentPosition);
-                    map.getView().setCenter(coords);
-                    map.getView().setZoom(19);
-                    showToast('Centered on your location', 'info');
-                } else {
-                    showToast('Location not available. Please enable location tracking first.', 'warning');
-                    startLocationTracking();
-                }
             }
 
             // ==================== SEARCH FUNCTIONS ====================
@@ -1445,12 +1510,14 @@
                 $.each(results, function(i, r) {
                     let lon = r.coordinates && r.coordinates[0] ? r.coordinates[0] : '';
                     let lat = r.coordinates && r.coordinates[1] ? r.coordinates[1] : '';
-                    $res.append(`<div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}">
-                        <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
-                        <div class="result-owner"><i class="fas fa-tag"></i> ${r.matchType}: ${escapeHtml(r.matchValue)}</div>
-                        <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
-                        <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
-                    </div>`);
+                    $res.append(`
+                        <div class="search-result-item" data-gisid="${r.gisid}" data-lon="${lon}" data-lat="${lat}" data-name="${r.gisid} - ${r.building.building_usage || ''}">
+                            <div class="result-gisid"><i class="fas fa-building"></i> ${r.gisid}</div>
+                            <div class="result-owner"><i class="fas fa-tag"></i> ${escapeHtml(r.matchType)}: ${escapeHtml(r.matchValue)}</div>
+                            <div class="result-owner"><i class="fas fa-location-dot"></i> ${r.building.road_name || 'No road'} | ${r.building.zone || 'No zone'}</div>
+                            <button class="direction-btn"><i class="fas fa-directions"></i> Get Directions</button>
+                        </div>
+                    `);
                 });
 
                 $('.search-result-item').off('click').on('click', function(e) {
@@ -1465,13 +1532,15 @@
                     let p = $(this).closest('.search-result-item');
                     let lon = parseFloat(p.data('lon'));
                     let lat = parseFloat(p.data('lat'));
+                    let name = p.data('name');
 
-                    if (lon && lat && !isNaN(lon) && !isNaN(lat) && lon !== 0 && lat !== 0) {
+                    if (lon && lat && !isNaN(lon) && !isNaN(lat)) {
                         selectedBuilding = {
                             gisid: p.data('gisid'),
-                            coords: [lon, lat]
+                            coords: [lon, lat],
+                            name: name
                         };
-                        getRouteToBuilding(p.data('gisid'), [lon, lat]);
+                        getRouteToBuilding(p.data('gisid'), [lon, lat], name);
                         closeAllPanels();
                     } else {
                         showToast("Coordinates not available for this building", 'error');
@@ -1600,95 +1669,31 @@
 
                 $('#routeFromPopupBtn').off('click').on('click', function() {
                     closePopup();
-                    getRouteToBuilding(pd.gisid, [coord[0], coord[1]]);
-                });
-
-                $('.assessment-card').off('click').on('click', function() {
-                    let id = $(this).data('id');
-                    let num = $(this).data('assessment');
-                    $(this).after(`
-                        <div class="assessment-form-container">
-                            <button class="close-form-btn" style="float:right; background:none; border:none; color:#ff4444; font-size:20px;">&times;</button>
-                            <h4 style="color:#ffc107; margin-bottom:15px;">QC Form - ${num}</h4>
-                            <form class="qc-form">
-                                <input type="hidden" name="assessment_id" value="${id}">
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Square Feet:</label>
-                                    <input type="number" name="qc_sqfeet" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">QC Usage:</label>
-                                    <select name="qc_usage" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                        <option value="">Select</option>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Industrial">Industrial</option>
-                                    </select>
-                                </div>
-                                <div style="margin-bottom:12px;">
-                                    <label style="color:#ffc107">Tax Amount (₹):</label>
-                                    <input type="number" name="tax_amount" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ff4444; background:#0f0f1a; color:white;">
-                                </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button type="submit" style="flex:1; background:#28a745; color:white; border:none; padding:10px; border-radius:8px;">Save</button>
-                                    <button type="button" class="cancel-form-btn" style="flex:1; background:#dc3545; color:white; border:none; padding:10px; border-radius:8px;">Cancel</button>
-                                </div>
-                            </form>
-                        </div>
-                    `);
-
-                    $('.qc-form').on('submit', function(e) {
-                        e.preventDefault();
-                        let hasValues = $(this).find('input[name="qc_sqfeet"]').val() &&
-                            $(this).find('select[name="qc_usage"]').val() &&
-                            $(this).find('input[name="tax_amount"]').val();
-                        let $badge = $(this).closest('.assessment-card').find('.badge');
-                        if (hasValues) {
-                            $badge.removeClass('badge-warning').addClass('badge-success').html('<i class="fas fa-check-circle"></i> QC Complete');
-                        } else {
-                            $badge.removeClass('badge-success').addClass('badge-warning').html('<i class="fas fa-clock"></i> QC Pending');
-                        }
-                        showToast('QC Saved! Status: ' + (hasValues ? 'QC Complete' : 'QC Pending'), 'info');
-                        $('.assessment-form-container').remove();
-                    });
-
-                    $('.close-form-btn, .cancel-form-btn').on('click', function() {
-                        $('.assessment-form-container').remove();
-                    });
+                    getRouteToBuilding(pd.gisid, [coord[0], coord[1]], `${pd.gisid} - ${pd.building_usage || ''}`);
                 });
             }
 
             // ==================== REFRESH LAYERS ====================
             function refreshLayers() {
-                console.log('Refreshing layers...');
-
                 if (polygonLayer) map.removeLayer(polygonLayer);
                 if (lineLayer) map.removeLayer(lineLayer);
 
                 let ps = new ol.source.Vector();
-                let polygonCount = 0;
-
                 $.each(polygons, function(i, p) {
                     try {
                         let c = typeof p.coordinates === 'string' ? JSON.parse(p.coordinates) : p.coordinates;
-                        if (c && c.length) {
-                            // Ensure polygon is valid
-                            if (c[0] && c[0].length >= 3) {
-                                ps.addFeature(new ol.Feature({
-                                    geometry: new ol.geom.Polygon(c),
-                                    gisid: p.gisid,
-                                    sqfeet: p.sqfeet,
-                                    visible: true
-                                }));
-                                polygonCount++;
-                            }
+                        if (c && c.length && c[0] && c[0].length >= 3) {
+                            ps.addFeature(new ol.Feature({
+                                geometry: new ol.geom.Polygon(c),
+                                gisid: p.gisid,
+                                sqfeet: p.sqfeet,
+                                visible: true
+                            }));
                         }
                     } catch (e) {
                         console.error("Error parsing polygon:", e);
                     }
                 });
-
-                console.log('Added', polygonCount, 'polygon features');
 
                 polygonLayer = new ol.layer.Vector({
                     source: ps,
@@ -1697,8 +1702,6 @@
                 });
 
                 let ls = new ol.source.Vector();
-                let lineCount = 0;
-
                 $.each(lines, function(i, l) {
                     try {
                         let c = typeof l.coordinates === 'string' ? JSON.parse(l.coordinates) : l.coordinates;
@@ -1712,15 +1715,12 @@
                                     gisid: l.gisid,
                                     road_name: l.road_name
                                 }));
-                                lineCount++;
                             }
                         }
                     } catch (e) {
                         console.error("Error parsing line:", e);
                     }
                 });
-
-                console.log('Added', lineCount, 'line features');
 
                 lineLayer = new ol.layer.Vector({
                     source: ls,
@@ -1733,13 +1733,6 @@
                 map.addLayer(polygonLayer);
                 map.addLayer(lineLayer);
 
-                // Bring boundary and drone layers to front
-                if (boundaryLayer) boundaryLayer.setZIndex(100);
-                if (imageLayer) imageLayer.setZIndex(90);
-                polygonLayer.setZIndex(50);
-                lineLayer.setZIndex(40);
-
-                // Add click handler for popups
                 map.on('click', function(e) {
                     let feature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
                     if (feature && feature.get('gisid')) {
@@ -1753,16 +1746,10 @@
                     let hasFeature = map.forEachFeatureAtPixel(e.pixel, function(f) { return f; });
                     $('#map').css('cursor', hasFeature ? 'pointer' : '');
                 });
-
-                showLoading(false);
             }
 
             // ==================== MAP INITIALIZATION ====================
             function initMap() {
-                showLoading(true);
-
-                console.log('Initializing map...');
-
                 osmLayer = new ol.layer.Tile({
                     source: new ol.source.OSM(),
                     visible: true
@@ -1780,14 +1767,9 @@
 
                 if (droneImg && droneImg !== 'null' && droneImg !== '') {
                     try {
-                        let imageUrl = droneImg;
-                        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('//')) {
-                            imageUrl = '/' + imageUrl.replace(/^\/+/, '');
-                        }
-
                         imageLayer = new ol.layer.Image({
                             source: new ol.source.ImageStatic({
-                                url: imageUrl,
+                                url: droneImg,
                                 imageExtent: [
                                     parseFloat(wardData.extent_left),
                                     parseFloat(wardData.extent_bottom),
@@ -1800,17 +1782,21 @@
                             opacity: 0.8
                         });
                         hasDrone = true;
-                        console.log('Drone image loaded');
                     } catch (e) {
                         console.error("Error loading drone image:", e);
                     }
                 }
 
                 let bound = wardData.boundary;
-                let boundExt = null;
+                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
+                let zoom = 18;
 
-                if (bound && bound.length && bound[0] && bound[0].length) {
+                if (bound && bound[0] && bound[0].length) {
                     try {
+                        let lons = bound[0].map(p => p[0]);
+                        let lats = bound[0].map(p => p[1]);
+                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
+
                         let bc = bound[0].map(c => ol.proj.fromLonLat(c));
                         boundaryLayer = new ol.layer.Vector({
                             source: new ol.source.Vector({
@@ -1824,25 +1810,9 @@
                             }),
                             visible: true
                         });
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        boundExt = ol.proj.fromLonLat([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-                        console.log('Boundary layer added');
                     } catch (e) {
                         console.error("Error parsing boundary:", e);
                     }
-                }
-
-                let center = ol.proj.fromLonLat([80.2707, 13.0827]);
-                let zoom = 18;
-
-                if (bound && bound[0] && bound[0].length) {
-                    try {
-                        let lons = bound[0].map(p => p[0]);
-                        let lats = bound[0].map(p => p[1]);
-                        center = ol.proj.fromLonLat([(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2]);
-                        zoom = 18;
-                    } catch (e) {}
                 }
 
                 map = new ol.Map({
@@ -1854,169 +1824,116 @@
                     })
                 });
 
-                console.log('Map created');
-
                 popupOverlay = createPopup();
                 map.addOverlay(popupOverlay);
 
-                if (imageLayer) {
-                    map.addLayer(imageLayer);
-                    console.log('Drone layer added');
-                }
-                if (boundaryLayer) {
-                    map.addLayer(boundaryLayer);
-                    console.log('Boundary layer added');
-                }
+                if (imageLayer) map.addLayer(imageLayer);
+                if (boundaryLayer) map.addLayer(boundaryLayer);
 
-                setTimeout(() => {
-                    if (boundExt) {
-                        map.getView().fit(boundExt, { padding: [50, 50, 50, 50], duration: 1000 });
-                    }
-                }, 500);
+                // Add mobile bottom navigation
+                $('body').append(`
+                    <div class="mobile-bottom-nav">
+                        <button class="mobile-nav-btn" id="mobileMenuBtn"><i class="fas fa-layer-group"></i><span>Layers</span></button>
+                        <button class="mobile-nav-btn" id="mobileSearchBtn"><i class="fas fa-search"></i><span>Search</span></button>
+                        <button class="mobile-nav-btn" id="mobileLocationBtn"><i class="fas fa-location-dot"></i><span>Location</span></button>
+                        <button class="mobile-nav-btn" id="mobileRouteBtn"><i class="fas fa-route"></i><span>Route</span></button>
+                        <button class="mobile-nav-btn" id="mobileFilterBtn"><i class="fas fa-filter"></i><span>Filter</span></button>
+                    </div>
+                `);
 
-                // Add Mobile Bottom Navigation
-                if ($('.mobile-bottom-nav').length === 0) {
-                    $('body').append(`
-                        <div class="mobile-bottom-nav">
-                            <button class="mobile-nav-btn" id="mobileMenuBtn">
-                                <i class="fas fa-layer-group"></i>
-                                <span>Layers</span>
-                            </button>
-                            <button class="mobile-nav-btn" id="mobileSearchBtn">
-                                <i class="fas fa-search"></i>
-                                <span>Search</span>
-                            </button>
-                            <button class="mobile-nav-btn" id="mobileLocationBtn">
-                                <i class="fas fa-location-dot"></i>
-                                <span>Location</span>
-                            </button>
-                            <button class="mobile-nav-btn" id="mobileRouteBtn">
-                                <i class="fas fa-route"></i>
-                                <span>Route</span>
-                            </button>
-                            <button class="mobile-nav-btn" id="mobileFilterBtn">
-                                <i class="fas fa-filter"></i>
-                                <span>Filter</span>
-                            </button>
+                // Add panels
+                $('body').append(`
+                    <div class="layer-switcher panel" id="layerSwitcher">
+                        <button class="panel-close" onclick="$('#layerSwitcher').removeClass('open')">&times;</button>
+                        <h5><i class="fas fa-layer-group"></i> Layers</h5>
+                        <div class="layer-group">
+                            <div class="group-title">Base Maps</div>
+                            <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
+                            <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
                         </div>
-                    `);
-                }
-
-                // Add panels to DOM if they don't exist
-                if ($('#layerSwitcher').length === 0) {
-                    $('body').append(`
-                        <div class="layer-switcher panel" id="layerSwitcher">
-                            <button class="panel-close" onclick="$('#layerSwitcher').removeClass('open')">&times;</button>
-                            <h5><i class="fas fa-layer-group"></i> Layers</h5>
-                            <div class="layer-group">
-                                <div class="group-title">Base Maps</div>
-                                <label><input type="radio" name="baseLayer" value="osm" checked> <i class="fas fa-map"></i> OpenStreetMap</label>
-                                <label><input type="radio" name="baseLayer" value="satellite"> <i class="fas fa-satellite"></i> Satellite</label>
-                            </div>
-                            <div class="layer-group">
-                                <div class="group-title">Overlays</div>
-                                <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
-                                <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
-                                <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
-                                ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
-                            </div>
+                        <div class="layer-group">
+                            <div class="group-title">Overlays</div>
+                            <label><input type="checkbox" id="toggleBuildings" checked> <i class="fas fa-building"></i> Buildings</label>
+                            <label><input type="checkbox" id="toggleRoads" checked> <i class="fas fa-road"></i> Roads</label>
+                            <label><input type="checkbox" id="toggleBoundary" checked> <i class="fas fa-draw-polygon"></i> Ward Boundary</label>
+                            ${hasDrone ? '<label><input type="checkbox" id="toggleDrone" checked> <i class="fas fa-drone"></i> Drone Image</label>' : ''}
                         </div>
-                    `);
-                }
+                    </div>
+                `);
 
-                if ($('#mapLegend').length === 0) {
-                    $('body').append(`
-                        <div class="map-legend panel" id="mapLegend">
-                            <button class="panel-close" onclick="$('#mapLegend').removeClass('open')">&times;</button>
-                            <h5><i class="fas fa-info-circle"></i> Legend</h5>
-                            <div class="legend-item"><div class="legend-color residential"></div><span>Residential</span></div>
-                            <div class="legend-item"><div class="legend-color commercial"></div><span>Commercial</span></div>
-                            <div class="legend-item"><div class="legend-color industrial"></div><span>Industrial</span></div>
-                            <div class="legend-item"><div class="legend-color institutional"></div><span>Institutional</span></div>
-                            <div class="legend-item"><div class="legend-color mixed"></div><span>Mixed Use</span></div>
-                            <div class="legend-item"><div class="legend-color government"></div><span>Government</span></div>
-                            <div class="legend-item"><div class="legend-color vacant"></div><span>Vacant</span></div>
-                            <div class="legend-item"><div class="legend-color default"></div><span>Other/Unknown</span></div>
-                            <div class="legend-item mt-2"><div class="legend-color" style="background:#ffc107;"></div><span>Roads</span></div>
-                            <div class="legend-item"><div class="legend-color" style="background:#ff0000;"></div><span>Ward Boundary</span></div>
+                $('body').append(`
+                    <div class="map-legend panel" id="mapLegend">
+                        <button class="panel-close" onclick="$('#mapLegend').removeClass('open')">&times;</button>
+                        <h5><i class="fas fa-info-circle"></i> Legend</h5>
+                        <div class="legend-item"><div class="legend-color residential"></div><span>Residential</span></div>
+                        <div class="legend-item"><div class="legend-color commercial"></div><span>Commercial</span></div>
+                        <div class="legend-item"><div class="legend-color industrial"></div><span>Industrial</span></div>
+                        <div class="legend-item"><div class="legend-color institutional"></div><span>Institutional</span></div>
+                        <div class="legend-item"><div class="legend-color mixed"></div><span>Mixed Use</span></div>
+                        <div class="legend-item"><div class="legend-color government"></div><span>Government</span></div>
+                        <div class="legend-item"><div class="legend-color vacant"></div><span>Vacant</span></div>
+                        <div class="legend-item"><div class="legend-color default"></div><span>Other/Unknown</span></div>
+                    </div>
+                `);
+
+                $('body').append(`
+                    <div class="search-panel panel" id="searchPanel">
+                        <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
+                        <h5><i class="fas fa-search"></i> Search Building</h5>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
+                            <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
                         </div>
-                    `);
-                }
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                `);
 
-                if ($('#searchPanel').length === 0) {
-                    $('body').append(`
-                        <div class="search-panel panel" id="searchPanel">
-                            <button class="panel-close" onclick="$('#searchPanel').removeClass('open')">&times;</button>
-                            <h5><i class="fas fa-search"></i> Search Building</h5>
-                            <div class="search-box">
-                                <input type="text" id="searchInput" placeholder="GIS ID, Owner, Assessment...">
-                                <button id="doSearchBtn"><i class="fas fa-search"></i> Go</button>
-                            </div>
-                            <div id="searchResults" class="search-results"></div>
+                $('body').append(`
+                    <div class="filter-panel panel" id="filterPanel">
+                        <button class="panel-close" onclick="$('#filterPanel').removeClass('open')">&times;</button>
+                        <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
+                        <div class="filter-group">
+                            <label>Building Usage</label>
+                            <select id="filterUsage">
+                                <option value="all">All Buildings</option>
+                                <option value="RESIDENTIAL">Residential</option>
+                                <option value="COMMERCIAL">Commercial</option>
+                                <option value="INDUSTRIAL">Industrial</option>
+                                <option value="INSTITUTIONAL">Institutional</option>
+                                <option value="MIXED">Mixed Use</option>
+                                <option value="GOVERNMENT">Government</option>
+                                <option value="VACANT">Vacant</option>
+                            </select>
                         </div>
-                    `);
-                }
-
-                if ($('#filterPanel').length === 0) {
-                    $('body').append(`
-                        <div class="filter-panel panel" id="filterPanel">
-                            <button class="panel-close" onclick="$('#filterPanel').removeClass('open')">&times;</button>
-                            <h5><i class="fas fa-filter"></i> Filter Buildings</h5>
-                            <div class="filter-group">
-                                <label>Building Usage</label>
-                                <select id="filterUsage">
-                                    <option value="all">All Buildings</option>
-                                    <option value="RESIDENTIAL">Residential</option>
-                                    <option value="COMMERCIAL">Commercial</option>
-                                    <option value="INDUSTRIAL">Industrial</option>
-                                    <option value="INSTITUTIONAL">Institutional</option>
-                                    <option value="MIXED">Mixed Use</option>
-                                    <option value="GOVERNMENT">Government</option>
-                                    <option value="VACANT">Vacant</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>QC Status</label>
-                                <select id="filterType">
-                                    <option value="all">All Buildings</option>
-                                    <option value="completed">QC Complete</option>
-                                    <option value="pending">QC Pending</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Min Floors</label>
-                                <input type="number" id="filterMinFloors" placeholder="Min">
-                            </div>
-                            <div class="filter-group">
-                                <label>Max Floors</label>
-                                <input type="number" id="filterMaxFloors" placeholder="Max">
-                            </div>
-                            <div class="filter-actions">
-                                <button class="apply-btn" id="applyFilterBtn">Apply</button>
-                                <button class="reset-btn" id="resetFilterBtn">Reset</button>
-                            </div>
-                            <div class="filter-count" id="filterCount"></div>
+                        <div class="filter-group">
+                            <label>QC Status</label>
+                            <select id="filterType">
+                                <option value="all">All Buildings</option>
+                                <option value="completed">QC Complete</option>
+                                <option value="pending">QC Pending</option>
+                            </select>
                         </div>
-                    `);
-                }
-
-                if ($('.zoom-controls').length === 0) {
-                    $('body').append(`
-                        <div class="zoom-controls">
-                            <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
-                            <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                        <div class="filter-actions">
+                            <button class="apply-btn" id="applyFilterBtn">Apply</button>
+                            <button class="reset-btn" id="resetFilterBtn">Reset</button>
                         </div>
-                    `);
-                }
+                        <div class="filter-count" id="filterCount"></div>
+                    </div>
+                `);
 
-                // Desktop button handlers
+                $('body').append(`
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomInBtn"><i class="fas fa-plus"></i></button>
+                        <button class="zoom-btn" id="zoomOutBtn"><i class="fas fa-minus"></i></button>
+                    </div>
+                `);
+
+                // Button event handlers
                 $('#menuBtn, #mobileMenuBtn').on('click', function(e) {
                     e.stopPropagation();
                     let isOpen = $('#layerSwitcher').hasClass('open');
                     closeAllPanels();
                     if (!isOpen) $('#layerSwitcher').addClass('open');
-                    $('.mobile-nav-btn').removeClass('active');
-                    $(this).addClass('active');
                 });
 
                 $('#legendBtn').on('click', function(e) {
@@ -2034,8 +1951,6 @@
                         $('#searchPanel').addClass('open');
                         setTimeout(() => $('#searchInput').focus(), 300);
                     }
-                    $('.mobile-nav-btn').removeClass('active');
-                    $(this).addClass('active');
                 });
 
                 $('#filterBtn, #mobileFilterBtn').on('click', function(e) {
@@ -2043,8 +1958,6 @@
                     let isOpen = $('#filterPanel').hasClass('open');
                     closeAllPanels();
                     if (!isOpen) $('#filterPanel').addClass('open');
-                    $('.mobile-nav-btn').removeClass('active');
-                    $(this).addClass('active');
                 });
 
                 $('#locationBtn, #mobileLocationBtn').on('click', function() {
@@ -2054,21 +1967,15 @@
                     } else {
                         startLocationTracking();
                     }
-                    $('.mobile-nav-btn').removeClass('active');
-                    $(this).addClass('active');
-                    setTimeout(() => $(this).removeClass('active'), 500);
                 });
 
                 $('#routeBtn, #mobileRouteBtn').on('click', function() {
                     if (selectedBuilding) {
-                        getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords);
+                        getRouteToBuilding(selectedBuilding.gisid, selectedBuilding.coords, selectedBuilding.name);
                     } else {
                         showToast('Please search and select a building first', 'warning');
                         $('#openSearchBtn').click();
                     }
-                    $('.mobile-nav-btn').removeClass('active');
-                    $(this).addClass('active');
-                    setTimeout(() => $(this).removeClass('active'), 500);
                 });
 
                 // Layer toggles
@@ -2096,7 +2003,6 @@
                     });
                 }
 
-                // Search handlers
                 $('#doSearchBtn').on('click', function() {
                     searchBuildings($('#searchInput').val());
                 });
@@ -2107,12 +2013,9 @@
                     }
                 });
 
-                // Filter handlers
                 $('#applyFilterBtn').on('click', function() {
                     let usage = $('#filterUsage').val();
                     let type = $('#filterType').val();
-                    let minF = $('#filterMinFloors').val();
-                    let maxF = $('#filterMaxFloors').val();
                     let src = polygonLayer.getSource();
                     let fts = src.getFeatures();
                     let cnt = 0;
@@ -2143,12 +2046,6 @@
                             if (type === 'pending' && hasQC) show = false;
                         }
 
-                        if (show && b && (minF || maxF)) {
-                            let fl = parseInt(b.number_floor) || 0;
-                            if (minF && fl < parseInt(minF)) show = false;
-                            if (maxF && fl > parseInt(maxF)) show = false;
-                        }
-
                         f.set('visible', show);
                         if (show) cnt++;
                     });
@@ -2162,7 +2059,6 @@
                 $('#resetFilterBtn').on('click', function() {
                     $('#filterUsage').val('all');
                     $('#filterType').val('all');
-                    $('#filterMinFloors, #filterMaxFloors').val('');
                     let src = polygonLayer.getSource();
                     $.each(src.getFeatures(), function(i, f) {
                         f.set('visible', true);
@@ -2173,7 +2069,6 @@
                     closeAllPanels();
                 });
 
-                // Zoom handlers
                 $('#zoomInBtn').on('click', function() {
                     map.getView().setZoom(map.getView().getZoom() + 1);
                 });
