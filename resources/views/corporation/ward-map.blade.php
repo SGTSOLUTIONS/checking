@@ -1,3 +1,751 @@
+@extends('layouts.commissioner')
+
+@section('title', 'Ward Map - ' . ($ward->ward_no ?? ''))
+
+@section('content')
+    <div class="container-fluid p-0">
+        <div id="map"></div>
+
+        <!-- Action Buttons - Visible on ALL devices -->
+        <div class="action-buttons">
+            <button class="action-btn menu-btn" id="menuBtn" title="Layers">
+                <i class="fas fa-layer-group"></i>
+                <span class="btn-label">Layers</span>
+            </button>
+            <button class="action-btn legend-btn" id="legendBtn" title="Legend">
+                <i class="fas fa-info-circle"></i>
+                <span class="btn-label">Legend</span>
+            </button>
+            <button class="action-btn search-btn" id="openSearchBtn" title="Search">
+                <i class="fas fa-search"></i>
+                <span class="btn-label">Search</span>
+            </button>
+            <button class="action-btn filter-btn" id="filterBtn" title="Filter">
+                <i class="fas fa-filter"></i>
+                <span class="btn-label">Filter</span>
+            </button>
+            <button class="action-btn location-btn" id="locationBtn" title="My Location">
+                <i class="fas fa-location-dot"></i>
+                <span class="btn-label">Location</span>
+            </button>
+            <button class="action-btn route-btn" id="routeBtn" title="Route">
+                <i class="fas fa-route"></i>
+                <span class="btn-label">Route</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Route Info Panel -->
+    <div class="route-info panel" id="routeInfo">
+        <button class="panel-close" id="closeRouteInfo">&times;</button>
+        <h5><i class="fas fa-route"></i> Route Information</h5>
+        <div id="routeSummary" class="route-summary"></div>
+        <div id="directionsList" class="directions-list"></div>
+        <button class="btn-start-nav" id="startNavigationBtn">
+            <i class="fas fa-directions"></i> Open in Google Maps
+        </button>
+    </div>
+
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary"></div>
+        <div>Calculating route...</div>
+    </div>
+@endsection
+
+@push('styles')
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@latest/ol.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            touch-action: pan-x pan-y pinch-zoom;
+        }
+
+        /* Mobile Bottom Navigation */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px 20px 0 0;
+            z-index: 1003;
+            padding: 8px 12px;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .mobile-nav-btn i {
+            font-size: 20px;
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .mobile-nav-btn span {
+            font-size: 10px;
+            color: #aaa;
+            font-weight: 500;
+        }
+
+        .mobile-nav-btn.active {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .mobile-nav-btn.active i,
+        .mobile-nav-btn.active span {
+            color: #ff4444;
+        }
+
+        .mobile-nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Action Buttons - Desktop */
+        .action-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 1002;
+            padding: 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            min-width: 70px;
+        }
+
+        .action-btn i { font-size: 18px; }
+        .btn-label { font-size: 10px; font-weight: 500; }
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn.menu-btn { background: rgba(0, 0, 0, 0.85); }
+        .action-btn.legend-btn { background: rgba(255, 193, 7, 0.9); }
+        .action-btn.search-btn { background: rgba(23, 162, 184, 0.9); }
+        .action-btn.filter-btn { background: rgba(40, 167, 69, 0.9); }
+        .action-btn.location-btn { background: rgba(220, 53, 69, 0.9); }
+        .action-btn.route-btn { background: rgba(111, 66, 193, 0.9); }
+        .action-btn.location-btn.active { background: #28a745; }
+
+        @media (min-width: 769px) {
+            .action-buttons {
+                position: absolute;
+                bottom: auto;
+                top: 80%;
+                right: 20px;
+                left: auto;
+                transform: translateY(-50%);
+                flex-direction: column;
+                gap: 10px;
+            }
+            .action-btn {
+                flex-direction: row;
+                gap: 8px;
+                padding: 10px 16px;
+                min-width: auto;
+            }
+            .btn-label { font-size: 12px; }
+        }
+
+        /* Hide desktop buttons on mobile */
+        @media (max-width: 768px) {
+            .action-buttons {
+                display: none;
+            }
+            .mobile-bottom-nav {
+                display: flex;
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 18px;
+            color: white;
+            z-index: 1001;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .panel h5 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffc107;
+            border-bottom: 2px solid #ff4444;
+            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #ff4444;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 10;
+        }
+
+        /* Layer Switcher */
+        .layer-switcher {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            min-width: 200px;
+            display: none;
+        }
+
+        .layer-switcher.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            min-width: 200px;
+            display: none;
+        }
+
+        .map-legend.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Search Panel */
+        .search-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
+            display: none;
+        }
+
+        .search-panel.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 300px;
+            display: none;
+        }
+
+        .filter-panel.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Route Info Panel */
+        .route-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-width: calc(100% - 40px);
+            display: none;
+            max-height: 500px;
+        }
+
+        .route-info.open {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .layer-switcher,
+            .map-legend,
+            .search-panel,
+            .filter-panel,
+            .route-info {
+                position: fixed;
+                bottom: 80px;
+                right: 10px;
+                left: 10px;
+                top: auto;
+                width: auto;
+                max-height: 60vh;
+                z-index: 1004;
+            }
+            .map-legend {
+                left: 10px;
+                right: auto;
+                min-width: 180px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Route Styles */
+        .route-summary {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .route-summary div {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .directions-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .direction-step {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .step-number {
+            background: #ff4444;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-content { flex: 1; }
+        .step-instruction { margin-bottom: 4px; }
+        .step-distance { font-size: 11px; color: #ffc107; }
+
+        .btn-start-nav {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-start-nav:active { transform: scale(0.98); }
+
+        .loading-spinner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            z-index: 2000;
+            display: none;
+            text-align: center;
+            color: white;
+            gap: 12px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loading-spinner .spinner-border { width: 40px; height: 40px; }
+
+        .center-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .center-btn {
+                bottom: 80px;
+                left: 10px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .center-btn { bottom: auto; top: 160px; left: 20px; }
+        }
+
+        .layer-group { margin-bottom: 15px; }
+        .layer-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .layer-group label:hover { background: rgba(255, 255, 255, 0.1); }
+        .group-title { font-weight: 600; color: #ffc107; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+        .legend-color {
+            width: 24px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .legend-color.residential { background: #4CAF50; }
+        .legend-color.commercial { background: #2196F3; }
+        .legend-color.industrial { background: #FF9800; }
+        .legend-color.institutional { background: #9C27B0; }
+        .legend-color.mixed { background: #FF5722; }
+        .legend-color.government { background: #607D8B; }
+        .legend-color.vacant { background: #9E9E9E; }
+        .legend-color.default { background: #ff4444; }
+
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 14px;
+            outline: none;
+            min-width: 150px;
+        }
+        .search-box button {
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            background: #ff4444;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .search-results { max-height: 350px; overflow-y: auto; }
+        .search-result-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            cursor: pointer;
+            border-left: 3px solid #ffc107;
+        }
+        .result-gisid { font-weight: bold; color: #ffc107; font-size: 13px; margin-bottom: 5px; }
+        .result-owner { font-size: 11px; color: #ddd; margin: 3px 0; }
+        .direction-btn {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: #28a745;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label { display: block; margin-bottom: 6px; font-size: 12px; color: #ffc107; }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff4444;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+        }
+        .filter-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .apply-btn, .reset-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .apply-btn { background: #28a745; color: white; }
+        .reset-btn { background: #dc3545; color: white; }
+        .filter-count {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #ffc107;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .zoom-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .zoom-controls {
+                bottom: 80px;
+                right: 10px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .zoom-controls { bottom: auto; top: 100px; right: 20px; left: auto; }
+        }
+
+        .zoom-btn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .zoom-btn:first-child { border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+
+        .map-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Popup styles */
+        .ol-popup {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
+            color: white;
+            border-radius: 25px 25px 0 0 !important;
+            padding: 0;
+            width: 100% !important;
+            max-height: 70vh !important;
+            z-index: 9999 !important;
+            overflow-y: auto;
+        }
+        @media (min-width: 769px) {
+            .ol-popup {
+                position: absolute !important;
+                bottom: auto !important;
+                width: auto !important;
+                min-width: 400px !important;
+                max-width: 500px !important;
+                border-radius: 20px !important;
+            }
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1a);
+            padding: 18px 20px;
+            border-bottom: 2px solid #ff4444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .popup-header h4 { margin: 0; font-size: 18px; color: #ff4444; }
+        .popup-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .popup-tabs { display: flex; background: #141424; flex-wrap: wrap; }
+        .popup-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #aaa;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .popup-tab.active { color: #ff4444; border-bottom: 3px solid #ff4444; }
+        .popup-tab-content { display: none; padding: 20px; max-height: 55vh; overflow-y: auto; }
+        .popup-tab-content.active { display: block; }
+        .detail-row {
+            display: flex;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #ffc107;
+            width: 110px;
+            font-size: 12px;
+        }
+        .detail-value { color: #eee; flex: 1; font-size: 13px; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .assessment-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 3px solid #ffc107;
+            cursor: pointer;
+        }
+        .assessment-header {
+            background: rgba(255, 193, 7, 0.15);
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .assessment-number { font-weight: 700; font-size: 13px; color: #ffc107; }
+        .assessment-body { padding: 12px 15px; }
+        .assessment-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+        .assessment-label { width: 80px; color: #aaa; }
+        .assessment-value { color: #fff; flex: 1; }
+        .shop-item {
+            background: rgba(255, 68, 68, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+        .shop-name { font-weight: 700; color: #ff4444; font-size: 13px; margin-bottom: 8px; }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+        .empty-state i { font-size: 50px; margin-bottom: 15px; opacity: 0.5; }
+        .assessment-form-container {
+            margin: 10px;
+            padding: 15px;
+            background: #1a1a2e;
+            border-radius: 12px;
+            border-left: 3px solid #ff4444;
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
