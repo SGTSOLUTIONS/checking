@@ -603,9 +603,8 @@ class CommissionerController extends Controller
         ];
     }
 
-    if (request()->expectsJson()) {
-        return response()->json($results);
-    }
+  return response()->json($results);
+
 
     return view('corporation.variations', compact(
         'results',
