@@ -560,8 +560,7 @@ class CommissionerController extends Controller
             $pointCount = DB::table($pointsTableName)
                 ->where(function($query) use ($polygonGisid) {
                     $query->where('gisid', $polygonGisid)
-                          ->orWhere('polygon_gisid', $polygonGisid)
-                          ->orWhere('point_gisid', $polygonGisid);
+                          ->orWhere('gisid', $polygonGisid);
                 })
                 ->count();
         }
