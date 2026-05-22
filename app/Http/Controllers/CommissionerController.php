@@ -606,7 +606,7 @@ class CommissionerController extends Controller
             ];
         }
 
-        return view('variations.index', compact(
+        return view('corporation.variations', compact(
             'results',
             'warddetail',
             'ward_no'
