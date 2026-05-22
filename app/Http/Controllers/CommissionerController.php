@@ -451,141 +451,141 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-    public function viewVariations($ward_no)
-    {
-        $user = Auth::user();
+  public function viewVariations($ward_no)
+{
+    $user = Auth::user();
 
-        $warddetail = Ward::where('corporation_id', $user->corporation_id)
-            ->where('ward_no', $ward_no)
-            ->first();
+    $warddetail = Ward::where('corporation_id', $user->corporation_id)
+        ->where('ward_no', $ward_no)
+        ->first();
 
-        if (!$warddetail) {
-            return back()->with('error', 'Ward not found');
-        }
-
-        $zone = strtolower(trim($warddetail->zone));
-        $wardNo = (int) $warddetail->ward_no;
-        $corp = (int) $warddetail->corporation_id;
-
-        $misTableName = "mis_corporation_{$corp}";
-        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
-        $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
-        $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
-
-        // OPTIMIZATION 1: Get all polygons with their building data in one query
-        $polygons = DB::table($polygonsTableName . ' as p')
-            ->leftJoin($polygonDataTable . ' as b', 'p.gisid', '=', 'b.gisid')
-            ->select(
-                'p.gisid',
-                'p.sqfeet',
-                'b.building_name',
-                'b.road_name',
-                'b.building_usage',
-                'b.number_floor',
-                'b.basement',
-                'b.percentage'
-            )
-            ->get();
-
-        if ($polygons->isEmpty()) {
-            return view('corporation.variations', compact('results', 'warddetail', 'ward_no'))->with('error', 'No polygons found');
-        }
-
-        // OPTIMIZATION 2: Get all point data with MIS in one query for all polygons
-        $gisids = $polygons->pluck('gisid')->toArray();
-
-        $allPointDatas = DB::table($pointDataTable . ' as pd')
-            ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
-            ->whereIn('pd.point_gisid', $gisids)
-            ->select(
-                'pd.*',
-                'pd.point_gisid',
-                'mis.owner_name as mis_owner_name',
-                'mis.plot_area as mis_plot_area',
-                'mis.half_year_tax as mis_half_year_tax',
-                'mis.usage as mis_usage'
-            )
-            ->get()
-            ->groupBy('point_gisid'); // Group by GISID for easy access
-
-        // OPTIMIZATION 3: Process data in memory
-        $results = [];
-
-        foreach ($polygons as $polygon) {
-            // Get point data for this polygon
-            $pointDatas = $allPointDatas->get($polygon->gisid, collect());
-
-            // Skip if no point data
-            if ($pointDatas->isEmpty()) {
-                continue;
-            }
-
-            // Calculate totals
-            $misTotalArea = $pointDatas->sum('mis_plot_area');
-
-            $numberFloor = (float) ($polygon->number_floor ?? 0);
-            $basement = (float) ($polygon->basement ?? 0);
-            $percentage = (float) ($polygon->percentage ?? 0);
-            $polygonSqft = (float) ($polygon->sqfeet ?? 0);
-
-            // Drone calculated area
-            $droneArea = ($numberFloor + $basement + ($percentage / 100)) * $polygonSqft;
-
-            // Difference
-            $areaDifference = $droneArea - $misTotalArea;
-
-            // Area variation status
-            if ($areaDifference > 100) {
-                $areaVariation = 'EXCESS';
-            } elseif ($areaDifference < -100) {
-                $areaVariation = 'SHORT';
-            } else {
-                $areaVariation = 'MATCHED';
-            }
-
-            // Usage variation check
-            $usageVariation = false;
-            $usageMismatches = [];
-
-            foreach ($pointDatas as $pd) {
-                $surveyUsage = strtolower(trim($pd->bill_usage ?? ''));
-                $misUsage = strtolower(trim($pd->mis_usage ?? ''));
-
-                if ($surveyUsage != $misUsage) {
-                    $usageVariation = true;
-                    $usageMismatches[] = [
-                        'assessment' => $pd->assessment,
-                        'survey_usage' => $pd->bill_usage,
-                        'mis_usage' => $pd->mis_usage,
-                    ];
-                }
-            }
-
-            $results[] = [
-                'gisid' => $polygon->gisid,
-                'sqfeet' => $polygonSqft,
-                'building_name' => $polygon->building_name ?? '',
-                'road_name' => $polygon->road_name ?? '',
-                'building_usage' => $polygon->building_usage ?? '',
-                'number_floor' => $numberFloor,
-                'basement' => $basement,
-                'percentage' => $percentage,
-                'surveyed_points' => 1,
-                'assessment_count' => $pointDatas->count(),
-                'drone_area' => round($droneArea, 2),
-                'mis_total_area' => round($misTotalArea, 2),
-                'area_difference' => round($areaDifference, 2),
-                'area_variation' => $areaVariation,
-                'usage_variation' => $usageVariation,
-                'usage_mismatches' => $usageMismatches,
-                'assessments' => $pointDatas,
-                'building_data' => $polygon,
-            ];
-        }
-
-        return view('corporation.variations', compact('results', 'warddetail', 'ward_no'));
+    if (!$warddetail) {
+        return back()->with('error', 'Ward not found');
     }
+
+    $zone = strtolower(trim($warddetail->zone));
+    $wardNo = (int) $warddetail->ward_no;
+    $corp = (int) $warddetail->corporation_id;
+
+    $misTableName = "mis_corporation_{$corp}";
+    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+    $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
+    $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
+    $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+    // OPTIMIZATION 1: Get all polygons with their building data in one query
+    $polygons = DB::table($polygonsTableName . ' as p')
+        ->leftJoin($polygonDataTable . ' as b', 'p.gisid', '=', 'b.gisid')
+        ->select(
+            'p.gisid',
+            'p.sqfeet',
+            'b.building_name',
+            'b.road_name',
+            'b.building_usage',
+            'b.number_floor',
+            'b.basement',
+            'b.percentage'
+        )
+        ->get();
+
+    if ($polygons->isEmpty()) {
+        return view('corporation.variations', compact('results', 'warddetail', 'ward_no'))->with('error', 'No polygons found');
+    }
+
+    // OPTIMIZATION 2: Get all point data with MIS in one query for all polygons
+    $gisids = $polygons->pluck('gisid')->toArray();
+
+    $allPointDatas = DB::table($pointDataTable . ' as pd')
+        ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
+        ->whereIn('pd.point_gisid', $gisids)
+        ->select(
+            'pd.*',
+            'pd.point_gisid',
+            'mis.owner_name as mis_owner_name',
+            'mis.plot_area as mis_plot_area',
+            'mis.half_year_tax as mis_half_year_tax',
+            'mis.usage as mis_usage'
+        )
+        ->get()
+        ->groupBy('point_gisid'); // Group by GISID for easy access
+
+    // OPTIMIZATION 3: Process data in memory
+    $results = [];
+
+    foreach ($polygons as $polygon) {
+        // Get point data for this polygon
+        $pointDatas = $allPointDatas->get($polygon->gisid, collect());
+
+        // Skip if no point data
+        if ($pointDatas->isEmpty()) {
+            continue;
+        }
+
+        // Calculate totals
+        $misTotalArea = $pointDatas->sum('mis_plot_area');
+
+        $numberFloor = (float) ($polygon->number_floor ?? 0);
+        $basement = (float) ($polygon->basement ?? 0);
+        $percentage = (float) ($polygon->percentage ?? 0);
+        $polygonSqft = (float) ($polygon->sqfeet ?? 0);
+
+        // Drone calculated area
+        $droneArea = ($numberFloor + $basement + ($percentage / 100)) * $polygonSqft;
+
+        // Difference
+        $areaDifference = $droneArea - $misTotalArea;
+
+        // Area variation status
+        if ($areaDifference > 100) {
+            $areaVariation = 'EXCESS';
+        } elseif ($areaDifference < -100) {
+            $areaVariation = 'SHORT';
+        } else {
+            $areaVariation = 'MATCHED';
+        }
+
+        // Usage variation check
+        $usageVariation = false;
+        $usageMismatches = [];
+
+        foreach ($pointDatas as $pd) {
+            $surveyUsage = strtolower(trim($pd->bill_usage ?? ''));
+            $misUsage = strtolower(trim($pd->mis_usage ?? ''));
+
+            if ($surveyUsage != $misUsage) {
+                $usageVariation = true;
+                $usageMismatches[] = [
+                    'assessment' => $pd->assessment,
+                    'survey_usage' => $pd->bill_usage,
+                    'mis_usage' => $pd->mis_usage,
+                ];
+            }
+        }
+
+        $results[] = [
+            'gisid' => $polygon->gisid,
+            'sqfeet' => $polygonSqft,
+            'building_name' => $polygon->building_name ?? '',
+            'road_name' => $polygon->road_name ?? '',
+            'building_usage' => $polygon->building_usage ?? '',
+            'number_floor' => $numberFloor,
+            'basement' => $basement,
+            'percentage' => $percentage,
+            'surveyed_points' => 1,
+            'assessment_count' => $pointDatas->count(),
+            'drone_area' => round($droneArea, 2),
+            'mis_total_area' => round($misTotalArea, 2),
+            'area_difference' => round($areaDifference, 2),
+            'area_variation' => $areaVariation,
+            'usage_variation' => $usageVariation,
+            'usage_mismatches' => $usageMismatches,
+            'assessments' => $pointDatas,
+            'building_data' => $polygon,
+        ];
+    }
+
+    return view('corporation.variations', compact('results', 'warddetail', 'ward_no'));
+}
     /**
      * Export ward data to Excel with building variations
      */
