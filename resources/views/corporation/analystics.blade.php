@@ -257,6 +257,11 @@
 
                                     <i class="fas fa-map-marked-alt"></i> View Map
                                 </a>
+                                <a href="/corporation/variation/${ward.ward_no}"
+                                    class="btn btn-sm btn-light">
+
+                                    <i class="fas fa-map-marked-alt"></i> View Variation
+                                </a>
                             </div>
 
                             <!-- Body -->
