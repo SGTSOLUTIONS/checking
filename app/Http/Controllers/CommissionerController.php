@@ -451,57 +451,242 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-public function viewVariations($ward_no)
-{
-    $user = Auth::user();
+    public function viewVariations($ward_no)
+    {
+        $user = Auth::user();
 
-    $warddetail = Ward::where('corporation_id', $user->corporation_id)
-        ->where('ward_no', $ward_no)
-        ->first();
+        $warddetail = Ward::where('corporation_id', $user->corporation_id)
+            ->where('ward_no', $ward_no)
+            ->first();
 
-    if (!$warddetail) {
-        return back()->with('error', 'Ward not found');
+        if (!$warddetail) {
+            return back()->with('error', 'Ward not found');
+        }
+
+        $zone = strtolower(trim($warddetail->zone));
+        $wardNo = (int) $warddetail->ward_no;
+        $corp = (int) $warddetail->corporation_id;
+
+        // MIS table
+        $misTableName = "mis_corporation_{$corp}";
+
+        // Dynamic tables
+        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+        $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
+
+        $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
+        $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+        $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+        // Get polygons
+        $polygons = DB::table($polygonsTableName)->get();
+
+        $results = [];
+
+        foreach ($polygons as $polygon) {
+
+            /**
+             * BUILDING DATA
+             */
+            $buildingData = DB::table($polygonDataTable)
+                ->where('gisid', $polygon->gisid)
+                ->first();
+
+            /**
+             * POINT DATA + MIS
+             */
+            $pointDatas = DB::table($pointDataTable . ' as pd')
+                ->leftJoin(
+                    $misTableName . ' as mis',
+                    'pd.assessment',
+                    '=',
+                    'mis.assessment'
+                )
+                ->where('pd.point_gisid', $polygon->gisid)
+                ->select(
+                    'pd.*',
+
+                    'mis.owner_name as mis_owner_name',
+                    'mis.phone_number as mis_phone_number',
+                    'mis.old_door_no as mis_old_door_no',
+                    'mis.new_door_no as mis_new_door_no',
+                    'mis.plot_area as mis_plot_area',
+                    'mis.half_year_tax as mis_half_year_tax',
+                    'mis.usage as mis_usage'
+                )
+                ->get();
+
+            /**
+             * POINT DATA MUST EXIST
+             */
+            if ($pointDatas->isEmpty()) {
+                continue;
+            }
+
+            /**
+             * POINT COUNT
+             */
+            $pointCount = DB::table($pointsTableName)
+                ->where('gisid', $polygon->gisid)
+                ->count();
+
+            /**
+             * SHOP DATA
+             */
+            $shops = DB::table($shopTableName)
+                ->where('gisid', $polygon->gisid)
+                ->get();
+
+            /**
+             * AREA CALCULATION
+             */
+
+            $numberFloor = (float) ($buildingData->number_floor ?? 0);
+
+            $basement = (float) ($buildingData->basement ?? 0);
+
+            $percentage = (float) ($buildingData->percentage ?? 0);
+
+            $polygonSqft = (float) ($polygon->sqfeet ?? 0);
+
+            /**
+             * DRONE AREA
+             *
+             * (floor + basement + percentage/100) * sqfeet
+             */
+            $droneArea =
+                (
+                    $numberFloor +
+                    $basement +
+                    ($percentage / 100)
+                ) * $polygonSqft;
+
+            /**
+             * MIS TOTAL AREA
+             */
+            $misTotalArea = $pointDatas->sum(function ($item) {
+                return (float) ($item->mis_plot_area ?? 0);
+            });
+
+            /**
+             * AREA DIFFERENCE
+             */
+            $areaDifference = $droneArea - $misTotalArea;
+
+            /**
+             * AREA VARIATION STATUS
+             */
+            if ($areaDifference > 100) {
+
+                $areaVariation = 'EXCESS';
+            } elseif ($areaDifference < -100) {
+
+                $areaVariation = 'SHORT';
+            } else {
+
+                $areaVariation = 'MATCHED';
+            }
+
+            /**
+             * USAGE VARIATION
+             */
+            $usageVariation = false;
+
+            $usageMismatches = [];
+
+            foreach ($pointDatas as $pd) {
+
+                $surveyUsage = strtolower(trim($pd->bill_usage ?? ''));
+
+                $misUsage = strtolower(trim($pd->mis_usage ?? ''));
+
+                if ($surveyUsage != $misUsage) {
+
+                    $usageVariation = true;
+
+                    $usageMismatches[] = [
+
+                        'assessment' => $pd->assessment,
+
+                        'survey_usage' => $pd->bill_usage,
+
+                        'mis_usage' => $pd->mis_usage,
+                    ];
+                }
+            }
+
+            /**
+             * FINAL RESULT
+             */
+            $results[] = [
+
+                'gisid' => $polygon->gisid,
+
+                'sqfeet' => round($polygonSqft, 2),
+
+                /**
+                 * Building
+                 */
+                'building_name' => $buildingData->building_name ?? '',
+
+                'road_name' => $buildingData->road_name ?? '',
+
+                'building_usage' => $buildingData->building_usage ?? '',
+
+                'number_floor' => $numberFloor,
+
+                'basement' => $basement,
+
+                'percentage' => $percentage,
+
+                /**
+                 * Counts
+                 */
+                'surveyed_points' => $pointCount,
+
+                'assessment_count' => $pointDatas->count(),
+
+                'shop_count' => $shops->count(),
+
+                /**
+                 * Area Variation
+                 */
+                'drone_area' => round($droneArea, 2),
+
+                'mis_total_area' => round($misTotalArea, 2),
+
+                'area_difference' => round($areaDifference, 2),
+
+                'area_variation' => $areaVariation,
+
+                /**
+                 * Usage Variation
+                 */
+                'usage_variation' => $usageVariation,
+
+                'usage_mismatches' => $usageMismatches,
+
+                /**
+                 * Raw Data
+                 */
+                'assessments' => $pointDatas,
+
+                'shops' => $shops,
+
+                'building_data' => $buildingData,
+            ];
+        }
+
+        return view(
+            'corporation.variations',
+            compact(
+                'results',
+                'warddetail',
+                'ward_no'
+            )
+        );
     }
-
-    $zone = strtolower(trim($warddetail->zone));
-    $wardNo = (int) $warddetail->ward_no;
-    $corp = (int) $warddetail->corporation_id;
-
-    // Dynamic table names
-    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-    $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
-    $linesTableName    = "line_{$corp}_{$zone}_{$wardNo}";
-
-    $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
-    $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
-
-    $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
-
-    // Check table existence
-    $tables = [
-        'polygon_table' => Schema::hasTable($polygonsTableName),
-        'point_table'   => Schema::hasTable($pointsTableName),
-        'line_table'    => Schema::hasTable($linesTableName),
-        'point_data'    => Schema::hasTable($pointDataTable),
-        'polygon_data'  => Schema::hasTable($polygonDataTable),
-        'shop_table'    => Schema::hasTable($shopTableName),
-    ];
-
-    // Response data
-    $data = [
-        'ward_no' => $wardNo,
-        'zone' => $zone,
-        'corporation_id' => $corp,
-        'tables' => $tables,
-    ];
-
-    // Headers
-    $headers = [
-        'Content-Type' => 'application/json'
-    ];
-
-    return response()->json($data, 200, $headers);
-}
     /**
      * Export ward data to Excel with building variations
      */

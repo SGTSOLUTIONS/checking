@@ -33,10 +33,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::get('/dashboard', [CommissionerController::class, 'dashboard'])->name('dashboard');
         Route::get('/ward/{ward_no}', [CommissionerController::class, 'mapView'])->name('ward.map');
         Route::get('/ward/{ward_no}/excel', [CommissionerController::class, 'mapDownloadExcel'])->name('ward.excel');
-        Route::get('/analystics', [CommissionerController::class, 'Analystics'])->name('analystics');;
-
-
-
+        Route::get('/analystics', [CommissionerController::class, 'Analystics'])->name('analystics');
 
         //map
          Route::get('/ward/{ward_no}/details', [CommissionerController::class, 'wardDetails'])->name('ward.details');
