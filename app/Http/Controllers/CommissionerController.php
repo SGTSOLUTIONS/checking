@@ -482,7 +482,6 @@ class CommissionerController extends Controller
         $polygons = DB::table($polygonsTableName)->get();
 
         $results = [];
-return response()->json("data");
         foreach ($polygons as $polygon) {
 
             // Building data
@@ -599,6 +598,7 @@ return response()->json("data");
             ];
         }
 
+return response()->json( $results);
         return view('corporation.variations', compact(
             'results',
             'warddetail',
