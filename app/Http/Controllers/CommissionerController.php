@@ -514,14 +514,7 @@ class CommissionerController extends Controller
             // Point count
             $misTotalArea = $pointDatas->sum('mis_plot_area');
 
-            // Shop count
-            $shops = DB::table($shopTableName)
-                ->where('gisid', $polygon->gisid)
-                ->get();
 
-            /**
-             * AREA VARIATION CALCULATION
-             */
 
             $numberFloor = (float) ($buildingData->number_floor ?? 0);
             $basement    = (float) ($buildingData->basement ?? 0);
@@ -587,7 +580,7 @@ class CommissionerController extends Controller
 
                 'surveyed_points'    => 1,
                 'assessment_count'   => $pointDatas->count(),
-                'shop_count'         => $shops->count(),
+
 
                 // Area variation
                 'drone_area'         => round($droneArea, 2),
@@ -601,7 +594,7 @@ class CommissionerController extends Controller
 
                 // Raw data
                 'assessments'        => $pointDatas,
-                'shops'              => $shops,
+
                 'building_data'      => $buildingData,
             ];
         }
