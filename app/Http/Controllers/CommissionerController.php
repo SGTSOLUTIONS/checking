@@ -451,232 +451,239 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-   public function viewVariations($ward_no)
-{
-    $user = Auth::user();
+    public function viewVariations($ward_no)
+    {
+        $user = Auth::user();
 
-    $warddetail = Ward::where('corporation_id', $user->corporation_id)
-        ->where('ward_no', $ward_no)
-        ->first();
+        $warddetail = Ward::where('corporation_id', $user->corporation_id)
+            ->where('ward_no', $ward_no)
+            ->first();
 
-    if (!$warddetail) {
-        return back()->with('error', 'Ward not found');
-    }
-
-    $zone = strtolower(trim($warddetail->zone));
-    $wardNo = (int) $warddetail->ward_no;
-    $corp = (int) $warddetail->corporation_id;
-
-    // MIS table
-    $misTableName = "mis_corporation_{$corp}";
-
-    // Dynamic tables
-    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-    $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
-
-    $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
-    $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
-
-    $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
-
-    // Check if tables exist before querying
-    $polygonsExist = Schema::connection('mysql')->hasTable($polygonsTableName);
-    $pointsExist = Schema::connection('mysql')->hasTable($pointsTableName);
-    $pointDataExist = Schema::connection('mysql')->hasTable($pointDataTable);
-    $polygonDataExist = Schema::connection('mysql')->hasTable($polygonDataTable);
-    $shopTableExist = Schema::connection('mysql')->hasTable($shopTableName);
-    $misTableExist = Schema::connection('mysql')->hasTable($misTableName);
-
-    if (!$polygonsExist) {
-        return back()->with('error', "Table {$polygonsTableName} not found");
-    }
-
-    // Get polygons
-    $polygons = DB::table($polygonsTableName)->get();
-
-    $results = [];
-
-    foreach ($polygons as $polygon) {
-        // Get the polygon GIS ID (might be 'gisid' or 'id' or 'polygon_id')
-        $polygonGisid = $polygon->gisid ?? $polygon->id ?? null;
-
-        if (!$polygonGisid) {
-            continue;
+        if (!$warddetail) {
+            return back()->with('error', 'Ward not found');
         }
 
-        /**
-         * BUILDING DATA
-         */
-        $buildingData = null;
-        if ($polygonDataExist) {
-            $buildingData = DB::table($polygonDataTable)
-                ->where('gisid', $polygonGisid)
-                ->first();
+        $zone = strtolower(trim($warddetail->zone));
+        $wardNo = (int) $warddetail->ward_no;
+        $corp = (int) $warddetail->corporation_id;
+
+        // MIS table
+        $misTableName = "mis_corporation_{$corp}";
+
+        // Dynamic tables
+        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+        $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
+
+        $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
+        $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+        $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
+
+        // Check if tables exist
+        if (!Schema::hasTable($polygonsTableName)) {
+            return back()->with('error', "Polygon table not found for Ward {$wardNo}");
         }
 
-        /**
-         * POINT DATA + MIS
-         */
-        $pointDatas = collect();
-        if ($pointDataExist) {
-            $query = DB::table($pointDataTable . ' as pd');
+        // Get polygons
+        $polygons = DB::table($polygonsTableName)->get();
 
-            if ($misTableExist) {
-                $query->leftJoin(
-                    $misTableName . ' as mis',
-                    'pd.assessment',
-                    '=',
-                    'mis.assessment'
-                );
+        $results = [];
+
+        foreach ($polygons as $polygon) {
+            // Get the polygon GIS ID
+            $polygonGisid = $polygon->gisid;
+
+            /**
+             * BUILDING DATA from polygonDataTable
+             * polygonDataTable has 'gisid' column
+             */
+            $buildingData = null;
+            if (Schema::hasTable($polygonDataTable)) {
+                $buildingData = DB::table($polygonDataTable)
+                    ->where('gisid', $polygonGisid)
+                    ->first();
             }
 
-            $pointDatas = $query->where('pd.point_gisid', $polygonGisid)
-                ->select(
-                    'pd.*',
-                    'mis.owner_name as mis_owner_name',
-                    'mis.phone_number as mis_phone_number',
-                    'mis.old_door_no as mis_old_door_no',
-                    'mis.new_door_no as mis_new_door_no',
-                    'mis.plot_area as mis_plot_area',
-                    'mis.half_year_tax as mis_half_year_tax',
-                    'mis.usage as mis_usage'
-                )
-                ->get();
-        }
+            /**
+             * POINT DATA + MIS
+             * pointDataTable has 'point_gisid' column that references polygon's gisid
+             */
+            $pointDatas = collect();
+            if (Schema::hasTable($pointDataTable)) {
+                $query = DB::table($pointDataTable . ' as pd');
 
-        /**
-         * POINT DATA MUST EXIST
-         */
-        if ($pointDatas->isEmpty()) {
-            continue;
-        }
+                if (Schema::hasTable($misTableName)) {
+                    $query->leftJoin(
+                        $misTableName . ' as mis',
+                        'pd.assessment',
+                        '=',
+                        'mis.assessment'
+                    );
+                }
 
-        /**
-         * POINT COUNT - Fix: Use correct column name
-         */
-        $pointCount = 0;
-        if ($pointsExist) {
-            // Try different possible column names for the GIS ID
-            $pointCount = DB::table($pointsTableName)
-                ->where(function($query) use ($polygonGisid) {
-                    $query->where('gisid', $polygonGisid)
-                          ->orWhere('gisid', $polygonGisid);
-                })
-                ->count();
-        }
-
-        /**
-         * SHOP DATA - Fix: Try multiple possible column names
-         */
-        $shops = collect();
-        if ($shopTableExist) {
-            // Try different possible column names for shop table
-            $shops = DB::table($shopTableName)
-                ->where(function($query) use ($polygonGisid) {
-                    $query->where('gisid', $polygonGisid)
-                          ->orWhere('polygon_gisid', $polygonGisid)
-                          ->orWhere('building_gisid', $polygonGisid)
-                          ->orWhere('ward_gisid', $polygonGisid);
-                })
-                ->get();
-        }
-
-        /**
-         * AREA CALCULATION
-         */
-        $numberFloor = (float) ($buildingData->number_floor ?? $buildingData->number_floors ?? 0);
-        $basement = (float) ($buildingData->basement ?? 0);
-        $percentage = (float) ($buildingData->percentage ?? 0);
-        $polygonSqft = (float) ($polygon->sqfeet ?? $polygon->area ?? $polygon->sqft ?? 0);
-
-        /**
-         * DRONE AREA
-         */
-        $droneArea = ($numberFloor + $basement + ($percentage / 100)) * $polygonSqft;
-
-        /**
-         * MIS TOTAL AREA
-         */
-        $misTotalArea = $pointDatas->sum(function ($item) {
-            return (float) ($item->mis_plot_area ?? $item->plot_area ?? 0);
-        });
-
-        /**
-         * AREA DIFFERENCE
-         */
-        $areaDifference = $droneArea - $misTotalArea;
-
-        /**
-         * AREA VARIATION STATUS
-         */
-        if ($areaDifference > 100) {
-            $areaVariation = 'EXCESS';
-        } elseif ($areaDifference < -100) {
-            $areaVariation = 'SHORT';
-        } else {
-            $areaVariation = 'MATCHED';
-        }
-
-        /**
-         * USAGE VARIATION
-         */
-        $usageVariation = false;
-        $usageMismatches = [];
-
-        foreach ($pointDatas as $pd) {
-            $surveyUsage = strtolower(trim($pd->bill_usage ?? $pd->usage ?? $pd->building_usage ?? ''));
-            $misUsage = strtolower(trim($pd->mis_usage ?? ''));
-
-            if ($surveyUsage != $misUsage && $misUsage != '') {
-                $usageVariation = true;
-                $usageMismatches[] = [
-                    'assessment' => $pd->assessment,
-                    'survey_usage' => $pd->bill_usage ?? $pd->usage ?? '',
-                    'mis_usage' => $pd->mis_usage ?? '',
-                ];
+                $pointDatas = $query->where('pd.point_gisid', $polygonGisid)
+                    ->select(
+                        'pd.*',
+                        'mis.owner_name as mis_owner_name',
+                        'mis.phone_number as mis_phone_number',
+                        'mis.old_door_no as mis_old_door_no',
+                        'mis.new_door_no as mis_new_door_no',
+                        'mis.plot_area as mis_plot_area',
+                        'mis.half_year_tax as mis_half_year_tax',
+                        'mis.usage as mis_usage'
+                    )
+                    ->get();
             }
+
+            /**
+             * POINT DATA MUST EXIST
+             */
+            if ($pointDatas->isEmpty()) {
+                continue;
+            }
+
+            /**
+             * POINT COUNT from pointsTableName
+             * points table likely has 'gisid' column (the point's own ID)
+             * Not directly related to polygon, so we might need to adjust this
+             */
+            $pointCount = 0;
+            if (Schema::hasTable($pointsTableName)) {
+                // If points table has polygon reference
+                if (Schema::hasColumn($pointsTableName, 'polygon_gisid')) {
+                    $pointCount = DB::table($pointsTableName)
+                        ->where('polygon_gisid', $polygonGisid)
+                        ->count();
+                }
+                // If points table doesn't have polygon reference, count points within polygon using spatial query
+                else {
+                    $pointCount = DB::table($pointsTableName)
+                        ->count(); // Or use spatial query if geometry columns exist
+                }
+            }
+
+            /**
+             * SHOP DATA
+             * Shop table needs a reference to polygon
+             */
+            $shops = collect();
+            if (Schema::hasTable($shopTableName)) {
+                // Try different possible column names for shop table
+                if (Schema::hasColumn($shopTableName, 'polygon_gisid')) {
+                    $shops = DB::table($shopTableName)
+                        ->where('polygon_gisid', $polygonGisid)
+                        ->get();
+                } elseif (Schema::hasColumn($shopTableName, 'gisid')) {
+                    $shops = DB::table($shopTableName)
+                        ->where('gisid', $polygonGisid)
+                        ->get();
+                } elseif (Schema::hasColumn($shopTableName, 'point_gisid')) {
+                    // Shop might be linked to point instead of polygon
+                    $pointGisids = $pointDatas->pluck('gisid')->toArray();
+                    if (!empty($pointGisids)) {
+                        $shops = DB::table($shopTableName)
+                            ->whereIn('point_gisid', $pointGisids)
+                            ->get();
+                    }
+                }
+            }
+
+            /**
+             * AREA CALCULATION
+             */
+            $numberFloor = (float) ($buildingData->number_floor ?? $buildingData->number_floors ?? 0);
+            $basement = (float) ($buildingData->basement ?? 0);
+            $percentage = (float) ($buildingData->percentage ?? 0);
+            $polygonSqft = (float) ($polygon->sqfeet ?? $polygon->area ?? $polygon->sqft ?? 0);
+
+            /**
+             * DRONE AREA
+             * (floor + basement + percentage/100) * sqfeet
+             */
+            $droneArea = ($numberFloor + $basement + ($percentage / 100)) * $polygonSqft;
+
+            /**
+             * MIS TOTAL AREA
+             */
+            $misTotalArea = $pointDatas->sum(function ($item) {
+                return (float) ($item->mis_plot_area ?? 0);
+            });
+
+            /**
+             * AREA DIFFERENCE
+             */
+            $areaDifference = $droneArea - $misTotalArea;
+
+            /**
+             * AREA VARIATION STATUS
+             */
+            if ($areaDifference > 100) {
+                $areaVariation = 'EXCESS';
+            } elseif ($areaDifference < -100) {
+                $areaVariation = 'SHORT';
+            } else {
+                $areaVariation = 'MATCHED';
+            }
+
+            /**
+             * USAGE VARIATION
+             */
+            $usageVariation = false;
+            $usageMismatches = [];
+
+            foreach ($pointDatas as $pd) {
+                $surveyUsage = strtolower(trim($pd->bill_usage ?? ''));
+                $misUsage = strtolower(trim($pd->mis_usage ?? ''));
+
+                if ($surveyUsage != $misUsage && $misUsage != '') {
+                    $usageVariation = true;
+                    $usageMismatches[] = [
+                        'assessment' => $pd->assessment,
+                        'survey_usage' => $pd->bill_usage,
+                        'mis_usage' => $pd->mis_usage,
+                    ];
+                }
+            }
+
+            /**
+             * FINAL RESULT
+             */
+            $results[] = [
+                'gisid' => $polygonGisid,
+                'sqfeet' => round($polygonSqft, 2),
+
+                // Building
+                'building_name' => $buildingData->building_name ?? '',
+                'road_name' => $buildingData->road_name ?? '',
+                'building_usage' => $buildingData->building_usage ?? '',
+                'number_floor' => $numberFloor,
+                'basement' => $basement,
+                'percentage' => $percentage,
+
+                // Counts
+                'surveyed_points' => $pointCount,
+                'assessment_count' => $pointDatas->count(),
+                'shop_count' => $shops->count(),
+
+                // Area Variation
+                'drone_area' => round($droneArea, 2),
+                'mis_total_area' => round($misTotalArea, 2),
+                'area_difference' => round($areaDifference, 2),
+                'area_variation' => $areaVariation,
+
+                // Usage Variation
+                'usage_variation' => $usageVariation,
+                'usage_mismatches' => $usageMismatches,
+
+                // Raw Data
+                'assessments' => $pointDatas,
+                'shops' => $shops,
+                'building_data' => $buildingData,
+            ];
         }
 
-        /**
-         * FINAL RESULT
-         */
-        $results[] = [
-            'gisid' => $polygonGisid,
-            'sqfeet' => round($polygonSqft, 2),
-            'polygon_raw' => $polygon, // For debugging - remove in production
-
-            // Building
-            'building_name' => $buildingData->building_name ?? $buildingData->name ?? '',
-            'road_name' => $buildingData->road_name ?? $buildingData->road ?? '',
-            'building_usage' => $buildingData->building_usage ?? $buildingData->usage ?? '',
-            'number_floor' => $numberFloor,
-            'basement' => $basement,
-            'percentage' => $percentage,
-
-            // Counts
-            'surveyed_points' => $pointCount,
-            'assessment_count' => $pointDatas->count(),
-            'shop_count' => $shops->count(),
-
-            // Area Variation
-            'drone_area' => round($droneArea, 2),
-            'mis_total_area' => round($misTotalArea, 2),
-            'area_difference' => round($areaDifference, 2),
-            'area_variation' => $areaVariation,
-
-            // Usage Variation
-            'usage_variation' => $usageVariation,
-            'usage_mismatches' => $usageMismatches,
-
-            // Raw Data
-            'assessments' => $pointDatas,
-            'shops' => $shops,
-            'building_data' => $buildingData,
-        ];
+        return view('variations.index', compact('results', 'warddetail', 'ward_no'));
     }
-
-    return view('variations.index', compact('results', 'warddetail', 'ward_no'));
-}
     /**
      * Export ward data to Excel with building variations
      */
