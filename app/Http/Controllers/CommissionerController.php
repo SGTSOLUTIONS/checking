@@ -583,7 +583,7 @@ class CommissionerController extends Controller
             'building_data' => $polygon,
         ];
     }
-
+return response()->json($results);
     return view('corporation.variations', compact('results', 'warddetail', 'ward_no'));
 }
     /**
