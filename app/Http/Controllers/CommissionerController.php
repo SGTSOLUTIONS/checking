@@ -468,110 +468,142 @@ class CommissionerController extends Controller
         $corp = (int) $warddetail->corporation_id;
 
         $misTableName = "mis_corporation_{$corp}";
+
+        // Dynamic table names
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
-        $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
+        $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
 
-        // STEP 1: Get polygons (keep only needed fields)
-        $polygons = DB::table("$polygonsTableName as p")
-            ->leftJoin("$polygonDataTable as b", 'p.gisid', '=', 'b.gisid')
-            ->select(
-                'p.gisid',
-                'p.sqfeet',
-                'b.number_floor',
-                'b.basement',
-                'b.percentage',
-                'b.building_name',
-                'b.road_name',
-                'b.building_usage'
-            )
-            ->get();
+        $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
+        $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
-        if ($polygons->isEmpty()) {
-            return response()->json([]);
-        }
+        $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-        // STEP 2: GIS IDs
-        $gisids = $polygons->pluck('gisid');
+        // Get all polygons
+        $polygons = DB::table($polygonsTableName)->get();
 
-        // STEP 3: Get ONLY required point fields (IMPORTANT optimization)
-        $points = DB::table("$pointDataTable as pd")
-            ->leftJoin("$misTableName as mis", 'pd.assessment', '=', 'mis.assessment')
-            ->whereIn('pd.point_gisid', $gisids)
-            ->select(
-                'pd.point_gisid',
-                'pd.assessment',
-                'pd.bill_usage',
-                'mis.plot_area',
-                'mis.usage as mis_usage'
-            )
-            ->get();
-
-        // STEP 4: Index points by GISID (faster than groupBy)
-        $pointsByGisid = [];
-        foreach ($points as $p) {
-            $pointsByGisid[$p->point_gisid][] = $p;
-        }
-
-        // STEP 5: Process
         $results = [];
-return response()->json("clear");
+return response()->json("data");
         foreach ($polygons as $polygon) {
 
-            $pointDatas = $pointsByGisid[$polygon->gisid] ?? [];
+            // Building data
+            $buildingData = DB::table($polygonDataTable)
+                ->where('gisid', $polygon->gisid)
+                ->first();
 
-            if (empty($pointDatas)) continue;
+            // Point data + MIS
+            $pointDatas = DB::table($pointDataTable . ' as pd')
+                ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
+                ->where('pd.point_gisid', $polygon->gisid)
+                ->select(
+                    'pd.*',
+                    'mis.owner_name as mis_owner_name',
+                    'mis.plot_area as mis_plot_area',
+                    'mis.half_year_tax as mis_half_year_tax',
+                    'mis.usage as mis_usage'
+                )
+                ->get();
 
-            // MIS total area (fast loop)
-            $misTotalArea = 0;
-            foreach ($pointDatas as $pd) {
-                $misTotalArea += (float) $pd->plot_area;
+            /**
+             * IMPORTANT
+             * Point data must exist
+             */
+            if ($pointDatas->isEmpty()) {
+                continue;
             }
 
-            $floor = (float) $polygon->number_floor;
-            $basement = (float) $polygon->basement;
-            $percentage = (float) $polygon->percentage;
-            $sqft = (float) $polygon->sqfeet;
+            // Point count
+            $misTotalArea = $pointDatas->sum('mis_plot_area');
 
-            $droneArea = ($floor + $basement + ($percentage / 100)) * $sqft;
-            $diff = $droneArea - $misTotalArea;
 
-            $areaVariation = match (true) {
-                $diff > 100 => 'EXCESS',
-                $diff < -100 => 'SHORT',
-                default => 'MATCHED'
-            };
 
-            // usage check (fast loop)
+            $numberFloor = (float) ($buildingData->number_floor ?? 0);
+            $basement    = (float) ($buildingData->basement ?? 0);
+            $percentage  = (float) ($buildingData->percentage ?? 0);
+
+            $polygonSqft = (float) ($polygon->sqfeet ?? 0);
+
+            // Drone calculated area
+            $droneArea = ($numberFloor + $basement + ($percentage / 100)) * $polygonSqft;
+
+
+
+            // Difference
+            $areaDifference = $droneArea - $misTotalArea;
+
+            /**
+             * AREA VARIATION STATUS
+             */
+            if ($areaDifference > 100) {
+                $areaVariation = 'EXCESS';
+            } elseif ($areaDifference < -100) {
+                $areaVariation = 'SHORT';
+            } else {
+                $areaVariation = 'MATCHED';
+            }
+
+            /**
+             * USAGE VARIATION
+             */
+
             $usageVariation = false;
-            $mismatches = [];
+            $usageMismatches = [];
 
             foreach ($pointDatas as $pd) {
-                if (
-                    strtolower(trim($pd->bill_usage ?? '')) !==
-                    strtolower(trim($pd->mis_usage ?? ''))
-                ) {
+
+                $surveyUsage = strtolower(trim($pd->bill_usage ?? ''));
+                $misUsage    = strtolower(trim($pd->mis_usage ?? ''));
+
+                if ($surveyUsage != $misUsage) {
+
                     $usageVariation = true;
-                    $mismatches[] = $pd->assessment;
+
+                    $usageMismatches[] = [
+                        'assessment'   => $pd->assessment,
+                        'survey_usage' => $pd->bill_usage,
+                        'mis_usage'    => $pd->mis_usage,
+                    ];
                 }
             }
 
+            // Final result
             $results[] = [
-                'gisid' => $polygon->gisid,
-                'sqfeet' => $sqft,
-                'building_name' => $polygon->building_name,
-                'road_name' => $polygon->road_name,
-                'building_usage' => $polygon->building_usage,
-                'drone_area' => round($droneArea, 2),
-                'mis_total_area' => round($misTotalArea, 2),
-                'area_difference' => round($diff, 2),
-                'area_variation' => $areaVariation,
-                'usage_variation' => $usageVariation,
-                'assessment_count' => count($pointDatas),
+                'gisid'              => $polygon->gisid,
+                'sqfeet'             => $polygonSqft,
+
+                'building_name'      => $buildingData->building_name ?? '',
+                'road_name'          => $buildingData->road_name ?? '',
+                'building_usage'     => $buildingData->building_usage ?? '',
+
+                'number_floor'       => $numberFloor,
+                'basement'           => $basement,
+                'percentage'         => $percentage,
+
+                'surveyed_points'    => 1,
+                'assessment_count'   => $pointDatas->count(),
+
+
+                // Area variation
+                'drone_area'         => round($droneArea, 2),
+                'mis_total_area'     => round($misTotalArea, 2),
+                'area_difference'    => round($areaDifference, 2),
+                'area_variation'     => $areaVariation,
+
+                // Usage variation
+                'usage_variation'    => $usageVariation,
+                'usage_mismatches'   => $usageMismatches,
+
+                // Raw data
+                'assessments'        => $pointDatas,
+
+                'building_data'      => $buildingData,
             ];
         }
 
-        return response()->json($results);
+        return view('corporation.variations', compact(
+            'results',
+            'warddetail',
+            'ward_no'
+        ));
     }
     /**
      * Export ward data to Excel with building variations
