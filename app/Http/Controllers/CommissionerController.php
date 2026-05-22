@@ -509,7 +509,6 @@ class CommissionerController extends Controller
             'pd.bill_usage',
             'pd.owner_name',
 
-            'pd.address',
             'mis.owner_name as mis_owner_name',
             'mis.plot_area as mis_plot_area',
             'mis.half_year_tax as mis_half_year_tax',
