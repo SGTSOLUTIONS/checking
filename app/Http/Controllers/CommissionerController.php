@@ -564,7 +564,7 @@ class CommissionerController extends Controller
                     ];
                 }
             }
-
+return response()->json($pointDatas);
             // Final result
             $results[] = [
                 'gisid'              => $polygon->gisid,
