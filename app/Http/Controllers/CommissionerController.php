@@ -452,65 +452,184 @@ class CommissionerController extends Controller
         ];
     }
     public function viewVariations($ward_no)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $warddetail = Ward::where('corporation_id', $user->corporation_id)
-            ->where('ward_no', $ward_no)
-            ->first();
+    $warddetail = Ward::where('corporation_id', $user->corporation_id)
+        ->where('ward_no', $ward_no)
+        ->first();
 
-        if (!$warddetail) {
-            return back()->with('error', 'Ward not found');
+    if (!$warddetail) {
+        return back()->with('error', 'Ward not found');
+    }
+
+    $zone = strtolower(trim($warddetail->zone));
+    $wardNo = (int) $warddetail->ward_no;
+    $corp = (int) $warddetail->corporation_id;
+
+    $misTableName      = "mis_corporation_{$corp}";
+    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+
+    $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
+    $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Polygon + Building Data
+    |--------------------------------------------------------------------------
+    */
+
+    $polygons = DB::table($polygonsTableName . ' as p')
+        ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
+        ->select(
+            'p.gisid',
+            'p.sqfeet',
+
+            'pgd.number_floor',
+            'pgd.percentage',
+            'pgd.basement'
+        )
+        ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Point Data
+    |--------------------------------------------------------------------------
+    */
+
+    $pointDatas = DB::table($pointDataTable)
+        ->select(
+            'point_gisid',
+            'assessment'
+        )
+        ->whereNotNull('assessment')
+        ->get()
+        ->groupBy('point_gisid');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Only Matching Assessments
+    |--------------------------------------------------------------------------
+    */
+
+    $assessmentList = DB::table($pointDataTable)
+        ->whereNotNull('assessment')
+        ->pluck('assessment')
+        ->unique()
+        ->toArray();
+
+    /*
+    |--------------------------------------------------------------------------
+    | MIS Data (Only Matching Records)
+    |--------------------------------------------------------------------------
+    */
+
+    $misData = DB::table($misTableName)
+        ->whereIn('assessment', $assessmentList)
+        ->select(
+            'assessment',
+            DB::raw('SUM(plot_area) as total_plot_area')
+        )
+        ->groupBy('assessment')
+        ->get()
+        ->keyBy('assessment');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Final Result
+    |--------------------------------------------------------------------------
+    */
+
+    $result = [];
+
+    foreach ($polygons as $polygon) {
+
+        $points = $pointDatas[$polygon->gisid] ?? collect();
+
+        $misArea = 0;
+        $assessmentCount = 0;
+
+        foreach ($points as $point) {
+
+            $assessmentCount++;
+
+            $misArea += (float) (
+                $misData[$point->assessment]->total_plot_area ?? 0
+            );
         }
 
-        $zone = strtolower(trim($warddetail->zone));
-        $wardNo = (int) $warddetail->ward_no;
-        $corp = (int) $warddetail->corporation_id;
+        /*
+        |--------------------------------------------------------------------------
+        | Building Calculation
+        |--------------------------------------------------------------------------
+        */
 
-        $misTableName      = "mis_corporation_{$corp}";
-        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
+        $sqfeet = (float) ($polygon->sqfeet ?? 0);
 
-        $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
-        $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
-        $misTableName = "mis_corporation_{$corp}";
-$polygons = DB::table($polygonsTableName . ' as p')
-    ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
-    ->leftJoin($pointDataTable . ' as pt', 'p.gisid', '=', 'pt.point_gisid')
-    ->leftJoin($misTableName . ' as mis', 'mis.assessment', '=', 'pt.assessment')
-    ->select(
-        'p.gisid',
-        'p.sqfeet',
+        $floorPercentage = (float) ($polygon->percentage ?? 100);
 
-        // Polygon Data
-        'pgd.gisid as building_gisid',
-        'pgd.number_floor',
-        'pgd.percentage',
-        'pgd.basement',
+        $numberFloor = (int) ($polygon->number_floor ?? 1);
 
-        // Point Data
-        'pt.assessment',
-        'pt.point_gisid',
+        $basement = (int) ($polygon->basement ?? 0);
 
-        // MIS Data
-        DB::raw('SUM(mis.plot_area) as total_plot_area'),
-        DB::raw('COUNT(pt.assessment) as assessment_count')
-    )
-    ->groupBy(
-        'p.gisid',
-        'p.sqfeet',
-        'pgd.gisid',
-        'pgd.number_floor',
-        'pgd.percentage',
-        'pgd.basement',
-        'pt.assessment',
-        'pt.point_gisid'
-    )
-    ->get();
-        $result = [];
+        // Main Area
+        $calculatedArea =
+            ($sqfeet * $floorPercentage / 100) * $numberFloor;
 
-        return response()->json($polygons);
+        // Basement Area
+        if ($basement > 0) {
+            $calculatedArea += ($sqfeet * $basement);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Variation
+        |--------------------------------------------------------------------------
+        */
+
+        $areaVariation = $calculatedArea - $misArea;
+
+        $variationPercentage = 0;
+
+        if ($misArea > 0) {
+            $variationPercentage =
+                ($areaVariation / $misArea) * 100;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Result Row
+        |--------------------------------------------------------------------------
+        */
+
+        $result[] = [
+
+            'gisid' => $polygon->gisid,
+
+            // Polygon
+            'sqfeet' => round($sqfeet, 2),
+            'number_floor' => $numberFloor,
+            'percentage' => $floorPercentage,
+            'basement' => $basement,
+
+            // MIS
+            'mis_plot_area' => round($misArea, 2),
+
+            // Calculated
+            'calculated_area' => round($calculatedArea, 2),
+
+            // Variation
+            'area_variation' => round($areaVariation, 2),
+
+            'variation_percentage' => round($variationPercentage, 2),
+
+            // Assessment
+            'assessment_count' => $assessmentCount,
+        ];
     }
+
+    return response()->json($result);
+}
     /**
      * Export ward data to Excel with building variations
      */
