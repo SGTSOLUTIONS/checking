@@ -526,10 +526,7 @@ class CommissionerController extends Controller
                 ->where('gisid', $polygon->gisid)
                 ->count();
 
-            // Get shop data
-            $shops = DB::table($shopTableName)
-                ->where('gisid', $polygon->gisid)
-                ->get();
+
 
             // Store full results
             $results[] = [
@@ -542,9 +539,8 @@ class CommissionerController extends Controller
                 'number_bill'       => $buildingData->number_bill ?? 0,
                 'surveyed_points'   => $pointCount,
                 'assessment_count'  => $pointDatas->count(),
-                'shop_count'        => $shops->count(),
+
                 'assessments'       => $pointDatas,
-                'shops'             => $shops,
                 'building_data'     => $buildingData,
             ];
         }
