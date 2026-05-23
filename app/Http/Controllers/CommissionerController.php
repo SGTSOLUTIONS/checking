@@ -473,6 +473,7 @@ class CommissionerController extends Controller
 
         $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+        $misTableName = "mis_corporation_{$corp}";
 
         $polygons = DB::table($polygonsTableName . ' as p')
             ->leftJoin($polygonDataTable . ' as pd', 'p.gisid', '=', 'pd.gisid')
@@ -494,12 +495,12 @@ class CommissionerController extends Controller
                 $result[] = [
                     'gisid'             => $polygon->gisid,
                     'sqfeet'            => $polygon->sqfeet,
-                    'number_floor'      => $polygon->number_floor ?? '',
+                    'number_floor'      => '',
                     'basement'          => '',
                     'percentage'        => '',
                     'surveyed_points'   => 0,
                     'assessment_count'  => 0,
-                    'drone_area'        => $polygon->sqfeet,
+                    'totaldrone_area'        => $polygon->sqfeet,
                     'area_difference'   => 0,
                     'area_variation'    => 0,
                     'usage_variation'   => '',
@@ -507,6 +508,37 @@ class CommissionerController extends Controller
                     'assessments'       => 0,
                     'building_data'     => 0,
                 ];
+            } else {
+                $totalDronArea = ($polygon->number_floor + $polygon->basement + ($polygon->percentage / 100)) * $polygon->sqfeet;
+                $pointDatas = DB::table($pointDataTable . ' as pd')
+                    ->where('pd.point_gisid', $polygon->gisid)
+                    ->leftJoin($misTableName . ' as mis', 'mis.assessment', '=', 'pd.assessment')
+                    ->select(
+                        'pd.point_gisid',
+                        'pd.assessment',
+                        DB::raw('SUM(mis.plot_area) as total_plot_area')
+                    )
+                    ->groupBy('pd.point_gisid', 'pd.assessment')
+                    ->get();
+                if (empty($pointDatas)) {
+                    $result[] = [
+                        'gisid'             => $polygon->gisid,
+                        'sqfeet'            => $polygon->sqfeet,
+                        'number_floor'      => '',
+                        'basement'          => '',
+                        'percentage'        => '',
+                        'surveyed_points'   => 0,
+                        'assessment_count'  => 0,
+                        'totaldrone_area'        => $totalDronArea,
+                        'area_difference'   => 0,
+                        'area_variation'    => 0,
+                        'usage_variation'   => '',
+                        'usage_mismatches'  => 0,
+                        'assessments'       => 0,
+                        'building_data'     => 0,
+                    ];
+                }
+                  return response()->json($pointDatas);
             }
         }
         return response()->json($polygons);
