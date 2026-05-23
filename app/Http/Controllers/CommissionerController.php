@@ -628,7 +628,10 @@ class CommissionerController extends Controller
         ];
     }
 
-    return response()->json($result);
+   return view('corporation.variations', compact(
+    'result',
+    'warddetail'
+));
 }
     /**
      * Export ward data to Excel with building variations
