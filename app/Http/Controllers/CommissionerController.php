@@ -474,7 +474,41 @@ class CommissionerController extends Controller
         $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
-        $polygons = DB::table($polygonsTableName)->select('gisid','sqfeet')->get();
+        $polygons = DB::table($polygonsTableName . ' as p')
+            ->leftJoin($pointDataTable . ' as pd', 'p.gisid', '=', 'pd.gisid')
+            ->select(
+                'p.gisid',
+                'p.sqfeet',
+                'pd.gisid as building_gisid',
+                'pd.number_floor',
+                'pd.percentage',
+                'pd.basement'
+            )
+            ->get();
+        $result = [];
+
+        foreach ($polygons as $polygon) {
+
+            if (empty($polygon->building_gisid)) {
+
+                $result[] = [
+                    'gisid'             => $polygon->gisid,
+                    'sqfeet'            => $polygon->sqfeet,
+                    'number_floor'      => $polygon->number_floor ?? '',
+                    'basement'          => '',
+                    'percentage'        => '',
+                    'surveyed_points'   => 0,
+                    'assessment_count'  => 0,
+                    'drone_area'        => $polygon->sqfeet,
+                    'area_difference'   => 0,
+                    'area_variation'    => 0,
+                    'usage_variation'   => '',
+                    'usage_mismatches'  => 0,
+                    'assessments'       => 0,
+                    'building_data'     => 0,
+                ];
+            }
+        }
         return response()->json($polygons);
     }
     /**
