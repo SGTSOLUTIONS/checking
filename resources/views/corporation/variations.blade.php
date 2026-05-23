@@ -4,7 +4,6 @@
 @section('title', 'Ward ' . $warddetail->ward_no . ' - Area Variations')
 
 @section('content')
-<div class="container-fluid py-3">
 
     {{-- HEADER --}}
     <div class="card shadow-sm mb-4 border-0">
@@ -264,7 +263,7 @@
 
         </div>
     </div>
-</div>
+
 @endsection
 
 @push('scripts')
