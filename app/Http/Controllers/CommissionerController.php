@@ -466,86 +466,105 @@ class CommissionerController extends Controller
         $zone = strtolower(trim($warddetail->zone));
         $wardNo = (int) $warddetail->ward_no;
         $corp = (int) $warddetail->corporation_id;
-        $misTableName = "mis_corporation_{$corp}";
 
-        // Dynamic table names
+        $misTableName      = "mis_corporation_{$corp}";
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
         $pointsTableName   = "point_{$corp}_{$zone}_{$wardNo}";
-        $linesTableName    = "line_{$corp}_{$zone}_{$wardNo}";
 
         $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
-        $shopTableName     = "shopdata_{$corp}_{$zone}_{$wardNo}";
-
-        // Get all polygons
+        /*
+    |--------------------------------------------------------------------------
+    | Get All Polygons
+    |--------------------------------------------------------------------------
+    */
         $polygons = DB::table($polygonsTableName)->get();
 
+        if ($polygons->isEmpty()) {
+            return view('variations.index', [
+                'results' => [],
+                'warddetail' => $warddetail,
+                'ward_no' => $ward_no
+            ]);
+        }
+
+        $gisids = $polygons->pluck('gisid')->toArray();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Get All Building Data
+    |--------------------------------------------------------------------------
+    */
+        $buildingDatas = DB::table($polygonDataTable)
+            ->whereIn('gisid', $gisids)
+            ->get()
+            ->keyBy('gisid');
+
+        /*
+    |--------------------------------------------------------------------------
+    | Get All Point Data With MIS
+    |--------------------------------------------------------------------------
+    */
+        $allPointDatas = DB::table($pointDataTable . ' as pd')
+            ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
+            ->whereIn('pd.point_gisid', $gisids)
+            ->select(
+                'pd.*',
+                'mis.owner_name as mis_owner_name',
+                'mis.phone_number as mis_phone_number',
+                'mis.old_door_no as mis_old_door_no',
+                'mis.new_door_no as mis_new_door_no',
+                'mis.plot_area as mis_plot_area',
+                'mis.half_year_tax as mis_half_year_tax'
+            )
+            ->get()
+            ->groupBy('point_gisid');
+
+        /*
+    |--------------------------------------------------------------------------
+    | Get Point Counts
+    |--------------------------------------------------------------------------
+    */
+        $pointCounts = DB::table($pointsTableName)
+            ->select('gisid', DB::raw('COUNT(*) as total'))
+            ->whereIn('gisid', $gisids)
+            ->groupBy('gisid')
+            ->pluck('total', 'gisid');
+
+        /*
+    |--------------------------------------------------------------------------
+    | Build Results
+    |--------------------------------------------------------------------------
+    */
         $results = [];
 
         foreach ($polygons as $polygon) {
 
-            // Get polygon building data
-            $buildingData = DB::table($polygonDataTable)
-                ->where('gisid', $polygon->gisid)
-                ->first();
+            $buildingData = $buildingDatas[$polygon->gisid] ?? null;
 
-            // Get point data
-            $pointDatas = DB::table($pointDataTable . ' as pd')
-                ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
-                ->where('pd.point_gisid', $polygon->gisid)
-                ->select(
-                    'pd.*',
-                    'mis.owner_name as mis_owner_name',
-                    'mis.phone_number as mis_phone_number',
-                    'mis.old_door_no as mis_old_door_no',
-                    'mis.new_door_no as mis_new_door_no',
-                    'mis.plot_area as mis_plot_area',
-                    'mis.half_year_tax as mis_half_year_tax'
-                )
-                ->get();
+            $pointDatas = $allPointDatas[$polygon->gisid] ?? collect();
 
-            // If both are missing
-            if (!$buildingData && !$pointDatas) {
-
-                $results[] = [
-                    'gisid'  => $polygon->gisid,
-                    'sqfeet' => $polygon->sqfeet ?? 0,
-                ];
-
-                continue;
-            }
-
-            // Get all assessments
-            $pointDatas = DB::table($pointDataTable)
-                ->where('point_gisid', $polygon->gisid)
-                ->get();
-
-            // Get point count
-            $pointCount = DB::table($pointsTableName)
-                ->where('gisid', $polygon->gisid)
-                ->count();
-
-
-
-            // Store full results
             $results[] = [
                 'gisid'             => $polygon->gisid,
                 'sqfeet'            => $polygon->sqfeet ?? 0,
+
                 'building_name'     => $buildingData->building_name ?? '',
                 'road_name'         => $buildingData->road_name ?? '',
                 'building_usage'    => $buildingData->building_usage ?? '',
                 'number_floor'      => $buildingData->number_floor ?? 0,
                 'number_bill'       => $buildingData->number_bill ?? 0,
-                'surveyed_points'   => $pointCount,
+
+                'surveyed_points'   => $pointCounts[$polygon->gisid] ?? 0,
+
                 'assessment_count'  => $pointDatas->count(),
 
-                'assessments'       => $pointDatas,
+                'assessments'       => $pointDatas->values(),
+
                 'building_data'     => $buildingData,
             ];
-              return response()->json($results);
         }
-        return response()->json($results);
+
         return view('variations.index', compact(
             'results',
             'warddetail',
