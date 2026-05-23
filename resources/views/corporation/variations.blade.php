@@ -34,7 +34,7 @@
                     <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted mb-1">Total Buildings (GIS)</h6>
-                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($paginatedResult->total()) }}</h2>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($polygons->total()) }}</h2>
                             <small class="text-primary"><i class="fas fa-draw-polygon"></i> Polygons analyzed</small>
                         </div>
                         <div class="stat-icon"><i class="fas fa-building"></i></div>
@@ -107,7 +107,7 @@
                             <div class="mt-2 mt-sm-0">
                                 <span class="badge bg-primary p-2">
                                     <i class="fas fa-chart-bar me-1"></i>
-                                    Total Buildings: {{ number_format($paginatedResult->total()) }}
+                                    Total Buildings: {{ number_format($polygons->total()) }}
                                 </span>
                             </div>
                         </div>
@@ -166,21 +166,20 @@
                             <table class="table table-hover variation-table" id="variationTable">
                                 <thead>
                                     <tr>
-                                        <th>GIS ID</th>
-                                        <th>Polygon Area (sq.ft)</th>
-                                        <th>Floors</th>
-                                        <th>Floor %</th>
-                                        <th>Basement</th>
-                                        <th>Calculated Area (sq.ft)</th>
-                                        <th>MIS Plot Area (sq.ft)</th>
-                                        <th>Area Variation (sq.ft)</th>
-                                        <th>Variation %</th>
-                                        <th>Assessments</th>
-                                        <th>Status</th>
+                                        <th style="width: 15%">GIS ID</th>
+                                        <th style="width: 10%">Polygon Area (sq.ft)</th>
+                                        <th style="width: 8%">Floors</th>
+                                        <th style="width: 8%">Floor %</th>
+                                        <th style="width: 8%">Basement</th>
+                                        <th style="width: 12%">Calculated Area (sq.ft)</th>
+                                        <th style="width: 12%">MIS Plot Area (sq.ft)</th>
+                                        <th style="width: 12%">Area Variation (sq.ft)</th>
+                                        <th style="width: 8%">Variation %</th>
+                                        <th style="width: 7%">Assessments</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
-                                    @forelse($paginatedResult as $item)
+                                    @forelse($polygons as $item)
                                     @php
                                         $rowClass = $item->variation_percentage > 0 ? 'table-warning' : ($item->variation_percentage < 0 ? 'table-danger' : 'table-success');
                                         $statusBadge = $item->variation_percentage > 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>' : ($item->variation_percentage < 0 ? '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>' : '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>');
@@ -191,7 +190,7 @@
                                             <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="{{ $item->gisid }}">
                                                 <i class="fas fa-copy text-muted"></i>
                                             </button>
-                                        </td>
+                                         </td>
                                         <td>{{ number_format($item->sqfeet, 2) }}</td>
                                         <td>{{ $item->number_floor }}</td>
                                         <td>{{ $item->percentage }}%</td>
@@ -205,11 +204,10 @@
                                             {{ $item->variation_percentage > 0 ? '+' : '' }}{{ number_format($item->variation_percentage, 2) }}%
                                         </td>
                                         <td><span class="badge bg-secondary">{{ $item->assessment_count }}</span></td>
-                                        <td>{!! $statusBadge !!}</td>
-                                    </tr>
+                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="11" class="text-center py-5">
+                                        <td colspan="10" class="text-center py-5">
                                             <div class="alert alert-info mb-0">
                                                 <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                                 No variation data found for this ward
@@ -218,28 +216,28 @@
                                     </tr>
                                     @endforelse
                                 </tbody>
-                             </table>
+                            </table>
                         </div>
 
                         <!-- Stylish Pagination -->
                         <div class="pagination-wrapper mt-4">
-                            @if($paginatedResult->hasPages())
+                            @if($polygons->hasPages())
                                 <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
                                     <div class="pagination-info">
                                         <i class="fas fa-info-circle me-1"></i>
                                         Showing
-                                        <strong>{{ $paginatedResult->firstItem() ?? 0 }}</strong>
+                                        <strong>{{ $polygons->firstItem() ?? 0 }}</strong>
                                         to
-                                        <strong>{{ $paginatedResult->lastItem() ?? 0 }}</strong>
+                                        <strong>{{ $polygons->lastItem() ?? 0 }}</strong>
                                         of
-                                        <strong>{{ $paginatedResult->total() }}</strong>
+                                        <strong>{{ $polygons->total() }}</strong>
                                         buildings
                                     </div>
 
                                     <nav aria-label="Page navigation">
                                         <ul class="pagination justify-content-center mb-0">
                                             {{-- Previous Page Link --}}
-                                            @if ($paginatedResult->onFirstPage())
+                                            @if ($polygons->onFirstPage())
                                                 <li class="page-item disabled">
                                                     <span class="page-link">
                                                         <i class="fas fa-chevron-left"></i>
@@ -248,7 +246,7 @@
                                                 </li>
                                             @else
                                                 <li class="page-item">
-                                                    <a class="page-link" href="{{ $paginatedResult->previousPageUrl() }}" rel="prev">
+                                                    <a class="page-link" href="{{ $polygons->previousPageUrl() }}" rel="prev">
                                                         <i class="fas fa-chevron-left"></i>
                                                         <span class="d-none d-sm-inline"> Previous</span>
                                                     </a>
@@ -257,18 +255,18 @@
 
                                             {{-- Pagination Elements --}}
                                             @php
-                                                $start = max(1, $paginatedResult->currentPage() - 2);
-                                                $end = min($start + 4, $paginatedResult->lastPage());
-                                                if ($end - $start < 4 && $paginatedResult->lastPage() > 5) {
-                                                    $start = max(1, $paginatedResult->lastPage() - 4);
-                                                    $end = $paginatedResult->lastPage();
+                                                $start = max(1, $polygons->currentPage() - 2);
+                                                $end = min($start + 4, $polygons->lastPage());
+                                                if ($end - $start < 4 && $polygons->lastPage() > 5) {
+                                                    $start = max(1, $polygons->lastPage() - 4);
+                                                    $end = $polygons->lastPage();
                                                 }
                                             @endphp
 
                                             {{-- First Page --}}
                                             @if($start > 1)
                                                 <li class="page-item">
-                                                    <a class="page-link" href="{{ $paginatedResult->url(1) }}">1</a>
+                                                    <a class="page-link" href="{{ $polygons->url(1) }}">1</a>
                                                 </li>
                                                 @if($start > 2)
                                                     <li class="page-item disabled">
@@ -279,35 +277,35 @@
 
                                             {{-- Page Numbers --}}
                                             @for($i = $start; $i <= $end; $i++)
-                                                @if($i == $paginatedResult->currentPage())
+                                                @if($i == $polygons->currentPage())
                                                     <li class="page-item active" aria-current="page">
                                                         <span class="page-link">{{ $i }}</span>
                                                     </li>
                                                 @else
                                                     <li class="page-item">
-                                                        <a class="page-link" href="{{ $paginatedResult->url($i) }}">{{ $i }}</a>
+                                                        <a class="page-link" href="{{ $polygons->url($i) }}">{{ $i }}</a>
                                                     </li>
                                                 @endif
                                             @endfor
 
                                             {{-- Last Page --}}
-                                            @if($end < $paginatedResult->lastPage())
-                                                @if($end < $paginatedResult->lastPage() - 1)
+                                            @if($end < $polygons->lastPage())
+                                                @if($end < $polygons->lastPage() - 1)
                                                     <li class="page-item disabled">
                                                         <span class="page-link">...</span>
                                                     </li>
                                                 @endif
                                                 <li class="page-item">
-                                                    <a class="page-link" href="{{ $paginatedResult->url($paginatedResult->lastPage()) }}">
-                                                        {{ $paginatedResult->lastPage() }}
+                                                    <a class="page-link" href="{{ $polygons->url($polygons->lastPage()) }}">
+                                                        {{ $polygons->lastPage() }}
                                                     </a>
                                                 </li>
                                             @endif
 
                                             {{-- Next Page Link --}}
-                                            @if ($paginatedResult->hasMorePages())
+                                            @if ($polygons->hasMorePages())
                                                 <li class="page-item">
-                                                    <a class="page-link" href="{{ $paginatedResult->nextPageUrl() }}" rel="next">
+                                                    <a class="page-link" href="{{ $polygons->nextPageUrl() }}" rel="next">
                                                         <span class="d-none d-sm-inline">Next </span>
                                                         <i class="fas fa-chevron-right"></i>
                                                     </a>
@@ -340,12 +338,6 @@
                                 </div>
                             @endif
                         </div>
-
-                        <div id="noDataMessage" class="alert alert-info text-center py-5 d-none">
-                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                            <h5>No data available</h5>
-                            <p class="mb-0">No buildings match your filter criteria.</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -358,43 +350,49 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Data from server
-    const variationsData = @json($paginatedResult->items());
+    // Get all data items from the current page
+    const variationsData = @json($polygons->items());
 
-    // Render initial table
-    renderTable(variationsData);
-    updateResultCount(variationsData.length);
+    // Store original HTML of table body for reset
+    const originalTableBody = $('#tableBody').html();
 
-    function renderTable(data) {
+    // Function to render filtered table
+    function renderFilteredTable(data) {
         const $tbody = $("#tableBody");
 
         if (data.length === 0) {
-            $("#noDataMessage").removeClass('d-none');
-            $("#variationTable").addClass('d-none');
+            $tbody.html(`
+                <tr>
+                    <td colspan="10" class="text-center py-5">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            No buildings match your filter criteria
+                        </div>
+                    </td>
+                </tr>
+            `);
+            $("#resultCount").text(0);
             return;
         }
 
-        $("#noDataMessage").addClass('d-none');
-        $("#variationTable").removeClass('d-none');
-
-        $tbody.empty();
-        data.forEach(function(item, index) {
+        let html = '';
+        data.forEach(function(item) {
             let statusBadge = '';
-            let variationClass = '';
+            let rowClass = '';
 
             if (item.variation_percentage > 0) {
                 statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>';
-                variationClass = 'table-warning';
+                rowClass = 'table-warning';
             } else if (item.variation_percentage < 0) {
                 statusBadge = '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>';
-                variationClass = 'table-danger';
+                rowClass = 'table-danger';
             } else {
                 statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>';
-                variationClass = 'table-success';
+                rowClass = 'table-success';
             }
 
-            let row = `
-                <tr class="${variationClass}">
+            html += `
+                <tr class="${rowClass}">
                     <td>
                         <strong>${escapeHtml(item.gisid)}</strong>
                         <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${escapeHtml(item.gisid)}">
@@ -414,11 +412,12 @@ $(document).ready(function() {
                         ${item.variation_percentage > 0 ? '+' : ''}${item.variation_percentage}%
                     </td>
                     <td><span class="badge bg-secondary">${item.assessment_count}</span></td>
-                    <td>${statusBadge}</td>
                 </tr>
             `;
-            $tbody.append(row);
         });
+
+        $tbody.html(html);
+        $("#resultCount").text(data.length);
     }
 
     function formatNumber(num) {
@@ -439,10 +438,6 @@ $(document).ready(function() {
         });
     }
 
-    function updateResultCount(count) {
-        $("#resultCount").text(count);
-    }
-
     function applyFilters() {
         var filterGisid = $("#filterGisid").val().toLowerCase().trim();
         var filterVariationType = $("#filterVariationType").val();
@@ -459,10 +454,18 @@ $(document).ready(function() {
             return gisidMatch && typeMatch && percentageMatch;
         });
 
-        renderTable(filteredData);
-        updateResultCount(filteredData.length);
+        renderFilteredTable(filteredData);
     }
 
+    function resetFilters() {
+        $("#filterGisid").val('');
+        $("#filterVariationType").val('all');
+        $("#filterMinPercentage").val('');
+        $("#tableBody").html(originalTableBody);
+        $("#resultCount").text(variationsData.length);
+    }
+
+    // Debounce function
     function debounce(func, delay) {
         let timeout;
         return function() {
@@ -473,9 +476,18 @@ $(document).ready(function() {
 
     const debouncedApplyFilters = debounce(applyFilters, 300);
 
+    // Event listeners
     $("#filterGisid").on("keyup", debouncedApplyFilters);
     $("#filterVariationType").on("change", applyFilters);
     $("#filterMinPercentage").on("keyup", debouncedApplyFilters);
+
+    // Reset button (optional - add if you want)
+    // Add this button in your filter section if needed
+    // $("<button>", {
+    //     class: "btn btn-secondary",
+    //     html: '<i class="fas fa-undo-alt me-1"></i> Reset',
+    //     click: resetFilters
+    // }).appendTo(".filter-actions");
 
     // Per page selector
     $("#perPageSelect").on("change", function() {
@@ -491,23 +503,32 @@ $(document).ready(function() {
         e.preventDefault();
         const gisid = $(this).data('gisid');
 
-        navigator.clipboard.writeText(gisid).then(function() {
-            const $btn = $(e.currentTarget);
-            const originalIcon = $btn.html();
-            $btn.html('<i class="fas fa-check text-success"></i>');
-            setTimeout(() => $btn.html(originalIcon), 1000);
-        }).catch(function() {
-            const tempInput = $('<input>');
-            $('body').append(tempInput);
-            tempInput.val(gisid).select();
-            document.execCommand('copy');
-            tempInput.remove();
-            const $btn = $(e.currentTarget);
-            const originalIcon = $btn.html();
-            $btn.html('<i class="fas fa-check text-success"></i>');
-            setTimeout(() => $btn.html(originalIcon), 1000);
-        });
+        // Modern clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(gisid).then(function() {
+                showCopySuccess($(e.currentTarget));
+            }).catch(function() {
+                fallbackCopy(gisid, $(e.currentTarget));
+            });
+        } else {
+            fallbackCopy(gisid, $(e.currentTarget));
+        }
     });
+
+    function fallbackCopy(text, $btn) {
+        const tempInput = $('<input>');
+        $('body').append(tempInput);
+        tempInput.val(text).select();
+        document.execCommand('copy');
+        tempInput.remove();
+        showCopySuccess($btn);
+    }
+
+    function showCopySuccess($btn) {
+        const originalIcon = $btn.html();
+        $btn.html('<i class="fas fa-check text-success"></i>');
+        setTimeout(() => $btn.html(originalIcon), 1000);
+    }
 
     // Export current filtered data
     $("#exportBtn").on("click", function() {
@@ -551,17 +572,19 @@ $(document).ready(function() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `variation_ward_{{ $warddetail->ward_no }}_page_{{ $paginatedResult->currentPage() }}.csv`;
+        a.download = `variation_ward_{{ $warddetail->ward_no }}_page_{{ $polygons->currentPage() }}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
     });
+
+    // Initialize result count
+    $("#resultCount").text(variationsData.length);
 });
 </script>
 
 <style>
-    /* Your existing CSS styles */
     .dashboard-content-area {
         padding: 20px;
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
@@ -690,6 +713,7 @@ $(document).ready(function() {
 
     .pagination {
         gap: 5px;
+        margin-bottom: 0;
     }
 
     .page-link {
