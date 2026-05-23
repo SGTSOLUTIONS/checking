@@ -516,7 +516,8 @@ class CommissionerController extends Controller
                     ->select(
                         'pd.point_gisid',
                         'pd.assessment',
-                        DB::raw('SUM(mis.plot_area) as total_plot_area')
+                        DB::raw('SUM(mis.plot_area) as total_plot_area'),
+                        DB::raw('COUNT(pd.assessment) as assessment_count')
                     )
                     ->groupBy('pd.point_gisid', 'pd.assessment')
                     ->get();
@@ -538,7 +539,7 @@ class CommissionerController extends Controller
                         'building_data'     => 0,
                     ];
                 }
-                  return response()->json($pointDatas);
+                return response()->json($pointDatas);
             }
         }
         return response()->json($polygons);
