@@ -495,18 +495,17 @@ class CommissionerController extends Controller
                 $result[] = [
                     'gisid'             => $polygon->gisid,
                     'sqfeet'            => $polygon->sqfeet,
-                    'number_floor'      => '',
-                    'basement'          => '',
-                    'percentage'        => '',
+                    'number_floor'      => $polygon->number_floor,
+                    'basement'          => $polygon->basement,
+                    'percentage'        => $polygon->percentage,
                     'surveyed_points'   => 0,
                     'assessment_count'  => 0,
-                    'totaldrone_area'        => $polygon->sqfeet,
+                    'totaldrone_area'   => $polygon->sqfeet,
                     'area_difference'   => 0,
                     'area_variation'    => 0,
                     'usage_variation'   => '',
                     'usage_mismatches'  => 0,
-                    'assessments'       => 0,
-                    'building_data'     => 0,
+
                 ];
             } else {
                 $totalDronArea = ($polygon->number_floor + $polygon->basement + ($polygon->percentage / 100)) * $polygon->sqfeet;
@@ -525,21 +524,37 @@ class CommissionerController extends Controller
                     $result[] = [
                         'gisid'             => $polygon->gisid,
                         'sqfeet'            => $polygon->sqfeet,
-                        'number_floor'      => '',
-                        'basement'          => '',
-                        'percentage'        => '',
+                        'number_floor'      => $polygon->number_floor,
+                        'basement'          => $polygon->basement,
+                        'percentage'        => $polygon->percentage,
                         'surveyed_points'   => 0,
                         'assessment_count'  => 0,
-                        'totaldrone_area'        => $totalDronArea,
+                        'totaldrone_area'   => $totalDronArea,
                         'area_difference'   => 0,
                         'area_variation'    => 0,
                         'usage_variation'   => '',
                         'usage_mismatches'  => 0,
-                        'assessments'       => 0,
-                        'building_data'     => 0,
+
+                    ];
+                } else {
+                    $areaVariation = $totalDronArea - $pointDatas->total_plot_area;
+
+                    $result[] = [
+                        'gisid'             => $polygon->gisid,
+                        'sqfeet'            => $polygon->sqfeet,
+                        'number_floor'      => $polygon->number_floor,
+                        'basement'          => $polygon->basement,
+                        'percentage'        => $polygon->percentage,
+                        'surveyed_points'   => 0,
+                        'assessment_count'  => 0,
+                        'totaldrone_area'   => $totalDronArea,
+                        'area_difference'   => 0,
+                        'area_variation'    => $areaVariation,
+                        'usage_variation'   => '',
+                        'usage_mismatches'  => 0,
                     ];
                 }
-                return response()->json($pointDatas);
+                return response()->json($result);
             }
         }
         return response()->json($polygons);
