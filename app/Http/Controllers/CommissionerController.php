@@ -603,7 +603,7 @@ class CommissionerController extends Controller
             ];
         }
 
-        return response()->json($results);
+
 
 
         return view('corporation.variations', compact(
