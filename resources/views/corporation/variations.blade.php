@@ -34,7 +34,7 @@
                     <div class="stat-card p-3 d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-muted mb-1">Total Buildings (GIS)</h6>
-                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format(count($result)) }}</h2>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_buildings) }}</h2>
                             <small class="text-primary"><i class="fas fa-draw-polygon"></i> Polygons analyzed</small>
                         </div>
                         <div class="stat-icon"><i class="fas fa-building"></i></div>
@@ -46,7 +46,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Total MIS Area</h6>
                             <h2 class="fw-bold mb-0" style="color:#102C57;">
-                                {{ number_format(collect($result)->sum('mis_plot_area')) }} <small>sq.ft</small>
+                                {{ number_format($total_mis_area) }} <small>sq.ft</small>
                             </h2>
                             <small class="text-info"><i class="fas fa-database"></i> From MIS records</small>
                         </div>
@@ -59,7 +59,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Total Calculated Area</h6>
                             <h2 class="fw-bold mb-0" style="color:#102C57;">
-                                {{ number_format(collect($result)->sum('calculated_area')) }} <small>sq.ft</small>
+                                {{ number_format($total_calculated_area) }} <small>sq.ft</small>
                             </h2>
                             <small class="text-warning"><i class="fas fa-calculator"></i> Based on building parameters</small>
                         </div>
@@ -72,16 +72,15 @@
                         <div>
                             <h6 class="text-muted mb-1">Total Area Variation</h6>
                             @php
-                                $totalVariation = collect($result)->sum('area_variation');
-                                $variationClass = $totalVariation >= 0 ? 'text-success' : 'text-danger';
-                                $variationIcon = $totalVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                                $variationClass = $total_variation >= 0 ? 'text-success' : 'text-danger';
+                                $variationIcon = $total_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
                             @endphp
                             <h2 class="fw-bold mb-0 {{ $variationClass }}">
-                                {{ number_format($totalVariation) }} <small>sq.ft</small>
+                                {{ number_format($total_variation) }} <small>sq.ft</small>
                             </h2>
                             <small class="{{ $variationClass }}">
                                 <i class="fas {{ $variationIcon }}"></i>
-                                {{ number_format(($totalVariation / max(collect($result)->sum('mis_plot_area'), 1)) * 100, 2) }}% variation
+                                {{ number_format($total_variation_percentage, 2) }}% variation
                             </small>
                         </div>
                         <div class="stat-icon bg-danger-subtle"><i class="fas fa-exclamation-triangle text-danger"></i></div>
@@ -108,7 +107,7 @@
                             <div class="mt-2 mt-sm-0">
                                 <span class="badge bg-primary p-2">
                                     <i class="fas fa-chart-bar me-1"></i>
-                                    Total Buildings: {{ count($result) }}
+                                    Total Buildings: {{ number_format($total_buildings) }}
                                 </span>
                             </div>
                         </div>
@@ -127,18 +126,18 @@
                             </h4>
                             <div>
                                 <button class="btn btn-sm btn-outline-primary" id="exportBtn">
-                                    <i class="fas fa-download me-1"></i> Export Data
+                                    <i class="fas fa-download me-1"></i> Export Current View
                                 </button>
                             </div>
                         </div>
 
                         <!-- Filter Section -->
                         <div class="row g-3 mb-4">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="text-dark fw-bold mb-2">Filter by GIS ID:</label>
                                 <input type="text" class="form-control" id="filterGisid" placeholder="Enter GIS ID...">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="text-dark fw-bold mb-2">Filter by Variation Type:</label>
                                 <select class="form-select" id="filterVariationType">
                                     <option value="all">All Variations</option>
@@ -147,19 +146,24 @@
                                     <option value="zero">No Variation</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label class="text-dark fw-bold mb-2">Min Variation Percentage:</label>
+                            <div class="col-md-3">
+                                <label class="text-dark fw-bold mb-2">Min Variation %:</label>
                                 <input type="number" class="form-control" id="filterMinPercentage" placeholder="e.g., 10">
-                                <small class="text-muted">Show variations greater than this %</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="text-dark fw-bold mb-2">&nbsp;</label>
+                                <button class="btn btn-primary w-100" id="resetFilters">
+                                    <i class="fas fa-undo-alt me-1"></i> Reset Filters
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Results Counter -->
-                        <div class="mb-3">
-                            <span class="badge bg-primary p-2">
-                                <i class="fas fa-chart-bar me-1"></i>
-                                Showing <span id="resultCount">0</span> buildings
-                            </span>
+                        <!-- Loading Indicator -->
+                        <div id="loadingIndicator" class="text-center py-4 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading data...</p>
                         </div>
 
                         <!-- Table Container -->
@@ -167,23 +171,38 @@
                             <table class="table table-hover variation-table" id="variationTable">
                                 <thead>
                                     <tr>
-                                        <th>GIS ID</th>
-                                        <th>Polygon Area (sq.ft)</th>
-                                        <th>Floors</th>
-                                        <th>Floor %</th>
-                                        <th>Basement</th>
-                                        <th>Calculated Area (sq.ft)</th>
-                                        <th>MIS Plot Area (sq.ft)</th>
-                                        <th>Area Variation (sq.ft)</th>
-                                        <th>Variation %</th>
-                                        <th>Assessments</th>
-                                        <th>Status</th>
+                                        <th style="width: 15%">GIS ID</th>
+                                        <th style="width: 10%">Polygon Area</th>
+                                        <th style="width: 8%">Floors</th>
+                                        <th style="width: 8%">Floor %</th>
+                                        <th style="width: 8%">Basement</th>
+                                        <th style="width: 12%">Calculated Area</th>
+                                        <th style="width: 12%">MIS Plot Area</th>
+                                        <th style="width: 12%">Area Variation</th>
+                                        <th style="width: 8%">Variation %</th>
+                                        <th style="width: 7%">Assessments</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
-                                    <!-- Data will be loaded by JavaScript -->
+                                    <!-- Data will be loaded via AJAX -->
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Pagination Section -->
+                        <div id="paginationContainer" class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
+                            <div class="mb-2 mb-sm-0">
+                                <small class="text-muted" id="paginationInfo">
+                                    Showing 0 to 0 of 0 entries
+                                </small>
+                            </div>
+                            <div>
+                                <nav>
+                                    <ul class="pagination mb-0" id="pagination">
+                                        <!-- Pagination will be inserted here -->
+                                    </ul>
+                                </nav>
+                            </div>
                         </div>
 
                         <!-- No Data Message -->
@@ -204,51 +223,128 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Data from server
-            const variationsData = @json($result);
+            // State variables
+            let currentPage = 1;
+            let perPage = 20;
+            let totalRecords = {{ $total_buildings }};
+            let filters = {
+                gisid: '',
+                variation_type: 'all',
+                min_percentage: ''
+            };
 
-            // Render initial table
-            renderTable(variationsData);
-            updateResultCount(variationsData.length);
+            // Load initial data
+            loadVariations();
+
+            // Event listeners for filters
+            let debounceTimer;
+            $("#filterGisid").on("keyup", function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    filters.gisid = $(this).val().toLowerCase().trim();
+                    currentPage = 1;
+                    loadVariations();
+                }, 500);
+            });
+
+            $("#filterVariationType").on("change", function() {
+                filters.variation_type = $(this).val();
+                currentPage = 1;
+                loadVariations();
+            });
+
+            $("#filterMinPercentage").on("keyup", function() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    filters.min_percentage = $(this).val();
+                    currentPage = 1;
+                    loadVariations();
+                }, 500);
+            });
+
+            $("#resetFilters").on("click", function() {
+                $("#filterGisid").val('');
+                $("#filterVariationType").val('all');
+                $("#filterMinPercentage").val('');
+                filters = {
+                    gisid: '',
+                    variation_type: 'all',
+                    min_percentage: ''
+                };
+                currentPage = 1;
+                loadVariations();
+            });
+
+            $("#exportBtn").on("click", function() {
+                exportData();
+            });
+
+            function loadVariations() {
+                $("#loadingIndicator").removeClass('d-none');
+                $("#tableBody").html('');
+                $("#noDataMessage").addClass('d-none');
+
+                $.ajax({
+                    url: "{{ route('corporation.variations.data', $warddetail->ward_no) }}",
+                    type: "GET",
+                    data: {
+                        page: currentPage,
+                        per_page: perPage,
+                        gisid: filters.gisid,
+                        variation_type: filters.variation_type,
+                        min_percentage: filters.min_percentage
+                    },
+                    success: function(response) {
+                        $("#loadingIndicator").addClass('d-none');
+
+                        if (response.success) {
+                            renderTable(response.data);
+                            renderPagination(response.pagination);
+                            updatePaginationInfo(response.pagination);
+                            totalRecords = response.pagination.total;
+                        } else {
+                            showError("Failed to load data");
+                        }
+                    },
+                    error: function(xhr) {
+                        $("#loadingIndicator").addClass('d-none');
+                        console.error("Error loading variations:", xhr);
+                        showError("Error loading data. Please try again.");
+                    }
+                });
+            }
 
             function renderTable(data) {
                 const $tbody = $("#tableBody");
                 $tbody.empty();
 
-                if (data.length === 0) {
+                if (!data || data.length === 0) {
                     $("#noDataMessage").removeClass('d-none');
                     $("#variationTable").addClass('d-none');
+                    $("#paginationContainer").addClass('d-none');
                     return;
                 }
 
                 $("#noDataMessage").addClass('d-none');
                 $("#variationTable").removeClass('d-none');
+                $("#paginationContainer").removeClass('d-none');
 
                 data.forEach(function(item, index) {
-                    // Determine status and class
-                    let statusBadge = '';
-                    let statusClass = '';
-                    let variationClass = '';
-
+                    // Determine row class
+                    let rowClass = '';
                     if (item.variation_percentage > 0) {
-                        statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>';
-                        variationClass = 'table-warning';
+                        rowClass = 'table-warning';
                     } else if (item.variation_percentage < 0) {
-                        statusBadge = '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>';
-                        variationClass = 'table-danger';
+                        rowClass = 'table-danger';
                     } else {
-                        statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>';
-                        variationClass = 'table-success';
+                        rowClass = 'table-success';
                     }
 
-                    // Format numbers
                     let row = `
-                        <tr class="${variationClass}" data-gisid="${item.gisid.toLowerCase()}"
-                            data-variation-type="${item.variation_percentage > 0 ? 'positive' : (item.variation_percentage < 0 ? 'negative' : 'zero')}"
-                            data-variation-percentage="${Math.abs(item.variation_percentage)}">
+                        <tr class="${rowClass}" data-gisid="${item.gisid.toLowerCase()}">
                             <td>
-                                <strong>${item.gisid}</strong>
-                                <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${item.gisid}">
+                                <strong>${escapeHtml(item.gisid)}</strong>
+                                <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${escapeHtml(item.gisid)}">
                                     <i class="fas fa-copy text-muted"></i>
                                 </button>
                             </td>
@@ -262,21 +358,125 @@
                                 ${item.area_variation > 0 ? '+' : ''}${formatNumber(item.area_variation)}
                             </td>
                             <td class="${item.variation_percentage > 0 ? 'text-warning' : (item.variation_percentage < 0 ? 'text-danger' : 'text-success')} fw-bold">
-                                ${item.variation_percentage > 0 ? '+' : ''}${item.variation_percentage}%
+                                ${item.variation_percentage > 0 ? '+' : ''}${formatNumber(item.variation_percentage)}%
                             </td>
                             <td>
                                 <span class="badge bg-secondary">${item.assessment_count}</span>
                             </td>
-                            <td>${statusBadge}</td>
                         </tr>
                     `;
                     $tbody.append(row);
                 });
 
-                // Add animation to rows
+                // Animation for rows
                 $('#tableBody tr').each(function(i) {
                     $(this).css('animation-delay', (i * 0.02) + 's');
                 });
+            }
+
+            function renderPagination(pagination) {
+                const $pagination = $("#pagination");
+                $pagination.empty();
+
+                if (pagination.total_pages <= 1) {
+                    return;
+                }
+
+                // Previous button
+                if (pagination.current_page > 1) {
+                    $pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="${pagination.current_page - 1}">
+                                <i class="fas fa-chevron-left"></i> Prev
+                            </a>
+                        </li>
+                    `);
+                } else {
+                    $pagination.append(`
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-left"></i> Prev</span>
+                        </li>
+                    `);
+                }
+
+                // Page numbers
+                let startPage = Math.max(1, pagination.current_page - 2);
+                let endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+
+                if (startPage > 1) {
+                    $pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="1">1</a>
+                        </li>
+                    `);
+                    if (startPage > 2) {
+                        $pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    if (i === pagination.current_page) {
+                        $pagination.append(`
+                            <li class="page-item active">
+                                <span class="page-link">${i}</span>
+                            </li>
+                        `);
+                    } else {
+                        $pagination.append(`
+                            <li class="page-item">
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>
+                        `);
+                    }
+                }
+
+                if (endPage < pagination.total_pages) {
+                    if (endPage < pagination.total_pages - 1) {
+                        $pagination.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+                    }
+                    $pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="${pagination.total_pages}">${pagination.total_pages}</a>
+                        </li>
+                    `);
+                }
+
+                // Next button
+                if (pagination.current_page < pagination.total_pages) {
+                    $pagination.append(`
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="${pagination.current_page + 1}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    `);
+                } else {
+                    $pagination.append(`
+                        <li class="page-item disabled">
+                            <span class="page-link">Next <i class="fas fa-chevron-right"></i></span>
+                        </li>
+                    `);
+                }
+
+                // Pagination click handler
+                $pagination.find('a.page-link').on('click', function(e) {
+                    e.preventDefault();
+                    const page = $(this).data('page');
+                    if (page && page !== currentPage) {
+                        currentPage = page;
+                        loadVariations();
+                        // Scroll to top of table
+                        $('html, body').animate({
+                            scrollTop: $("#variationTable").offset().top - 100
+                        }, 300);
+                    }
+                });
+            }
+
+            function updatePaginationInfo(pagination) {
+                const start = ((pagination.current_page - 1) * pagination.per_page) + 1;
+                const end = Math.min(pagination.current_page * pagination.per_page, pagination.total);
+                $("#paginationInfo").text(`Showing ${start} to ${end} of ${pagination.total} entries`);
             }
 
             function formatNumber(num) {
@@ -287,140 +487,64 @@
                 });
             }
 
-            function updateResultCount(count) {
-                $("#resultCount").text(count);
-            }
-
-            function applyFilters() {
-                var filterGisid = $("#filterGisid").val().toLowerCase().trim();
-                var filterVariationType = $("#filterVariationType").val();
-                var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
-
-                var filteredData = variationsData.filter(function(item) {
-                    // GIS ID filter
-                    var gisidMatch = true;
-                    if (filterGisid !== "") {
-                        gisidMatch = item.gisid.toLowerCase().includes(filterGisid);
-                    }
-
-                    // Variation type filter
-                    var typeMatch = true;
-                    if (filterVariationType !== "all") {
-                        if (filterVariationType === "positive") {
-                            typeMatch = item.variation_percentage > 0;
-                        } else if (filterVariationType === "negative") {
-                            typeMatch = item.variation_percentage < 0;
-                        } else if (filterVariationType === "zero") {
-                            typeMatch = item.variation_percentage === 0;
-                        }
-                    }
-
-                    // Min percentage filter
-                    var percentageMatch = true;
-                    if (!isNaN(filterMinPercentage) && filterMinPercentage > 0) {
-                        percentageMatch = Math.abs(item.variation_percentage) >= filterMinPercentage;
-                    }
-
-                    return gisidMatch && typeMatch && percentageMatch;
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
                 });
-
-                renderTable(filteredData);
-                updateResultCount(filteredData.length);
             }
 
-            // Debounce function
-            function debounce(func, delay) {
-                let timeout;
-                return function() {
-                    const context = this;
-                    const args = arguments;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(context, args), delay);
-                };
+            function showError(message) {
+                $("#tableBody").html(`
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <div class="alert alert-danger m-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                ${message}
+                            </div>
+                        </td>
+                    </tr>
+                `);
             }
-
-            const debouncedApplyFilters = debounce(applyFilters, 300);
-
-            // Event listeners
-            $("#filterGisid").on("keyup", debouncedApplyFilters);
-            $("#filterVariationType").on("change", applyFilters);
-            $("#filterMinPercentage").on("keyup", debouncedApplyFilters);
 
             // Copy GIS ID functionality
             $(document).on('click', '.copy-gisid', function(e) {
                 e.preventDefault();
                 const gisid = $(this).data('gisid');
 
-                // Create temporary input
-                const tempInput = $('<input>');
-                $('body').append(tempInput);
-                tempInput.val(gisid).select();
-                document.execCommand('copy');
-                tempInput.remove();
+                navigator.clipboard.writeText(gisid).then(function() {
+                    const $btn = $(e.currentTarget);
+                    const originalIcon = $btn.html();
+                    $btn.html('<i class="fas fa-check text-success"></i>');
+                    setTimeout(() => {
+                        $btn.html(originalIcon);
+                    }, 1000);
+                }).catch(function() {
+                    // Fallback for older browsers
+                    const tempInput = $('<input>');
+                    $('body').append(tempInput);
+                    tempInput.val(gisid).select();
+                    document.execCommand('copy');
+                    tempInput.remove();
 
-                // Show tooltip or alert
-                const $btn = $(this);
-                const originalIcon = $btn.html();
-                $btn.html('<i class="fas fa-check text-success"></i>');
-                setTimeout(() => {
-                    $btn.html(originalIcon);
-                }, 1000);
+                    const $btn = $(e.currentTarget);
+                    const originalIcon = $btn.html();
+                    $btn.html('<i class="fas fa-check text-success"></i>');
+                    setTimeout(() => {
+                        $btn.html(originalIcon);
+                    }, 1000);
+                });
             });
 
-            // Export functionality
-            $("#exportBtn").on("click", function() {
-                // Get current filtered data
-                var filterGisid = $("#filterGisid").val().toLowerCase().trim();
-                var filterVariationType = $("#filterVariationType").val();
-                var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
-
-                var exportData = variationsData.filter(function(item) {
-                    var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
-                    var typeMatch = filterVariationType === "all" ||
-                        (filterVariationType === "positive" && item.variation_percentage > 0) ||
-                        (filterVariationType === "negative" && item.variation_percentage < 0) ||
-                        (filterVariationType === "zero" && item.variation_percentage === 0);
-                    var percentageMatch = isNaN(filterMinPercentage) || filterMinPercentage <= 0 ||
-                        Math.abs(item.variation_percentage) >= filterMinPercentage;
-                    return gisidMatch && typeMatch && percentageMatch;
-                });
-
-                // Create CSV
-                const headers = [
-                    'GIS ID', 'Polygon Area (sq.ft)', 'Number of Floors', 'Floor Percentage',
-                    'Basement', 'Calculated Area (sq.ft)', 'MIS Plot Area (sq.ft)',
-                    'Area Variation (sq.ft)', 'Variation Percentage (%)', 'Assessment Count'
-                ];
-
-                const csvRows = [headers.join(',')];
-
-                exportData.forEach(item => {
-                    const row = [
-                        `"${item.gisid}"`,
-                        item.sqfeet,
-                        item.number_floor,
-                        item.percentage,
-                        item.basement || 0,
-                        item.calculated_area,
-                        item.mis_plot_area,
-                        item.area_variation,
-                        item.variation_percentage,
-                        item.assessment_count
-                    ];
-                    csvRows.push(row.join(','));
-                });
-
-                // Download CSV
-                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `variation_data_ward_${@json($warddetail->ward_no ?? '')}_${new Date().toISOString().slice(0,19)}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            });
+            function exportData() {
+                window.location.href = "{{ route('corporation.variations.export', $warddetail->ward_no) }}" +
+                    "?gisid=" + encodeURIComponent(filters.gisid) +
+                    "&variation_type=" + encodeURIComponent(filters.variation_type) +
+                    "&min_percentage=" + encodeURIComponent(filters.min_percentage);
+            }
         });
     </script>
 
@@ -456,21 +580,17 @@
             color: #1679AB;
         }
 
-        /* Form Controls */
-        .form-control,
-        .form-select {
+        .form-control, .form-select {
             border-radius: 10px;
             border: 1px solid #dee2e6;
             padding: 8px 12px;
         }
 
-        .form-control:focus,
-        .form-select:focus {
+        .form-control:focus, .form-select:focus {
             border-color: #1679AB;
             box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
         }
 
-        /* Table Styles */
         .variation-table {
             border-radius: 12px;
             overflow: hidden;
@@ -514,7 +634,6 @@
             transform: scale(1.01);
         }
 
-        /* Badge Styles */
         .badge {
             padding: 6px 12px;
             font-size: 11px;
@@ -522,7 +641,6 @@
             border-radius: 20px;
         }
 
-        /* Button Styles */
         .btn-outline-light {
             border-color: rgba(255, 255, 255, 0.3);
             color: white;
@@ -545,7 +663,6 @@
             color: white;
         }
 
-        /* Copy button */
         .copy-gisid {
             opacity: 0.6;
             transition: opacity 0.2s ease;
@@ -555,7 +672,30 @@
             opacity: 1;
         }
 
-        /* Table responsive */
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .page-link {
+            color: #102C57;
+            border-radius: 8px;
+            margin: 0 2px;
+            border: none;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+
+        .page-item.active .page-link {
+            background-color: #1679AB;
+            border-color: #1679AB;
+            color: white;
+        }
+
+        .page-link:hover {
+            color: #1679AB;
+            background-color: #f8f9fa;
+        }
+
         @media(max-width: 1200px) {
             .variation-table {
                 font-size: 12px;
@@ -570,28 +710,11 @@
             .dashboard-content-area {
                 padding: 15px;
             }
-
             .stat-card {
                 margin-bottom: 15px;
             }
-
-            .variation-table thead th {
-                font-size: 10px;
-                padding: 8px 4px;
-            }
-
-            .variation-table tbody td {
-                font-size: 10px;
-                padding: 8px 4px;
-            }
-
-            .badge {
-                font-size: 9px;
-                padding: 4px 8px;
-            }
         }
 
-        /* Loading Animation */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -608,7 +731,6 @@
             animation-duration: 0.6s;
         }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -628,44 +750,17 @@
             background: #102C57;
         }
 
-        /* Statistics Card Icons */
         .stat-icon i {
             font-size: 28px;
         }
 
-        /* Text Colors */
-        .text-success {
-            color: #28a745 !important;
-        }
+        .text-success { color: #28a745 !important; }
+        .text-warning { color: #ffc107 !important; }
+        .text-danger { color: #dc3545 !important; }
+        .text-primary { color: #1679AB !important; }
 
-        .text-warning {
-            color: #ffc107 !important;
-        }
-
-        .text-danger {
-            color: #dc3545 !important;
-        }
-
-        .text-primary {
-            color: #1679AB !important;
-        }
-
-        /* Table row colors */
-        .table-warning {
-            background-color: #fff3cd !important;
-        }
-
-        .table-danger {
-            background-color: #f8d7da !important;
-        }
-
-        .table-success {
-            background-color: #d4edda !important;
-        }
-
-        /* Label styling */
-        label {
-            font-size: 0.9rem;
-        }
+        .table-warning { background-color: #fff3cd !important; }
+        .table-danger { background-color: #f8d7da !important; }
+        .table-success { background-color: #d4edda !important; }
     </style>
 @endpush

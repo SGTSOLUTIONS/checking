@@ -43,6 +43,7 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
 
         //variation
          Route::get('/variation/{ward_no}', [CommissionerController::class, 'viewVariations'])->name('ward.variation');
+         Route::get('/variations/export/{ward_no}', [CommissionerController::class, 'exportVariations'])->name('variations.export');
     });
 });
 Route::get('/', function () {
