@@ -667,40 +667,67 @@ public function viewVariations($ward_no)
     $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
     $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
-    // Calculate totals for summary (without pagination)
+    // Check if tables exist
+    if (!Schema::hasTable($polygonsTableName)) {
+        return back()->with('error', 'Building data not found for this ward');
+    }
+
+    // Calculate totals for summary
     $allPolygons = DB::table($polygonsTableName . ' as p')
         ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
         ->select('p.gisid', 'p.sqfeet', 'pgd.number_floor', 'pgd.percentage', 'pgd.basement')
         ->get();
 
-    $allPointDatas = DB::table($pointDataTable)
-        ->select('point_gisid', 'assessment')
-        ->whereNotNull('assessment')
-        ->get()
-        ->groupBy('point_gisid');
-
-    $allAssessmentList = DB::table($pointDataTable)
-        ->whereNotNull('assessment')
-        ->pluck('assessment')
-        ->unique()
-        ->toArray();
-
-    $allMisData = DB::table($misTableName)
-        ->whereIn('assessment', $allAssessmentList)
-        ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
-        ->groupBy('assessment')
-        ->get()
-        ->keyBy('assessment');
-
     $totalBuildings = $allPolygons->count();
+
+    // If no buildings found
+    if ($totalBuildings == 0) {
+        return view('corporation.variations', compact(
+            'warddetail',
+            'totalBuildings',
+            'totalMisArea',
+            'totalCalculatedArea',
+            'totalVariation',
+            'totalVariationPercentage'
+        ))->with('error', 'No building data found for this ward');
+    }
+
+    $allPointDatas = collect();
+    if (Schema::hasTable($pointDataTable)) {
+        $allPointDatas = DB::table($pointDataTable)
+            ->select('point_gisid', 'assessment')
+            ->whereNotNull('assessment')
+            ->get()
+            ->groupBy('point_gisid');
+    }
+
+    $allAssessmentList = [];
+    if (Schema::hasTable($pointDataTable)) {
+        $allAssessmentList = DB::table($pointDataTable)
+            ->whereNotNull('assessment')
+            ->pluck('assessment')
+            ->unique()
+            ->toArray();
+    }
+
+    $allMisData = collect();
+    if (Schema::hasTable($misTableName) && !empty($allAssessmentList)) {
+        $allMisData = DB::table($misTableName)
+            ->whereIn('assessment', $allAssessmentList)
+            ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
+            ->groupBy('assessment')
+            ->get()
+            ->keyBy('assessment');
+    }
+
     $totalMisArea = 0;
     $totalCalculatedArea = 0;
 
     foreach ($allPolygons as $polygon) {
-        $points = $allPointDatas[$polygon->gisid] ?? collect();
+        $points = isset($allPointDatas[$polygon->gisid]) ? $allPointDatas[$polygon->gisid] : collect();
         $misArea = 0;
         foreach ($points as $point) {
-            $misArea += (float) ($allMisData[$point->assessment]->total_plot_area ?? 0);
+            $misArea += (float) (isset($allMisData[$point->assessment]) ? $allMisData[$point->assessment]->total_plot_area : 0);
         }
         $totalMisArea += $misArea;
 
@@ -719,6 +746,12 @@ public function viewVariations($ward_no)
     $totalVariation = $totalCalculatedArea - $totalMisArea;
     $totalVariationPercentage = $totalMisArea > 0 ? ($totalVariation / $totalMisArea) * 100 : 0;
 
+    // Initialize variables with default values
+    $totalMisArea = $totalMisArea ?? 0;
+    $totalCalculatedArea = $totalCalculatedArea ?? 0;
+    $totalVariation = $totalVariation ?? 0;
+    $totalVariationPercentage = $totalVariationPercentage ?? 0;
+
     return view('corporation.variations', compact(
         'warddetail',
         'totalBuildings',
@@ -728,7 +761,6 @@ public function viewVariations($ward_no)
         'totalVariationPercentage'
     ));
 }
-
 // Add export method
 public function exportVariations($ward_no, Request $request)
 {
