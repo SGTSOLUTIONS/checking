@@ -497,7 +497,11 @@ class CommissionerController extends Controller
         )
         ->groupBy(
             'p.gisid',
-
+            'p.sqfeet',
+            'pgd.gisid',
+            'pgd.number_floor',
+            'pgd.percentage',
+            'pgd.basement',
             'pt.assessment',
             'pt.point_gisid'
         )
