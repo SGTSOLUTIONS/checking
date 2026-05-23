@@ -543,6 +543,7 @@ class CommissionerController extends Controller
                 'assessments'       => $pointDatas,
                 'building_data'     => $buildingData,
             ];
+              return response()->json($results);
         }
         return response()->json($results);
         return view('variations.index', compact(
