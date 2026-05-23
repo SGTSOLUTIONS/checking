@@ -452,175 +452,154 @@ class CommissionerController extends Controller
         ];
     }
     public function viewVariations($ward_no)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $warddetail = Ward::where('corporation_id', $user->corporation_id)
-            ->where('ward_no', $ward_no)
-            ->first();
+    $warddetail = Ward::where('corporation_id', $user->corporation_id)
+        ->where('ward_no', $ward_no)
+        ->first();
 
-        if (!$warddetail) {
-            return back()->with('error', 'Ward not found');
-        }
-
-        $zone = strtolower(trim($warddetail->zone));
-        $wardNo = (int) $warddetail->ward_no;
-        $corp = (int) $warddetail->corporation_id;
-
-        $misTableName      = "mis_corporation_{$corp}";
-        $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
-        $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
-        $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
-
-        // Check if table exists
-        if (!Schema::hasTable($polygonsTableName)) {
-            return back()->with('error', 'Building data not found for this ward');
-        }
-
-        // Get total count for pagination
-        $totalPolygons = DB::table($polygonsTableName . ' as p')->count();
-
-        // Pagination parameters
-        $perPage = 20;
-        $currentPage = request()->get('page', 1);
-        $offset = ($currentPage - 1) * $perPage;
-
-        // Get polygons with pagination
-        $polygons = DB::table($polygonsTableName . ' as p')
-            ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
-            ->select(
-                'p.gisid',
-                'p.sqfeet',
-                'pgd.number_floor',
-                'pgd.percentage',
-                'pgd.basement'
-            )
-            ->orderBy('p.gisid')
-            ->skip($offset)
-            ->take($perPage)
-            ->get();
-
-        // Get all point data (without pagination for calculations)
-        $pointDatas = DB::table($pointDataTable)
-            ->select('point_gisid', 'assessment')
-            ->whereNotNull('assessment')
-            ->get()
-            ->groupBy('point_gisid');
-
-        // Get assessment list
-        $assessmentList = DB::table($pointDataTable)
-            ->whereNotNull('assessment')
-            ->pluck('assessment')
-            ->unique()
-            ->toArray();
-
-        // Get MIS data
-        $misData = collect();
-        if (!empty($assessmentList) && Schema::hasTable($misTableName)) {
-            $misData = DB::table($misTableName)
-                ->whereIn('assessment', $assessmentList)
-                ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
-                ->groupBy('assessment')
-                ->get()
-                ->keyBy('assessment');
-        }
-
-        // Calculate result for current page only
-        $result = [];
-
-        foreach ($polygons as $polygon) {
-            $points = $pointDatas[$polygon->gisid] ?? collect();
-            $misArea = 0;
-            $assessmentCount = 0;
-
-            foreach ($points as $point) {
-                $assessmentCount++;
-                $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
-            }
-
-            $sqfeet = (float) ($polygon->sqfeet ?? 0);
-            $floorPercentage = (float) ($polygon->percentage ?? 100);
-            $numberFloor = (int) ($polygon->number_floor ?? 1);
-            $basement = (int) ($polygon->basement ?? 0);
-
-            $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
-            if ($basement > 0) {
-                $calculatedArea += ($sqfeet * $basement);
-            }
-
-            $areaVariation = $calculatedArea - $misArea;
-            $variationPercentage = $misArea > 0 ? ($areaVariation / $misArea) * 100 : 0;
-
-            $result[] = (object) [
-                'gisid' => $polygon->gisid,
-                'sqfeet' => round($sqfeet, 2),
-                'number_floor' => $numberFloor,
-                'percentage' => $floorPercentage,
-                'basement' => $basement,
-                'mis_plot_area' => round($misArea, 2),
-                'calculated_area' => round($calculatedArea, 2),
-                'area_variation' => round($areaVariation, 2),
-                'variation_percentage' => round($variationPercentage, 2),
-                'assessment_count' => $assessmentCount,
-            ];
-        }
-
-        // Calculate totals for summary from ALL data (not just current page)
-        $allPolygons = DB::table($polygonsTableName . ' as p')
-            ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
-            ->select('p.gisid', 'p.sqfeet', 'pgd.number_floor', 'pgd.percentage', 'pgd.basement')
-            ->get();
-
-        $allPointDatas = DB::table($pointDataTable)
-            ->select('point_gisid', 'assessment')
-            ->whereNotNull('assessment')
-            ->get()
-            ->groupBy('point_gisid');
-
-        $totalMisAreaAll = 0;
-        $totalCalculatedAreaAll = 0;
-
-        foreach ($allPolygons as $polygon) {
-            $points = $allPointDatas[$polygon->gisid] ?? collect();
-            $misArea = 0;
-            foreach ($points as $point) {
-                $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
-            }
-            $totalMisAreaAll += $misArea;
-
-            $sqfeet = (float) ($polygon->sqfeet ?? 0);
-            $floorPercentage = (float) ($polygon->percentage ?? 100);
-            $numberFloor = (int) ($polygon->number_floor ?? 1);
-            $basement = (int) ($polygon->basement ?? 0);
-
-            $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
-            if ($basement > 0) {
-                $calculatedArea += ($sqfeet * $basement);
-            }
-            $totalCalculatedAreaAll += $calculatedArea;
-        }
-
-        $totalVariationAll = $totalCalculatedAreaAll - $totalMisAreaAll;
-        $totalVariationPercentageAll = $totalMisAreaAll > 0 ? ($totalVariationAll / $totalMisAreaAll) * 100 : 0;
-
-        // Create paginator instance
-        $paginatedResult = new \Illuminate\Pagination\LengthAwarePaginator(
-            $result,
-            $totalPolygons,
-            $perPage,
-            $currentPage,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return view('corporation.variations', compact(
-            'paginatedResult',
-            'warddetail',
-            'totalMisAreaAll',
-            'totalCalculatedAreaAll',
-            'totalVariationAll',
-            'totalVariationPercentageAll'
-        ));
+    if (!$warddetail) {
+        return back()->with('error', 'Ward not found');
     }
+
+    $zone = strtolower(trim($warddetail->zone));
+    $wardNo = (int) $warddetail->ward_no;
+    $corp = (int) $warddetail->corporation_id;
+
+    $misTableName      = "mis_corporation_{$corp}";
+    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+    $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
+    $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+
+    // Check if table exists
+    if (!Schema::hasTable($polygonsTableName)) {
+        return back()->with('error', 'Building data not found for this ward');
+    }
+
+    // Get all point data for calculations (cached)
+    $allPointDatas = DB::table($pointDataTable)
+        ->select('point_gisid', 'assessment')
+        ->whereNotNull('assessment')
+        ->get()
+        ->groupBy('point_gisid');
+
+    // Get assessment list
+    $assessmentList = DB::table($pointDataTable)
+        ->whereNotNull('assessment')
+        ->pluck('assessment')
+        ->unique()
+        ->toArray();
+
+    // Get MIS data
+    $misData = collect();
+    if (!empty($assessmentList) && Schema::hasTable($misTableName)) {
+        $misData = DB::table($misTableName)
+            ->whereIn('assessment', $assessmentList)
+            ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
+            ->groupBy('assessment')
+            ->get()
+            ->keyBy('assessment');
+    }
+
+    // Use Laravel's paginator with the query builder
+    $polygons = DB::table($polygonsTableName . ' as p')
+        ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
+        ->select(
+            'p.gisid',
+            'p.sqfeet',
+            'pgd.number_floor',
+            'pgd.percentage',
+            'pgd.basement'
+        )
+        ->orderBy('p.gisid')
+        ->paginate(20); // This automatically handles pagination
+
+    // Calculate results for current page only
+    $result = [];
+    foreach ($polygons as $polygon) {
+        $points = $allPointDatas[$polygon->gisid] ?? collect();
+        $misArea = 0;
+        $assessmentCount = 0;
+
+        foreach ($points as $point) {
+            $assessmentCount++;
+            $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
+        }
+
+        $sqfeet = (float) ($polygon->sqfeet ?? 0);
+        $floorPercentage = (float) ($polygon->percentage ?? 100);
+        $numberFloor = (int) ($polygon->number_floor ?? 1);
+        $basement = (int) ($polygon->basement ?? 0);
+
+        $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
+        if ($basement > 0) {
+            $calculatedArea += ($sqfeet * $basement);
+        }
+
+        $areaVariation = $calculatedArea - $misArea;
+        $variationPercentage = $misArea > 0 ? ($areaVariation / $misArea) * 100 : 0;
+
+        $result[] = (object) [
+            'gisid' => $polygon->gisid,
+            'sqfeet' => round($sqfeet, 2),
+            'number_floor' => $numberFloor,
+            'percentage' => $floorPercentage,
+            'basement' => $basement,
+            'mis_plot_area' => round($misArea, 2),
+            'calculated_area' => round($calculatedArea, 2),
+            'area_variation' => round($areaVariation, 2),
+            'variation_percentage' => round($variationPercentage, 2),
+            'assessment_count' => $assessmentCount,
+        ];
+    }
+
+    // Replace the paginated items with our calculated results
+    $polygons->setCollection(collect($result));
+
+    // Calculate totals for summary from ALL data (efficiently using chunking if needed)
+    $totalMisAreaAll = 0;
+    $totalCalculatedAreaAll = 0;
+
+    // Process in chunks to avoid memory issues with large datasets
+    DB::table($polygonsTableName . ' as p')
+        ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
+        ->select('p.gisid', 'p.sqfeet', 'pgd.number_floor', 'pgd.percentage', 'pgd.basement')
+        ->orderBy('p.gisid')
+        ->chunk(100, function ($chunk) use (&$totalMisAreaAll, &$totalCalculatedAreaAll, $allPointDatas, $misData) {
+            foreach ($chunk as $polygon) {
+                $points = $allPointDatas[$polygon->gisid] ?? collect();
+                $misArea = 0;
+                foreach ($points as $point) {
+                    $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
+                }
+                $totalMisAreaAll += $misArea;
+
+                $sqfeet = (float) ($polygon->sqfeet ?? 0);
+                $floorPercentage = (float) ($polygon->percentage ?? 100);
+                $numberFloor = (int) ($polygon->number_floor ?? 1);
+                $basement = (int) ($polygon->basement ?? 0);
+
+                $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
+                if ($basement > 0) {
+                    $calculatedArea += ($sqfeet * $basement);
+                }
+                $totalCalculatedAreaAll += $calculatedArea;
+            }
+        });
+
+    $totalVariationAll = $totalCalculatedAreaAll - $totalMisAreaAll;
+    $totalVariationPercentageAll = $totalMisAreaAll > 0 ? ($totalVariationAll / $totalMisAreaAll) * 100 : 0;
+
+    return view('corporation.variations', compact(
+        'polygons', // Now using the paginator instance
+        'warddetail',
+        'totalMisAreaAll',
+        'totalCalculatedAreaAll',
+        'totalVariationAll',
+        'totalVariationPercentageAll'
+    ));
+}
     /**
      * Export ward data to Excel with building variations
      */
