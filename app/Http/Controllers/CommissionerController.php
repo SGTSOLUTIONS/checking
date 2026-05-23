@@ -475,7 +475,7 @@ class CommissionerController extends Controller
         $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
         $polygons = DB::table($polygonsTableName . ' as p')
-            ->leftJoin($pointDataTable . ' as pd', 'p.gisid', '=', 'pd.gisid')
+            ->leftJoin($polygonDataTable . ' as pd', 'p.gisid', '=', 'pd.gisid')
             ->select(
                 'p.gisid',
                 'p.sqfeet',
