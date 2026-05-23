@@ -502,7 +502,7 @@ class CommissionerController extends Controller
         // 3. Load all point + MIS data in one query
         $allPointDatas = DB::table($pointDataTable . ' as pd')
             ->leftJoin($misTableName . ' as mis', 'pd.assessment', '=', 'mis.assessment')
-
+            ->whereIn('pd.point_gisid', $gisids)
             ->select(
                 'pd.point_gisid',
                 'pd.assessment',
