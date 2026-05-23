@@ -46,7 +46,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Total MIS Area</h6>
                             <h2 class="fw-bold mb-0" style="color:#102C57;">
-                                {{ number_format(collect($paginatedResult->items())->sum('mis_plot_area')) }} <small>sq.ft</small>
+                                {{ number_format($totalMisAreaAll) }} <small>sq.ft</small>
                             </h2>
                             <small class="text-info"><i class="fas fa-database"></i> From MIS records</small>
                         </div>
@@ -59,7 +59,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Total Calculated Area</h6>
                             <h2 class="fw-bold mb-0" style="color:#102C57;">
-                                {{ number_format(collect($paginatedResult->items())->sum('calculated_area')) }} <small>sq.ft</small>
+                                {{ number_format($totalCalculatedAreaAll) }} <small>sq.ft</small>
                             </h2>
                             <small class="text-warning"><i class="fas fa-calculator"></i> Based on building parameters</small>
                         </div>
@@ -72,16 +72,15 @@
                         <div>
                             <h6 class="text-muted mb-1">Total Area Variation</h6>
                             @php
-                                $totalVariation = collect($paginatedResult->items())->sum('area_variation');
-                                $variationClass = $totalVariation >= 0 ? 'text-success' : 'text-danger';
-                                $variationIcon = $totalVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                                $variationClass = $totalVariationAll >= 0 ? 'text-success' : 'text-danger';
+                                $variationIcon = $totalVariationAll >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
                             @endphp
                             <h2 class="fw-bold mb-0 {{ $variationClass }}">
-                                {{ number_format($totalVariation) }} <small>sq.ft</small>
+                                {{ number_format($totalVariationAll) }} <small>sq.ft</small>
                             </h2>
                             <small class="{{ $variationClass }}">
                                 <i class="fas {{ $variationIcon }}"></i>
-                                {{ number_format(($totalVariation / max(collect($paginatedResult->items())->sum('mis_plot_area'), 1)) * 100, 2) }}% variation
+                                {{ number_format(abs($totalVariationPercentageAll), 2) }}% variation
                             </small>
                         </div>
                         <div class="stat-icon bg-danger-subtle"><i class="fas fa-exclamation-triangle text-danger"></i></div>
@@ -181,25 +180,167 @@
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
-                                    <!-- Data will be loaded from paginatedResult -->
+                                    @forelse($paginatedResult as $item)
+                                    @php
+                                        $rowClass = $item->variation_percentage > 0 ? 'table-warning' : ($item->variation_percentage < 0 ? 'table-danger' : 'table-success');
+                                        $statusBadge = $item->variation_percentage > 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>' : ($item->variation_percentage < 0 ? '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>' : '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>');
+                                    @endphp
+                                    <tr class="{{ $rowClass }}">
+                                        <td>
+                                            <strong>{{ $item->gisid }}</strong>
+                                            <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="{{ $item->gisid }}">
+                                                <i class="fas fa-copy text-muted"></i>
+                                            </button>
+                                        </td>
+                                        <td>{{ number_format($item->sqfeet, 2) }}</td>
+                                        <td>{{ $item->number_floor }}</td>
+                                        <td>{{ $item->percentage }}%</td>
+                                        <td>{{ $item->basement > 0 ? $item->basement : '-' }}</td>
+                                        <td class="fw-bold">{{ number_format($item->calculated_area, 2) }}</td>
+                                        <td>{{ number_format($item->mis_plot_area, 2) }}</td>
+                                        <td class="{{ $item->area_variation > 0 ? 'text-success' : ($item->area_variation < 0 ? 'text-danger' : '') }}">
+                                            {{ $item->area_variation > 0 ? '+' : '' }}{{ number_format($item->area_variation, 2) }}
+                                        </td>
+                                        <td class="{{ $item->variation_percentage > 0 ? 'text-warning' : ($item->variation_percentage < 0 ? 'text-danger' : 'text-success') }} fw-bold">
+                                            {{ $item->variation_percentage > 0 ? '+' : '' }}{{ number_format($item->variation_percentage, 2) }}%
+                                        </td>
+                                        <td><span class="badge bg-secondary">{{ $item->assessment_count }}</span></td>
+                                        <td>{!! $statusBadge !!}</td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="11" class="text-center py-5">
+                                            <div class="alert alert-info mb-0">
+                                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                                No variation data found for this ward
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforelse
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
 
-                        <!-- Pagination Links -->
-                        <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
-                            <div class="mb-2 mb-sm-0">
-                                <small class="text-muted">
-                                    Showing {{ $paginatedResult->firstItem() ?? 0 }} to {{ $paginatedResult->lastItem() ?? 0 }}
-                                    of {{ $paginatedResult->total() ?? 0 }} buildings
-                                </small>
-                            </div>
-                            <div>
-                                {{ $paginatedResult->appends(request()->query())->links() }}
-                            </div>
+                        <!-- Stylish Pagination -->
+                        <div class="pagination-wrapper mt-4">
+                            @if($paginatedResult->hasPages())
+                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3">
+                                    <div class="pagination-info">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Showing
+                                        <strong>{{ $paginatedResult->firstItem() ?? 0 }}</strong>
+                                        to
+                                        <strong>{{ $paginatedResult->lastItem() ?? 0 }}</strong>
+                                        of
+                                        <strong>{{ $paginatedResult->total() }}</strong>
+                                        buildings
+                                    </div>
+
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination justify-content-center mb-0">
+                                            {{-- Previous Page Link --}}
+                                            @if ($paginatedResult->onFirstPage())
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">
+                                                        <i class="fas fa-chevron-left"></i>
+                                                        <span class="d-none d-sm-inline"> Previous</span>
+                                                    </span>
+                                                </li>
+                                            @else
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ $paginatedResult->previousPageUrl() }}" rel="prev">
+                                                        <i class="fas fa-chevron-left"></i>
+                                                        <span class="d-none d-sm-inline"> Previous</span>
+                                                    </a>
+                                                </li>
+                                            @endif
+
+                                            {{-- Pagination Elements --}}
+                                            @php
+                                                $start = max(1, $paginatedResult->currentPage() - 2);
+                                                $end = min($start + 4, $paginatedResult->lastPage());
+                                                if ($end - $start < 4 && $paginatedResult->lastPage() > 5) {
+                                                    $start = max(1, $paginatedResult->lastPage() - 4);
+                                                    $end = $paginatedResult->lastPage();
+                                                }
+                                            @endphp
+
+                                            {{-- First Page --}}
+                                            @if($start > 1)
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ $paginatedResult->url(1) }}">1</a>
+                                                </li>
+                                                @if($start > 2)
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                @endif
+                                            @endif
+
+                                            {{-- Page Numbers --}}
+                                            @for($i = $start; $i <= $end; $i++)
+                                                @if($i == $paginatedResult->currentPage())
+                                                    <li class="page-item active" aria-current="page">
+                                                        <span class="page-link">{{ $i }}</span>
+                                                    </li>
+                                                @else
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="{{ $paginatedResult->url($i) }}">{{ $i }}</a>
+                                                    </li>
+                                                @endif
+                                            @endfor
+
+                                            {{-- Last Page --}}
+                                            @if($end < $paginatedResult->lastPage())
+                                                @if($end < $paginatedResult->lastPage() - 1)
+                                                    <li class="page-item disabled">
+                                                        <span class="page-link">...</span>
+                                                    </li>
+                                                @endif
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ $paginatedResult->url($paginatedResult->lastPage()) }}">
+                                                        {{ $paginatedResult->lastPage() }}
+                                                    </a>
+                                                </li>
+                                            @endif
+
+                                            {{-- Next Page Link --}}
+                                            @if ($paginatedResult->hasMorePages())
+                                                <li class="page-item">
+                                                    <a class="page-link" href="{{ $paginatedResult->nextPageUrl() }}" rel="next">
+                                                        <span class="d-none d-sm-inline">Next </span>
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </a>
+                                                </li>
+                                            @else
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">
+                                                        <span class="d-none d-sm-inline">Next </span>
+                                                        <i class="fas fa-chevron-right"></i>
+                                                    </span>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </nav>
+
+                                    {{-- Per Page Selector --}}
+                                    <div class="per-page-selector">
+                                        <label class="text-muted me-2 mb-0">
+                                            <i class="fas fa-eye"></i>
+                                            <span class="d-none d-sm-inline">Show:</span>
+                                        </label>
+                                        <select class="form-select form-select-sm" id="perPageSelect" style="width: auto; display: inline-block;">
+                                            <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
+                                            <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20</option>
+                                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
+                                            <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
+                                        </select>
+                                        <span class="text-muted d-none d-sm-inline">per page</span>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
 
-                        <!-- No Data Message -->
                         <div id="noDataMessage" class="alert alert-info text-center py-5 d-none">
                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
                             <h5>No data available</h5>
@@ -215,225 +356,436 @@
 @endsection
 
 @push('scripts')
-    <script>
-        $(document).ready(function() {
-            // Data from server (current page only)
-            const variationsData = @json($paginatedResult->items());
+<script>
+$(document).ready(function() {
+    // Data from server
+    const variationsData = @json($paginatedResult->items());
 
-            // Render initial table
-            renderTable(variationsData);
-            updateResultCount(variationsData.length);
+    // Render initial table
+    renderTable(variationsData);
+    updateResultCount(variationsData.length);
 
-            function renderTable(data) {
-                const $tbody = $("#tableBody");
-                $tbody.empty();
+    function renderTable(data) {
+        const $tbody = $("#tableBody");
 
-                if (data.length === 0) {
-                    $("#noDataMessage").removeClass('d-none');
-                    $("#variationTable").addClass('d-none');
-                    return;
-                }
+        if (data.length === 0) {
+            $("#noDataMessage").removeClass('d-none');
+            $("#variationTable").addClass('d-none');
+            return;
+        }
 
-                $("#noDataMessage").addClass('d-none');
-                $("#variationTable").removeClass('d-none');
+        $("#noDataMessage").addClass('d-none');
+        $("#variationTable").removeClass('d-none');
 
-                data.forEach(function(item, index) {
-                    let statusBadge = '';
-                    let variationClass = '';
+        $tbody.empty();
+        data.forEach(function(item, index) {
+            let statusBadge = '';
+            let variationClass = '';
 
-                    if (item.variation_percentage > 0) {
-                        statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>';
-                        variationClass = 'table-warning';
-                    } else if (item.variation_percentage < 0) {
-                        statusBadge = '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>';
-                        variationClass = 'table-danger';
-                    } else {
-                        statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>';
-                        variationClass = 'table-success';
-                    }
-
-                    let row = `
-                        <tr class="${variationClass}">
-                            <td>
-                                <strong>${escapeHtml(item.gisid)}</strong>
-                                <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${escapeHtml(item.gisid)}">
-                                    <i class="fas fa-copy text-muted"></i>
-                                </button>
-                            </td>
-                            <td>${formatNumber(item.sqfeet)}</td>
-                            <td>${item.number_floor}</td>
-                            <td>${item.percentage}%</td>
-                            <td>${item.basement > 0 ? item.basement : '-'}</td>
-                            <td class="fw-bold">${formatNumber(item.calculated_area)}</td>
-                            <td>${formatNumber(item.mis_plot_area)}</td>
-                            <td class="${item.area_variation > 0 ? 'text-success' : (item.area_variation < 0 ? 'text-danger' : '')}">
-                                ${item.area_variation > 0 ? '+' : ''}${formatNumber(item.area_variation)}
-                            </td>
-                            <td class="${item.variation_percentage > 0 ? 'text-warning' : (item.variation_percentage < 0 ? 'text-danger' : 'text-success')} fw-bold">
-                                ${item.variation_percentage > 0 ? '+' : ''}${item.variation_percentage}%
-                            </td>
-                            <td><span class="badge bg-secondary">${item.assessment_count}</span></td>
-                            <td>${statusBadge}</td>
-                        </tr>
-                    `;
-                    $tbody.append(row);
-                });
+            if (item.variation_percentage > 0) {
+                statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>';
+                variationClass = 'table-warning';
+            } else if (item.variation_percentage < 0) {
+                statusBadge = '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>';
+                variationClass = 'table-danger';
+            } else {
+                statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>';
+                variationClass = 'table-success';
             }
 
-            function formatNumber(num) {
-                if (num === null || num === undefined) return '0';
-                return parseFloat(num).toLocaleString('en-IN', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-            }
-
-            function escapeHtml(str) {
-                if (!str) return '';
-                return str.replace(/[&<>]/g, function(m) {
-                    if (m === '&') return '&amp;';
-                    if (m === '<') return '&lt;';
-                    if (m === '>') return '&gt;';
-                    return m;
-                });
-            }
-
-            function updateResultCount(count) {
-                $("#resultCount").text(count);
-            }
-
-            function applyFilters() {
-                var filterGisid = $("#filterGisid").val().toLowerCase().trim();
-                var filterVariationType = $("#filterVariationType").val();
-                var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
-
-                var filteredData = variationsData.filter(function(item) {
-                    var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
-                    var typeMatch = filterVariationType === "all" ||
-                        (filterVariationType === "positive" && item.variation_percentage > 0) ||
-                        (filterVariationType === "negative" && item.variation_percentage < 0) ||
-                        (filterVariationType === "zero" && item.variation_percentage === 0);
-                    var percentageMatch = isNaN(filterMinPercentage) || filterMinPercentage <= 0 ||
-                        Math.abs(item.variation_percentage) >= filterMinPercentage;
-                    return gisidMatch && typeMatch && percentageMatch;
-                });
-
-                renderTable(filteredData);
-                updateResultCount(filteredData.length);
-            }
-
-            function debounce(func, delay) {
-                let timeout;
-                return function() {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(this, arguments), delay);
-                };
-            }
-
-            const debouncedApplyFilters = debounce(applyFilters, 300);
-
-            $("#filterGisid").on("keyup", debouncedApplyFilters);
-            $("#filterVariationType").on("change", applyFilters);
-            $("#filterMinPercentage").on("keyup", debouncedApplyFilters);
-
-            // Copy GIS ID functionality
-            $(document).on('click', '.copy-gisid', function(e) {
-                e.preventDefault();
-                const gisid = $(this).data('gisid');
-
-                navigator.clipboard.writeText(gisid).then(function() {
-                    const $btn = $(e.currentTarget);
-                    const originalIcon = $btn.html();
-                    $btn.html('<i class="fas fa-check text-success"></i>');
-                    setTimeout(() => $btn.html(originalIcon), 1000);
-                }).catch(function() {
-                    const tempInput = $('<input>');
-                    $('body').append(tempInput);
-                    tempInput.val(gisid).select();
-                    document.execCommand('copy');
-                    tempInput.remove();
-                    const $btn = $(e.currentTarget);
-                    const originalIcon = $btn.html();
-                    $btn.html('<i class="fas fa-check text-success"></i>');
-                    setTimeout(() => $btn.html(originalIcon), 1000);
-                });
-            });
-
-            // Export current page data
-            $("#exportBtn").on("click", function() {
-                var filterGisid = $("#filterGisid").val().toLowerCase().trim();
-                var filterVariationType = $("#filterVariationType").val();
-                var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
-
-                var exportData = variationsData.filter(function(item) {
-                    var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
-                    var typeMatch = filterVariationType === "all" ||
-                        (filterVariationType === "positive" && item.variation_percentage > 0) ||
-                        (filterVariationType === "negative" && item.variation_percentage < 0) ||
-                        (filterVariationType === "zero" && item.variation_percentage === 0);
-                    var percentageMatch = isNaN(filterMinPercentage) || filterMinPercentage <= 0 ||
-                        Math.abs(item.variation_percentage) >= filterMinPercentage;
-                    return gisidMatch && typeMatch && percentageMatch;
-                });
-
-                const headers = [
-                    'GIS ID', 'Polygon Area (sq.ft)', 'Number of Floors', 'Floor Percentage',
-                    'Basement', 'Calculated Area (sq.ft)', 'MIS Plot Area (sq.ft)',
-                    'Area Variation (sq.ft)', 'Variation Percentage (%)', 'Assessment Count'
-                ];
-
-                const csvRows = [headers.join(',')];
-                exportData.forEach(item => {
-                    const row = [
-                        `"${item.gisid}"`, item.sqfeet, item.number_floor, item.percentage,
-                        item.basement || 0, item.calculated_area, item.mis_plot_area,
-                        item.area_variation, item.variation_percentage, item.assessment_count
-                    ];
-                    csvRows.push(row.join(','));
-                });
-
-                const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `variation_page_${{{ $paginatedResult->currentPage() }}}_ward_${@json($warddetail->ward_no ?? '')}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            });
+            let row = `
+                <tr class="${variationClass}">
+                    <td>
+                        <strong>${escapeHtml(item.gisid)}</strong>
+                        <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${escapeHtml(item.gisid)}">
+                            <i class="fas fa-copy text-muted"></i>
+                        </button>
+                    </td>
+                    <td>${formatNumber(item.sqfeet)}</td>
+                    <td>${item.number_floor}</td>
+                    <td>${item.percentage}%</td>
+                    <td>${item.basement > 0 ? item.basement : '-'}</td>
+                    <td class="fw-bold">${formatNumber(item.calculated_area)}</td>
+                    <td>${formatNumber(item.mis_plot_area)}</td>
+                    <td class="${item.area_variation > 0 ? 'text-success' : (item.area_variation < 0 ? 'text-danger' : '')}">
+                        ${item.area_variation > 0 ? '+' : ''}${formatNumber(item.area_variation)}
+                    </td>
+                    <td class="${item.variation_percentage > 0 ? 'text-warning' : (item.variation_percentage < 0 ? 'text-danger' : 'text-success')} fw-bold">
+                        ${item.variation_percentage > 0 ? '+' : ''}${item.variation_percentage}%
+                    </td>
+                    <td><span class="badge bg-secondary">${item.assessment_count}</span></td>
+                    <td>${statusBadge}</td>
+                </tr>
+            `;
+            $tbody.append(row);
         });
-    </script>
+    }
 
-    <!-- Keep all your existing CSS styles here -->
-    <style>
-        /* Your existing CSS styles - keep them exactly as they are */
+    function formatNumber(num) {
+        if (num === null || num === undefined) return '0';
+        return parseFloat(num).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function updateResultCount(count) {
+        $("#resultCount").text(count);
+    }
+
+    function applyFilters() {
+        var filterGisid = $("#filterGisid").val().toLowerCase().trim();
+        var filterVariationType = $("#filterVariationType").val();
+        var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
+
+        var filteredData = variationsData.filter(function(item) {
+            var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
+            var typeMatch = filterVariationType === "all" ||
+                (filterVariationType === "positive" && item.variation_percentage > 0) ||
+                (filterVariationType === "negative" && item.variation_percentage < 0) ||
+                (filterVariationType === "zero" && item.variation_percentage === 0);
+            var percentageMatch = isNaN(filterMinPercentage) || filterMinPercentage <= 0 ||
+                Math.abs(item.variation_percentage) >= filterMinPercentage;
+            return gisidMatch && typeMatch && percentageMatch;
+        });
+
+        renderTable(filteredData);
+        updateResultCount(filteredData.length);
+    }
+
+    function debounce(func, delay) {
+        let timeout;
+        return function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, arguments), delay);
+        };
+    }
+
+    const debouncedApplyFilters = debounce(applyFilters, 300);
+
+    $("#filterGisid").on("keyup", debouncedApplyFilters);
+    $("#filterVariationType").on("change", applyFilters);
+    $("#filterMinPercentage").on("keyup", debouncedApplyFilters);
+
+    // Per page selector
+    $("#perPageSelect").on("change", function() {
+        var perPage = $(this).val();
+        var currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('per_page', perPage);
+        currentUrl.searchParams.set('page', 1);
+        window.location.href = currentUrl.toString();
+    });
+
+    // Copy GIS ID functionality
+    $(document).on('click', '.copy-gisid', function(e) {
+        e.preventDefault();
+        const gisid = $(this).data('gisid');
+
+        navigator.clipboard.writeText(gisid).then(function() {
+            const $btn = $(e.currentTarget);
+            const originalIcon = $btn.html();
+            $btn.html('<i class="fas fa-check text-success"></i>');
+            setTimeout(() => $btn.html(originalIcon), 1000);
+        }).catch(function() {
+            const tempInput = $('<input>');
+            $('body').append(tempInput);
+            tempInput.val(gisid).select();
+            document.execCommand('copy');
+            tempInput.remove();
+            const $btn = $(e.currentTarget);
+            const originalIcon = $btn.html();
+            $btn.html('<i class="fas fa-check text-success"></i>');
+            setTimeout(() => $btn.html(originalIcon), 1000);
+        });
+    });
+
+    // Export current filtered data
+    $("#exportBtn").on("click", function() {
+        var filterGisid = $("#filterGisid").val().toLowerCase().trim();
+        var filterVariationType = $("#filterVariationType").val();
+        var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
+
+        var exportData = variationsData.filter(function(item) {
+            var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
+            var typeMatch = filterVariationType === "all" ||
+                (filterVariationType === "positive" && item.variation_percentage > 0) ||
+                (filterVariationType === "negative" && item.variation_percentage < 0) ||
+                (filterVariationType === "zero" && item.variation_percentage === 0);
+            var percentageMatch = isNaN(filterMinPercentage) || filterMinPercentage <= 0 ||
+                Math.abs(item.variation_percentage) >= filterMinPercentage;
+            return gisidMatch && typeMatch && percentageMatch;
+        });
+
+        if (exportData.length === 0) {
+            alert("No data to export!");
+            return;
+        }
+
+        const headers = [
+            'GIS ID', 'Polygon Area (sq.ft)', 'Number of Floors', 'Floor Percentage',
+            'Basement', 'Calculated Area (sq.ft)', 'MIS Plot Area (sq.ft)',
+            'Area Variation (sq.ft)', 'Variation Percentage (%)', 'Assessment Count'
+        ];
+
+        const csvRows = [headers.join(',')];
+        exportData.forEach(item => {
+            const row = [
+                `"${item.gisid}"`, item.sqfeet, item.number_floor, item.percentage,
+                item.basement || 0, item.calculated_area, item.mis_plot_area,
+                item.area_variation, item.variation_percentage, item.assessment_count
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `variation_ward_{{ $warddetail->ward_no }}_page_{{ $paginatedResult->currentPage() }}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    });
+});
+</script>
+
+<style>
+    /* Your existing CSS styles */
+    .dashboard-content-area {
+        padding: 20px;
+        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+        min-height: 100vh;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+        background: rgba(22, 121, 171, 0.1);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #1679AB;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        padding: 8px 12px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #1679AB;
+        box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
+    }
+
+    .variation-table {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .variation-table thead th {
+        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 12px 10px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .variation-table tbody td {
+        padding: 12px 10px;
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+
+    .variation-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .variation-table tbody tr:hover {
+        background-color: rgba(22, 121, 171, 0.05);
+        transform: scale(1.01);
+    }
+
+    .badge {
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+
+    .btn-outline-light {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+
+    .btn-outline-light:hover {
+        background: white;
+        color: #102C57;
+        border-color: white;
+    }
+
+    .btn-outline-primary {
+        border-color: #1679AB;
+        color: #1679AB;
+    }
+
+    .btn-outline-primary:hover {
+        background: #1679AB;
+        border-color: #1679AB;
+        color: white;
+    }
+
+    .copy-gisid {
+        opacity: 0.6;
+        transition: opacity 0.2s ease;
+    }
+
+    .copy-gisid:hover {
+        opacity: 1;
+    }
+
+    /* Stylish Pagination */
+    .pagination-wrapper {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .pagination-info {
+        background: #f8f9fa;
+        padding: 8px 15px;
+        border-radius: 10px;
+        font-size: 14px;
+        color: #102C57;
+    }
+
+    .pagination {
+        gap: 5px;
+    }
+
+    .page-link {
+        color: #102C57;
+        border-radius: 10px;
+        margin: 0 2px;
+        border: 1px solid #dee2e6;
+        padding: 8px 14px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .page-link:hover {
+        background-color: #1679AB;
+        border-color: #1679AB;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+        border-color: #1679AB;
+        color: white;
+        box-shadow: 0 2px 8px rgba(22, 121, 171, 0.3);
+    }
+
+    .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #fff;
+        border-color: #dee2e6;
+        opacity: 0.6;
+    }
+
+    .per-page-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f8f9fa;
+        padding: 5px 12px;
+        border-radius: 10px;
+    }
+
+    .per-page-selector select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .per-page-selector select:focus {
+        border-color: #1679AB;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(22, 121, 171, 0.2);
+    }
+
+    .table-warning {
+        background-color: #fff3cd !important;
+    }
+
+    .table-danger {
+        background-color: #f8d7da !important;
+    }
+
+    .table-success {
+        background-color: #d4edda !important;
+    }
+
+    @media (max-width: 768px) {
         .dashboard-content-area {
-            padding: 20px;
-            background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
-            min-height: 100vh;
+            padding: 15px;
         }
-        /* ... rest of your existing styles ... */
 
-        /* Add pagination styles */
-        .pagination {
-            margin-bottom: 0;
+        .pagination-wrapper {
+            padding: 15px;
         }
+
+        .pagination-info {
+            font-size: 12px;
+            text-align: center;
+            width: 100%;
+        }
+
         .page-link {
-            color: #102C57;
-            border-radius: 8px;
-            margin: 0 2px;
-            border: none;
-            padding: 8px 14px;
+            padding: 6px 10px;
+            font-size: 12px;
         }
-        .page-item.active .page-link {
-            background-color: #1679AB;
-            border-color: #1679AB;
-            color: white;
+
+        .per-page-selector {
+            font-size: 12px;
         }
-        .page-link:hover {
-            color: #1679AB;
-            background-color: #f8f9fa;
+
+        .variation-table thead th,
+        .variation-table tbody td {
+            font-size: 11px;
+            padding: 8px 5px;
         }
-    </style>
+    }
+</style>
 @endpush
