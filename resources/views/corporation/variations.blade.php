@@ -1,5 +1,5 @@
 {{-- resources/views/corporation/variations.blade.php --}}
-@extends('layouts.app')
+@extends('layouts.commissioner')
 
 @section('title', 'Ward ' . $ward_no . ' - Area & Usage Variations')
 
