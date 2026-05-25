@@ -540,7 +540,7 @@ public function viewVariations($ward_no)
     $totalCalculatedArea = 0;
     $totalAreaVariation = 0;
 
-    foreach ($polygons as $polygon) {
+    foreach ($polygons as $index => $polygon) {
         $points = $pointDatas[$polygon->gisid] ?? collect();
         $misArea = 0;
         $assessmentCount = 0;
@@ -556,7 +556,6 @@ public function viewVariations($ward_no)
         $basement = (int) ($polygon->basement ?? 0);
 
         // CORRECTED FORMULA: ((numberFloor + basement + (percentage/100)) * sqfeet)
-        // Example: (1 + 0 + 0.85) * 1399.60 = 2,589.26
         $calculatedArea = (($numberFloor + $basement + ($floorPercentage / 100)) * $sqfeet);
 
         $areaVariation = $calculatedArea - $misArea;
@@ -576,6 +575,7 @@ public function viewVariations($ward_no)
         }
 
         $allResults[] = [
+            'index' => $index + 1, // Add index for sorting
             'gisid' => $polygon->gisid,
             'sqfeet' => round($sqfeet, 2),
             'number_floor' => $numberFloor,
@@ -589,30 +589,11 @@ public function viewVariations($ward_no)
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pagination
-    |--------------------------------------------------------------------------
-    */
-    $perPage = 50;
-    $currentPage = request()->get('page', 1);
-    $collection = collect($allResults);
-
-    $paginatedResult = new \Illuminate\Pagination\LengthAwarePaginator(
-        $collection->forPage($currentPage, $perPage),
-        $collection->count(),
-        $perPage,
-        $currentPage,
-        [
-            'path' => request()->url(),
-            'query' => request()->query()
-        ]
-    );
-
     $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
 
+    // Pass all data to view (no pagination from controller - it's handled client-side)
     return view('corporation.variations', [
-        'result' => $paginatedResult,
+        'result' => collect($allResults), // Pass the collection
         'warddetail' => $warddetail,
         'totalSqfeet' => round($totalSqfeet, 2),
         'totalBuildings' => $totalBuildings,
