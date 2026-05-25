@@ -520,6 +520,13 @@ public function viewVariations($ward_no)
     | MIS Data
     |--------------------------------------------------------------------------
     */
+    // Delete duplicate assessments, keeping the record with the highest ID
+DB::statement("
+    DELETE t1 FROM {$misTableName} t1
+    INNER JOIN {$misTableName} t2
+    WHERE t1.assessment = t2.assessment
+    AND t1.id < t2.id
+");
     $misData = DB::table($misTableName)
         ->whereIn('assessment', $assessmentList)
         ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
