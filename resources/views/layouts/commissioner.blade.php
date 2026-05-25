@@ -384,7 +384,11 @@
         .alert-danger { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; }
         .alert-info { background: linear-gradient(135deg, #d1ecf1, #bee5eb); color: #0c5460; }
 
-        .custom-pagination-wrapper {
+        /* =========================================================
+   MODERN PAGINATION UI
+========================================================= */
+
+.custom-pagination-wrapper {
 
     display: flex;
 
@@ -394,19 +398,44 @@
 
     flex-wrap: wrap;
 
-    gap: 15px;
+    gap: 20px;
 
-    padding-top: 20px;
+    margin-top: 30px;
+
+    padding: 20px;
+
+    background: #ffffff;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.08);
 
 }
+
+/* =========================================================
+   INFO TEXT
+========================================================= */
 
 .pagination-info {
 
-    color: #102C57;
+    font-size: 16px;
 
     font-weight: 600;
 
+    color: #102C57;
+
 }
+
+.pagination-info strong {
+
+    color: #1679AB;
+
+}
+
+/* =========================================================
+   PAGINATION CONTAINER
+========================================================= */
 
 .custom-pagination {
 
@@ -414,17 +443,23 @@
 
     align-items: center;
 
-    gap: 8px;
+    gap: 10px;
 
     flex-wrap: wrap;
 
 }
 
+/* =========================================================
+   BUTTONS
+========================================================= */
+
 .page-btn {
 
-    min-width: 42px;
+    min-width: 45px;
 
-    height: 42px;
+    height: 45px;
+
+    padding: 0 14px;
 
     display: flex;
 
@@ -432,34 +467,51 @@
 
     justify-content: center;
 
-    border-radius: 12px;
+    border-radius: 14px;
 
-    text-decoration: none;
-
-    font-weight: 600;
-
-    transition: all 0.3s ease;
-
-    background: white;
+    background: #ffffff;
 
     color: #102C57;
 
-    border: 1px solid #dbe4f0;
+    border: 1px solid #d9e2ef;
+
+    text-decoration: none;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    transition: all 0.25s ease;
 
     box-shadow:
         0 4px 10px rgba(0,0,0,0.05);
 
 }
 
+/* =========================================================
+   HOVER
+========================================================= */
+
 .page-btn:hover {
 
-    background: #1679AB;
+    background:
+        linear-gradient(
+            135deg,
+            #1679AB 0%,
+            #0F4C75 100%
+        );
 
-    color: white;
+    color: #ffffff;
 
     transform: translateY(-2px);
 
+    border-color: transparent;
+
 }
+
+/* =========================================================
+   ACTIVE
+========================================================= */
 
 .page-btn.active {
 
@@ -470,19 +522,78 @@
             #1679AB 100%
         );
 
-    color: white;
+    color: #ffffff;
 
     border: none;
 
+    box-shadow:
+        0 6px 15px rgba(22,121,171,0.35);
+
 }
+
+/* =========================================================
+   DISABLED
+========================================================= */
 
 .page-btn.disabled {
 
-    opacity: 0.5;
+    opacity: 0.45;
+
+    pointer-events: none;
 
     cursor: not-allowed;
 
-    pointer-events: none;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width: 768px) {
+
+    .custom-pagination-wrapper {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+    }
+
+    .custom-pagination {
+
+        width: 100%;
+
+        justify-content: center;
+
+    }
+
+    .page-btn {
+
+        min-width: 40px;
+
+        height: 40px;
+
+        font-size: 14px;
+
+    }
+
+}
+
+/* =========================================================
+   OPTIONAL SCROLLBAR
+========================================================= */
+
+.custom-pagination::-webkit-scrollbar {
+
+    height: 6px;
+
+}
+
+.custom-pagination::-webkit-scrollbar-thumb {
+
+    background: #1679AB;
+
+    border-radius: 10px;
 
 }
     </style>
