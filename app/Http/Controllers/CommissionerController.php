@@ -579,11 +579,11 @@ class CommissionerController extends Controller
                     $floorPercentage = (float) ($polygon->percentage ?? 100);
                     $numberFloor = (int) ($polygon->number_floor ?? 1);
                     $basement = (int) ($polygon->basement ?? 0);
-                    if ($basement > 0) {
-                        $numberFloor += $basement;
-                    }
-                    $calculatedArea = $sqfeet * (($floorPercentage / 100) + $numberFloor);
 
+                    $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
+                    if ($basement > 0) {
+                        $calculatedArea += ($sqfeet * $basement);
+                    }
                     $totalCalculatedAreaAll += $calculatedArea;
                 }
             });
