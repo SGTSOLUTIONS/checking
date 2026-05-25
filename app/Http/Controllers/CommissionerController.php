@@ -451,7 +451,7 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
- public function viewVariations($ward_no)
+public function viewVariations($ward_no)
 {
     $user = Auth::user();
 
@@ -460,57 +460,37 @@ class CommissionerController extends Controller
         ->first();
 
     if (!$warddetail) {
-
         return back()->with('error', 'Ward not found');
     }
 
     $zone = strtolower(trim($warddetail->zone));
-
     $wardNo = (int) $warddetail->ward_no;
-
     $corp = (int) $warddetail->corporation_id;
 
-    $misTableName =
-        "mis_corporation_{$corp}";
-
-    $polygonsTableName =
-        "polygon_{$corp}_{$zone}_{$wardNo}";
-
-    $pointDataTable =
-        $this->getPointDataTable($corp, $wardNo, $zone);
-
-    $polygonDataTable =
-        $this->getPolygonDataTable($corp, $wardNo, $zone);
+    $misTableName = "mis_corporation_{$corp}";
+    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+    $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
+    $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
     /*
     |--------------------------------------------------------------------------
     | Polygon Data
     |--------------------------------------------------------------------------
     */
-
     $polygons = DB::table($polygonsTableName . ' as p')
-
         ->leftJoin(
             $polygonDataTable . ' as pgd',
             'p.gisid',
             '=',
             'pgd.gisid'
         )
-
         ->select(
-
             'p.gisid',
-
             'p.sqfeet',
-
             'pgd.number_floor',
-
             'pgd.percentage',
-
             'pgd.basement'
-
         )
-
         ->get();
 
     /*
@@ -518,21 +498,10 @@ class CommissionerController extends Controller
     | Point Data
     |--------------------------------------------------------------------------
     */
-
     $pointDatas = DB::table($pointDataTable)
-
-        ->select(
-
-            'point_gisid',
-
-            'assessment'
-
-        )
-
+        ->select('point_gisid', 'assessment')
         ->whereNotNull('assessment')
-
         ->get()
-
         ->groupBy('point_gisid');
 
     /*
@@ -540,15 +509,10 @@ class CommissionerController extends Controller
     | Assessment List
     |--------------------------------------------------------------------------
     */
-
     $assessmentList = DB::table($pointDataTable)
-
         ->whereNotNull('assessment')
-
         ->pluck('assessment')
-
         ->unique()
-
         ->toArray();
 
     /*
@@ -556,135 +520,73 @@ class CommissionerController extends Controller
     | MIS Data
     |--------------------------------------------------------------------------
     */
-
     $misData = DB::table($misTableName)
-
         ->whereIn('assessment', $assessmentList)
-
-        ->select(
-
-            'assessment',
-
-            DB::raw('SUM(plot_area) as total_plot_area')
-
-        )
-
+        ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
         ->groupBy('assessment')
-
         ->get()
-
         ->keyBy('assessment');
 
     /*
     |--------------------------------------------------------------------------
-    | Final Result
+    | Process All Data for Totals (Before Pagination)
     |--------------------------------------------------------------------------
     */
-
-    $result = [];
+    $allResults = [];
+    $totalSqfeet = 0;
+    $totalBuildings = 0;
+    $totalMisPlotArea = 0;
+    $totalCalculatedArea = 0;
+    $totalAreaVariation = 0;
 
     foreach ($polygons as $polygon) {
-
-        $points =
-            $pointDatas[$polygon->gisid] ?? collect();
-
+        $points = $pointDatas[$polygon->gisid] ?? collect();
         $misArea = 0;
-
         $assessmentCount = 0;
 
         foreach ($points as $point) {
-
             $assessmentCount++;
-
-            $misArea += (float) (
-
-                $misData[$point->assessment]->total_plot_area ?? 0
-
-            );
+            $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Calculation
-        |--------------------------------------------------------------------------
-        */
+        $sqfeet = (float) ($polygon->sqfeet ?? 0);
+        $floorPercentage = (float) ($polygon->percentage ?? 100);
+        $numberFloor = (int) ($polygon->number_floor ?? 1);
+        $basement = (int) ($polygon->basement ?? 0);
 
-        $sqfeet =
-            (float) ($polygon->sqfeet ?? 0);
-
-        $floorPercentage =
-            (float) ($polygon->percentage ?? 100);
-
-        $numberFloor =
-            (int) ($polygon->number_floor ?? 1);
-
-        $basement =
-            (int) ($polygon->basement ?? 0);
-
-        $calculatedArea =
-            ($sqfeet * $floorPercentage / 100)
-            * $numberFloor;
+        $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
 
         if ($basement > 0) {
-
-            $calculatedArea +=
-                ($sqfeet * $basement);
+            $calculatedArea += ($sqfeet * $basement);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Variation
-        |--------------------------------------------------------------------------
-        */
-
-        $areaVariation =
-            $calculatedArea - $misArea;
-
+        $areaVariation = $calculatedArea - $misArea;
         $variationPercentage = 0;
 
         if ($misArea > 0) {
-
-            $variationPercentage =
-                ($areaVariation / $misArea) * 100;
+            $variationPercentage = ($areaVariation / $misArea) * 100;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Row
-        |--------------------------------------------------------------------------
-        */
+        // Add to totals (only if there's at least one assessment or building)
+        if ($assessmentCount > 0) {
+            $totalBuildings++;
+            $totalSqfeet += $sqfeet;
+            $totalMisPlotArea += $misArea;
+            $totalCalculatedArea += $calculatedArea;
+            $totalAreaVariation += $areaVariation;
+        }
 
-        $result[] = [
-
-            'gisid' =>
-                $polygon->gisid,
-
-            'sqfeet' =>
-                round($sqfeet, 2),
-
-            'number_floor' =>
-                $numberFloor,
-
-            'percentage' =>
-                $floorPercentage,
-
-            'basement' =>
-                $basement,
-
-            'mis_plot_area' =>
-                round($misArea, 2),
-
-            'calculated_area' =>
-                round($calculatedArea, 2),
-
-            'area_variation' =>
-                round($areaVariation, 2),
-
-            'variation_percentage' =>
-                round($variationPercentage, 2),
-
-            'assessment_count' =>
-                $assessmentCount,
+        $allResults[] = [
+            'gisid' => $polygon->gisid,
+            'sqfeet' => round($sqfeet, 2),
+            'number_floor' => $numberFloor,
+            'percentage' => $floorPercentage,
+            'basement' => $basement,
+            'mis_plot_area' => round($misArea, 2),
+            'calculated_area' => round($calculatedArea, 2),
+            'area_variation' => round($areaVariation, 2),
+            'variation_percentage' => round($variationPercentage, 2),
+            'assessment_count' => $assessmentCount,
         ];
     }
 
@@ -693,47 +595,30 @@ class CommissionerController extends Controller
     | Pagination
     |--------------------------------------------------------------------------
     */
-
     $perPage = 50;
+    $currentPage = request()->get('page', 1);
+    $collection = collect($allResults);
 
-    $currentPage =
-        request()->get('page', 1);
-
-    $collection =
-        collect($result);
-
-    $paginatedResult =
-        new \Illuminate\Pagination\LengthAwarePaginator(
-
-            $collection->forPage(
-                $currentPage,
-                $perPage
-            ),
-
-            $collection->count(),
-
-            $perPage,
-
-            $currentPage,
-
-            [
-                'path' => request()->url(),
-
-                'query' => request()->query()
-            ]
-        );
-
-    return view(
-        'corporation.variations',
+    $paginatedResult = new \Illuminate\Pagination\LengthAwarePaginator(
+        $collection->forPage($currentPage, $perPage),
+        $collection->count(),
+        $perPage,
+        $currentPage,
         [
-
-            'result' =>
-                $paginatedResult,
-
-            'warddetail' =>
-                $warddetail
+            'path' => request()->url(),
+            'query' => request()->query()
         ]
     );
+
+    return view('corporation.variations', [
+        'result' => $paginatedResult,
+        'warddetail' => $warddetail,
+        'totalSqfeet' => round($totalSqfeet, 2),
+        'totalBuildings' => $totalBuildings,
+        'totalMisPlotArea' => round($totalMisPlotArea, 2),
+        'totalCalculatedArea' => round($totalCalculatedArea, 2),
+        'totalAreaVariation' => round($totalAreaVariation, 2),
+    ]);
 }
     /**
      * Export ward data to Excel with building variations
