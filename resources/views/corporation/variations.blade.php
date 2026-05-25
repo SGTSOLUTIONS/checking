@@ -3,595 +3,308 @@
 
 @section('title', 'Building Variations - Ward ' . ($warddetail->ward_no ?? ''))
 
-@section('styles')
-<style>
-    /* Modern Stats Cards */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .stat-card-modern {
-        background: var(--card-white);
-        border-radius: 24px;
-        padding: 1.5rem;
-        position: relative;
-        overflow: hidden;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(212, 161, 62, 0.1);
-        box-shadow: var(--card-shadow);
-    }
-
-    .stat-card-modern:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--hover-shadow);
-        border-color: rgba(212, 161, 62, 0.3);
-    }
-
-    .stat-card-modern::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #D4A13E, #E86A5F, #1A6B6E);
-    }
-
-    .stat-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-
-    .stat-icon-modern {
-        width: 54px;
-        height: 54px;
-        background: linear-gradient(135deg, rgba(212, 161, 62, 0.12), rgba(232, 106, 95, 0.12));
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-    }
-
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--text-dark);
-        margin-bottom: 0.25rem;
-        letter-spacing: -0.02em;
-    }
-
-    .stat-label {
-        color: var(--text-light);
-        font-size: 0.875rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    /* Variation Highlight Card */
-    .variation-card {
-        background: linear-gradient(135deg, #0B2B40 0%, #1A6B6E 100%);
-        border-radius: 24px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .variation-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(212, 161, 62, 0.1) 0%, transparent 70%);
-        animation: pulse 8s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
-    }
-
-    .variation-content {
-        position: relative;
-        z-index: 1;
-        text-align: center;
-    }
-
-    .variation-label {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 1rem;
-    }
-
-    .variation-amount {
-        font-size: 3.5rem;
-        font-weight: 800;
-        margin: 1rem 0;
-        letter-spacing: -0.02em;
-    }
-
-    .variation-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1.25rem;
-        border-radius: 50px;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-
-    /* Table Styles */
-    .data-table-wrapper {
-        background: var(--card-white);
-        border-radius: 24px;
-        overflow: hidden;
-        box-shadow: var(--card-shadow);
-        margin-bottom: 1.5rem;
-    }
-
-    .table-header {
-        background: linear-gradient(135deg, #0B2B40 0%, #1A6B6E 100%);
-        padding: 1.25rem 1.5rem;
-    }
-
-    .table-header h5 {
-        color: white;
-        margin: 0;
-        font-weight: 600;
-    }
-
-    .modern-table {
-        margin-bottom: 0;
-    }
-
-    .modern-table thead th {
-        background: #F8F9FA;
-        color: var(--text-dark);
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 1rem 1rem;
-        border-bottom: 2px solid rgba(212, 161, 62, 0.2);
-    }
-
-    .modern-table tbody tr {
-        transition: all 0.2s ease;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    .modern-table tbody tr:hover {
-        background: linear-gradient(90deg, rgba(212, 161, 62, 0.03), rgba(232, 106, 95, 0.03));
-        transform: scale(1.01);
-    }
-
-    .modern-table tbody td {
-        padding: 1rem;
-        vertical-align: middle;
-        color: var(--text-dark);
-    }
-
-    .badge-modern {
-        padding: 6px 12px;
-        border-radius: 10px;
-        font-weight: 500;
-        font-size: 0.75rem;
-    }
-
-    .badge-gold {
-        background: rgba(212, 161, 62, 0.15);
-        color: #D4A13E;
-    }
-
-    .badge-teal {
-        background: rgba(26, 107, 110, 0.15);
-        color: #1A6B6E;
-    }
-
-    .badge-coral {
-        background: rgba(232, 106, 95, 0.15);
-        color: #E86A5F;
-    }
-
-    .variation-up {
-        color: #10b981;
-        font-weight: 600;
-    }
-
-    .variation-down {
-        color: #ef4444;
-        font-weight: 600;
-    }
-
-    /* Footer Total Row */
-    .total-footer {
-        background: linear-gradient(135deg, #F8F9FA, #FFFFFF);
-        border-top: 2px solid rgba(212, 161, 62, 0.2);
-        font-weight: 700;
-    }
-
-    .total-footer td {
-        padding: 1rem;
-        font-weight: 700;
-        color: var(--text-dark);
-        border-top: 2px solid #D4A13E;
-    }
-
-    /* Ward Header */
-    .ward-header-modern {
-        background: linear-gradient(135deg, #0B2B40 0%, #1A6B6E 100%);
-        border-radius: 24px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .ward-header-modern::after {
-        content: '';
-        position: absolute;
-        bottom: -50px;
-        right: -50px;
-        width: 200px;
-        height: 200px;
-        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='rgba(255,255,255,0.05)'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E");
-        background-size: cover;
-        opacity: 0.1;
-    }
-
-    /* Info Alert */
-    .info-alert {
-        background: linear-gradient(135deg, rgba(212, 161, 62, 0.08), rgba(232, 106, 95, 0.08));
-        border-left: 4px solid #D4A13E;
-        border-radius: 16px;
-        padding: 1.25rem;
-        margin-bottom: 2rem;
-    }
-
-    /* Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        margin-top: 1.5rem;
-    }
-
-    .btn-modern {
-        padding: 0.6rem 1.25rem;
-        border-radius: 12px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        border: none;
-    }
-
-    .btn-modern-success {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-    }
-
-    .btn-modern-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-modern-secondary {
-        background: linear-gradient(135deg, #6B7A7F, #4B5A5F);
-        color: white;
-    }
-
-    .btn-modern-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(107, 122, 127, 0.3);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .stat-value {
-            font-size: 1.5rem;
-        }
-
-        .variation-amount {
-            font-size: 2rem;
-        }
-
-        .modern-table {
-            font-size: 0.75rem;
-        }
-
-        .modern-table th,
-        .modern-table td {
-            padding: 0.75rem 0.5rem;
-        }
-
-        .ward-header-modern {
-            padding: 1.5rem;
-        }
-    }
-
-    /* Print Styles */
-    @media print {
-        .action-buttons,
-        .menu-toggle,
-        .navbar-custom,
-        .sidebar {
-            display: none !important;
-        }
-
-        .main-content {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .ward-header-modern {
-            background: #0B2B40 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        .stat-card-modern,
-        .variation-card {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-    }
-</style>
-@endsection
-
 @section('content')
-<div class="content-panel">
-    <!-- Modern Ward Header -->
-    <div class="ward-header-modern">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+<div class="dashboard-content-area">
+    <div class="animate__animated animate__fadeInUp">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <h3 class="fw-bold text-white">
+                <i class="fas fa-chart-line me-2" style="color:#1679AB;"></i>
+                Building Variations - Ward {{ $warddetail->ward_no ?? '' }}
+            </h3>
             <div>
-                <div class="mb-3">
-                    <a href="{{ route('corporation.dashboard') }}" class="text-white-50 text-decoration-none small">
-                        <i class="fas fa-home me-1"></i> Dashboard
-                    </a>
-                    <i class="fas fa-chevron-right mx-2 text-white-50 fa-xs"></i>
-                    <span class="text-white">Ward {{ $warddetail->ward_no }}</span>
-                </div>
-                <h2 class="fw-bold text-white mb-2">
-                    <i class="fas fa-building me-3"></i>
-                    Building Variations Analysis
-                </h2>
-                <div class="d-flex gap-3 text-white-50 small">
-                    <span><i class="fas fa-location-dot me-1"></i> Zone: {{ ucfirst($warddetail->zone) }}</span>
-                    <span><i class="fas fa-calendar me-1"></i> {{ now()->format('d M, Y') }}</span>
-                </div>
-            </div>
-            <div>
-                <button onclick="window.print()" class="btn btn-light">
-                    <i class="fas fa-print me-2"></i>Print
-                </button>
-                <button onclick="exportToExcel()" class="btn btn-success ms-2">
-                    <i class="fas fa-file-excel me-2"></i>Export
-                </button>
-                <a href="{{ route('corporation.dashboard') }}" class="btn btn-outline-light ms-2">
-                    <i class="fas fa-arrow-left me-2"></i>Back
+                <span class="badge bg-light text-dark p-2">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {{ now()->format('d M Y') }}
+                </span>
+                <a href="{{ route('corporation.dashboard') }}" class="btn btn-sm btn-light ms-2">
+                    <i class="fas fa-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
-    </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-        <div class="stat-card-modern">
-            <div class="stat-header">
-                <div class="stat-icon-modern">
-                    <i class="fas fa-building" style="color: #1A6B6E; font-size: 28px;"></i>
-                </div>
-                <i class="fas fa-chart-line text-muted"></i>
-            </div>
-            <div class="stat-value">{{ number_format($totalBuildings) }}</div>
-            <div class="stat-label">Total Buildings</div>
-        </div>
-
-        <div class="stat-card-modern">
-            <div class="stat-header">
-                <div class="stat-icon-modern">
-                    <i class="fas fa-vector-square" style="color: #D4A13E; font-size: 28px;"></i>
-                </div>
-                <i class="fas fa-ruler text-muted"></i>
-            </div>
-            <div class="stat-value">{{ number_format($totalSqfeet, 2) }}</div>
-            <div class="stat-label">Total Sq. Feet</div>
-        </div>
-
-        <div class="stat-card-modern">
-            <div class="stat-header">
-                <div class="stat-icon-modern">
-                    <i class="fas fa-database" style="color: #E86A5F; font-size: 28px;"></i>
-                </div>
-                <i class="fas fa-chart-bar text-muted"></i>
-            </div>
-            <div class="stat-value">{{ number_format($totalMisPlotArea, 2) }}</div>
-            <div class="stat-label">MIS Plot Area</div>
-        </div>
-
-        <div class="stat-card-modern">
-            <div class="stat-header">
-                <div class="stat-icon-modern">
-                    <i class="fas fa-calculator" style="color: #0B2B40; font-size: 28px;"></i>
-                </div>
-                <i class="fas fa-chart-pie text-muted"></i>
-            </div>
-            <div class="stat-value">{{ number_format($totalCalculatedArea, 2) }}</div>
-            <div class="stat-label">Calculated Area</div>
-        </div>
-    </div>
-
-    <!-- Variation Highlight Card -->
-    @php
-        $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
-        $totalVariationPercent = $avgVariationPercentage;
-    @endphp
-
-    <div class="variation-card">
-        <div class="variation-content">
-            <div class="variation-label">
-                <i class="fas fa-chart-line me-2"></i>Total Area Variation
-            </div>
-            <div class="variation-amount {{ $totalAreaVariation >= 0 ? 'variation-up' : 'variation-down' }}">
-                {{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}
-            </div>
-            <div>
-                <span class="variation-badge"
-                      style="background: {{ $avgVariationPercentage >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }};
-                             color: {{ $avgVariationPercentage >= 0 ? '#10b981' : '#ef4444' }};">
-                    <i class="fas fa-percent me-1"></i>
-                    {{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average Variation
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Info Alert -->
-    <div class="info-alert">
-        <div class="d-flex gap-3">
-            <div>
-                <i class="fas fa-lightbulb" style="color: #D4A13E; font-size: 1.5rem;"></i>
-            </div>
-            <div>
-                <strong class="d-block mb-1">Understanding the Calculations</strong>
-                <div class="row">
-                    <div class="col-md-6">
-                        <small class="text-muted d-block">
-                            <i class="fas fa-formula me-1"></i>
-                            <strong>Calculated Area</strong> = (Sq. Feet × Floor % / 100) × Floors + (Sq. Feet × Basement)
-                        </small>
-                    </div>
-                    <div class="col-md-6">
-                        <small class="text-muted d-block">
-                            <i class="fas fa-chart-line me-1"></i>
-                            <strong>Area Variation</strong> = Calculated Area - MIS Area
-                            <span class="badge-modern badge-gold ms-2">+ = Under-assessment</span>
-                            <span class="badge-modern badge-coral ms-1">- = Over-assessment</span>
-                        </small>
+        <!-- Ward Info Card -->
+        <div class="stat-card p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1" style="color:#102C57;">Ward {{ $warddetail->ward_no ?? '' }}</h5>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-building me-1"></i> Zone: {{ ucfirst($warddetail->zone ?? 'N/A') }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <small class="text-muted d-block mt-2">
-                    <i class="fas fa-info-circle me-1"></i>
-                    <strong>Note:</strong> All totals reflect ALL buildings in this ward, not just the current page.
-                </small>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-primary p-2">
+                        <i class="fas fa-chart-line me-1"></i> Variation Analysis Report
+                    </span>
+                    <button onclick="window.print()" class="btn btn-sm btn-outline-primary ms-2">
+                        <i class="fas fa-print me-1"></i> Print
+                    </button>
+                    <button onclick="exportToExcel()" class="btn btn-sm btn-success ms-2">
+                        <i class="fas fa-file-excel me-1"></i> Export
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Data Table -->
-    <div class="data-table-wrapper">
-        <div class="table-header">
-            <h5>
-                <i class="fas fa-table me-2"></i>
-                Detailed Building Data
-                <span class="badge bg-white text-dark ms-2">{{ $result->total() }} Records</span>
-            </h5>
+        <!-- Statistics Cards - Row 1 -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Buildings</h6>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalBuildings) }}</h2>
+                        <small class="text-info"><i class="fas fa-building"></i> In this ward</small>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-building"></i></div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Total Sq. Feet</h6>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalSqfeet, 2) }}</h2>
+                        <small class="text-info"><i class="fas fa-vector-square"></i> Built-up area</small>
+                    </div>
+                    <div class="stat-icon bg-info-subtle"><i class="fas fa-ruler-combined text-info"></i></div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">MIS Plot Area</h6>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalMisPlotArea, 2) }}</h2>
+                        <small class="text-warning"><i class="fas fa-database"></i> From MIS records</small>
+                    </div>
+                    <div class="stat-icon bg-warning-subtle"><i class="fas fa-database text-warning"></i></div>
+                </div>
+            </div>
+
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Calculated Area</h6>
+                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalCalculatedArea, 2) }}</h2>
+                        <small class="text-danger"><i class="fas fa-calculator"></i> Based on formula</small>
+                    </div>
+                    <div class="stat-icon bg-danger-subtle"><i class="fas fa-calculator text-danger"></i></div>
+                </div>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="modern-table table">
-                <thead>
-                    <tr>
-                        <th width="5%">#</th>
-                        <th width="12%">GIS ID</th>
-                        <th width="10%">Sq. Feet</th>
-                        <th width="8%">Floors</th>
-                        <th width="8%">Floor %</th>
-                        <th width="8%">Basement</th>
-                        <th width="12%">MIS Area</th>
-                        <th width="12%">Calculated</th>
-                        <th width="12%">Variation</th>
-                        <th width="13%">Variation %</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($result as $index => $row)
-                    <tr>
-                        <td>{{ $result->firstItem() + $index }}</td>
-                        <td>
-                            <span class="badge-modern badge-gold">
-                                <i class="fas fa-map-pin me-1"></i>
-                                {{ $row['gisid'] }}
-                            </span>
-                        </td>
-                        <td class="fw-semibold">{{ number_format($row['sqfeet'], 2) }}</td>
-                        <td>
-                            <span class="badge-modern badge-teal">
-                                <i class="fas fa-layer-group me-1"></i>
-                                {{ $row['number_floor'] }}
-                            </span>
-                        </td>
-                        <td>{{ number_format($row['percentage'], 1) }}%</td>
-                        <td>
-                            @if($row['basement'] > 0)
-                                <span class="badge-modern badge-coral">
-                                    <i class="fas fa-arrow-down me-1"></i>
-                                    {{ $row['basement'] }}
+
+        <!-- Variation Summary Card -->
+        @php
+            $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
+            $variationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
+            $variationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            $variationText = $totalAreaVariation >= 0 ? 'Under-assessment' : 'Over-assessment';
+        @endphp
+
+        <div class="stat-card p-4 mb-4" style="background: linear-gradient(135deg, {{ $totalAreaVariation >= 0 ? '#d4edda' : '#f8d7da' }} 0%, #ffffff 100%);">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon me-3" style="background: {{ $totalAreaVariation >= 0 ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)' }}">
+                            <i class="fas {{ $variationIcon }} {{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1" style="color:#102C57;">
+                                Total Area Variation:
+                                <span class="{{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}
                                 </span>
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
-                        </td>
-                        <td>{{ number_format($row['mis_plot_area'], 2) }}</td>
-                        <td>{{ number_format($row['calculated_area'], 2) }}</td>
-                        <td class="{{ $row['area_variation'] >= 0 ? 'variation-up' : 'variation-down' }}">
-                            <i class="fas {{ $row['area_variation'] >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} me-1"></i>
-                            {{ $row['area_variation'] >= 0 ? '+' : '' }}{{ number_format($row['area_variation'], 2) }}
-                        </td>
-                        <td class="{{ $row['variation_percentage'] >= 0 ? 'variation-up' : 'variation-down' }}">
-                            {{ $row['variation_percentage'] >= 0 ? '+' : '' }}{{ number_format($row['variation_percentage'], 2) }}%
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="text-center py-5">
-                            <i class="fas fa-building fa-3x text-muted mb-3 d-block"></i>
-                            <p class="mb-0 text-muted">No variation data found for this ward</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-                <tfoot class="total-footer">
-                    <tr>
-                        <td colspan="2"><strong>📊 TOTAL</strong></td>
-                        <td><strong>{{ number_format($totalSqfeet, 2) }}</strong></td>
-                        <td colspan="3"></td>
-                        <td><strong>{{ number_format($totalMisPlotArea, 2) }}</strong></td>
-                        <td><strong>{{ number_format($totalCalculatedArea, 2) }}</strong></td>
-                        <td class="{{ $totalAreaVariation >= 0 ? 'variation-up' : 'variation-down' }}">
-                            <strong>{{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}</strong>
-                        </td>
-                        <td class="{{ $avgVariationPercentage >= 0 ? 'variation-up' : 'variation-down' }}">
-                            <strong>{{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}%</strong>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+                            </h5>
+                            <p class="mb-0">
+                                <span class="badge {{ $totalAreaVariation >= 0 ? 'bg-success' : 'bg-danger' }} p-2">
+                                    <i class="fas {{ $variationIcon }} me-1"></i>
+                                    {{ $variationText }} ({{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average)
+                                </span>
+                                <small class="text-muted ms-2">
+                                    <i class="fas fa-info-circle"></i>
+                                    {{ $totalAreaVariation >= 0 ? 'Positive variation indicates potential revenue loss' : 'Negative variation indicates possible over-assessment' }}
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="progress" style="height: 10px;">
+                        @php
+                            $progressPercent = min(100, abs($avgVariationPercentage));
+                        @endphp
+                        <div class="progress-bar {{ $totalAreaVariation >= 0 ? 'bg-success' : 'bg-danger' }}"
+                             style="width: {{ $progressPercent }}%">
+                        </div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">
+                        {{ $progressPercent }}% deviation from MIS records
+                    </small>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Pagination -->
-    <div class="custom-pagination-wrapper">
-        {{ $result->withQueryString()->links('pagination::bootstrap-5') }}
+        <!-- Data Table Section -->
+        <div class="stat-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                <h4 class="fw-bold mb-0">
+                    <i class="fas fa-table me-2" style="color:#1679AB;"></i>
+                    Detailed Building Data
+                    <span class="badge bg-primary ms-2">{{ $result->total() }} Records</span>
+                </h4>
+
+                <!-- Search Filter -->
+                <div class="mt-2 mt-sm-0">
+                    <input type="text" id="tableSearch" class="form-control" placeholder="Search by GIS ID..." style="width: 250px;">
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover" id="variationsTable">
+                    <thead style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
+                        <tr>
+                            <th class="text-white">S.No</th>
+                            <th class="text-white">GIS ID</th>
+                            <th class="text-white text-end">Sq. Feet</th>
+                            <th class="text-white text-center">Floors</th>
+                            <th class="text-white text-center">Floor %</th>
+                            <th class="text-white text-center">Basement</th>
+                            <th class="text-white text-end">MIS Area</th>
+                            <th class="text-white text-end">Calculated</th>
+                            <th class="text-white text-end">Variation</th>
+                            <th class="text-white text-center">Variation %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($result as $index => $row)
+                        @php
+                            $variationClass = $row['area_variation'] >= 0 ? 'text-success' : 'text-danger';
+                            $variationIcon = $row['area_variation'] >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                        @endphp
+                        <tr>
+                            <td>{{ $result->firstItem() + $index }}</td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-10 text-dark p-2">
+                                    <i class="fas fa-map-pin me-1"></i>
+                                    {{ $row['gisid'] }}
+                                </span>
+                            </td>
+                            <td class="text-end fw-semibold">{{ number_format($row['sqfeet'], 2) }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-primary bg-opacity-10 text-primary">
+                                    {{ $row['number_floor'] }}
+                                </span>
+                            </td>
+                            <td class="text-center">{{ number_format($row['percentage'], 1) }}%</td>
+                            <td class="text-center">
+                                @if($row['basement'] > 0)
+                                    <span class="badge bg-warning bg-opacity-10 text-warning">
+                                        {{ $row['basement'] }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-end">{{ number_format($row['mis_plot_area'], 2) }}</td>
+                            <td class="text-end">{{ number_format($row['calculated_area'], 2) }}</td>
+                            <td class="text-end {{ $variationClass }}">
+                                <i class="fas {{ $variationIcon }} me-1"></i>
+                                {{ $row['area_variation'] >= 0 ? '+' : '' }}{{ number_format($row['area_variation'], 2) }}
+                            </td>
+                            <td class="text-center {{ $variationClass }}">
+                                {{ $row['variation_percentage'] >= 0 ? '+' : '' }}{{ number_format($row['variation_percentage'], 2) }}%
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <i class="fas fa-building fa-3x text-muted mb-3 d-block"></i>
+                                <h5>No Data Available</h5>
+                                <p class="text-muted mb-0">No variation data found for this ward</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot style="background: #f8f9fa; font-weight: bold;">
+                        <tr>
+                            <td colspan="2"><strong>TOTAL</strong></td>
+                            <td class="text-end"><strong>{{ number_format($totalSqfeet, 2) }}</strong></td>
+                            <td colspan="3"></td>
+                            <td class="text-end"><strong>{{ number_format($totalMisPlotArea, 2) }}</strong></td>
+                            <td class="text-end"><strong>{{ number_format($totalCalculatedArea, 2) }}</strong></td>
+                            <td class="text-end {{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}">
+                                <strong>{{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}</strong>
+                            </td>
+                            <td class="text-center {{ $avgVariationPercentage >= 0 ? 'text-success' : 'text-danger' }}">
+                                <strong>{{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}%</strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if($result->hasPages())
+                <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
+                    <div class="mb-2 mb-sm-0">
+                        <small class="text-muted">
+                            Showing {{ $result->firstItem() ?? 0 }} to {{ $result->lastItem() ?? 0 }} of {{ $result->total() ?? 0 }} records
+                        </small>
+                    </div>
+                    <div>
+                        {{ $result->withQueryString()->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Info Note -->
+        <div class="stat-card p-3 mt-4" style="background: #e7f3ff;">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="fas fa-lightbulb fa-2x" style="color:#1679AB;"></i>
+                </div>
+                <div>
+                    <strong class="d-block">Understanding the Calculations</strong>
+                    <small class="text-muted">
+                        <strong>Calculated Area</strong> = (Sq. Feet × Floor Percentage / 100) × Number of Floors + (Sq. Feet × Basement)<br>
+                        <strong>Area Variation</strong> = Calculated Area - MIS Plot Area
+                        (<span class="text-success">Positive = Under-assessment</span>,
+                        <span class="text-danger">Negative = Over-assessment</span>)<br>
+                        <strong>Note:</strong> All totals reflect ALL buildings in this ward, not just the current page.
+                    </small>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
+    $(document).ready(function() {
+        // Table search functionality
+        $("#tableSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#variationsTable tbody tr").filter(function() {
+                $(this).toggle($(this).find('td:eq(1)').text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+
     function exportToExcel() {
-        // Get the table data
-        const table = document.querySelector('.modern-table');
+        const table = document.getElementById('variationsTable');
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.table_to_sheet(table, { raw: true });
 
@@ -599,8 +312,8 @@
         const summaryData = [
             ['BUILDING VARIATION REPORT'],
             ['Generated on:', new Date().toLocaleString()],
-            ['Ward No:', '{{ $warddetail->ward_no }}'],
-            ['Zone:', '{{ ucfirst($warddetail->zone) }}'],
+            ['Ward No:', '{{ $warddetail->ward_no ?? '' }}'],
+            ['Zone:', '{{ ucfirst($warddetail->zone ?? 'N/A') }}'],
             [''],
             ['SUMMARY STATISTICS'],
             ['Total Buildings:', '{{ number_format($totalBuildings) }}'],
@@ -609,11 +322,11 @@
             ['Total Calculated Area:', '{{ number_format($totalCalculatedArea, 2) }}'],
             ['Total Area Variation:', '{{ $totalAreaVariation >= 0 ? "+" : "" }}{{ number_format($totalAreaVariation, 2) }}'],
             ['Average Variation %:', '{{ $avgVariationPercentage >= 0 ? "+" : "" }}{{ number_format($avgVariationPercentage, 2) }}%'],
+            ['Status:', '{{ $totalAreaVariation >= 0 ? "Under-assessment" : "Over-assessment" }}'],
             [''],
             ['DETAILED DATA']
         ];
 
-        // Add summary to worksheet
         XLSX.utils.sheet_add_aoa(ws, summaryData, { origin: 'A1' });
 
         // Adjust column widths
@@ -623,8 +336,8 @@
             {wch:12}, {wch:10}
         ];
 
-        XLSX.utils.book_append_sheet(wb, ws, 'Ward_{{ $warddetail->ward_no }}_Variations');
-        XLSX.writeFile(wb, 'Ward_{{ $warddetail->ward_no }}_Building_Variations.xlsx');
+        XLSX.utils.book_append_sheet(wb, ws, 'Ward_{{ $warddetail->ward_no ?? '' }}_Variations');
+        XLSX.writeFile(wb, 'Ward_{{ $warddetail->ward_no ?? '' }}_Building_Variations.xlsx');
     }
 
     // Print styling
@@ -644,19 +357,165 @@
     window.onafterprint = function() {
         location.reload();
     };
-
-    // Smooth row animations
-    document.addEventListener('DOMContentLoaded', function() {
-        const rows = document.querySelectorAll('.modern-table tbody tr');
-        rows.forEach((row, index) => {
-            row.style.opacity = '0';
-            row.style.transform = 'translateY(10px)';
-            row.style.transition = `all 0.3s ease ${index * 0.05}s`;
-            setTimeout(() => {
-                row.style.opacity = '1';
-                row.style.transform = 'translateY(0)';
-            }, 100);
-        });
-    });
 </script>
-@endsection
+
+<style>
+    .dashboard-content-area {
+        padding: 20px;
+        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+        min-height: 100vh;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+        width: 55px;
+        height: 55px;
+        background: rgba(22, 121, 171, 0.1);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #1679AB;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table thead th {
+        border-bottom: none;
+        padding: 15px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(22, 121, 171, 0.05);
+    }
+
+    .table tfoot td {
+        padding: 12px 15px;
+        background: #f8f9fa;
+        border-top: 2px solid #1679AB;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        border: 1px solid #dee2e6;
+        padding: 8px 12px;
+    }
+
+    .form-control:focus {
+        border-color: #1679AB;
+        box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
+    }
+
+    .btn-sm {
+        border-radius: 8px;
+        padding: 5px 12px;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+
+    .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .page-link {
+        color: #102C57;
+        border-radius: 8px;
+        margin: 0 2px;
+        border: none;
+        padding: 8px 14px;
+    }
+
+    .page-item.active .page-link {
+        background-color: #1679AB;
+        border-color: #1679AB;
+        color: white;
+    }
+
+    .page-link:hover {
+        color: #1679AB;
+        background-color: #f8f9fa;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate__fadeInUp {
+        animation-name: fadeInUp;
+        animation-duration: 0.6s;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-content-area {
+            padding: 15px;
+        }
+
+        .stat-card {
+            margin-bottom: 15px;
+        }
+
+        .table {
+            font-size: 0.8rem;
+        }
+
+        .table thead th,
+        .table tbody td {
+            padding: 8px 10px;
+        }
+
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+        }
+
+        .stat-card h2 {
+            font-size: 1.3rem;
+        }
+
+        .stat-card h6 {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+@endpush
