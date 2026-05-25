@@ -370,13 +370,16 @@
                     <span><i class="fas fa-calendar me-1"></i> {{ now()->format('d M, Y') }}</span>
                 </div>
             </div>
-            <div class="action-buttons">
-                <button onclick="window.print()" class="btn-modern btn-modern-secondary">
+            <div>
+                <button onclick="window.print()" class="btn btn-light">
                     <i class="fas fa-print me-2"></i>Print
                 </button>
-                <button onclick="exportToExcel()" class="btn-modern btn-modern-success">
-                    <i class="fas fa-download me-2"></i>Export
+                <button onclick="exportToExcel()" class="btn btn-success ms-2">
+                    <i class="fas fa-file-excel me-2"></i>Export
                 </button>
+                <a href="{{ route('corporation.dashboard') }}" class="btn btn-outline-light ms-2">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
             </div>
         </div>
     </div>
@@ -429,6 +432,11 @@
     </div>
 
     <!-- Variation Highlight Card -->
+    @php
+        $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
+        $totalVariationPercent = $avgVariationPercentage;
+    @endphp
+
     <div class="variation-card">
         <div class="variation-content">
             <div class="variation-label">
@@ -437,15 +445,12 @@
             <div class="variation-amount {{ $totalAreaVariation >= 0 ? 'variation-up' : 'variation-down' }}">
                 {{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}
             </div>
-            @php
-                $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
-            @endphp
             <div>
-                <span class="variation-badge {{ $avgVariationPercentage >= 0 ? 'badge-teal' : 'badge-coral' }}"
+                <span class="variation-badge"
                       style="background: {{ $avgVariationPercentage >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)' }};
                              color: {{ $avgVariationPercentage >= 0 ? '#10b981' : '#ef4444' }};">
                     <i class="fas fa-percent me-1"></i>
-                    {{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average
+                    {{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average Variation
                 </span>
             </div>
         </div>
@@ -496,16 +501,16 @@
             <table class="modern-table table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>GIS ID</th>
-                        <th>Sq. Feet</th>
-                        <th>Floors</th>
-                        <th>Floor %</th>
-                        <th>Basement</th>
-                        <th>MIS Area</th>
-                        <th>Calculated</th>
-                        <th>Variation</th>
-                        <th>Variation %</th>
+                        <th width="5%">#</th>
+                        <th width="12%">GIS ID</th>
+                        <th width="10%">Sq. Feet</th>
+                        <th width="8%">Floors</th>
+                        <th width="8%">Floor %</th>
+                        <th width="8%">Basement</th>
+                        <th width="12%">MIS Area</th>
+                        <th width="12%">Calculated</th>
+                        <th width="12%">Variation</th>
+                        <th width="13%">Variation %</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -557,7 +562,7 @@
                 </tbody>
                 <tfoot class="total-footer">
                     <tr>
-                        <td colspan="2"><strong>Totals</strong></td>
+                        <td colspan="2"><strong>📊 TOTAL</strong></td>
                         <td><strong>{{ number_format($totalSqfeet, 2) }}</strong></td>
                         <td colspan="3"></td>
                         <td><strong>{{ number_format($totalMisPlotArea, 2) }}</strong></td>
@@ -565,8 +570,8 @@
                         <td class="{{ $totalAreaVariation >= 0 ? 'variation-up' : 'variation-down' }}">
                             <strong>{{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}</strong>
                         </td>
-                        <td class="{{ $totalVariationPercent >= 0 ? 'variation-up' : 'variation-down' }}">
-                            <strong>{{ $totalVariationPercent >= 0 ? '+' : '' }}{{ number_format($totalVariationPercent, 2) }}%</strong>
+                        <td class="{{ $avgVariationPercentage >= 0 ? 'variation-up' : 'variation-down' }}">
+                            <strong>{{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}%</strong>
                         </td>
                     </tr>
                 </tfoot>
@@ -585,13 +590,15 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
     function exportToExcel() {
+        // Get the table data
         const table = document.querySelector('.modern-table');
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.table_to_sheet(table, { raw: true });
 
+        // Add summary info
         const summaryData = [
             ['BUILDING VARIATION REPORT'],
-            ['Generated:', new Date().toLocaleString()],
+            ['Generated on:', new Date().toLocaleString()],
             ['Ward No:', '{{ $warddetail->ward_no }}'],
             ['Zone:', '{{ ucfirst($warddetail->zone) }}'],
             [''],
@@ -601,22 +608,42 @@
             ['Total MIS Plot Area:', '{{ number_format($totalMisPlotArea, 2) }}'],
             ['Total Calculated Area:', '{{ number_format($totalCalculatedArea, 2) }}'],
             ['Total Area Variation:', '{{ $totalAreaVariation >= 0 ? "+" : "" }}{{ number_format($totalAreaVariation, 2) }}'],
-            ['Average Variation %:', '{{ $totalVariationPercent >= 0 ? "+" : "" }}{{ number_format($totalVariationPercent, 2) }}%'],
+            ['Average Variation %:', '{{ $avgVariationPercentage >= 0 ? "+" : "" }}{{ number_format($avgVariationPercentage, 2) }}%'],
             [''],
             ['DETAILED DATA']
         ];
 
+        // Add summary to worksheet
         XLSX.utils.sheet_add_aoa(ws, summaryData, { origin: 'A1' });
 
+        // Adjust column widths
         ws['!cols'] = [
             {wch:8}, {wch:14}, {wch:12}, {wch:8},
             {wch:8}, {wch:8}, {wch:12}, {wch:12},
             {wch:12}, {wch:10}
         ];
 
-        XLSX.utils.book_append_sheet(wb, ws, 'Ward_{{ $warddetail->ward_no }}');
+        XLSX.utils.book_append_sheet(wb, ws, 'Ward_{{ $warddetail->ward_no }}_Variations');
         XLSX.writeFile(wb, 'Ward_{{ $warddetail->ward_no }}_Building_Variations.xlsx');
     }
+
+    // Print styling
+    window.onbeforeprint = function() {
+        document.querySelectorAll('.btn, .menu-toggle, .navbar-custom .dropdown').forEach(el => {
+            if(el) el.style.display = 'none';
+        });
+        const sidebar = document.querySelector('.sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if(sidebar) sidebar.style.display = 'none';
+        if(mainContent) {
+            mainContent.style.width = '100%';
+            mainContent.style.marginLeft = '0';
+        }
+    };
+
+    window.onafterprint = function() {
+        location.reload();
+    };
 
     // Smooth row animations
     document.addEventListener('DOMContentLoaded', function() {
