@@ -554,7 +554,8 @@ public function viewVariations($ward_no)
         $numberFloor = (int) ($polygon->number_floor ?? 1);
         $basement = (int) ($polygon->basement ?? 0);
 
-        // CORRECTED FORMULA: ((totalfloor + basement + (percentage/100)) * sqfeet)
+        // CORRECTED FORMULA: ((numberFloor + basement + (percentage/100)) * sqfeet)
+        // Example: (1 + 0 + 0.85) * 1399.60 = 2,589.26
         $calculatedArea = (($numberFloor + $basement + ($floorPercentage / 100)) * $sqfeet);
 
         $areaVariation = $calculatedArea - $misArea;
