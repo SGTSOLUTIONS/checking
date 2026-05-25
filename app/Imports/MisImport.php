@@ -2,20 +2,32 @@
 
 namespace App\Imports;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class MisImport implements ToCollection, WithHeadingRow, WithChunkReading
+use Maatwebsite\Excel\Row;
+
+use Maatwebsite\Excel\Concerns\OnEachRow;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
+
+class MisImport implements
+    OnEachRow,
+    WithHeadingRow,
+    WithChunkReading,
+    WithBatchInserts,
+    WithCustomCsvSettings,
+    ShouldQueue
 {
     protected $tableName;
     protected $corporationId;
 
+    protected $batchData = [];
+
     protected $importedCount = 0;
-    protected $updatedCount = 0;
     protected $errorCount = 0;
 
     public function __construct($tableName, $corporationId)
@@ -25,208 +37,249 @@ class MisImport implements ToCollection, WithHeadingRow, WithChunkReading
     }
 
     /**
-     * Process rows in chunks
+     * Process each row
      */
-    public function chunkSize(): int
-    {
-        return 500;
-    }
-
-    /**
-     * Main import function
-     */
-    public function collection(Collection $rows)
+    public function onRow(Row $row)
     {
         try {
 
-            $batchData = [];
-
-            foreach ($rows as $index => $row) {
-
-                try {
-
-                    // =========================
-                    // Normalize columns
-                    // =========================
-
-                    $wardNo = $this->cleanValue(
-                        $row['ward_no']
-                            ?? $row['wardno']
-                            ?? $row['ward']
-                            ?? $row['ward_number']
-                            ?? null
-                    );
-
-                    $assessment = $this->cleanValue(
-                        $row['assessment']
-                            ?? $row['assessment_no']
-                            ?? $row['assessment_number']
-                            ?? null
-                    );
-
-                    // Skip invalid rows
-                    if (!$wardNo || !$assessment) {
-
-                        $this->errorCount++;
-
-                        Log::warning("Skipping row {$index} - Missing ward_no or assessment");
-
-                        continue;
-                    }
-
-                    // =========================
-                    // Prepare data
-                    // =========================
-
-                    $data = [
-
-                        'corporation_id' => $this->corporationId,
-
-                        'ward_no' => $wardNo,
-
-                        'assessment' => $assessment,
-
-                        'old_assessment' => $this->cleanValue(
-                            $row['old_assessment']
-                                ?? $row['old_assessment_no']
-                                ?? null
-                        ),
-
-                        'road_name' => $this->cleanValue(
-                            $row['road_name']
-                                ?? null
-                        ),
-
-                        'owner_name' => $this->cleanValue(
-                            $row['owner_name']
-                                ?? $row['ownername']
-                                ?? $row['owner']
-                                ?? null
-                        ),
-
-                        'old_door_no' => $this->cleanValue(
-                            $row['old_door_no']
-                                ?? $row['old_doorno']
-                                ?? null
-                        ),
-
-                        'new_door_no' => $this->cleanValue(
-                            $row['new_door_no']
-                                ?? $row['new_doorno']
-                                ?? null
-                        ),
-
-                        'phone_number' => $this->cleanValue(
-                            $row['phone_number']
-                                ?? $row['phone']
-                                ?? $row['mobile']
-                                ?? null
-                        ),
-
-                        'plot_area' => $this->cleanNumeric(
-                            $row['plot_area']
-                                ?? $row['area']
-                                ?? null
-                        ),
-
-                        'half_year_tax' => $this->cleanNumeric(
-                            $row['half_year_tax']
-                                ?? $row['halfyear_tax']
-                                ?? $row['tax']
-                                ?? null
-                        ),
-
-                        'balance' => $this->cleanNumeric(
-                            $row['balance']
-                                ?? $row['due_balance']
-                                ?? null
-                        ),
-
-                        'usage' => $this->cleanEnum(
-                            $row['usage']
-                                ?? $row['usage_type']
-                                ?? null,
-                            'usage'
-                        ),
-
-                        'type' => $this->cleanEnum(
-                            $row['type']
-                                ?? $row['owner_type']
-                                ?? null,
-                            'type'
-                        ),
-
-                        'zone' => $this->cleanValue(
-                            $row['zone']
-                                ?? null
-                        ),
-
-                        'created_at' => now(),
-
-                        'updated_at' => now(),
-                    ];
-
-                    $batchData[] = $data;
-
-                    $this->importedCount++;
-
-                } catch (\Exception $e) {
-
-                    $this->errorCount++;
-
-                    Log::error(
-                        "Row {$index} failed in MIS import: " . $e->getMessage()
-                    );
-
-                    continue;
-                }
-            }
+            $row = $row->toArray();
 
             // =========================
-            // Bulk UPSERT
+            // Normalize columns
             // =========================
 
-            if (!empty($batchData)) {
+            $wardNo = $this->cleanValue(
+                $row['ward_no']
+                    ?? $row['wardno']
+                    ?? $row['ward']
+                    ?? $row['ward_number']
+                    ?? null
+            );
 
-                DB::table($this->tableName)->upsert(
+            $assessment = $this->cleanValue(
+                $row['assessment']
+                    ?? $row['assessment_no']
+                    ?? $row['assessment_number']
+                    ?? null
+            );
 
-                    $batchData,
+            // Skip invalid rows
+            if (!$wardNo || !$assessment) {
 
-                    // Unique columns
-                    ['corporation_id', 'ward_no', 'assessment'],
+                $this->errorCount++;
 
-                    // Columns to update
-                    [
-                        'old_assessment',
-                        'road_name',
-                        'owner_name',
-                        'old_door_no',
-                        'new_door_no',
-                        'phone_number',
-                        'plot_area',
-                        'half_year_tax',
-                        'balance',
-                        'usage',
-                        'type',
-                        'zone',
-                        'updated_at'
-                    ]
+                Log::warning(
+                    "Skipping row {$row->getIndex()} - Missing ward_no or assessment"
                 );
+
+                return;
             }
+
+            // =========================
+            // Prepare data
+            // =========================
+
+            $data = [
+
+                'corporation_id' => $this->corporationId,
+
+                'ward_no' => $wardNo,
+
+                'assessment' => $assessment,
+
+                'old_assessment' => $this->cleanValue(
+                    $row['old_assessment']
+                        ?? $row['old_assessment_no']
+                        ?? null
+                ),
+
+                'road_name' => $this->cleanValue(
+                    $row['road_name']
+                        ?? null
+                ),
+
+                'owner_name' => $this->cleanValue(
+                    $row['owner_name']
+                        ?? $row['ownername']
+                        ?? $row['owner']
+                        ?? null
+                ),
+
+                'old_door_no' => $this->cleanValue(
+                    $row['old_door_no']
+                        ?? $row['old_doorno']
+                        ?? null
+                ),
+
+                'new_door_no' => $this->cleanValue(
+                    $row['new_door_no']
+                        ?? $row['new_doorno']
+                        ?? null
+                ),
+
+                'phone_number' => $this->cleanValue(
+                    $row['phone_number']
+                        ?? $row['phone']
+                        ?? $row['mobile']
+                        ?? null
+                ),
+
+                'plot_area' => $this->cleanNumeric(
+                    $row['plot_area']
+                        ?? $row['area']
+                        ?? null
+                ),
+
+                'half_year_tax' => $this->cleanNumeric(
+                    $row['half_year_tax']
+                        ?? $row['halfyear_tax']
+                        ?? $row['tax']
+                        ?? null
+                ),
+
+                'balance' => $this->cleanNumeric(
+                    $row['balance']
+                        ?? $row['due_balance']
+                        ?? null
+                ),
+
+                'usage' => $this->cleanEnum(
+                    $row['usage']
+                        ?? $row['usage_type']
+                        ?? null,
+                    'usage'
+                ),
+
+                'type' => $this->cleanEnum(
+                    $row['type']
+                        ?? $row['owner_type']
+                        ?? null,
+                    'type'
+                ),
+
+                'zone' => $this->cleanValue(
+                    $row['zone']
+                        ?? null
+                ),
+
+                'created_at' => now(),
+
+                'updated_at' => now(),
+            ];
+
+            $this->batchData[] = $data;
+
+            $this->importedCount++;
+
+            // =========================
+            // Bulk insert every 100 rows
+            // =========================
+
+            if (count($this->batchData) >= 100) {
+
+                $this->insertBatch();
+            }
+
+        } catch (\Exception $e) {
+
+            $this->errorCount++;
+
+            Log::error(
+                "MIS Import Row Failed: " . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Destructor flush remaining rows
+     */
+    public function __destruct()
+    {
+        $this->insertBatch();
+    }
+
+    /**
+     * Bulk UPSERT
+     */
+    protected function insertBatch()
+    {
+        try {
+
+            if (empty($this->batchData)) {
+                return;
+            }
+
+            DB::table($this->tableName)->upsert(
+
+                $this->batchData,
+
+                // Unique keys
+                ['corporation_id', 'ward_no', 'assessment'],
+
+                // Columns to update
+                [
+                    'old_assessment',
+                    'road_name',
+                    'owner_name',
+                    'old_door_no',
+                    'new_door_no',
+                    'phone_number',
+                    'plot_area',
+                    'half_year_tax',
+                    'balance',
+                    'usage',
+                    'type',
+                    'zone',
+                    'updated_at'
+                ]
+            );
 
             Log::info(
-                "✅ MIS Import Completed for {$this->tableName} | " .
-                "Imported: {$this->importedCount} | " .
-                "Errors: {$this->errorCount}"
+                "Inserted batch: " . count($this->batchData)
             );
+
+            $this->batchData = [];
 
         } catch (\Exception $e) {
 
             Log::error(
-                "❌ MIS Import Failed for {$this->tableName}: " .
-                $e->getMessage()
+                "Batch Insert Failed: " . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * Chunk size
+     */
+    public function chunkSize(): int
+    {
+        return 100;
+    }
+
+    /**
+     * Batch size
+     */
+    public function batchSize(): int
+    {
+        return 100;
+    }
+
+    /**
+     * CSV Settings
+     */
+    public function getCsvSettings(): array
+    {
+        return [
+
+            'delimiter' => ',',
+
+            'enclosure' => '"',
+
+            'escape_character' => '\\',
+
+            'input_encoding' => 'UTF-8',
+        ];
     }
 
     /**
@@ -265,6 +318,7 @@ class MisImport implements ToCollection, WithHeadingRow, WithChunkReading
         }
 
         if (is_string($value)) {
+
             $value = preg_replace('/[^\d.-]/', '', $value);
         }
 
@@ -305,8 +359,9 @@ class MisImport implements ToCollection, WithHeadingRow, WithChunkReading
 
         foreach ($enums[$type] as $validValue) {
 
-            if (strtolower($value) === strtolower($validValue)) {
-
+            if (
+                strtolower($value) === strtolower($validValue)
+            ) {
                 return $validValue;
             }
         }
@@ -322,8 +377,6 @@ class MisImport implements ToCollection, WithHeadingRow, WithChunkReading
         return [
 
             'imported' => $this->importedCount,
-
-            'updated' => $this->updatedCount,
 
             'errors' => $this->errorCount
         ];
