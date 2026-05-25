@@ -1,4 +1,5 @@
 {{-- resources/views/corporation/variations.blade.php --}}
+
 @extends('layouts.commissioner')
 
 @section('title', 'Variation Analysis')
@@ -7,16 +8,20 @@
 
 @php
 
-    $totalBuildings = count($result);
+    $totalBuildings =
+        $result->total();
 
     $totalMisAreaAll =
-        collect($result)->sum('mis_plot_area');
+        collect($result->items())
+            ->sum('mis_plot_area');
 
     $totalCalculatedAreaAll =
-        collect($result)->sum('calculated_area');
+        collect($result->items())
+            ->sum('calculated_area');
 
     $totalVariationAll =
-        collect($result)->sum('area_variation');
+        collect($result->items())
+            ->sum('area_variation');
 
     $totalVariationPercentageAll =
         $totalMisAreaAll > 0
@@ -38,6 +43,7 @@
                    class="btn btn-outline-light mb-2">
 
                     <i class="fas fa-arrow-left me-2"></i>
+
                     Back
 
                 </a>
@@ -47,8 +53,11 @@
                     <i class="fas fa-chart-line me-2"></i>
 
                     Variation Analysis -
+
                     {{ $warddetail->zone ?? '' }}
+
                     Zone,
+
                     Ward {{ $warddetail->ward_no ?? '' }}
 
                 </h3>
@@ -84,10 +93,6 @@
 
                     </h2>
 
-                    <small class="text-muted">
-                        GIS Polygons
-                    </small>
-
                 </div>
 
             </div>
@@ -103,10 +108,6 @@
                         {{ number_format($totalMisAreaAll, 2) }}
 
                     </h2>
-
-                    <small class="text-muted">
-                        sq.ft
-                    </small>
 
                 </div>
 
@@ -124,10 +125,6 @@
 
                     </h2>
 
-                    <small class="text-muted">
-                        sq.ft
-                    </small>
-
                 </div>
 
             </div>
@@ -144,80 +141,6 @@
 
                     </h2>
 
-                    <small class="{{ $totalVariationAll >= 0 ? 'text-success' : 'text-danger' }}">
-
-                        {{ number_format(abs($totalVariationPercentageAll), 2) }}%
-
-                    </small>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {{-- FILTERS --}}
-        <div class="stat-card p-4 mb-4">
-
-            <div class="row g-3">
-
-                <div class="col-md-4">
-
-                    <label class="fw-bold mb-2">
-                        GIS ID
-                    </label>
-
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="filterGisid"
-                        placeholder="Search GIS ID"
-                    >
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <label class="fw-bold mb-2">
-                        Variation Type
-                    </label>
-
-                    <select class="form-select"
-                            id="filterVariationType">
-
-                        <option value="all">
-                            All
-                        </option>
-
-                        <option value="positive">
-                            Extra Area
-                        </option>
-
-                        <option value="negative">
-                            Less Area
-                        </option>
-
-                        <option value="zero">
-                            Matched
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-4">
-
-                    <label class="fw-bold mb-2">
-                        Minimum Variation %
-                    </label>
-
-                    <input
-                        type="number"
-                        class="form-control"
-                        id="filterMinPercentage"
-                        placeholder="10"
-                    >
-
                 </div>
 
             </div>
@@ -226,39 +149,6 @@
 
         {{-- TABLE --}}
         <div class="stat-card p-4">
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-
-                <h4 class="fw-bold">
-                    Building Variation Details
-                </h4>
-
-                <button class="btn btn-outline-primary"
-                        id="exportBtn">
-
-                    <i class="fas fa-download me-1"></i>
-
-                    Export
-
-                </button>
-
-            </div>
-
-            <div class="mb-3">
-
-                <span class="badge bg-primary p-2">
-
-                    Showing
-                    <span id="resultCount">
-
-                        {{ count($result) }}
-
-                    </span>
-                    Results
-
-                </span>
-
-            </div>
 
             <div class="table-responsive">
 
@@ -269,48 +159,34 @@
                         <tr>
 
                             <th>GIS ID</th>
+
                             <th>Polygon Area</th>
+
                             <th>Floors</th>
+
                             <th>Floor %</th>
+
                             <th>Basement</th>
+
                             <th>Calculated Area</th>
+
                             <th>MIS Area</th>
+
                             <th>Variation</th>
+
                             <th>Variation %</th>
-                            <th>Status</th>
+
                             <th>Assessments</th>
 
                         </tr>
 
                     </thead>
 
-                    <tbody id="tableBody">
+                    <tbody>
 
                         @forelse($result as $item)
 
-                            @php
-
-                                $rowClass =
-                                    $item['variation_percentage'] > 0
-                                        ? 'table-success'
-                                        : (
-                                            $item['variation_percentage'] < 0
-                                                ? 'table-danger'
-                                                : 'table-light'
-                                        );
-
-                                $statusBadge =
-                                    $item['variation_percentage'] > 0
-                                        ? '<span class="badge bg-success">Extra Area</span>'
-                                        : (
-                                            $item['variation_percentage'] < 0
-                                                ? '<span class="badge bg-danger">Less Area</span>'
-                                                : '<span class="badge bg-secondary">Matched</span>'
-                                        );
-
-                            @endphp
-
-                            <tr class="{{ $rowClass }}">
+                            <tr>
 
                                 <td>
 
@@ -319,15 +195,6 @@
                                         {{ $item['gisid'] }}
 
                                     </strong>
-
-                                    <button
-                                        class="btn btn-sm btn-link copy-gisid"
-                                        data-gisid="{{ $item['gisid'] }}"
-                                    >
-
-                                        <i class="fas fa-copy"></i>
-
-                                    </button>
 
                                 </td>
 
@@ -351,11 +218,11 @@
 
                                 <td>
 
-                                    {{ $item['basement'] > 0 ? $item['basement'] : '-' }}
+                                    {{ $item['basement'] }}
 
                                 </td>
 
-                                <td class="fw-bold">
+                                <td>
 
                                     {{ number_format($item['calculated_area'], 2) }}
 
@@ -367,17 +234,13 @@
 
                                 </td>
 
-                                <td class="{{ $item['area_variation'] > 0 ? 'text-success' : ($item['area_variation'] < 0 ? 'text-danger' : '') }}">
-
-                                    {{ $item['area_variation'] > 0 ? '+' : '' }}
+                                <td class="{{ $item['area_variation'] > 0 ? 'text-success' : 'text-danger' }}">
 
                                     {{ number_format($item['area_variation'], 2) }}
 
                                 </td>
 
-                                <td class="{{ $item['variation_percentage'] > 0 ? 'text-success' : ($item['variation_percentage'] < 0 ? 'text-danger' : 'text-secondary') }} fw-bold">
-
-                                    {{ $item['variation_percentage'] > 0 ? '+' : '' }}
+                                <td class="{{ $item['variation_percentage'] > 0 ? 'text-success' : 'text-danger' }}">
 
                                     {{ number_format($item['variation_percentage'], 2) }}%
 
@@ -385,17 +248,7 @@
 
                                 <td>
 
-                                    {!! $statusBadge !!}
-
-                                </td>
-
-                                <td>
-
-                                    <span class="badge bg-dark">
-
-                                        {{ $item['assessment_count'] }}
-
-                                    </span>
+                                    {{ $item['assessment_count'] }}
 
                                 </td>
 
@@ -405,14 +258,10 @@
 
                             <tr>
 
-                                <td colspan="11"
-                                    class="text-center py-5">
+                                <td colspan="10"
+                                    class="text-center">
 
-                                    <div class="alert alert-info">
-
-                                        No variation data found
-
-                                    </div>
+                                    No Data Found
 
                                 </td>
 
@@ -426,6 +275,13 @@
 
             </div>
 
+            {{-- PAGINATION --}}
+            <div class="mt-4 d-flex justify-content-center">
+
+                {{ $result->links() }}
+
+            </div>
+
         </div>
 
     </div>
@@ -434,256 +290,7 @@
 
 @endsection
 
-@push('scripts')
-
-<script>
-
-$(document).ready(function () {
-
-    const variationsData = @json($result);
-
-    function formatNumber(num) {
-
-        return parseFloat(num || 0).toLocaleString('en-IN', {
-
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-
-        });
-
-    }
-
-    function applyFilters() {
-
-        const filterGisid =
-            $("#filterGisid").val().toLowerCase().trim();
-
-        const filterVariationType =
-            $("#filterVariationType").val();
-
-        const filterMinPercentage =
-            parseFloat($("#filterMinPercentage").val());
-
-        const filteredData =
-            variationsData.filter(function(item) {
-
-                const gisid =
-                    (item.gisid || '')
-                        .toString()
-                        .toLowerCase();
-
-                const gisidMatch =
-                    filterGisid === '' ||
-                    gisid.includes(filterGisid);
-
-                const typeMatch =
-                    filterVariationType === 'all' ||
-
-                    (
-                        filterVariationType === 'positive' &&
-                        item.variation_percentage > 0
-                    ) ||
-
-                    (
-                        filterVariationType === 'negative' &&
-                        item.variation_percentage < 0
-                    ) ||
-
-                    (
-                        filterVariationType === 'zero' &&
-                        item.variation_percentage == 0
-                    );
-
-                const percentageMatch =
-                    isNaN(filterMinPercentage) ||
-
-                    Math.abs(item.variation_percentage)
-                        >= filterMinPercentage;
-
-                return gisidMatch &&
-                       typeMatch &&
-                       percentageMatch;
-
-            });
-
-        renderTable(filteredData);
-
-    }
-
-    function renderTable(data) {
-
-        let html = '';
-
-        if (data.length === 0) {
-
-            html = `
-                <tr>
-                    <td colspan="11" class="text-center py-5">
-                        <div class="alert alert-info">
-                            No matching records found
-                        </div>
-                    </td>
-                </tr>
-            `;
-
-            $("#tableBody").html(html);
-
-            $("#resultCount").text(0);
-
-            return;
-
-        }
-
-        data.forEach(function(item) {
-
-            let rowClass = '';
-            let badge = '';
-
-            if (item.variation_percentage > 0) {
-
-                rowClass = 'table-success';
-
-                badge =
-                    '<span class="badge bg-success">Extra Area</span>';
-
-            }
-            else if (item.variation_percentage < 0) {
-
-                rowClass = 'table-danger';
-
-                badge =
-                    '<span class="badge bg-danger">Less Area</span>';
-
-            }
-            else {
-
-                rowClass = 'table-light';
-
-                badge =
-                    '<span class="badge bg-secondary">Matched</span>';
-
-            }
-
-            html += `
-                <tr class="${rowClass}">
-
-                    <td>
-                        <strong>${item.gisid}</strong>
-                    </td>
-
-                    <td>${formatNumber(item.sqfeet)}</td>
-
-                    <td>${item.number_floor}</td>
-
-                    <td>${item.percentage}%</td>
-
-                    <td>${item.basement > 0 ? item.basement : '-'}</td>
-
-                    <td class="fw-bold">
-                        ${formatNumber(item.calculated_area)}
-                    </td>
-
-                    <td>
-                        ${formatNumber(item.mis_plot_area)}
-                    </td>
-
-                    <td class="${item.area_variation > 0 ? 'text-success' : (item.area_variation < 0 ? 'text-danger' : '')}">
-                        ${item.area_variation > 0 ? '+' : ''}
-                        ${formatNumber(item.area_variation)}
-                    </td>
-
-                    <td class="${item.variation_percentage > 0 ? 'text-success' : (item.variation_percentage < 0 ? 'text-danger' : 'text-secondary')} fw-bold">
-
-                        ${item.variation_percentage > 0 ? '+' : ''}
-
-                        ${parseFloat(item.variation_percentage).toFixed(2)}%
-
-                    </td>
-
-                    <td>${badge}</td>
-
-                    <td>
-                        <span class="badge bg-dark">
-                            ${item.assessment_count}
-                        </span>
-                    </td>
-
-                </tr>
-            `;
-
-        });
-
-        $("#tableBody").html(html);
-
-        $("#resultCount").text(data.length);
-
-    }
-
-    $("#filterGisid").on('keyup', applyFilters);
-
-    $("#filterVariationType").on('change', applyFilters);
-
-    $("#filterMinPercentage").on('keyup', applyFilters);
-
-    $("#exportBtn").on("click", function () {
-
-        let csv = [];
-
-        csv.push([
-
-            'GIS ID',
-            'Polygon Area',
-            'Floors',
-            'Floor %',
-            'Basement',
-            'Calculated Area',
-            'MIS Area',
-            'Variation',
-            'Variation %',
-            'Assessments'
-
-        ].join(','));
-
-        variationsData.forEach(function(item) {
-
-            csv.push([
-
-                item.gisid,
-                item.sqfeet,
-                item.number_floor,
-                item.percentage,
-                item.basement,
-                item.calculated_area,
-                item.mis_plot_area,
-                item.area_variation,
-                item.variation_percentage,
-                item.assessment_count
-
-            ].join(','));
-
-        });
-
-        let blob =
-            new Blob([csv.join("\n")], {
-                type: 'text/csv'
-            });
-
-        let link =
-            document.createElement("a");
-
-        link.href =
-            URL.createObjectURL(blob);
-
-        link.download =
-            "variation_report.csv";
-
-        link.click();
-
-    });
-
-});
-
-</script>
+@push('styles')
 
 <style>
 
@@ -723,53 +330,6 @@ $(document).ready(function () {
         );
 
     color: white;
-
-    border: none;
-
-    white-space: nowrap;
-
-}
-
-.variation-table tbody td {
-
-    vertical-align: middle;
-
-}
-
-.table-success {
-
-    background-color: #d1f7dc !important;
-
-}
-
-.table-danger {
-
-    background-color: #ffd7d7 !important;
-
-}
-
-.table-light {
-
-    background-color: #f5f5f5 !important;
-
-}
-
-.form-control,
-.form-select {
-
-    border-radius: 10px;
-
-}
-
-.btn-outline-primary {
-
-    border-radius: 10px;
-
-}
-
-.badge {
-
-    border-radius: 20px;
 
 }
 

@@ -451,7 +451,7 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-    public function viewVariations($ward_no)
+ public function viewVariations($ward_no)
 {
     $user = Auth::user();
 
@@ -460,35 +460,57 @@ class CommissionerController extends Controller
         ->first();
 
     if (!$warddetail) {
+
         return back()->with('error', 'Ward not found');
     }
 
     $zone = strtolower(trim($warddetail->zone));
+
     $wardNo = (int) $warddetail->ward_no;
+
     $corp = (int) $warddetail->corporation_id;
 
-    $misTableName      = "mis_corporation_{$corp}";
-    $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
+    $misTableName =
+        "mis_corporation_{$corp}";
 
-    $pointDataTable    = $this->getPointDataTable($corp, $wardNo, $zone);
-    $polygonDataTable  = $this->getPolygonDataTable($corp, $wardNo, $zone);
+    $polygonsTableName =
+        "polygon_{$corp}_{$zone}_{$wardNo}";
+
+    $pointDataTable =
+        $this->getPointDataTable($corp, $wardNo, $zone);
+
+    $polygonDataTable =
+        $this->getPolygonDataTable($corp, $wardNo, $zone);
 
     /*
     |--------------------------------------------------------------------------
-    | Polygon + Building Data
+    | Polygon Data
     |--------------------------------------------------------------------------
     */
 
     $polygons = DB::table($polygonsTableName . ' as p')
-        ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
-        ->select(
+
+        ->leftJoin(
+            $polygonDataTable . ' as pgd',
             'p.gisid',
+            '=',
+            'pgd.gisid'
+        )
+
+        ->select(
+
+            'p.gisid',
+
             'p.sqfeet',
 
             'pgd.number_floor',
+
             'pgd.percentage',
+
             'pgd.basement'
+
         )
+
         ->get();
 
     /*
@@ -498,40 +520,59 @@ class CommissionerController extends Controller
     */
 
     $pointDatas = DB::table($pointDataTable)
+
         ->select(
+
             'point_gisid',
+
             'assessment'
+
         )
+
         ->whereNotNull('assessment')
+
         ->get()
+
         ->groupBy('point_gisid');
 
     /*
     |--------------------------------------------------------------------------
-    | Get Only Matching Assessments
+    | Assessment List
     |--------------------------------------------------------------------------
     */
 
     $assessmentList = DB::table($pointDataTable)
+
         ->whereNotNull('assessment')
+
         ->pluck('assessment')
+
         ->unique()
+
         ->toArray();
 
     /*
     |--------------------------------------------------------------------------
-    | MIS Data (Only Matching Records)
+    | MIS Data
     |--------------------------------------------------------------------------
     */
 
     $misData = DB::table($misTableName)
+
         ->whereIn('assessment', $assessmentList)
+
         ->select(
+
             'assessment',
+
             DB::raw('SUM(plot_area) as total_plot_area')
+
         )
+
         ->groupBy('assessment')
+
         ->get()
+
         ->keyBy('assessment');
 
     /*
@@ -544,9 +585,11 @@ class CommissionerController extends Controller
 
     foreach ($polygons as $polygon) {
 
-        $points = $pointDatas[$polygon->gisid] ?? collect();
+        $points =
+            $pointDatas[$polygon->gisid] ?? collect();
 
         $misArea = 0;
+
         $assessmentCount = 0;
 
         foreach ($points as $point) {
@@ -554,31 +597,38 @@ class CommissionerController extends Controller
             $assessmentCount++;
 
             $misArea += (float) (
+
                 $misData[$point->assessment]->total_plot_area ?? 0
+
             );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Building Calculation
+        | Calculation
         |--------------------------------------------------------------------------
         */
 
-        $sqfeet = (float) ($polygon->sqfeet ?? 0);
+        $sqfeet =
+            (float) ($polygon->sqfeet ?? 0);
 
-        $floorPercentage = (float) ($polygon->percentage ?? 100);
+        $floorPercentage =
+            (float) ($polygon->percentage ?? 100);
 
-        $numberFloor = (int) ($polygon->number_floor ?? 1);
+        $numberFloor =
+            (int) ($polygon->number_floor ?? 1);
 
-        $basement = (int) ($polygon->basement ?? 0);
+        $basement =
+            (int) ($polygon->basement ?? 0);
 
-        // Main Area
         $calculatedArea =
-            ($sqfeet * $floorPercentage / 100) * $numberFloor;
+            ($sqfeet * $floorPercentage / 100)
+            * $numberFloor;
 
-        // Basement Area
         if ($basement > 0) {
-            $calculatedArea += ($sqfeet * $basement);
+
+            $calculatedArea +=
+                ($sqfeet * $basement);
         }
 
         /*
@@ -587,52 +637,103 @@ class CommissionerController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $areaVariation = $calculatedArea - $misArea;
+        $areaVariation =
+            $calculatedArea - $misArea;
 
         $variationPercentage = 0;
 
         if ($misArea > 0) {
+
             $variationPercentage =
                 ($areaVariation / $misArea) * 100;
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Result Row
+        | Row
         |--------------------------------------------------------------------------
         */
 
         $result[] = [
 
-            'gisid' => $polygon->gisid,
+            'gisid' =>
+                $polygon->gisid,
 
-            // Polygon
-            'sqfeet' => round($sqfeet, 2),
-            'number_floor' => $numberFloor,
-            'percentage' => $floorPercentage,
-            'basement' => $basement,
+            'sqfeet' =>
+                round($sqfeet, 2),
 
-            // MIS
-            'mis_plot_area' => round($misArea, 2),
+            'number_floor' =>
+                $numberFloor,
 
-            // Calculated
-            'calculated_area' => round($calculatedArea, 2),
+            'percentage' =>
+                $floorPercentage,
 
-            // Variation
-            'area_variation' => round($areaVariation, 2),
+            'basement' =>
+                $basement,
 
-            'variation_percentage' => round($variationPercentage, 2),
+            'mis_plot_area' =>
+                round($misArea, 2),
 
-            // Assessment
-            'assessment_count' => $assessmentCount,
+            'calculated_area' =>
+                round($calculatedArea, 2),
+
+            'area_variation' =>
+                round($areaVariation, 2),
+
+            'variation_percentage' =>
+                round($variationPercentage, 2),
+
+            'assessment_count' =>
+                $assessmentCount,
         ];
     }
-    // return response()->json($data, 200, $headers);
 
-   return view('corporation.variations', compact(
-    'result',
-    'warddetail'
-));
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+
+    $perPage = 50;
+
+    $currentPage =
+        request()->get('page', 1);
+
+    $collection =
+        collect($result);
+
+    $paginatedResult =
+        new \Illuminate\Pagination\LengthAwarePaginator(
+
+            $collection->forPage(
+                $currentPage,
+                $perPage
+            ),
+
+            $collection->count(),
+
+            $perPage,
+
+            $currentPage,
+
+            [
+                'path' => request()->url(),
+
+                'query' => request()->query()
+            ]
+        );
+
+    return view(
+        'corporation.variations',
+        [
+
+            'result' =>
+                $paginatedResult,
+
+            'warddetail' =>
+                $warddetail
+        ]
+    );
 }
     /**
      * Export ward data to Excel with building variations
