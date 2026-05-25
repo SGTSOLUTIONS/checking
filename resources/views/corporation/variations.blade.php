@@ -276,11 +276,106 @@
             </div>
 
             {{-- PAGINATION --}}
-            <div class="mt-4 d-flex justify-content-center">
+            {{-- PAGINATION --}}
+@if ($result->hasPages())
 
-                {{ $result->links() }}
+<div class="custom-pagination-wrapper mt-4">
 
-            </div>
+    <div class="pagination-info">
+
+        Showing
+
+        <strong>
+            {{ $result->firstItem() }}
+        </strong>
+
+        to
+
+        <strong>
+            {{ $result->lastItem() }}
+        </strong>
+
+        of
+
+        <strong>
+            {{ $result->total() }}
+        </strong>
+
+        records
+
+    </div>
+
+    <div class="custom-pagination">
+
+        {{-- PREVIOUS --}}
+        @if ($result->onFirstPage())
+
+            <span class="page-btn disabled">
+
+                <i class="fas fa-angle-left"></i>
+
+            </span>
+
+        @else
+
+            <a href="{{ $result->previousPageUrl() }}"
+               class="page-btn">
+
+                <i class="fas fa-angle-left"></i>
+
+            </a>
+
+        @endif
+
+        {{-- PAGE NUMBERS --}}
+        @foreach ($result->getUrlRange(1, $result->lastPage()) as $page => $url)
+
+            @if ($page == $result->currentPage())
+
+                <span class="page-btn active">
+
+                    {{ $page }}
+
+                </span>
+
+            @else
+
+                <a href="{{ $url }}"
+                   class="page-btn">
+
+                    {{ $page }}
+
+                </a>
+
+            @endif
+
+        @endforeach
+
+        {{-- NEXT --}}
+        @if ($result->hasMorePages())
+
+            <a href="{{ $result->nextPageUrl() }}"
+               class="page-btn">
+
+                <i class="fas fa-angle-right"></i>
+
+            </a>
+
+        @else
+
+            <span class="page-btn disabled">
+
+                <i class="fas fa-angle-right"></i>
+
+            </span>
+
+        @endif
+
+    </div>
+
+</div>
+
+@endif
 
         </div>
 
