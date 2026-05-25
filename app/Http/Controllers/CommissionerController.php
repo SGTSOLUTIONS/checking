@@ -554,11 +554,8 @@ public function viewVariations($ward_no)
         $numberFloor = (int) ($polygon->number_floor ?? 1);
         $basement = (int) ($polygon->basement ?? 0);
 
-        $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
-
-        if ($basement > 0) {
-            $calculatedArea += ($sqfeet * $basement);
-        }
+        // CORRECTED FORMULA: ((totalfloor + basement + (percentage/100)) * sqfeet)
+        $calculatedArea = (($numberFloor + $basement + ($floorPercentage / 100)) * $sqfeet);
 
         $areaVariation = $calculatedArea - $misArea;
         $variationPercentage = 0;
@@ -610,6 +607,8 @@ public function viewVariations($ward_no)
         ]
     );
 
+    $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
+
     return view('corporation.variations', [
         'result' => $paginatedResult,
         'warddetail' => $warddetail,
@@ -618,6 +617,7 @@ public function viewVariations($ward_no)
         'totalMisPlotArea' => round($totalMisPlotArea, 2),
         'totalCalculatedArea' => round($totalCalculatedArea, 2),
         'totalAreaVariation' => round($totalAreaVariation, 2),
+        'avgVariationPercentage' => round($avgVariationPercentage, 2),
     ]);
 }
     /**

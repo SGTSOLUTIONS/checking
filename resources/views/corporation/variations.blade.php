@@ -103,7 +103,6 @@
 
         <!-- Variation Summary Card -->
         @php
-            $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
             $variationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
             $variationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
             $variationText = $totalAreaVariation >= 0 ? 'Under-assessment' : 'Over-assessment';
@@ -267,7 +266,7 @@
             @endif
         </div>
 
-        <!-- Info Note -->
+        <!-- Info Note with Corrected Formula -->
         <div class="stat-card p-3 mt-4" style="background: #e7f3ff;">
             <div class="d-flex align-items-center">
                 <div class="me-3">
@@ -276,7 +275,9 @@
                 <div>
                     <strong class="d-block">Understanding the Calculations</strong>
                     <small class="text-muted">
-                        <strong>Calculated Area</strong> = (Sq. Feet × Floor Percentage / 100) × Number of Floors + (Sq. Feet × Basement)<br>
+                        <strong>Formula:</strong> Calculated Area = (Number of Floors + Basement + (Floor % / 100)) × Sq. Feet<br>
+                        <strong>Example:</strong> If Floors=2, Basement=1, Floor%=80, Sq.Feet=1000<br>
+                        = (2 + 1 + 0.8) × 1000 = 3.8 × 1000 = 3800 sq.ft<br>
                         <strong>Area Variation</strong> = Calculated Area - MIS Plot Area
                         (<span class="text-success">Positive = Under-assessment</span>,
                         <span class="text-danger">Negative = Over-assessment</span>)<br>
@@ -323,6 +324,9 @@
             ['Total Area Variation:', '{{ $totalAreaVariation >= 0 ? "+" : "" }}{{ number_format($totalAreaVariation, 2) }}'],
             ['Average Variation %:', '{{ $avgVariationPercentage >= 0 ? "+" : "" }}{{ number_format($avgVariationPercentage, 2) }}%'],
             ['Status:', '{{ $totalAreaVariation >= 0 ? "Under-assessment" : "Over-assessment" }}'],
+            [''],
+            ['FORMULA USED:'],
+            ['Calculated Area = (Number of Floors + Basement + (Floor % / 100)) × Sq. Feet'],
             [''],
             ['DETAILED DATA']
         ];
