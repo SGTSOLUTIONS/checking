@@ -167,7 +167,7 @@
                 <!-- GIS ID Search -->
                 <div class="col-md-3">
                     <label class="form-label fw-semibold small">GIS ID / Assessment</label>
-                    <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID or Assessment...">
+                    <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID...">
                 </div>
 
                 <!-- Floors Filter -->
@@ -340,7 +340,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-    // Store all data
+    // Store all data from PHP
     let allData = @json($result->items());
     let filteredData = [...allData];
     let currentPage = 1;
@@ -572,6 +572,10 @@
                     return 0;
             }
 
+            if (typeof aVal === 'string') {
+                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            }
+
             if (aVal < bVal) return direction === 'asc' ? -1 : 1;
             if (aVal > bVal) return direction === 'asc' ? 1 : -1;
             return 0;
@@ -643,7 +647,7 @@
                     <td>
                         <span class="badge bg-info bg-opacity-10 text-dark p-2">
                             <i class="fas fa-map-pin me-1"></i>
-                            ${item.gisid}
+                            ${escapeHtml(item.gisid)}
                         </span>
                     </td>
                     <td class="text-end fw-semibold">${formatNumber(item.sqfeet, 2)}</td>
@@ -830,6 +834,16 @@
         });
     }
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     function exportToExcel() {
         const exportData = filteredData.map(item => ({
             'S.No': item.index,
@@ -942,6 +956,12 @@
         padding: 15px;
         font-weight: 600;
         font-size: 0.85rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .table thead th:hover {
+        background: rgba(255, 255, 255, 0.1);
     }
 
     .table tbody td {
@@ -1009,15 +1029,6 @@
     .page-link:hover {
         color: #1679AB;
         background-color: #f8f9fa;
-    }
-
-    .sortable {
-        cursor: pointer;
-        user-select: none;
-    }
-
-    .sortable:hover {
-        background: rgba(255, 255, 255, 0.1);
     }
 
     @keyframes fadeInUp {

@@ -520,7 +520,6 @@ public function viewVariations($ward_no)
     | MIS Data
     |--------------------------------------------------------------------------
     */
-
     $misData = DB::table($misTableName)
         ->whereIn('assessment', $assessmentList)
         ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
@@ -530,7 +529,7 @@ public function viewVariations($ward_no)
 
     /*
     |--------------------------------------------------------------------------
-    | Process All Data for Totals (Before Pagination)
+    | Process All Data
     |--------------------------------------------------------------------------
     */
     $allResults = [];
@@ -565,7 +564,7 @@ public function viewVariations($ward_no)
             $variationPercentage = ($areaVariation / $misArea) * 100;
         }
 
-        // Add to totals (only if there's at least one assessment or building)
+        // Add to totals (only if there's at least one assessment)
         if ($assessmentCount > 0) {
             $totalBuildings++;
             $totalSqfeet += $sqfeet;
@@ -575,7 +574,7 @@ public function viewVariations($ward_no)
         }
 
         $allResults[] = [
-            'index' => $index + 1, // Add index for sorting
+            'index' => $index + 1,
             'gisid' => $polygon->gisid,
             'sqfeet' => round($sqfeet, 2),
             'number_floor' => $numberFloor,
@@ -591,9 +590,25 @@ public function viewVariations($ward_no)
 
     $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
 
-    // Pass all data to view (no pagination from controller - it's handled client-side)
+    // Convert to collection and add pagination
+    $collection = collect($allResults);
+    $perPage = 50;
+    $currentPage = request()->get('page', 1);
+
+    $paginatedResult = new \Illuminate\Pagination\LengthAwarePaginator(
+        $collection->forPage($currentPage, $perPage),
+        $collection->count(),
+        $perPage,
+        $currentPage,
+        [
+            'path' => request()->url(),
+            'query' => request()->query()
+        ]
+    );
+
     return view('corporation.variations', [
-        'result' => collect($allResults), // Pass the collection
+        'result' => $paginatedResult,
+        'allDataJson' => json_encode($allResults), // Pass all data as JSON for client-side filtering
         'warddetail' => $warddetail,
         'totalSqfeet' => round($totalSqfeet, 2),
         'totalBuildings' => $totalBuildings,
