@@ -383,6 +383,108 @@
         .alert-success { background: linear-gradient(135deg, #d4edda, #c3e6cb); color: #155724; }
         .alert-danger { background: linear-gradient(135deg, #f8d7da, #f5c6cb); color: #721c24; }
         .alert-info { background: linear-gradient(135deg, #d1ecf1, #bee5eb); color: #0c5460; }
+
+        .custom-pagination-wrapper {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 15px;
+
+    padding-top: 20px;
+
+}
+
+.pagination-info {
+
+    color: #102C57;
+
+    font-weight: 600;
+
+}
+
+.custom-pagination {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
+}
+
+.page-btn {
+
+    min-width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 12px;
+
+    text-decoration: none;
+
+    font-weight: 600;
+
+    transition: all 0.3s ease;
+
+    background: white;
+
+    color: #102C57;
+
+    border: 1px solid #dbe4f0;
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,0.05);
+
+}
+
+.page-btn:hover {
+
+    background: #1679AB;
+
+    color: white;
+
+    transform: translateY(-2px);
+
+}
+
+.page-btn.active {
+
+    background:
+        linear-gradient(
+            135deg,
+            #102C57 0%,
+            #1679AB 100%
+        );
+
+    color: white;
+
+    border: none;
+
+}
+
+.page-btn.disabled {
+
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    pointer-events: none;
+
+}
     </style>
     @stack('styles')
 </head>
