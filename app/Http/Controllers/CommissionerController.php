@@ -627,7 +627,7 @@ class CommissionerController extends Controller
             'assessment_count' => $assessmentCount,
         ];
     }
-    return response()->json($result);
+    // return response()->json($data, 200, $headers);
 
    return view('corporation.variations', compact(
     'result',
