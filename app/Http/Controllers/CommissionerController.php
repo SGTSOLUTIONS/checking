@@ -590,25 +590,9 @@ public function viewVariations($ward_no)
 
     $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
 
-    // Convert to collection and add pagination
-    $collection = collect($allResults);
-    $perPage = 50;
-    $currentPage = request()->get('page', 1);
-
-    $paginatedResult = new \Illuminate\Pagination\LengthAwarePaginator(
-        $collection->forPage($currentPage, $perPage),
-        $collection->count(),
-        $perPage,
-        $currentPage,
-        [
-            'path' => request()->url(),
-            'query' => request()->query()
-        ]
-    );
-
+    // Return ALL data as JSON for client-side filtering
     return view('corporation.variations', [
-        'result' => $paginatedResult,
-        'allDataJson' => json_encode($allResults), // Pass all data as JSON for client-side filtering
+        'allDataJson' => json_encode($allResults),
         'warddetail' => $warddetail,
         'totalSqfeet' => round($totalSqfeet, 2),
         'totalBuildings' => $totalBuildings,

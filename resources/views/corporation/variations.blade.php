@@ -166,7 +166,7 @@
             <div class="row g-3">
                 <!-- GIS ID Search -->
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold small">GIS ID / Assessment</label>
+                    <label class="form-label fw-semibold small">GIS ID</label>
                     <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID...">
                 </div>
 
@@ -275,6 +275,8 @@
                         <option value="50" selected>50 per page</option>
                         <option value="100">100 per page</option>
                         <option value="200">200 per page</option>
+                        <option value="500">500 per page</option>
+                        <option value="-1">All Records</option>
                     </select>
                 </div>
             </div>
@@ -340,14 +342,20 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-    // Store all data from PHP
-    let allData = @json($result->items());
+    // Store ALL data from PHP
+    let allData = @json($allDataJson);
+
+    // Parse if it's a string
+    if (typeof allData === 'string') {
+        allData = JSON.parse(allData);
+    }
+
     let filteredData = [...allData];
     let currentPage = 1;
     let itemsPerPage = 50;
     let currentSort = { column: 'index', direction: 'asc' };
 
-    // Totals from server
+    // Totals from server (ward totals - never change)
     const serverTotals = {
         totalBuildings: {{ $totalBuildings }},
         totalSqfeet: {{ $totalSqfeet }},
@@ -358,6 +366,7 @@
     };
 
     $(document).ready(function() {
+        console.log('Total records loaded:', allData.length);
         initializeFilters();
         applyFiltersAndRender();
     });
@@ -377,7 +386,8 @@
 
         // Per page change
         $('#perPageSelect').change(function() {
-            itemsPerPage = parseInt($(this).val());
+            const val = parseInt($(this).val());
+            itemsPerPage = val === -1 ? allData.length : val;
             currentPage = 1;
             renderTable();
         });
@@ -465,7 +475,7 @@
         if (!type) return true;
         if (type === 'positive') return item.area_variation > 0;
         if (type === 'negative') return item.area_variation < 0;
-        if (type === 'zero') return item.area_variation === 0;
+        if (type === 'zero') return Math.abs(item.area_variation) < 0.01;
         return true;
     }
 
@@ -535,7 +545,9 @@
                 case 'gisid':
                     aVal = String(a.gisid).toLowerCase();
                     bVal = String(b.gisid).toLowerCase();
-                    break;
+                    if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                    if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                    return 0;
                 case 'sqfeet':
                     aVal = a.sqfeet;
                     bVal = b.sqfeet;
@@ -570,10 +582,6 @@
                     break;
                 default:
                     return 0;
-            }
-
-            if (typeof aVal === 'string') {
-                return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
             }
 
             if (aVal < bVal) return direction === 'asc' ? -1 : 1;
@@ -620,13 +628,14 @@
 
         if (filters.length > 0) {
             $('#activeFilters').show();
-            $('#filterTags').html(filters.map(f => `<span class="badge bg-secondary">${f}</span>`).join(''));
+            $('#filterTags').html(filters.map(f => `<span class="badge bg-secondary">${escapeHtml(f)}</span>`).join(''));
         } else {
             $('#activeFilters').hide();
         }
     }
 
     function renderTable() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
         const pageData = filteredData.slice(start, end);
@@ -760,6 +769,18 @@
         const start = (currentPage - 1) * itemsPerPage + 1;
         const end = Math.min(currentPage * itemsPerPage, filteredData.length);
 
+        if (totalPages <= 1 && filteredData.length <= itemsPerPage) {
+            $('#pagination').html(`
+                <div class="mb-2 mb-sm-0">
+                    <small class="text-muted">
+                        Showing ${filteredData.length > 0 ? start : 0} to ${end} of ${filteredData.length} records
+                    </small>
+                </div>
+                <div></div>
+            `);
+            return;
+        }
+
         let paginationHtml = `
             <div class="mb-2 mb-sm-0">
                 <small class="text-muted">
@@ -828,6 +849,7 @@
     }
 
     function formatNumber(num, decimals = 2) {
+        if (isNaN(num)) return '0.00';
         return parseFloat(num).toLocaleString('en-US', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
@@ -836,7 +858,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
+        return String(str).replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
@@ -876,6 +898,14 @@
             ['Total Calculated Area:', formatNumber(calculateFilteredTotals().totalCalculatedArea, 2)],
             ['Total Area Variation:', `${calculateFilteredTotals().totalAreaVariation >= 0 ? '+' : ''}${formatNumber(calculateFilteredTotals().totalAreaVariation, 2)}`],
             ['Average Variation %:', `${calculateFilteredTotals().avgVariationPercentage >= 0 ? '+' : ''}${formatNumber(calculateFilteredTotals().avgVariationPercentage, 2)}%`],
+            [''],
+            ['WARD TOTAL STATISTICS'],
+            ['Total Buildings:', formatNumber(serverTotals.totalBuildings, 0)],
+            ['Total Sq. Feet:', formatNumber(serverTotals.totalSqfeet, 2)],
+            ['Total MIS Plot Area:', formatNumber(serverTotals.totalMisPlotArea, 2)],
+            ['Total Calculated Area:', formatNumber(serverTotals.totalCalculatedArea, 2)],
+            ['Total Area Variation:', `${serverTotals.totalAreaVariation >= 0 ? '+' : ''}${formatNumber(serverTotals.totalAreaVariation, 2)}`],
+            ['Average Variation %:', `${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${formatNumber(serverTotals.avgVariationPercentage, 2)}%`],
             [''],
             ['FORMULA USED:'],
             ['Calculated Area = (Number of Floors + Basement + (Floor % / 100)) × Sq. Feet'],
