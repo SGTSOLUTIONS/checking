@@ -477,66 +477,51 @@ class CommissionerController extends Controller
             return back()->with('error', 'Building data not found for this ward');
         }
 
-        // Get all point data for calculations (cached)
-        $allPointDatas = DB::table($pointDataTable)
-            ->select('point_gisid', 'assessment')
-            ->whereNotNull('assessment')
-            ->get()
-            ->groupBy('point_gisid');
-
-        // Get assessment list
-        $assessmentList = DB::table($pointDataTable)
-            ->whereNotNull('assessment')
-            ->pluck('assessment')
-            ->unique()
-            ->toArray();
-
-        // Get MIS data
-        $misData = collect();
-        if (!empty($assessmentList) && Schema::hasTable($misTableName)) {
-            $misData = DB::table($misTableName)
-                ->whereIn('assessment', $assessmentList)
-                ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
-                ->groupBy('assessment')
-                ->get()
-                ->keyBy('assessment');
+        // Check if point data table exists
+        if (!Schema::hasTable($pointDataTable)) {
+            return back()->with('error', 'Point data not found for this ward');
         }
 
-        // Use Laravel's paginator with the query builder
-        $polygons = DB::table($polygonsTableName . ' as p')
+        // Get per page from request, default to 20
+        $perPage = (int) request()->get('per_page', 20);
+        $perPage = in_array($perPage, [10, 20, 50, 100]) ? $perPage : 20;
+
+        // OPTIMIZED: Single query with all joins and aggregations
+        $query = DB::table($polygonsTableName . ' as p')
             ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
+            ->leftJoin($pointDataTable . ' as pt', 'p.gisid', '=', 'pt.point_gisid')
+            ->leftJoin($misTableName . ' as mis', 'pt.assessment', '=', 'mis.assessment')
             ->select(
                 'p.gisid',
                 'p.sqfeet',
                 'pgd.number_floor',
                 'pgd.percentage',
-                'pgd.basement'
+                'pgd.basement',
+                DB::raw('COALESCE(SUM(mis.plot_area), 0) as total_mis_area'),
+                DB::raw('COUNT(pt.point_gisid) as assessment_count')
             )
-            ->orderBy('p.gisid')
-            ->paginate(20); // This automatically handles pagination
+            ->whereNotNull('pt.assessment')
+            ->groupBy('p.gisid', 'p.sqfeet', 'pgd.number_floor', 'pgd.percentage', 'pgd.basement')
+            ->orderBy('p.gisid');
 
-        // Calculate results for current page only
+        // Get paginated results
+        $polygons = $query->paginate($perPage);
+
+        // Calculate results for current page
         $result = [];
         foreach ($polygons as $polygon) {
-            $points = $allPointDatas[$polygon->gisid] ?? collect();
-            $misArea = 0;
-            $assessmentCount = 0;
-
-            foreach ($points as $point) {
-                $assessmentCount++;
-                $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
-            }
-
             $sqfeet = (float) ($polygon->sqfeet ?? 0);
             $floorPercentage = (float) ($polygon->percentage ?? 100);
             $numberFloor = (int) ($polygon->number_floor ?? 1);
             $basement = (int) ($polygon->basement ?? 0);
 
+            // Calculate area
             $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
             if ($basement > 0) {
                 $calculatedArea += ($sqfeet * $basement);
             }
 
+            $misArea = (float) $polygon->total_mis_area;
             $areaVariation = $calculatedArea - $misArea;
             $variationPercentage = $misArea > 0 ? ($areaVariation / $misArea) * 100 : 0;
 
@@ -550,49 +535,47 @@ class CommissionerController extends Controller
                 'calculated_area' => round($calculatedArea, 2),
                 'area_variation' => round($areaVariation, 2),
                 'variation_percentage' => round($variationPercentage, 2),
-                'assessment_count' => $assessmentCount,
+                'assessment_count' => (int) $polygon->assessment_count,
             ];
         }
+
+        // OPTIMIZED: Calculate totals in a single query
+        $totals = DB::table($polygonsTableName . ' as p')
+            ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
+            ->leftJoin($pointDataTable . ' as pt', 'p.gisid', '=', 'pt.point_gisid')
+            ->leftJoin($misTableName . ' as mis', 'pt.assessment', '=', 'mis.assessment')
+            ->select(
+                DB::raw('COALESCE(SUM(mis.plot_area), 0) as total_mis_area'),
+                DB::raw('SUM(
+                CASE
+                    WHEN pgd.number_floor IS NOT NULL OR pgd.percentage IS NOT NULL OR pgd.basement IS NOT NULL
+                    THEN (
+                        (p.sqfeet * COALESCE(pgd.percentage, 100) / 100 * COALESCE(pgd.number_floor, 1)) +
+                        CASE WHEN COALESCE(pgd.basement, 0) > 0
+                             THEN p.sqfeet * COALESCE(pgd.basement, 0)
+                             ELSE 0
+                        END
+                    )
+                    ELSE 0
+                END
+            ) as total_calculated_area')
+            )
+            ->whereNotNull('pt.assessment')
+            ->first();
+
+        $totalMisAreaAll = (float) ($totals->total_mis_area ?? 0);
+        $totalCalculatedAreaAll = (float) ($totals->total_calculated_area ?? 0);
+        $totalVariationAll = $totalCalculatedAreaAll - $totalMisAreaAll;
+        $totalVariationPercentageAll = $totalMisAreaAll > 0 ? ($totalVariationAll / $totalMisAreaAll) * 100 : 0;
 
         // Replace the paginated items with our calculated results
         $polygons->setCollection(collect($result));
 
-        // Calculate totals for summary from ALL data (efficiently using chunking if needed)
-        $totalMisAreaAll = 0;
-        $totalCalculatedAreaAll = 0;
-
-        // Process in chunks to avoid memory issues with large datasets
-        DB::table($polygonsTableName . ' as p')
-            ->leftJoin($polygonDataTable . ' as pgd', 'p.gisid', '=', 'pgd.gisid')
-            ->select('p.gisid', 'p.sqfeet', 'pgd.number_floor', 'pgd.percentage', 'pgd.basement')
-            ->orderBy('p.gisid')
-            ->chunk(100, function ($chunk) use (&$totalMisAreaAll, &$totalCalculatedAreaAll, $allPointDatas, $misData) {
-                foreach ($chunk as $polygon) {
-                    $points = $allPointDatas[$polygon->gisid] ?? collect();
-                    $misArea = 0;
-                    foreach ($points as $point) {
-                        $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
-                    }
-                    $totalMisAreaAll += $misArea;
-
-                    $sqfeet = (float) ($polygon->sqfeet ?? 0);
-                    $floorPercentage = (float) ($polygon->percentage ?? 100);
-                    $numberFloor = (int) ($polygon->number_floor ?? 1);
-                    $basement = (int) ($polygon->basement ?? 0);
-
-                    $calculatedArea = ($sqfeet * $floorPercentage / 100) * $numberFloor;
-                    if ($basement > 0) {
-                        $calculatedArea += ($sqfeet * $basement);
-                    }
-                    $totalCalculatedAreaAll += $calculatedArea;
-                }
-            });
-
-        $totalVariationAll = $totalCalculatedAreaAll - $totalMisAreaAll;
-        $totalVariationPercentageAll = $totalMisAreaAll > 0 ? ($totalVariationAll / $totalMisAreaAll) * 100 : 0;
+        // Add per_page to pagination links
+        $polygons->appends(['per_page' => $perPage]);
 
         return view('corporation.variations', compact(
-            'polygons', // Now using the paginator instance
+            'polygons',
             'warddetail',
             'totalMisAreaAll',
             'totalCalculatedAreaAll',

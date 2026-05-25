@@ -182,9 +182,8 @@
                                     @forelse($polygons as $item)
                                     @php
                                         $rowClass = $item->variation_percentage > 0 ? 'table-warning' : ($item->variation_percentage < 0 ? 'table-danger' : 'table-success');
-                                        $statusBadge = $item->variation_percentage > 0 ? '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>' : ($item->variation_percentage < 0 ? '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>' : '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>');
                                     @endphp
-                                    <tr class="{{ $rowClass }}">
+                                    <tr class="{{ $rowClass }}" data-gisid="{{ $item->gisid }}" data-variation="{{ $item->variation_percentage }}">
                                         <td>
                                             <strong>{{ $item->gisid }}</strong>
                                             <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="{{ $item->gisid }}">
@@ -199,10 +198,10 @@
                                         <td>{{ number_format($item->mis_plot_area, 2) }}</td>
                                         <td class="{{ $item->area_variation > 0 ? 'text-success' : ($item->area_variation < 0 ? 'text-danger' : '') }}">
                                             {{ $item->area_variation > 0 ? '+' : '' }}{{ number_format($item->area_variation, 2) }}
-                                        </td>
+                                         </td>
                                         <td class="{{ $item->variation_percentage > 0 ? 'text-warning' : ($item->variation_percentage < 0 ? 'text-danger' : 'text-success') }} fw-bold">
                                             {{ $item->variation_percentage > 0 ? '+' : '' }}{{ number_format($item->variation_percentage, 2) }}%
-                                        </td>
+                                         </td>
                                         <td><span class="badge bg-secondary">{{ $item->assessment_count }}</span></td>
                                      </tr>
                                     @empty
@@ -212,11 +211,11 @@
                                                 <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                                 No variation data found for this ward
                                             </div>
-                                        </td>
+                                         </td>
                                     </tr>
                                     @endforelse
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
 
                         <!-- Stylish Pagination -->
@@ -353,9 +352,6 @@ $(document).ready(function() {
     // Get all data items from the current page
     const variationsData = @json($polygons->items());
 
-    // Store original HTML of table body for reset
-    const originalTableBody = $('#tableBody').html();
-
     // Function to render filtered table
     function renderFilteredTable(data) {
         const $tbody = $("#tableBody");
@@ -368,7 +364,7 @@ $(document).ready(function() {
                             <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                             No buildings match your filter criteria
                         </div>
-                    </td>
+                     </td>
                 </tr>
             `);
             $("#resultCount").text(0);
@@ -377,28 +373,28 @@ $(document).ready(function() {
 
         let html = '';
         data.forEach(function(item) {
-            let statusBadge = '';
             let rowClass = '';
+            let variationClass = '';
 
             if (item.variation_percentage > 0) {
-                statusBadge = '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-up me-1"></i>Extra Area</span>';
                 rowClass = 'table-warning';
+                variationClass = 'text-warning';
             } else if (item.variation_percentage < 0) {
-                statusBadge = '<span class="badge bg-danger"><i class="fas fa-arrow-down me-1"></i>Less Area</span>';
                 rowClass = 'table-danger';
+                variationClass = 'text-danger';
             } else {
-                statusBadge = '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Matched</span>';
                 rowClass = 'table-success';
+                variationClass = 'text-success';
             }
 
             html += `
-                <tr class="${rowClass}">
+                <tr class="${rowClass}" data-gisid="${escapeHtml(item.gisid)}" data-variation="${item.variation_percentage}">
                     <td>
                         <strong>${escapeHtml(item.gisid)}</strong>
                         <button class="btn btn-sm btn-link p-0 ms-2 copy-gisid" data-gisid="${escapeHtml(item.gisid)}">
                             <i class="fas fa-copy text-muted"></i>
                         </button>
-                    </td>
+                     </td>
                     <td>${formatNumber(item.sqfeet)}</td>
                     <td>${item.number_floor}</td>
                     <td>${item.percentage}%</td>
@@ -407,12 +403,12 @@ $(document).ready(function() {
                     <td>${formatNumber(item.mis_plot_area)}</td>
                     <td class="${item.area_variation > 0 ? 'text-success' : (item.area_variation < 0 ? 'text-danger' : '')}">
                         ${item.area_variation > 0 ? '+' : ''}${formatNumber(item.area_variation)}
-                    </td>
-                    <td class="${item.variation_percentage > 0 ? 'text-warning' : (item.variation_percentage < 0 ? 'text-danger' : 'text-success')} fw-bold">
+                     </td>
+                    <td class="${variationClass} fw-bold">
                         ${item.variation_percentage > 0 ? '+' : ''}${item.variation_percentage}%
-                    </td>
+                     </td>
                     <td><span class="badge bg-secondary">${item.assessment_count}</span></td>
-                </tr>
+                 </tr>
             `;
         });
 
@@ -430,7 +426,7 @@ $(document).ready(function() {
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
+        return String(str).replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
@@ -444,7 +440,7 @@ $(document).ready(function() {
         var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
 
         var filteredData = variationsData.filter(function(item) {
-            var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
+            var gisidMatch = filterGisid === "" || String(item.gisid).toLowerCase().includes(filterGisid);
             var typeMatch = filterVariationType === "all" ||
                 (filterVariationType === "positive" && item.variation_percentage > 0) ||
                 (filterVariationType === "negative" && item.variation_percentage < 0) ||
@@ -455,14 +451,6 @@ $(document).ready(function() {
         });
 
         renderFilteredTable(filteredData);
-    }
-
-    function resetFilters() {
-        $("#filterGisid").val('');
-        $("#filterVariationType").val('all');
-        $("#filterMinPercentage").val('');
-        $("#tableBody").html(originalTableBody);
-        $("#resultCount").text(variationsData.length);
     }
 
     // Debounce function
@@ -481,14 +469,6 @@ $(document).ready(function() {
     $("#filterVariationType").on("change", applyFilters);
     $("#filterMinPercentage").on("keyup", debouncedApplyFilters);
 
-    // Reset button (optional - add if you want)
-    // Add this button in your filter section if needed
-    // $("<button>", {
-    //     class: "btn btn-secondary",
-    //     html: '<i class="fas fa-undo-alt me-1"></i> Reset',
-    //     click: resetFilters
-    // }).appendTo(".filter-actions");
-
     // Per page selector
     $("#perPageSelect").on("change", function() {
         var perPage = $(this).val();
@@ -501,11 +481,12 @@ $(document).ready(function() {
     // Copy GIS ID functionality
     $(document).on('click', '.copy-gisid', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         const gisid = $(this).data('gisid');
 
         // Modern clipboard API
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(gisid).then(function() {
+            navigator.clipboard.writeText(String(gisid)).then(function() {
                 showCopySuccess($(e.currentTarget));
             }).catch(function() {
                 fallbackCopy(gisid, $(e.currentTarget));
@@ -537,7 +518,7 @@ $(document).ready(function() {
         var filterMinPercentage = parseFloat($("#filterMinPercentage").val());
 
         var exportData = variationsData.filter(function(item) {
-            var gisidMatch = filterGisid === "" || item.gisid.toLowerCase().includes(filterGisid);
+            var gisidMatch = filterGisid === "" || String(item.gisid).toLowerCase().includes(filterGisid);
             var typeMatch = filterVariationType === "all" ||
                 (filterVariationType === "positive" && item.variation_percentage > 0) ||
                 (filterVariationType === "negative" && item.variation_percentage < 0) ||
@@ -561,14 +542,21 @@ $(document).ready(function() {
         const csvRows = [headers.join(',')];
         exportData.forEach(item => {
             const row = [
-                `"${item.gisid}"`, item.sqfeet, item.number_floor, item.percentage,
-                item.basement || 0, item.calculated_area, item.mis_plot_area,
-                item.area_variation, item.variation_percentage, item.assessment_count
+                `"${String(item.gisid).replace(/"/g, '""')}"`,
+                item.sqfeet,
+                item.number_floor,
+                item.percentage,
+                item.basement || 0,
+                item.calculated_area,
+                item.mis_plot_area,
+                item.area_variation,
+                item.variation_percentage,
+                item.assessment_count
             ];
             csvRows.push(row.join(','));
         });
 
-        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -650,10 +638,11 @@ $(document).ready(function() {
 
     .variation-table tbody tr {
         transition: all 0.2s ease;
+        cursor: pointer;
     }
 
     .variation-table tbody tr:hover {
-        background-color: rgba(22, 121, 171, 0.05);
+        background-color: rgba(22, 121, 171, 0.1);
         transform: scale(1.01);
     }
 
