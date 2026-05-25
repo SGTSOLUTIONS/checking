@@ -5,6 +5,26 @@
 
 @section('content')
 
+@php
+
+    $totalBuildings = count($result);
+
+    $totalMisAreaAll =
+        collect($result)->sum('mis_plot_area');
+
+    $totalCalculatedAreaAll =
+        collect($result)->sum('calculated_area');
+
+    $totalVariationAll =
+        collect($result)->sum('area_variation');
+
+    $totalVariationPercentageAll =
+        $totalMisAreaAll > 0
+            ? ($totalVariationAll / $totalMisAreaAll) * 100
+            : 0;
+
+@endphp
+
 <div class="dashboard-content-area">
 
     <div class="animate__animated animate__fadeInUp">
@@ -13,26 +33,38 @@
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
 
             <div>
-                <a href="{{ url()->previous() }}" class="btn btn-outline-light mb-2">
+
+                <a href="{{ url()->previous() }}"
+                   class="btn btn-outline-light mb-2">
+
                     <i class="fas fa-arrow-left me-2"></i>
                     Back
+
                 </a>
 
                 <h3 class="fw-bold text-white mt-2">
+
                     <i class="fas fa-chart-line me-2"></i>
 
                     Variation Analysis -
                     {{ $warddetail->zone ?? '' }}
                     Zone,
                     Ward {{ $warddetail->ward_no ?? '' }}
+
                 </h3>
+
             </div>
 
             <div>
+
                 <span class="badge bg-light text-dark p-2">
+
                     <i class="fas fa-calendar-alt me-1"></i>
+
                     {{ now()->format('d M Y') }}
+
                 </span>
+
             </div>
 
         </div>
@@ -41,12 +73,15 @@
         <div class="row g-4 mb-4">
 
             <div class="col-md-3">
+
                 <div class="stat-card p-3">
 
                     <h6>Total Buildings</h6>
 
                     <h2 class="fw-bold">
-                        {{ number_format($polygons->total()) }}
+
+                        {{ number_format($totalBuildings) }}
+
                     </h2>
 
                     <small class="text-muted">
@@ -54,15 +89,19 @@
                     </small>
 
                 </div>
+
             </div>
 
             <div class="col-md-3">
+
                 <div class="stat-card p-3">
 
                     <h6>Total MIS Area</h6>
 
                     <h2 class="fw-bold text-primary">
+
                         {{ number_format($totalMisAreaAll, 2) }}
+
                     </h2>
 
                     <small class="text-muted">
@@ -70,15 +109,19 @@
                     </small>
 
                 </div>
+
             </div>
 
             <div class="col-md-3">
+
                 <div class="stat-card p-3">
 
                     <h6>Total Calculated Area</h6>
 
                     <h2 class="fw-bold text-success">
+
                         {{ number_format($totalCalculatedAreaAll, 2) }}
+
                     </h2>
 
                     <small class="text-muted">
@@ -86,22 +129,29 @@
                     </small>
 
                 </div>
+
             </div>
 
             <div class="col-md-3">
+
                 <div class="stat-card p-3">
 
                     <h6>Total Variation</h6>
 
                     <h2 class="fw-bold {{ $totalVariationAll >= 0 ? 'text-success' : 'text-danger' }}">
+
                         {{ number_format($totalVariationAll, 2) }}
+
                     </h2>
 
                     <small class="{{ $totalVariationAll >= 0 ? 'text-success' : 'text-danger' }}">
+
                         {{ number_format(abs($totalVariationPercentageAll), 2) }}%
+
                     </small>
 
                 </div>
+
             </div>
 
         </div>
@@ -112,6 +162,7 @@
             <div class="row g-3">
 
                 <div class="col-md-4">
+
                     <label class="fw-bold mb-2">
                         GIS ID
                     </label>
@@ -122,14 +173,17 @@
                         id="filterGisid"
                         placeholder="Search GIS ID"
                     >
+
                 </div>
 
                 <div class="col-md-4">
+
                     <label class="fw-bold mb-2">
                         Variation Type
                     </label>
 
-                    <select class="form-select" id="filterVariationType">
+                    <select class="form-select"
+                            id="filterVariationType">
 
                         <option value="all">
                             All
@@ -148,9 +202,11 @@
                         </option>
 
                     </select>
+
                 </div>
 
                 <div class="col-md-4">
+
                     <label class="fw-bold mb-2">
                         Minimum Variation %
                     </label>
@@ -161,6 +217,7 @@
                         id="filterMinPercentage"
                         placeholder="10"
                     >
+
                 </div>
 
             </div>
@@ -176,9 +233,13 @@
                     Building Variation Details
                 </h4>
 
-                <button class="btn btn-outline-primary" id="exportBtn">
+                <button class="btn btn-outline-primary"
+                        id="exportBtn">
+
                     <i class="fas fa-download me-1"></i>
+
                     Export
+
                 </button>
 
             </div>
@@ -186,11 +247,15 @@
             <div class="mb-3">
 
                 <span class="badge bg-primary p-2">
+
                     Showing
                     <span id="resultCount">
-                        {{ count($polygons) }}
+
+                        {{ count($result) }}
+
                     </span>
                     Results
+
                 </span>
 
             </div>
@@ -204,25 +269,15 @@
                         <tr>
 
                             <th>GIS ID</th>
-
                             <th>Polygon Area</th>
-
                             <th>Floors</th>
-
                             <th>Floor %</th>
-
                             <th>Basement</th>
-
                             <th>Calculated Area</th>
-
                             <th>MIS Area</th>
-
                             <th>Variation</th>
-
                             <th>Variation %</th>
-
                             <th>Status</th>
-
                             <th>Assessments</th>
 
                         </tr>
@@ -231,23 +286,27 @@
 
                     <tbody id="tableBody">
 
-                        @forelse($polygons as $item)
+                        @forelse($result as $item)
 
                             @php
 
                                 $rowClass =
-                                    $item->variation_percentage > 0
+                                    $item['variation_percentage'] > 0
                                         ? 'table-success'
-                                        : ($item->variation_percentage < 0
-                                            ? 'table-danger'
-                                            : 'table-light');
+                                        : (
+                                            $item['variation_percentage'] < 0
+                                                ? 'table-danger'
+                                                : 'table-light'
+                                        );
 
                                 $statusBadge =
-                                    $item->variation_percentage > 0
+                                    $item['variation_percentage'] > 0
                                         ? '<span class="badge bg-success">Extra Area</span>'
-                                        : ($item->variation_percentage < 0
-                                            ? '<span class="badge bg-danger">Less Area</span>'
-                                            : '<span class="badge bg-secondary">Matched</span>');
+                                        : (
+                                            $item['variation_percentage'] < 0
+                                                ? '<span class="badge bg-danger">Less Area</span>'
+                                                : '<span class="badge bg-secondary">Matched</span>'
+                                        );
 
                             @endphp
 
@@ -256,66 +315,88 @@
                                 <td>
 
                                     <strong>
-                                        {{ $item->gisid }}
+
+                                        {{ $item['gisid'] }}
+
                                     </strong>
 
                                     <button
                                         class="btn btn-sm btn-link copy-gisid"
-                                        data-gisid="{{ $item->gisid }}"
+                                        data-gisid="{{ $item['gisid'] }}"
                                     >
+
                                         <i class="fas fa-copy"></i>
+
                                     </button>
 
                                 </td>
 
                                 <td>
-                                    {{ number_format($item->sqfeet, 2) }}
+
+                                    {{ number_format($item['sqfeet'], 2) }}
+
                                 </td>
 
                                 <td>
-                                    {{ $item->number_floor }}
+
+                                    {{ $item['number_floor'] }}
+
                                 </td>
 
                                 <td>
-                                    {{ $item->percentage }}%
+
+                                    {{ $item['percentage'] }}%
+
                                 </td>
 
                                 <td>
-                                    {{ $item->basement > 0 ? $item->basement : '-' }}
+
+                                    {{ $item['basement'] > 0 ? $item['basement'] : '-' }}
+
                                 </td>
 
                                 <td class="fw-bold">
-                                    {{ number_format($item->calculated_area, 2) }}
-                                </td>
 
-                                <td>
-                                    {{ number_format($item->mis_plot_area, 2) }}
-                                </td>
-
-                                <td class="{{ $item->area_variation > 0 ? 'text-success' : ($item->area_variation < 0 ? 'text-danger' : '') }}">
-
-                                    {{ $item->area_variation > 0 ? '+' : '' }}
-
-                                    {{ number_format($item->area_variation, 2) }}
-
-                                </td>
-
-                                <td class="{{ $item->variation_percentage > 0 ? 'text-success' : ($item->variation_percentage < 0 ? 'text-danger' : 'text-secondary') }} fw-bold">
-
-                                    {{ $item->variation_percentage > 0 ? '+' : '' }}
-
-                                    {{ number_format($item->variation_percentage, 2) }}%
+                                    {{ number_format($item['calculated_area'], 2) }}
 
                                 </td>
 
                                 <td>
+
+                                    {{ number_format($item['mis_plot_area'], 2) }}
+
+                                </td>
+
+                                <td class="{{ $item['area_variation'] > 0 ? 'text-success' : ($item['area_variation'] < 0 ? 'text-danger' : '') }}">
+
+                                    {{ $item['area_variation'] > 0 ? '+' : '' }}
+
+                                    {{ number_format($item['area_variation'], 2) }}
+
+                                </td>
+
+                                <td class="{{ $item['variation_percentage'] > 0 ? 'text-success' : ($item['variation_percentage'] < 0 ? 'text-danger' : 'text-secondary') }} fw-bold">
+
+                                    {{ $item['variation_percentage'] > 0 ? '+' : '' }}
+
+                                    {{ number_format($item['variation_percentage'], 2) }}%
+
+                                </td>
+
+                                <td>
+
                                     {!! $statusBadge !!}
+
                                 </td>
 
                                 <td>
+
                                     <span class="badge bg-dark">
-                                        {{ $item->assessment_count }}
+
+                                        {{ $item['assessment_count'] }}
+
                                     </span>
+
                                 </td>
 
                             </tr>
@@ -324,7 +405,8 @@
 
                             <tr>
 
-                                <td colspan="11" class="text-center py-5">
+                                <td colspan="11"
+                                    class="text-center py-5">
 
                                     <div class="alert alert-info">
 
@@ -344,13 +426,6 @@
 
             </div>
 
-            {{-- PAGINATION --}}
-            <div class="mt-4">
-
-                {{ $polygons->links() }}
-
-            </div>
-
         </div>
 
     </div>
@@ -363,9 +438,9 @@
 
 <script>
 
-$(document).ready(function() {
+$(document).ready(function () {
 
-    const variationsData = @json($polygons->items());
+    const variationsData = @json($result);
 
     function formatNumber(num) {
 
@@ -389,36 +464,47 @@ $(document).ready(function() {
         const filterMinPercentage =
             parseFloat($("#filterMinPercentage").val());
 
-        const filteredData = variationsData.filter(function(item) {
+        const filteredData =
+            variationsData.filter(function(item) {
 
-            const gisid =
-                (item.gisid || '').toString().toLowerCase();
+                const gisid =
+                    (item.gisid || '')
+                        .toString()
+                        .toLowerCase();
 
-            const gisidMatch =
-                filterGisid === '' ||
-                gisid.includes(filterGisid);
+                const gisidMatch =
+                    filterGisid === '' ||
+                    gisid.includes(filterGisid);
 
-            const typeMatch =
-                filterVariationType === 'all' ||
+                const typeMatch =
+                    filterVariationType === 'all' ||
 
-                (filterVariationType === 'positive' &&
-                    item.variation_percentage > 0) ||
+                    (
+                        filterVariationType === 'positive' &&
+                        item.variation_percentage > 0
+                    ) ||
 
-                (filterVariationType === 'negative' &&
-                    item.variation_percentage < 0) ||
+                    (
+                        filterVariationType === 'negative' &&
+                        item.variation_percentage < 0
+                    ) ||
 
-                (filterVariationType === 'zero' &&
-                    item.variation_percentage == 0);
+                    (
+                        filterVariationType === 'zero' &&
+                        item.variation_percentage == 0
+                    );
 
-            const percentageMatch =
-                isNaN(filterMinPercentage) ||
-                Math.abs(item.variation_percentage) >= filterMinPercentage;
+                const percentageMatch =
+                    isNaN(filterMinPercentage) ||
 
-            return gisidMatch &&
-                   typeMatch &&
-                   percentageMatch;
+                    Math.abs(item.variation_percentage)
+                        >= filterMinPercentage;
 
-        });
+                return gisidMatch &&
+                       typeMatch &&
+                       percentageMatch;
+
+            });
 
         renderTable(filteredData);
 
@@ -451,7 +537,6 @@ $(document).ready(function() {
         data.forEach(function(item) {
 
             let rowClass = '';
-
             let badge = '';
 
             if (item.variation_percentage > 0) {
@@ -540,11 +625,12 @@ $(document).ready(function() {
 
     $("#filterMinPercentage").on('keyup', applyFilters);
 
-    $("#exportBtn").on("click", function() {
+    $("#exportBtn").on("click", function () {
 
         let csv = [];
 
         csv.push([
+
             'GIS ID',
             'Polygon Area',
             'Floors',
@@ -555,6 +641,7 @@ $(document).ready(function() {
             'Variation',
             'Variation %',
             'Assessments'
+
         ].join(','));
 
         variationsData.forEach(function(item) {
