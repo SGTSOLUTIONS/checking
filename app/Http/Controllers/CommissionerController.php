@@ -746,14 +746,47 @@ class CommissionerController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        return view('corporation.variations', compact(
-            'polygons',
-            'warddetail',
-            'totalMisAreaAll',
-            'totalCalculatedAreaAll',
-            'totalVariationAll',
-            'totalVariationPercentageAll'
-        ));
+     return response()->json([
+
+    'success' => true,
+
+    'warddetail' => $warddetail,
+
+    'summary' => [
+
+        'totalMisAreaAll' =>
+            round($totalMisAreaAll, 2),
+
+        'totalCalculatedAreaAll' =>
+            round($totalCalculatedAreaAll, 2),
+
+        'totalVariationAll' =>
+            round($totalVariationAll, 2),
+
+        'totalVariationPercentageAll' =>
+            round($totalVariationPercentageAll, 2),
+
+    ],
+
+    'pagination' => [
+
+        'current_page' =>
+            $polygons->currentPage(),
+
+        'last_page' =>
+            $polygons->lastPage(),
+
+        'per_page' =>
+            $polygons->perPage(),
+
+        'total' =>
+            $polygons->total(),
+
+    ],
+
+    'data' => $polygons->items()
+
+], 200);
     }
     /**
      * Export ward data to Excel with building variations
