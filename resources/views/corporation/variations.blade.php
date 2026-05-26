@@ -7,6 +7,7 @@
 <div class="dashboard-content-area">
     <div class="animate__animated animate__fadeInUp">
 
+        <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
             <h3 class="fw-bold text-white">
                 <i class="fas fa-chart-line me-2" style="color:#1679AB;"></i>
@@ -23,6 +24,7 @@
             </div>
         </div>
 
+        <!-- Ward Info Card -->
         <div class="stat-card p-4 mb-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
@@ -52,6 +54,7 @@
             </div>
         </div>
 
+        <!-- Statistics Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
@@ -71,7 +74,7 @@
                         <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalSqfeet, 2) }}</h2>
                         <small class="text-info"><i class="fas fa-vector-square"></i> Built-up area</small>
                     </div>
-                    <div class="stat-icon bg-info-subtle"><i class="fas fa-ruler-combined text-info"></i></div>
+                    <div class="stat-icon"><i class="fas fa-ruler-combined"></i></div>
                 </div>
             </div>
 
@@ -82,7 +85,7 @@
                         <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalMisPlotArea, 2) }}</h2>
                         <small class="text-warning"><i class="fas fa-database"></i> From MIS records</small>
                     </div>
-                    <div class="stat-icon bg-warning-subtle"><i class="fas fa-database text-warning"></i></div>
+                    <div class="stat-icon"><i class="fas fa-database"></i></div>
                 </div>
             </div>
 
@@ -93,11 +96,12 @@
                         <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalCalculatedArea, 2) }}</h2>
                         <small class="text-danger"><i class="fas fa-calculator"></i> Based on formula</small>
                     </div>
-                    <div class="stat-icon bg-danger-subtle"><i class="fas fa-calculator text-danger"></i></div>
+                    <div class="stat-icon"><i class="fas fa-calculator"></i></div>
                 </div>
             </div>
         </div>
 
+        <!-- Variation Summary Card -->
         @php
             $variationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
             $variationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
@@ -130,6 +134,7 @@
             </div>
         </div>
 
+        <!-- Filters Section -->
         <div class="stat-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                 <h5 class="fw-bold mb-0">
@@ -164,17 +169,24 @@
                         <option value="negative">Over-assessment</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold small">Variation % Range</label>
-                    <div class="d-flex gap-2 align-items-center">
-                        <input type="number" id="variationMin" class="form-control" placeholder="Min %">
-                        <span>to</span>
-                        <input type="number" id="variationMax" class="form-control" placeholder="Max %">
-                    </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Min Variation %</label>
+                    <input type="number" id="variationMin" class="form-control" placeholder="Min %">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Max Variation %</label>
+                    <input type="number" id="variationMax" class="form-control" placeholder="Max %">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold small">&nbsp;</label>
+                    <button class="btn btn-primary w-100" id="applyFiltersBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Data Table -->
         <div class="stat-card p-4">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                 <h4 class="fw-bold mb-0">
@@ -182,48 +194,58 @@
                     Detailed Building Data
                     <span class="badge bg-primary ms-2" id="recordCount">0 Records</span>
                 </h4>
-                <select id="perPageSelect" class="form-select form-select-sm mt-2 mt-md-0" style="width: auto;">
-                    <option value="25">25 per page</option>
-                    <option value="50" selected>50 per page</option>
-                    <option value="100">100 per page</option>
-                    <option value="-1">All Records</option>
-                </select>
+                <div class="mt-2 mt-sm-0">
+                    <label class="me-2">Show:</label>
+                    <select id="perPageSelect" class="form-select form-select-sm d-inline-block w-auto">
+                        <option value="10">10 per page</option>
+                        <option value="25">25 per page</option>
+                        <option value="50" selected>50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="-1">All Records</option>
+                    </select>
+                </div>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-hover" id="variationsTable">
                     <thead>
                         <tr>
-                            <th class="sortable" data-column="index">S.No</th>
-                            <th class="sortable" data-column="gisid">GIS ID</th>
-                            <th class="sortable text-end" data-column="sqfeet">Sq. Feet</th>
-                            <th class="sortable text-center" data-column="number_floor">Floors</th>
-                            <th class="sortable text-center" data-column="percentage">Floor %</th>
-                            <th class="sortable text-center" data-column="basement">Basement</th>
-                            <th class="sortable text-end" data-column="mis_plot_area">MIS Area</th>
-                            <th class="sortable text-end" data-column="calculated_area">Calculated</th>
-                            <th class="sortable text-end" data-column="area_variation">Variation</th>
-                            <th class="sortable text-center" data-column="variation_percentage">Variation %</th>
+                            <th class="sortable" data-column="index" style="cursor: pointer;">S.No <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-column="gisid" style="cursor: pointer;">GIS ID <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="sqfeet" style="cursor: pointer;">Sq. Feet <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="number_floor" style="cursor: pointer;">Floors <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="percentage" style="cursor: pointer;">Floor % <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="basement" style="cursor: pointer;">Basement <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="mis_plot_area" style="cursor: pointer;">MIS Area <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="calculated_area" style="cursor: pointer;">Calculated <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="area_variation" style="cursor: pointer;">Variation <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Variation % <i class="fas fa-sort"></i></th>
                             <th class="text-center">Assessments</th>
                             <th class="text-center">Map View</th>
-                        </tr>
+                        </table>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="12" class="text-center py-5">Loading...</td></tr>
+                        <tr><td colspan="12" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                        </td></tr>
                     </tbody>
-                    <tfoot id="tableFooter"></tfoot>
+                    <tfoot id="tableFooter" style="background: #f8f9fa;"></tfoot>
                 </table>
             </div>
 
             <div id="pagination" class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2"></div>
         </div>
 
+        <!-- Info Note -->
         <div class="stat-card p-3 mt-4" style="background: #e7f3ff;">
             <div class="d-flex align-items-center">
                 <i class="fas fa-info-circle fa-2x me-3" style="color:#1679AB;"></i>
                 <div>
-                    <strong>Note:</strong> If latitude and longitude are available, Map View opens Google Maps directions to the exact location. Otherwise, it falls back to GIS ID search [web:108][web:110].<br>
-                    <small class="text-muted">Coordinates must be valid GPS latitude/longitude values for direct navigation to work correctly [web:110].</small>
+                    <strong>Note:</strong> Click on <i class="fas fa-map-marker-alt"></i> <strong>GIS ID</strong> or <strong>View Map</strong> button to see the location on Google Maps.<br>
+                    <small class="text-muted">Coordinates are automatically converted from UTM to Lat/Lng for accurate Google Maps positioning.</small>
                 </div>
             </div>
         </div>
@@ -233,19 +255,92 @@
 @endsection
 
 @push('scripts')
+<!-- Proj4js for coordinate conversion -->
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script>
+    // Define the projection systems
+    // UTM Zone 43N (India) - Adjust based on your location
+    // Common for India: UTM Zone 43N (EPSG:32643) or 44N (EPSG:32644)
+    // Based on your coordinates (around 8566253, 1225035), this appears to be UTM Zone 43N
+    const utmProjection = '+proj=utm +zone=43 +datum=WGS84 +units=m +no_defs';
+    const wgs84Projection = '+proj=longlat +datum=WGS84 +no_defs';
+
+    // Initialize proj4
+    proj4.defs('EPSG:32643', utmProjection);
+    proj4.defs('EPSG:4326', wgs84Projection);
+
+    // Function to convert UTM coordinates to Lat/Lng
+    function convertUtmToLatLng(easting, northing) {
+        try {
+            // Convert UTM to Lat/Lng
+            const result = proj4('EPSG:32643', 'EPSG:4326', [easting, northing]);
+            return {
+                lat: result[1],
+                lng: result[0]
+            };
+        } catch (error) {
+            console.error('Conversion error:', error);
+            return null;
+        }
+    }
+
+    // Parse coordinates from string format "[8566253.148241518,1225035.097863368]"
+    function parseCoordinates(coordString) {
+        if (!coordString) return null;
+
+        try {
+            // Remove brackets and split
+            let cleaned = coordString.replace(/[\[\]]/g, '');
+            let parts = cleaned.split(',');
+
+            if (parts.length >= 2) {
+                let easting = parseFloat(parts[0]);
+                let northing = parseFloat(parts[1]);
+
+                if (!isNaN(easting) && !isNaN(northing)) {
+                    return { easting, northing };
+                }
+            }
+        } catch (e) {
+            console.error('Parse error:', e);
+        }
+        return null;
+    }
+
+    // Store ALL data from PHP
     let allData = @json($allDataJson);
 
+    // Parse if it's a string
     if (typeof allData === 'string') {
         allData = JSON.parse(allData);
     }
+
+    // Process each record to add lat/lng
+    allData = allData.map(record => {
+        const utmCoords = parseCoordinates(record.coordinates);
+        if (utmCoords) {
+            const latLng = convertUtmToLatLng(utmCoords.easting, utmCoords.northing);
+            if (latLng) {
+                record.lat = latLng.lat;
+                record.lng = latLng.lng;
+                record.hasValidCoords = true;
+            } else {
+                record.hasValidCoords = false;
+            }
+        } else {
+            record.hasValidCoords = false;
+        }
+        return record;
+    });
 
     let filteredData = [...allData];
     let currentPage = 1;
     let itemsPerPage = 50;
     let currentSort = { column: 'index', direction: 'asc' };
 
+    // Totals from server
     const serverTotals = {
         totalBuildings: {{ $totalBuildings }},
         totalSqfeet: {{ $totalSqfeet }},
@@ -255,31 +350,40 @@
         avgVariationPercentage: {{ $avgVariationPercentage }}
     };
 
-    $(document).ready(function () {
+    $(document).ready(function() {
+        console.log('Total records loaded:', allData.length);
+        console.log('Sample record with lat/lng:', allData[0]);
         initializeFilters();
         applyFiltersAndRender();
     });
 
     function initializeFilters() {
-        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').on('keyup change', function () {
+        $('#applyFiltersBtn').click(function() {
             currentPage = 1;
             applyFiltersAndRender();
         });
 
-        $('#clearFiltersBtn').click(function () {
+        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                applyFiltersAndRender();
+            }
+        });
+
+        $('#clearFiltersBtn').click(function() {
             $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').val('');
             currentPage = 1;
             applyFiltersAndRender();
         });
 
-        $('#perPageSelect').change(function () {
-            const val = parseInt($(this).val());
-            itemsPerPage = val === -1 ? filteredData.length || allData.length : val;
+        $('#perPageSelect').change(function() {
+            const val = $(this).val();
+            itemsPerPage = val === '-1' ? allData.length : parseInt(val);
             currentPage = 1;
             renderTable();
         });
 
-        $('.sortable').click(function () {
+        $('.sortable').click(function() {
             const column = $(this).data('column');
             if (currentSort.column === column) {
                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -294,56 +398,50 @@
     function applyFiltersAndRender() {
         filteredData = [...allData];
 
-        const gisidSearch = ($('#gisidSearch').val() || '').toLowerCase();
+        // GIS ID filter
+        const gisidSearch = $('#gisidSearch').val().toLowerCase().trim();
         if (gisidSearch) {
-            filteredData = filteredData.filter(item =>
-                String(item.gisid || '').toLowerCase().includes(gisidSearch)
-            );
+            filteredData = filteredData.filter(item => item.gisid.toLowerCase().includes(gisidSearch));
         }
 
+        // Floors filter
         const floorsFilter = $('#floorsFilter').val();
         if (floorsFilter) {
             filteredData = filteredData.filter(item => {
-                if (floorsFilter === '4') return Number(item.number_floor) >= 4;
-                return Number(item.number_floor) == Number(floorsFilter);
+                if (floorsFilter === '4') return item.number_floor >= 4;
+                return item.number_floor == floorsFilter;
             });
         }
 
+        // Variation type filter
         const variationType = $('#variationTypeFilter').val();
         if (variationType) {
             filteredData = filteredData.filter(item => {
-                if (variationType === 'positive') return Number(item.area_variation) > 0;
-                if (variationType === 'negative') return Number(item.area_variation) < 0;
+                if (variationType === 'positive') return item.area_variation > 0;
+                if (variationType === 'negative') return item.area_variation < 0;
                 return true;
             });
         }
 
+        // Variation percentage range
         const variationMin = parseFloat($('#variationMin').val());
         if (!isNaN(variationMin)) {
-            filteredData = filteredData.filter(item => Number(item.variation_percentage) >= variationMin);
+            filteredData = filteredData.filter(item => item.variation_percentage >= variationMin);
         }
 
         const variationMax = parseFloat($('#variationMax').val());
         if (!isNaN(variationMax)) {
-            filteredData = filteredData.filter(item => Number(item.variation_percentage) <= variationMax);
+            filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
         }
 
+        // Apply sorting
         filteredData.sort((a, b) => {
             let aVal = a[currentSort.column];
             let bVal = b[currentSort.column];
 
-            if (aVal === null || aVal === undefined) aVal = '';
-            if (bVal === null || bVal === undefined) bVal = '';
-
-            const aNum = parseFloat(aVal);
-            const bNum = parseFloat(bVal);
-
-            if (!isNaN(aNum) && !isNaN(bNum)) {
-                aVal = aNum;
-                bVal = bNum;
-            } else {
-                aVal = String(aVal).toLowerCase();
-                bVal = String(bVal).toLowerCase();
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
             }
 
             if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
@@ -355,145 +453,189 @@
         renderTable();
     }
 
-    function isValidCoordinate(lat, lng) {
-        lat = parseFloat(lat);
-        lng = parseFloat(lng);
-
-        return !isNaN(lat) &&
-               !isNaN(lng) &&
-               lat >= -90 && lat <= 90 &&
-               lng >= -180 && lng <= 180 &&
-               !(lat === 0 && lng === 0);
-    }
-
-    function openGoogleMaps(lat, lng, gisid) {
-        if (isValidCoordinate(lat, lng)) {
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    // Function to open Google Maps with actual coordinates
+    function openGoogleMaps(gisid, lat, lng) {
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+            // Use actual coordinates if available
+            const url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
             window.open(url, '_blank');
-        } else if (gisid) {
-            const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gisid)}`;
-            window.open(fallbackUrl, '_blank');
         } else {
-            alert('Location not available');
+            // Fallback to GIS ID search
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
+            window.open(url, '_blank');
         }
     }
 
     function renderTable() {
-        const safeItemsPerPage = itemsPerPage > 0 ? itemsPerPage : (filteredData.length || 1);
-        const start = (currentPage - 1) * safeItemsPerPage;
-        const pageData = filteredData.slice(start, start + safeItemsPerPage);
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        const start = (currentPage - 1) * itemsPerPage;
+        const pageData = filteredData.slice(start, start + itemsPerPage);
 
+        // Calculate totals for filtered data
         let filteredSqfeet = 0, filteredMisArea = 0, filteredCalculated = 0, filteredVariation = 0;
         filteredData.forEach(item => {
-            filteredSqfeet += Number(item.sqfeet || 0);
-            filteredMisArea += Number(item.mis_plot_area || 0);
-            filteredCalculated += Number(item.calculated_area || 0);
-            filteredVariation += Number(item.area_variation || 0);
+            filteredSqfeet += item.sqfeet;
+            filteredMisArea += item.mis_plot_area;
+            filteredCalculated += item.calculated_area;
+            filteredVariation += item.area_variation;
         });
-
         const filteredAvgVariation = filteredMisArea > 0 ? (filteredVariation / filteredMisArea) * 100 : 0;
 
+        // Build table body
         let html = '';
-        pageData.forEach((item, idx) => {
-            const variationClass = Number(item.area_variation) >= 0 ? 'text-success' : 'text-danger';
-            const variationIcon = Number(item.area_variation) >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-
-            html += `
-                <tr>
-                    <td>${start + idx + 1}</td>
-                    <td>
-                        <span class="gisid-link" onclick="openGoogleMaps('${item.latitude}', '${item.longitude}', '${escapeHtml(item.gisid)}')" style="cursor:pointer; color:#1679AB; text-decoration:underline;">
-                            <i class="fas fa-map-marker-alt me-1"></i>${escapeHtml(item.gisid)}
-                        </span>
-                    </td>
-                    <td class="text-end">${Number(item.sqfeet || 0).toFixed(2)}</td>
-                    <td class="text-center">${Number(item.number_floor || 0)}</td>
-                    <td class="text-center">${Number(item.percentage || 0)}%</td>
-                    <td class="text-center">${Number(item.basement || 0) > 0 ? Number(item.basement) : '-'}</td>
-                    <td class="text-end">${Number(item.mis_plot_area || 0).toFixed(2)}</td>
-                    <td class="text-end">${Number(item.calculated_area || 0).toFixed(2)}</td>
-                    <td class="text-end ${variationClass}">
-                        <i class="fas ${variationIcon} me-1"></i>
-                        ${Number(item.area_variation) >= 0 ? '+' : ''}${Number(item.area_variation || 0).toFixed(2)}
-                    </td>
-                    <td class="text-center ${variationClass}">
-                        ${Number(item.variation_percentage) >= 0 ? '+' : ''}${Number(item.variation_percentage || 0).toFixed(2)}%
-                    </td>
-                    <td class="text-center">
-                        <span class="badge ${Number(item.assessment_count) > 1 ? 'bg-info' : 'bg-secondary'}">${Number(item.assessment_count || 0)}</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-primary" onclick="openGoogleMaps('${item.latitude}', '${item.longitude}', '${escapeHtml(item.gisid)}')">
-                            <i class="fas fa-map-marked-alt"></i> View Map
-                        </button>
-                    </td>
-                </tr>
-            `;
-        });
-
         if (pageData.length === 0) {
             html = '<tr><td colspan="12" class="text-center py-5">No records found</td></tr>';
+        } else {
+            pageData.forEach((item, idx) => {
+                const variationClass = item.area_variation >= 0 ? 'text-success' : 'text-danger';
+                const variationIcon = item.area_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                const hasValidCoords = item.hasValidCoords && item.lat && item.lng;
+
+                html += `
+                    <tr>
+                        <td>${start + idx + 1}</td>
+                        <td>
+                            <a href="javascript:void(0)" onclick="openGoogleMaps('${item.gisid}', ${item.lat || 'null'}, ${item.lng || 'null'})"
+                               style="color: #1679AB; text-decoration: none; cursor: pointer;">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                <strong>${item.gisid}</strong>
+                            </a>
+                        </td>
+                        <td class="text-end">${item.sqfeet.toFixed(2)}</td>
+                        <td class="text-center"><span class="badge bg-primary">${item.number_floor}</span></td>
+                        <td class="text-center">${item.percentage}%</td>
+                        <td class="text-center">${item.basement > 0 ? item.basement : '-'}</td>
+                        <td class="text-end">${item.mis_plot_area.toFixed(2)}</td>
+                        <td class="text-end">${item.calculated_area.toFixed(2)}</td>
+                        <td class="text-end ${variationClass}">
+                            <i class="fas ${variationIcon} me-1"></i>
+                            ${item.area_variation >= 0 ? '+' : ''}${item.area_variation.toFixed(2)}
+                        </td>
+                        <td class="text-center ${variationClass}">
+                            <strong>${item.variation_percentage >= 0 ? '+' : ''}${item.variation_percentage.toFixed(2)}%</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge ${item.assessment_count > 1 ? 'bg-info' : 'bg-secondary'}">${item.assessment_count}</span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-sm ${hasValidCoords ? 'btn-primary' : 'btn-secondary'}"
+                                    onclick="openGoogleMaps('${item.gisid}', ${item.lat || 'null'}, ${item.lng || 'null'})"
+                                    ${!hasValidCoords ? 'disabled' : ''}>
+                                <i class="fas fa-map-marked-alt"></i> View Map
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
         }
 
         $('#tableBody').html(html);
 
+        // Build footer
         const footerHtml = `
-            <tr style="background: #f8f9fa; font-weight: bold;">
-                <td colspan="2">FILTERED TOTAL</td>
-                <td class="text-end">${filteredSqfeet.toFixed(2)}</td>
+            <tr style="border-top: 2px solid #dee2e6;">
+                <td colspan="2"><strong>FILTERED TOTAL</strong></td>
+                <td class="text-end"><strong>${filteredSqfeet.toFixed(2)}</strong></td>
                 <td colspan="3"></td>
-                <td class="text-end">${filteredMisArea.toFixed(2)}</td>
-                <td class="text-end">${filteredCalculated.toFixed(2)}</td>
-                <td class="text-end ${filteredVariation >= 0 ? 'text-success' : 'text-danger'}">${filteredVariation >= 0 ? '+' : ''}${filteredVariation.toFixed(2)}</td>
-                <td class="text-center ${filteredAvgVariation >= 0 ? 'text-success' : 'text-danger'}">${filteredAvgVariation >= 0 ? '+' : ''}${filteredAvgVariation.toFixed(2)}%</td>
+                <td class="text-end"><strong>${filteredMisArea.toFixed(2)}</strong></td>
+                <td class="text-end"><strong>${filteredCalculated.toFixed(2)}</strong></td>
+                <td class="text-end ${filteredVariation >= 0 ? 'text-success' : 'text-danger'}">
+                    <strong>${filteredVariation >= 0 ? '+' : ''}${filteredVariation.toFixed(2)}</strong>
+                </td>
+                <td class="text-center ${filteredAvgVariation >= 0 ? 'text-success' : 'text-danger'}">
+                    <strong>${filteredAvgVariation >= 0 ? '+' : ''}${filteredAvgVariation.toFixed(2)}%</strong>
+                </td>
                 <td colspan="2"></td>
             </tr>
-            <tr style="border-top: 2px solid #dee2e6; background: #f8f9fa; font-weight: bold;">
-                <td colspan="2">WARD TOTAL</td>
-                <td class="text-end">${Number(serverTotals.totalSqfeet).toFixed(2)}</td>
+            <tr style="background: #e9ecef;">
+                <td colspan="2"><strong>WARD TOTAL</strong></td>
+                <td class="text-end"><strong>${serverTotals.totalSqfeet.toFixed(2)}</strong></td>
                 <td colspan="3"></td>
-                <td class="text-end">${Number(serverTotals.totalMisPlotArea).toFixed(2)}</td>
-                <td class="text-end">${Number(serverTotals.totalCalculatedArea).toFixed(2)}</td>
-                <td class="text-end ${Number(serverTotals.totalAreaVariation) >= 0 ? 'text-success' : 'text-danger'}">${Number(serverTotals.totalAreaVariation) >= 0 ? '+' : ''}${Number(serverTotals.totalAreaVariation).toFixed(2)}</td>
-                <td class="text-center ${Number(serverTotals.avgVariationPercentage) >= 0 ? 'text-success' : 'text-danger'}">${Number(serverTotals.avgVariationPercentage) >= 0 ? '+' : ''}${Number(serverTotals.avgVariationPercentage).toFixed(2)}%</td>
+                <td class="text-end"><strong>${serverTotals.totalMisPlotArea.toFixed(2)}</strong></td>
+                <td class="text-end"><strong>${serverTotals.totalCalculatedArea.toFixed(2)}</strong></td>
+                <td class="text-end ${serverTotals.totalAreaVariation >= 0 ? 'text-success' : 'text-danger'}">
+                    <strong>${serverTotals.totalAreaVariation >= 0 ? '+' : ''}${serverTotals.totalAreaVariation.toFixed(2)}</strong>
+                </td>
+                <td class="text-center ${serverTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">
+                    <strong>${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${serverTotals.avgVariationPercentage.toFixed(2)}%</strong>
+                </td>
                 <td colspan="2"></td>
             </tr>
         `;
         $('#tableFooter').html(footerHtml);
 
-        const totalPages = safeItemsPerPage > 0 ? Math.ceil(filteredData.length / safeItemsPerPage) : 1;
-        const startRecord = filteredData.length ? start + 1 : 0;
-        const endRecord = Math.min(start + safeItemsPerPage, filteredData.length);
+        // Render pagination
+        renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+        if (totalPages <= 1 && filteredData.length <= itemsPerPage) {
+            $('#pagination').html(`
+                <div class="text-muted">
+                    Showing ${filteredData.length} of ${filteredData.length} records
+                </div>
+            `);
+            return;
+        }
+
+        const startRecord = (currentPage - 1) * itemsPerPage + 1;
+        const endRecord = Math.min(currentPage * itemsPerPage, filteredData.length);
 
         let paginationHtml = `
-            <div><small>Showing ${startRecord} to ${endRecord} of ${filteredData.length} records</small></div>
-            <nav><ul class="pagination mb-0">
+            <div class="text-muted">
+                Showing ${startRecord} to ${endRecord} of ${filteredData.length} records
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
         `;
 
-        if (currentPage > 1) {
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a></li>`;
-        }
+        // Previous button
+        paginationHtml += `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">« Previous</a>
+            </li>
+        `;
 
+        // Page numbers
         const maxVisible = 5;
-        let firstPage = Math.max(1, currentPage - 2);
-        let lastPage = Math.min(totalPages, firstPage + maxVisible - 1);
-        firstPage = Math.max(1, lastPage - maxVisible + 1);
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
 
-        for (let i = firstPage; i <= lastPage; i++) {
-            paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
-            </li>`;
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
         }
 
-        if (currentPage < totalPages) {
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a></li>`;
+        if (startPage > 1) {
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+            if (startPage > 2) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
         }
+
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                </li>
+            `;
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+        }
+
+        // Next button
+        paginationHtml += `
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next »</a>
+            </li>
+        `;
 
         paginationHtml += `</ul></nav>`;
         $('#pagination').html(paginationHtml);
     }
 
     function changePage(page) {
+        if (page < 1 || page > Math.ceil(filteredData.length / itemsPerPage)) return;
         currentPage = page;
         renderTable();
     }
@@ -511,25 +653,20 @@
             'Area Variation': item.area_variation,
             'Variation %': item.variation_percentage,
             'Assessment Count': item.assessment_count,
-            'Latitude': item.latitude,
-            'Longitude': item.longitude,
-            'Coordinates': item.coordinates
+            'Latitude': item.lat || '',
+            'Longitude': item.lng || '',
+            'Original Coordinates': item.coordinates
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Ward_Variations');
-        XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Variations.xlsx`);
-    }
+        XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+        // Auto-size columns
+        const maxWidth = 20;
+        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: maxWidth }));
+
+        XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
     }
 </script>
 
@@ -576,30 +713,30 @@
         padding: 15px;
         font-weight: 600;
         font-size: 0.85rem;
-        cursor: pointer;
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
         color: #ffffff !important;
         border: none;
-        position: sticky;
-        top: 0;
-        z-index: 5;
-        opacity: 1 !important;
+        white-space: nowrap;
     }
 
-    .table tbody td,
-    .table tfoot td {
+    .table thead th i {
+        margin-left: 5px;
+        opacity: 0.7;
+    }
+
+    .table tbody td {
         padding: 12px 15px;
         vertical-align: middle;
         border-bottom: 1px solid #e9ecef;
-        background: #fff;
     }
 
     .table tbody tr:hover {
         background-color: rgba(22, 121, 171, 0.05);
     }
 
-    .gisid-link:hover {
-        opacity: 0.8;
+    .table tfoot td {
+        padding: 12px 15px;
+        font-weight: bold;
     }
 
     .btn-sm {
@@ -607,7 +744,11 @@
         padding: 5px 12px;
     }
 
-    .pagination .page-link {
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .page-link {
         color: #102C57;
         border-radius: 8px;
         margin: 0 2px;
@@ -615,9 +756,22 @@
         padding: 8px 14px;
     }
 
-    .pagination .active .page-link {
+    .page-item.active .page-link {
         background-color: #1679AB;
+        border-color: #1679AB;
         color: white;
+    }
+
+    .page-link:hover {
+        color: #1679AB;
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 20px;
     }
 
     @media (max-width: 768px) {
@@ -626,13 +780,38 @@
         }
 
         .table {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
         .table thead th,
-        .table tbody td,
-        .table tfoot td {
+        .table tbody td {
             padding: 8px 10px;
+        }
+
+        .btn-sm {
+            padding: 3px 8px;
+            font-size: 0.7rem;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+    }
+
+    @media print {
+        .btn, .pagination, #perPageSelect, .stat-card .btn, .filters-section {
+            display: none !important;
+        }
+
+        .stat-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .table {
+            font-size: 10pt;
         }
     }
 </style>
