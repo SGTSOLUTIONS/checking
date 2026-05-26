@@ -604,7 +604,7 @@ class CommissionerController extends Controller
         }
 
         $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
-
+return response()->json(json_encode($allResults));
         // Return ALL data as JSON for client-side filtering
         return view('corporation.variations', [
             'allDataJson' => json_encode($allResults),
