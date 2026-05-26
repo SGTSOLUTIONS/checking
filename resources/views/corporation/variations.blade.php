@@ -134,6 +134,58 @@
             </div>
         </div>
 
+        <!-- Filters Section -->
+        <div class="stat-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-filter me-2" style="color:#1679AB;"></i>
+                    Advanced Filters
+                </h5>
+                <button class="btn btn-sm btn-outline-secondary" id="clearFiltersBtn">
+                    <i class="fas fa-undo-alt me-1"></i> Clear All Filters
+                </button>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">GIS ID</label>
+                    <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Floors</label>
+                    <select id="floorsFilter" class="form-select">
+                        <option value="">All</option>
+                        <option value="1">1 Floor</option>
+                        <option value="2">2 Floors</option>
+                        <option value="3">3 Floors</option>
+                        <option value="4">4+ Floors</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Variation Type</label>
+                    <select id="variationTypeFilter" class="form-select">
+                        <option value="">All</option>
+                        <option value="positive">Under-assessment (Positive)</option>
+                        <option value="negative">Over-assessment (Negative)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Min Variation %</label>
+                    <input type="number" id="variationMin" class="form-control" placeholder="Min %" step="any">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">Max Variation %</label>
+                    <input type="number" id="variationMax" class="form-control" placeholder="Max %" step="any">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold small">&nbsp;</label>
+                    <button class="btn btn-primary w-100" id="applyFiltersBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Data Table -->
         <div class="stat-card p-4">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
@@ -158,28 +210,44 @@
                 <table class="table table-hover" id="variationsTable">
                     <thead>
                         <tr>
-                            <th>S.No</th>
-                            <th>GIS ID</th>
-                            <th class="text-end">Sq. Feet</th>
-                            <th class="text-center">Floors</th>
-                            <th class="text-center">Floor %</th>
-                            <th class="text-center">Basement</th>
-                            <th class="text-end">MIS Area</th>
-                            <th class="text-end">Calculated</th>
-                            <th class="text-end">Variation</th>
-                            <th class="text-center">Variation %</th>
+                            <th class="sortable" data-column="index" style="cursor: pointer;">S.No <i class="fas fa-sort"></i></th>
+                            <th class="sortable" data-column="gisid" style="cursor: pointer;">GIS ID <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="sqfeet" style="cursor: pointer;">Sq. Feet <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="number_floor" style="cursor: pointer;">Floors <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="percentage" style="cursor: pointer;">Floor % <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="basement" style="cursor: pointer;">Basement <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="mis_plot_area" style="cursor: pointer;">MIS Area <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="calculated_area" style="cursor: pointer;">Calculated <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="area_variation" style="cursor: pointer;">Variation <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Variation % <i class="fas fa-sort"></i></th>
                             <th class="text-center">Assessments</th>
                             <th class="text-center">Map View</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="12" class="text-center py-5">Loading...</td></tr>
+                        <tr><td colspan="12" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading data...</p>
+                         </td></tr>
                     </tbody>
-                    <tfoot id="tableFooter"></tfoot>
-                彑able
+                    <tfoot id="tableFooter" style="background: #f8f9fa;"></tfoot>
+                </table>
             </div>
 
             <div id="pagination" class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Info Note -->
+        <div class="stat-card p-3 mt-4" style="background: #e7f3ff;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle fa-2x me-3" style="color:#1679AB;"></i>
+                <div>
+                    <strong>Note:</strong>
+                    <span id="coordinateNote">Coordinates are automatically converted from UTM to Lat/Lng for accurate Google Maps positioning.</span>
+                </div>
+            </div>
         </div>
 
     </div>
@@ -187,8 +255,48 @@
 @endsection
 
 @push('scripts')
+<!-- Proj4js for coordinate conversion -->
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <script>
+    // Define the projection systems (UTM Zone 43N - India)
+    const utmProjection = '+proj=utm +zone=43 +datum=WGS84 +units=m +no_defs';
+    const wgs84Projection = '+proj=longlat +datum=WGS84 +no_defs';
+
+    proj4.defs('EPSG:32643', utmProjection);
+    proj4.defs('EPSG:4326', wgs84Projection);
+
+    // Function to convert UTM coordinates to Lat/Lng
+    function convertUtmToLatLng(easting, northing) {
+        try {
+            const result = proj4('EPSG:32643', 'EPSG:4326', [parseFloat(easting), parseFloat(northing)]);
+            return { lat: result[1], lng: result[0] };
+        } catch (error) {
+            console.error('Conversion error:', error);
+            return null;
+        }
+    }
+
+    // Parse coordinates from string format "[8566253.148241518,1225035.097863368]"
+    function parseCoordinates(coordString) {
+        if (!coordString) return null;
+        try {
+            let cleaned = coordString.replace(/[\[\]]/g, '');
+            let parts = cleaned.split(',');
+            if (parts.length >= 2) {
+                let easting = parseFloat(parts[0]);
+                let northing = parseFloat(parts[1]);
+                if (!isNaN(easting) && !isNaN(northing)) {
+                    return { easting, northing };
+                }
+            }
+        } catch (e) {
+            console.error('Parse error:', e);
+        }
+        return null;
+    }
+
     // Store ALL data from PHP
     let allData = @json($allDataJson);
 
@@ -197,9 +305,28 @@
         allData = JSON.parse(allData);
     }
 
+    // Process each record to add lat/lng
+    allData = allData.map(record => {
+        const utmCoords = parseCoordinates(record.coordinates);
+        if (utmCoords) {
+            const latLng = convertUtmToLatLng(utmCoords.easting, utmCoords.northing);
+            if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
+                record.lat = latLng.lat;
+                record.lng = latLng.lng;
+                record.hasValidCoords = true;
+            } else {
+                record.hasValidCoords = false;
+            }
+        } else {
+            record.hasValidCoords = false;
+        }
+        return record;
+    });
+
     let filteredData = [...allData];
     let currentPage = 1;
     let itemsPerPage = 50;
+    let currentSort = { column: 'index', direction: 'asc' };
 
     // Totals from server
     const serverTotals = {
@@ -213,20 +340,117 @@
 
     $(document).ready(function() {
         console.log('Total records loaded:', allData.length);
-        if (allData.length > 0) {
-            console.log('Sample record with lat/lng:', allData[0]);
-        }
-        renderTable();
+        initializeFilters();
+        applyFiltersAndRender();
     });
+
+    function initializeFilters() {
+        $('#applyFiltersBtn').click(function() {
+            currentPage = 1;
+            applyFiltersAndRender();
+        });
+
+        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                applyFiltersAndRender();
+            }
+        });
+
+        $('#clearFiltersBtn').click(function() {
+            $('#gisidSearch').val('');
+            $('#floorsFilter').val('');
+            $('#variationTypeFilter').val('');
+            $('#variationMin').val('');
+            $('#variationMax').val('');
+            currentPage = 1;
+            applyFiltersAndRender();
+        });
+
+        $('#perPageSelect').change(function() {
+            const val = $(this).val();
+            itemsPerPage = val === '-1' ? filteredData.length : parseInt(val);
+            currentPage = 1;
+            renderTable();
+        });
+
+        $('.sortable').click(function() {
+            const column = $(this).data('column');
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+            applyFiltersAndRender();
+        });
+    }
+
+    function applyFiltersAndRender() {
+        filteredData = [...allData];
+
+        // GIS ID filter
+        const gisidSearch = $('#gisidSearch').val().toLowerCase().trim();
+        if (gisidSearch) {
+            filteredData = filteredData.filter(item => item.gisid.toLowerCase().includes(gisidSearch));
+        }
+
+        // Floors filter
+        const floorsFilter = $('#floorsFilter').val();
+        if (floorsFilter) {
+            filteredData = filteredData.filter(item => {
+                if (floorsFilter === '4') return item.number_floor >= 4;
+                return item.number_floor == floorsFilter;
+            });
+        }
+
+        // Variation type filter
+        const variationType = $('#variationTypeFilter').val();
+        if (variationType) {
+            filteredData = filteredData.filter(item => {
+                if (variationType === 'positive') return item.area_variation > 0;
+                if (variationType === 'negative') return item.area_variation < 0;
+                return true;
+            });
+        }
+
+        // Variation percentage range
+        const variationMin = parseFloat($('#variationMin').val());
+        if (!isNaN(variationMin)) {
+            filteredData = filteredData.filter(item => item.variation_percentage >= variationMin);
+        }
+
+        const variationMax = parseFloat($('#variationMax').val());
+        if (!isNaN(variationMax)) {
+            filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
+        }
+
+        // Apply sorting
+        filteredData.sort((a, b) => {
+            let aVal = a[currentSort.column];
+            let bVal = b[currentSort.column];
+
+            if (typeof aVal === 'string') {
+                aVal = aVal.toLowerCase();
+                bVal = bVal.toLowerCase();
+            }
+
+            if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        $('#recordCount').text(filteredData.length + ' Records');
+        currentPage = 1;
+        renderTable();
+    }
 
     // Function to open Google Maps with actual coordinates
     function openGoogleMaps(gisid, lat, lng) {
         if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-            // Use actual coordinates if available from controller
             const url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
             window.open(url, '_blank');
         } else {
-            // Fallback to GIS ID search if no coordinates
             const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
             window.open(url, '_blank');
         }
@@ -255,7 +479,7 @@
             pageData.forEach((item, idx) => {
                 const variationClass = item.area_variation >= 0 ? 'text-success' : 'text-danger';
                 const variationIcon = item.area_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-                const hasValidCoords = item.lat && item.lng && !isNaN(item.lat) && !isNaN(item.lng) && item.lat !== 0 && item.lng !== 0;
+                const hasValidCoords = item.hasValidCoords === true;
 
                 html += `
                     <tr>
@@ -299,7 +523,7 @@
 
         // Build footer
         const footerHtml = `
-            <tr style="border-top: 2px solid #dee2e6;">
+            <tr style="border-top: 2px solid #dee2e6; background-color: #f8f9fa;">
                 <td colspan="2"><strong>FILTERED TOTAL</strong></td>
                 <td class="text-end"><strong>${filteredSqfeet.toFixed(2)}</strong></td>
                 <td colspan="3"></td>
@@ -330,7 +554,6 @@
         `;
         $('#tableFooter').html(footerHtml);
 
-        // Render pagination
         renderPagination(totalPages);
     }
 
@@ -355,13 +578,28 @@
                 <ul class="pagination mb-0">
         `;
 
+        // Previous button
         paginationHtml += `
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">« Previous</a>
             </li>
         `;
 
-        for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+        // Page numbers
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+
+        if (startPage > 1) {
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+            if (startPage > 2) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
             paginationHtml += `
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
                     <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
@@ -369,6 +607,12 @@
             `;
         }
 
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+        }
+
+        // Next button
         paginationHtml += `
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next »</a>
@@ -384,13 +628,6 @@
         currentPage = page;
         renderTable();
     }
-
-    $('#perPageSelect').change(function() {
-        const val = $(this).val();
-        itemsPerPage = val === '-1' ? allData.length : parseInt(val);
-        currentPage = 1;
-        renderTable();
-    });
 
     function exportToExcel() {
         const exportData = filteredData.map(item => ({
@@ -413,7 +650,11 @@
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
-        XLSX.writeFile(wb, `Ward_${Date.now()}_Building_Variations.xlsx`);
+
+        // Auto-size columns
+        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 20 }));
+
+        XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
     }
 </script>
 
@@ -430,6 +671,11 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         border: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
     }
 
     .stat-icon {
@@ -458,6 +704,12 @@
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
         color: #ffffff !important;
         border: none;
+        white-space: nowrap;
+    }
+
+    .table thead th i {
+        margin-left: 5px;
+        opacity: 0.7;
     }
 
     .table tbody td {
@@ -470,12 +722,21 @@
         background-color: rgba(22, 121, 171, 0.05);
     }
 
+    .table tfoot td {
+        padding: 12px 15px;
+        font-weight: bold;
+    }
+
     .btn-sm {
         border-radius: 8px;
         padding: 5px 12px;
     }
 
-    .pagination .page-link {
+    .pagination {
+        margin-bottom: 0;
+    }
+
+    .page-link {
         color: #102C57;
         border-radius: 8px;
         margin: 0 2px;
@@ -483,9 +744,66 @@
         padding: 8px 14px;
     }
 
-    .pagination .active .page-link {
+    .page-item.active .page-link {
         background-color: #1679AB;
+        border-color: #1679AB;
         color: white;
+    }
+
+    .page-link:hover {
+        color: #1679AB;
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-content-area {
+            padding: 15px;
+        }
+        .table {
+            font-size: 0.75rem;
+        }
+        .table thead th,
+        .table tbody td {
+            padding: 8px 10px;
+        }
+        .btn-sm {
+            padding: 3px 8px;
+            font-size: 0.7rem;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+    }
+
+    @media print {
+        .btn, .pagination, #perPageSelect, .stat-card .btn, .filters-section, #clearFiltersBtn, #applyFiltersBtn {
+            display: none !important;
+        }
+        .stat-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .table {
+            font-size: 10pt;
+        }
+        .dashboard-content-area {
+            background: white;
+            padding: 10px;
+        }
     }
 </style>
 @endpush
