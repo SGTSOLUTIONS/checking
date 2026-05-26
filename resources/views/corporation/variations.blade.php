@@ -284,19 +284,19 @@
             <!-- Table -->
             <div class="table-responsive">
                 <table class="table table-hover" id="variationsTable">
-                    <thead style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
+                    <thead>
                         <tr>
-                            <th class="text-white sortable" data-column="index">S.No <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable" data-column="gisid">GIS ID <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-end" data-column="sqfeet">Sq. Feet <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-center" data-column="number_floor">Floors <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-center" data-column="percentage">Floor % <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-center" data-column="basement">Basement <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-end" data-column="mis_plot_area">MIS Area <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-end" data-column="calculated_area">Calculated <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-end" data-column="area_variation">Variation <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white sortable text-center" data-column="variation_percentage">Variation % <i class="fas fa-sort ms-1"></i></th>
-                            <th class="text-white text-center">Assessments</th>
+                            <th class="sortable" data-column="index">S.No <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable" data-column="gisid">GIS ID <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-end" data-column="sqfeet">Sq. Feet <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-center" data-column="number_floor">Floors <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-center" data-column="percentage">Floor % <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-center" data-column="basement">Basement <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-end" data-column="mis_plot_area">MIS Area <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-end" data-column="calculated_area">Calculated <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-end" data-column="area_variation">Variation <i class="fas fa-sort ms-1"></i></th>
+                            <th class="sortable text-center" data-column="variation_percentage">Variation % <i class="fas fa-sort ms-1"></i></th>
+                            <th class="text-center">Assessments</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -977,9 +977,12 @@
         color: #1679AB;
     }
 
+    /* Table Styles - Fixed Header Visibility */
     .table {
         margin-bottom: 0;
-        background-color: #102C57;
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
     }
 
     .table thead th {
@@ -989,20 +992,32 @@
         font-size: 0.85rem;
         cursor: pointer;
         user-select: none;
+        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+        color: #ffffff !important;
+        border: none;
+    }
+
+    .table thead th i {
+        color: rgba(255, 255, 255, 0.7);
     }
 
     .table thead th:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #1a3d6e 0%, #1e8bc2 100%);
     }
 
     .table tbody td {
         padding: 12px 15px;
         vertical-align: middle;
         border-bottom: 1px solid #e9ecef;
+        background-color: #ffffff;
     }
 
     .table tbody tr:hover {
-        background: rgba(22, 121, 171, 0.05);
+        background-color: rgba(22, 121, 171, 0.05);
+    }
+
+    .table tbody tr:hover td {
+        background-color: transparent;
     }
 
     .table tfoot td {
