@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
+        <!-- Statistics Cards (same as before) -->
         <div class="row g-4 mb-4">
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
@@ -230,7 +230,7 @@
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                             <p class="mt-2">Loading data...</p>
-                         </td></tr>
+                        </td></tr>
                     </tbody>
                     <tfoot id="tableFooter" style="background: #f8f9fa;"></tfoot>
                 </table>
@@ -245,7 +245,7 @@
                 <i class="fas fa-info-circle fa-2x me-3" style="color:#1679AB;"></i>
                 <div>
                     <strong>Note:</strong>
-                    <span id="coordinateNote">Coordinates are automatically converted from UTM to Lat/Lng for accurate Google Maps positioning.</span>
+                    Click on <i class="fas fa-map-marker-alt"></i> <strong>GIS ID</strong> or <strong>View Map</strong> button to see the location on Google Maps.
                 </div>
             </div>
         </div>
@@ -255,40 +255,47 @@
 @endsection
 
 @push('scripts')
-<!-- Proj4js for coordinate conversion -->
+<!-- Proj4js for EPSG:3857 to EPSG:4326 conversion -->
 <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-    // Define the projection systems (UTM Zone 43N - India)
-    const utmProjection = '+proj=utm +zone=43 +datum=WGS84 +units=m +no_defs';
-    const wgs84Projection = '+proj=longlat +datum=WGS84 +no_defs';
+    // Define the projection systems
+    // EPSG:3857 - Web Mercator (meters)
+    const webMercator = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs +type=crs';
+    // EPSG:4326 - WGS84 (latitude/longitude)
+    const wgs84 = '+proj=longlat +datum=WGS84 +no_defs +type=crs';
 
-    proj4.defs('EPSG:32643', utmProjection);
-    proj4.defs('EPSG:4326', wgs84Projection);
+    // Initialize proj4
+    proj4.defs('EPSG:3857', webMercator);
+    proj4.defs('EPSG:4326', wgs84);
 
-    // Function to convert UTM coordinates to Lat/Lng
-    function convertUtmToLatLng(easting, northing) {
+    // Function to convert EPSG:3857 to EPSG:4326
+    function convert3857ToLatLng(x, y) {
         try {
-            const result = proj4('EPSG:32643', 'EPSG:4326', [parseFloat(easting), parseFloat(northing)]);
-            return { lat: result[1], lng: result[0] };
+            // Convert from EPSG:3857 to EPSG:4326
+            const result = proj4('EPSG:3857', 'EPSG:4326', [x, y]);
+            return {
+                lng: result[0], // longitude
+                lat: result[1]  // latitude
+            };
         } catch (error) {
             console.error('Conversion error:', error);
             return null;
         }
     }
 
-    // Parse coordinates from string format "[8566253.148241518,1225035.097863368]"
+    // Parse coordinates from string format "[x,y]" where x,y are Web Mercator meters
     function parseCoordinates(coordString) {
         if (!coordString) return null;
         try {
             let cleaned = coordString.replace(/[\[\]]/g, '');
             let parts = cleaned.split(',');
             if (parts.length >= 2) {
-                let easting = parseFloat(parts[0]);
-                let northing = parseFloat(parts[1]);
-                if (!isNaN(easting) && !isNaN(northing)) {
-                    return { easting, northing };
+                let x = parseFloat(parts[0]);
+                let y = parseFloat(parts[1]);
+                if (!isNaN(x) && !isNaN(y)) {
+                    return { x, y };
                 }
             }
         } catch (e) {
@@ -305,11 +312,11 @@
         allData = JSON.parse(allData);
     }
 
-    // Process each record to add lat/lng
+    // Process each record to convert EPSG:3857 to Lat/Lng
     allData = allData.map(record => {
-        const utmCoords = parseCoordinates(record.coordinates);
-        if (utmCoords) {
-            const latLng = convertUtmToLatLng(utmCoords.easting, utmCoords.northing);
+        const coords = parseCoordinates(record.coordinates);
+        if (coords) {
+            const latLng = convert3857ToLatLng(coords.x, coords.y);
             if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
                 record.lat = latLng.lat;
                 record.lng = latLng.lng;
@@ -340,6 +347,9 @@
 
     $(document).ready(function() {
         console.log('Total records loaded:', allData.length);
+        if (allData.length > 0 && allData[0].lat) {
+            console.log('Sample converted coordinates - Lat:', allData[0].lat, 'Lng:', allData[0].lng);
+        }
         initializeFilters();
         applyFiltersAndRender();
     });
@@ -445,15 +455,19 @@
         renderTable();
     }
 
-    // Function to open Google Maps with actual coordinates
+    // Function to open Google Maps with decimal coordinates
     function openGoogleMaps(gisid, lat, lng) {
+        let url;
+
         if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-            const url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
-            window.open(url, '_blank');
+            // Google Maps expects lat,lng in decimal degrees
+            url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
         } else {
-            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
-            window.open(url, '_blank');
+            // Fallback to GIS ID search
+            url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
         }
+
+        window.open(url, '_blank');
     }
 
     function renderTable() {
@@ -578,14 +592,12 @@
                 <ul class="pagination mb-0">
         `;
 
-        // Previous button
         paginationHtml += `
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">« Previous</a>
             </li>
         `;
 
-        // Page numbers
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -612,7 +624,6 @@
             paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
         }
 
-        // Next button
         paginationHtml += `
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next »</a>
@@ -644,14 +655,13 @@
             'Assessment Count': item.assessment_count,
             'Latitude': item.lat || '',
             'Longitude': item.lng || '',
-            'Original Coordinates': item.coordinates
+            'Original Coordinates (3857)': item.coordinates
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
 
-        // Auto-size columns
         ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 20 }));
 
         XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
@@ -659,6 +669,7 @@
 </script>
 
 <style>
+    /* Same styles as before */
     .dashboard-content-area {
         padding: 20px;
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
