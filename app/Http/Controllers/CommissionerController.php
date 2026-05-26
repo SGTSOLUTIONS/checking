@@ -451,7 +451,7 @@ class CommissionerController extends Controller
             'usage_variation_percentage' => $validBuildingsCount > 0 ? round(($usageVariationCount / $validBuildingsCount) * 100, 1) : 0,
         ];
     }
-    <?php
+
 // In your controller
 public function viewVariations($ward_no)
 {
