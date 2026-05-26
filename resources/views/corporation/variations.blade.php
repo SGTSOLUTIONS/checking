@@ -979,6 +979,7 @@
 
     .table {
         margin-bottom: 0;
+        background-color: #102C57;
     }
 
     .table thead th {
