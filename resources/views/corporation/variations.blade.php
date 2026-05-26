@@ -245,7 +245,7 @@
     // Store ALL data from PHP
     let allData = @json($allDataJson);
 
-    // Parse if it's a string
+    // Parse JSON string if needed
     if (typeof allData === 'string') {
         allData = JSON.parse(allData);
     }
@@ -264,269 +264,408 @@
         avgVariationPercentage: {{ $avgVariationPercentage }}
     };
 
-    $(document).ready(function() {
-        console.log('Total records loaded:', allData.length);
-        if (allData.length > 0) {
-            console.log('Sample coordinates:', allData[0].coordinates);
-        }
+    $(document).ready(function () {
+
+        console.log('Loaded Records:', allData.length);
+
         initializeFilters();
         applyFiltersAndRender();
+
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | FILTERS
+    |--------------------------------------------------------------------------
+    */
     function initializeFilters() {
-        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').on('keyup change', function() {
+
+        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax')
+            .on('keyup change', function () {
+
+                currentPage = 1;
+                applyFiltersAndRender();
+
+            });
+
+        $('#clearFiltersBtn').click(function () {
+
+            $('#gisidSearch').val('');
+            $('#floorsFilter').val('');
+            $('#variationTypeFilter').val('');
+            $('#variationMin').val('');
+            $('#variationMax').val('');
+
             currentPage = 1;
+
             applyFiltersAndRender();
+
         });
 
-        $('#clearFiltersBtn').click(function() {
-            $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').val('');
-            applyFiltersAndRender();
-        });
+        $('#perPageSelect').change(function () {
 
-        $('#perPageSelect').change(function() {
-            itemsPerPage = parseInt($(this).val()) === -1 ? allData.length : parseInt($(this).val());
+            let value = parseInt($(this).val());
+
+            itemsPerPage = value === -1 ? filteredData.length : value;
+
             currentPage = 1;
+
             renderTable();
+
         });
 
-        $('.sortable').click(function() {
+        $('.sortable').click(function () {
+
             const column = $(this).data('column');
+
             if (currentSort.column === column) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                currentSort.direction =
+                    currentSort.direction === 'asc'
+                        ? 'desc'
+                        : 'asc';
             } else {
                 currentSort.column = column;
                 currentSort.direction = 'asc';
             }
+
             applyFiltersAndRender();
+
         });
+
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | APPLY FILTERS
+    |--------------------------------------------------------------------------
+    */
     function applyFiltersAndRender() {
+
         filteredData = [...allData];
 
-        // Apply filters
+        // GIS ID SEARCH
         const gisidSearch = $('#gisidSearch').val().toLowerCase();
+
         if (gisidSearch) {
-            filteredData = filteredData.filter(item => item.gisid.toLowerCase().includes(gisidSearch));
+
+            filteredData = filteredData.filter(item =>
+                String(item.gisid).toLowerCase().includes(gisidSearch)
+            );
+
         }
 
+        // FLOOR FILTER
         const floorsFilter = $('#floorsFilter').val();
+
         if (floorsFilter) {
+
             filteredData = filteredData.filter(item => {
-                if (floorsFilter === '4') return item.number_floor >= 4;
+
+                if (floorsFilter === '4') {
+                    return item.number_floor >= 4;
+                }
+
                 return item.number_floor == floorsFilter;
+
             });
+
         }
 
+        // VARIATION TYPE
         const variationType = $('#variationTypeFilter').val();
+
         if (variationType) {
+
             filteredData = filteredData.filter(item => {
-                if (variationType === 'positive') return item.area_variation > 0;
-                if (variationType === 'negative') return item.area_variation < 0;
+
+                if (variationType === 'positive') {
+                    return item.area_variation > 0;
+                }
+
+                if (variationType === 'negative') {
+                    return item.area_variation < 0;
+                }
+
                 return true;
+
             });
+
         }
 
+        // MIN %
         const variationMin = parseFloat($('#variationMin').val());
+
         if (!isNaN(variationMin)) {
-            filteredData = filteredData.filter(item => item.variation_percentage >= variationMin);
+
+            filteredData = filteredData.filter(item =>
+                item.variation_percentage >= variationMin
+            );
+
         }
 
+        // MAX %
         const variationMax = parseFloat($('#variationMax').val());
+
         if (!isNaN(variationMax)) {
-            filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
+
+            filteredData = filteredData.filter(item =>
+                item.variation_percentage <= variationMax
+            );
+
         }
 
-        // Sort
+        /*
+        |--------------------------------------------------------------------------
+        | SORTING
+        |--------------------------------------------------------------------------
+        */
         filteredData.sort((a, b) => {
+
             let aVal = a[currentSort.column];
             let bVal = b[currentSort.column];
+
             if (typeof aVal === 'string') {
                 aVal = aVal.toLowerCase();
                 bVal = bVal.toLowerCase();
             }
-            if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
-            if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+
+            if (aVal < bVal) {
+                return currentSort.direction === 'asc' ? -1 : 1;
+            }
+
+            if (aVal > bVal) {
+                return currentSort.direction === 'asc' ? 1 : -1;
+            }
+
             return 0;
+
         });
 
         $('#recordCount').text(filteredData.length + ' Records');
+
         renderTable();
+
     }
 
-    // Function to open Google Maps - searches by GIS ID since coordinates are projected
-    function openGoogleMaps(gisid) {
-        if (!gisid) {
-            alert('No GIS ID available');
+    /*
+    |--------------------------------------------------------------------------
+    | GOOGLE MAPS DIRECTION
+    |--------------------------------------------------------------------------
+    */
+    function openGoogleMaps(coordinates, gisid) {
+
+        if (!coordinates) {
+
+            alert('No coordinates available');
             return;
+
         }
 
-        // Search by GIS ID on Google Maps
-        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
-        window.open(url, '_blank');
-    }
+        try {
 
-    // Alternative: If you have lat/lng, use this function
-    function openGoogleMapsWithLatLng(lat, lng, gisid) {
-        if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-        } else {
-            // Fallback to GIS ID search
-            openGoogleMaps(gisid);
+            /*
+            |--------------------------------------------------------------------------
+            | YOUR COORDINATES FORMAT
+            | [8566253.148241518,1225035.097863368]
+            |--------------------------------------------------------------------------
+            */
+
+            let coords = coordinates;
+
+            // If coordinates are string
+            if (typeof coords === 'string') {
+
+                coords = coords
+                    .replace('[', '')
+                    .replace(']', '');
+
+                coords = coords.split(',');
+
+            }
+
+            let x = parseFloat(coords[0]);
+            let y = parseFloat(coords[1]);
+
+            if (isNaN(x) || isNaN(y)) {
+
+                alert('Invalid coordinates');
+                return;
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | CONVERT WEB MERCATOR TO LAT LNG
+            |--------------------------------------------------------------------------
+            */
+
+            let lng = (x / 20037508.34) * 180;
+
+            let lat = (y / 20037508.34) * 180;
+
+            lat =
+                180 / Math.PI *
+                (
+                    2 *
+                    Math.atan(
+                        Math.exp(lat * Math.PI / 180)
+                    ) -
+                    Math.PI / 2
+                );
+
+            console.log('Latitude:', lat);
+            console.log('Longitude:', lng);
+
+            /*
+            |--------------------------------------------------------------------------
+            | GOOGLE MAPS DIRECTION URL
+            |--------------------------------------------------------------------------
+            */
+
+            let url =
+                `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+            window.open(url, '_blank');
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert('Unable to open map');
+
         }
+
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | TABLE RENDER
+    |--------------------------------------------------------------------------
+    */
     function renderTable() {
+
         const start = (currentPage - 1) * itemsPerPage;
-        const pageData = filteredData.slice(start, start + itemsPerPage);
 
-        // Calculate totals for filtered data
-        let filteredSqfeet = 0, filteredMisArea = 0, filteredCalculated = 0, filteredVariation = 0;
-        filteredData.forEach(item => {
-            filteredSqfeet += item.sqfeet;
-            filteredMisArea += item.mis_plot_area;
-            filteredCalculated += item.calculated_area;
-            filteredVariation += item.area_variation;
-        });
-        const filteredAvgVariation = filteredMisArea > 0 ? (filteredVariation / filteredMisArea) * 100 : 0;
+        const pageData =
+            filteredData.slice(start, start + itemsPerPage);
 
-        // Build table body
         let html = '';
+
         pageData.forEach((item, idx) => {
-            const variationClass = item.area_variation >= 0 ? 'text-success' : 'text-danger';
-            const variationIcon = item.area_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+
+            const variationClass =
+                item.area_variation >= 0
+                    ? 'text-success'
+                    : 'text-danger';
+
+            const variationIcon =
+                item.area_variation >= 0
+                    ? 'fa-arrow-up'
+                    : 'fa-arrow-down';
 
             html += `
                 <tr>
+
                     <td>${start + idx + 1}</td>
+
                     <td>
-                        <span class="gisid-link" onclick="openGoogleMaps('${item.gisid}')" style="cursor:pointer; color:#1679AB; text-decoration:underline;">
-                            <i class="fas fa-map-marker-alt me-1"></i>${item.gisid}
+                        <span
+                            class="gisid-link"
+                            onclick='openGoogleMaps(${JSON.stringify(item.coordinates)}, "${item.gisid}")'
+                            style="cursor:pointer; color:#1679AB; text-decoration:underline;"
+                        >
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            ${item.gisid}
                         </span>
                     </td>
-                    <td class="text-end">${item.sqfeet.toFixed(2)}</td>
-                    <td class="text-center">${item.number_floor}</td>
-                    <td class="text-center">${item.percentage}%</td>
-                    <td class="text-center">${item.basement > 0 ? item.basement : '-'}</td>
-                    <td class="text-end">${item.mis_plot_area.toFixed(2)}</td>
-                    <td class="text-end">${item.calculated_area.toFixed(2)}</td>
+
+                    <td class="text-end">
+                        ${parseFloat(item.sqfeet).toFixed(2)}
+                    </td>
+
+                    <td class="text-center">
+                        ${item.number_floor}
+                    </td>
+
+                    <td class="text-center">
+                        ${item.percentage}%
+                    </td>
+
+                    <td class="text-center">
+                        ${item.basement > 0 ? item.basement : '-'}
+                    </td>
+
+                    <td class="text-end">
+                        ${parseFloat(item.mis_plot_area).toFixed(2)}
+                    </td>
+
+                    <td class="text-end">
+                        ${parseFloat(item.calculated_area).toFixed(2)}
+                    </td>
+
                     <td class="text-end ${variationClass}">
                         <i class="fas ${variationIcon} me-1"></i>
-                        ${item.area_variation >= 0 ? '+' : ''}${item.area_variation.toFixed(2)}
+                        ${item.area_variation >= 0 ? '+' : ''}
+                        ${parseFloat(item.area_variation).toFixed(2)}
                     </td>
+
                     <td class="text-center ${variationClass}">
-                        ${item.variation_percentage >= 0 ? '+' : ''}${item.variation_percentage.toFixed(2)}%
+                        ${item.variation_percentage >= 0 ? '+' : ''}
+                        ${parseFloat(item.variation_percentage).toFixed(2)}%
                     </td>
+
                     <td class="text-center">
-                        <span class="badge ${item.assessment_count > 1 ? 'bg-info' : 'bg-secondary'}">${item.assessment_count}</span>
+                        <span class="badge ${item.assessment_count > 1 ? 'bg-info' : 'bg-secondary'}">
+                            ${item.assessment_count}
+                        </span>
                     </td>
+
                     <td class="text-center">
-                        <button class="btn btn-sm btn-primary" onclick="openGoogleMaps('${item.gisid}')">
-                            <i class="fas fa-map-marked-alt"></i> View Map
+
+                        <button
+                            class="btn btn-sm btn-primary"
+                            onclick='openGoogleMaps(${JSON.stringify(item.coordinates)}, "${item.gisid}")'
+                        >
+                            <i class="fas fa-map-marked-alt"></i>
+                            View Map
                         </button>
+
                     </td>
+
                 </tr>
             `;
+
         });
 
         if (pageData.length === 0) {
-            html = '<tr><td colspan="12" class="text-center py-5">No records found</td></tr>';
+
+            html = `
+                <tr>
+                    <td colspan="12" class="text-center py-5">
+                        No records found
+                    </td>
+                </tr>
+            `;
+
         }
 
         $('#tableBody').html(html);
 
-        // Build footer
-        const footerHtml = `
-            <tr style="background: #f8f9fa; font-weight: bold;">
-                <td colspan="2">FILTERED TOTAL</td>
-                <td class="text-end">${filteredSqfeet.toFixed(2)}</td>
-                <td colspan="3"></td>
-                <td class="text-end">${filteredMisArea.toFixed(2)}</td>
-                <td class="text-end">${filteredCalculated.toFixed(2)}</td>
-                <td class="text-end ${filteredVariation >= 0 ? 'text-success' : 'text-danger'}">${filteredVariation >= 0 ? '+' : ''}${filteredVariation.toFixed(2)}</td>
-                <td class="text-center ${filteredAvgVariation >= 0 ? 'text-success' : 'text-danger'}">${filteredAvgVariation >= 0 ? '+' : ''}${filteredAvgVariation.toFixed(2)}%</td>
-                <td colspan="2"></td>
-            </tr>
-            <tr style="border-top: 2px solid #dee2e6; background: #f8f9fa; font-weight: bold;">
-                <td colspan="2">WARD TOTAL</td>
-                <td class="text-end">${serverTotals.totalSqfeet.toFixed(2)}</td>
-                <td colspan="3"></td>
-                <td class="text-end">${serverTotals.totalMisPlotArea.toFixed(2)}</td>
-                <td class="text-end">${serverTotals.totalCalculatedArea.toFixed(2)}</td>
-                <td class="text-end ${serverTotals.totalAreaVariation >= 0 ? 'text-success' : 'text-danger'}">${serverTotals.totalAreaVariation >= 0 ? '+' : ''}${serverTotals.totalAreaVariation.toFixed(2)}</td>
-                <td class="text-center ${serverTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${serverTotals.avgVariationPercentage.toFixed(2)}%</td>
-                <td colspan="2"></td>
-            </tr>
-        `;
-        $('#tableFooter').html(footerHtml);
-
-        // Pagination
-        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-        const startRecord = start + 1;
-        const endRecord = Math.min(start + itemsPerPage, filteredData.length);
-
-        let paginationHtml = `
-            <div><small>Showing ${startRecord} to ${endRecord} of ${filteredData.length} records</small></div>
-            <nav><ul class="pagination mb-0">
-        `;
-
-        if (currentPage > 1) {
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Previous</a></li>`;
-        }
-
-        for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-            paginationHtml += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a></li>`;
-        }
-
-        if (currentPage < totalPages) {
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next</a></li>`;
-        }
-
-        paginationHtml += `</ul></nav>`;
-        $('#pagination').html(paginationHtml);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | PAGINATION
+    |--------------------------------------------------------------------------
+    */
     function changePage(page) {
+
         currentPage = page;
+
         renderTable();
+
     }
 
-    function exportToExcel() {
-        const exportData = filteredData.map(item => ({
-            'S.No': item.index,
-            'GIS ID': item.gisid,
-            'Sq. Feet': item.sqfeet,
-            'Floors': item.number_floor,
-            'Floor %': item.percentage,
-            'Basement': item.basement,
-            'MIS Plot Area': item.mis_plot_area,
-            'Calculated Area': item.calculated_area,
-            'Area Variation': item.area_variation,
-            'Variation %': item.variation_percentage,
-            'Assessment Count': item.assessment_count,
-            'Coordinates': item.coordinates
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Ward_Variations');
-        XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Variations.xlsx`);
-    }
-
-    function formatNumber(num, decimals = 2) {
-        return parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
 </script>
 
 <style>
