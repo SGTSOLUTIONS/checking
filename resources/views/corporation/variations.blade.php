@@ -297,6 +297,7 @@
                             <th class="sortable text-end" data-column="area_variation">Variation <i class="fas fa-sort ms-1"></i></th>
                             <th class="sortable text-center" data-column="variation_percentage">Variation % <i class="fas fa-sort ms-1"></i></th>
                             <th class="text-center">Assessments</th>
+                            <th class="text-center">Map View</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -335,6 +336,35 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Google Maps Modal -->
+<div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%); color: white;">
+                <h5 class="modal-title" id="mapModalLabel">
+                    <i class="fas fa-map-marked-alt me-2"></i>
+                    Location Map
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="simpleMap" style="height: 400px; width: 100%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                    <div class="text-center">
+                        <i class="fas fa-map fa-3x text-muted mb-2"></i>
+                        <p>Click "Open in Google Maps" to view location</p>
+                    </div>
+                </div>
+                <div class="mt-3 text-center">
+                    <a href="#" id="openGoogleMaps" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        Open in Google Maps
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
@@ -634,6 +664,68 @@
         }
     }
 
+    function parseCoordinates(item) {
+        if (!item.coordinates) return null;
+
+        try {
+            // If coordinates is a string, try to parse it
+            let coords = item.coordinates;
+
+            // Handle GeoJSON format
+            if (typeof coords === 'string') {
+                const parsed = JSON.parse(coords);
+                if (parsed.type === 'Point' && parsed.coordinates && parsed.coordinates.length >= 2) {
+                    return {
+                        lat: parsed.coordinates[1],
+                        lng: parsed.coordinates[0]
+                    };
+                }
+            }
+
+            // Handle "lat,lng" format
+            if (typeof coords === 'string' && coords.includes(',')) {
+                const parts = coords.split(',');
+                if (parts.length >= 2) {
+                    const lat = parseFloat(parts[0].trim());
+                    const lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        return { lat, lng };
+                    }
+                }
+            }
+
+            // Handle object format
+            if (typeof coords === 'object') {
+                if (coords.lat && coords.lng) {
+                    return { lat: coords.lat, lng: coords.lng };
+                }
+                if (coords.latitude && coords.longitude) {
+                    return { lat: coords.latitude, lng: coords.longitude };
+                }
+                if (coords.coordinates && coords.coordinates.length >= 2) {
+                    return { lat: coords.coordinates[1], lng: coords.coordinates[0] };
+                }
+            }
+        } catch(e) {
+            console.log('Error parsing coordinates:', e);
+        }
+
+        return null;
+    }
+
+    function openGoogleMaps(gisid, coordinates) {
+        const coords = parseCoordinates({ coordinates });
+
+        if (coords && coords.lat && coords.lng) {
+            const url = `https://www.google.com/maps?q=${coords.lat},${coords.lng}`;
+            window.open(url, '_blank');
+        } else {
+            // If no coordinates, search by GIS ID
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gisid)}`;
+            window.open(url, '_blank');
+        }
+    }
+
     function renderTable() {
         const totalPages = Math.ceil(filteredData.length / itemsPerPage);
         const start = (currentPage - 1) * itemsPerPage;
@@ -650,11 +742,17 @@
             const variationIcon = item.area_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
             const serialNo = start + idx + 1;
 
+            // Check if coordinates exist
+            const hasCoordinates = item.coordinates && (
+                (typeof item.coordinates === 'string' && item.coordinates.length > 0) ||
+                (typeof item.coordinates === 'object' && Object.keys(item.coordinates).length > 0)
+            );
+
             html += `
                 <tr>
                     <td>${serialNo}</td>
                     <td>
-                        <span class="badge bg-info bg-opacity-10 text-dark p-2">
+                        <span class="badge bg-info bg-opacity-10 text-dark p-2" style="cursor: pointer;" onclick="openGoogleMaps('${escapeHtml(item.gisid)}', ${JSON.stringify(item.coordinates)})">
                             <i class="fas fa-map-pin me-1"></i>
                             ${escapeHtml(item.gisid)}
                         </span>
@@ -685,6 +783,15 @@
                             ${item.assessment_count}
                         </span>
                     </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm ${hasCoordinates ? 'btn-primary' : 'btn-secondary'}"
+                                onclick="openGoogleMaps('${escapeHtml(item.gisid)}', ${JSON.stringify(item.coordinates)})"
+                                ${!hasCoordinates ? 'disabled' : ''}
+                                title="${hasCoordinates ? 'View on Google Maps' : 'No coordinates available'}">
+                            <i class="fas fa-map-marked-alt"></i>
+                            ${hasCoordinates ? 'View Map' : 'No Map'}
+                        </button>
+                    </td>
                 </tr>
             `;
         });
@@ -692,7 +799,7 @@
         if (pageData.length === 0) {
             html = `
                 <tr>
-                    <td colspan="11" class="text-center py-5">
+                    <td colspan="12" class="text-center py-5">
                         <i class="fas fa-filter fa-3x text-muted mb-3 d-block"></i>
                         <h5>No Matching Records</h5>
                         <p class="text-muted mb-0">Try adjusting your filters to see more results</p>
@@ -717,7 +824,7 @@
                 <td class="text-center ${filteredTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">
                     <strong>${filteredTotals.avgVariationPercentage >= 0 ? '+' : ''}${formatNumber(filteredTotals.avgVariationPercentage, 2)}%</strong>
                 </td>
-                <td></td>
+                <td colspan="2"></td>
             </tr>
             <tr style="border-top: 2px solid #dee2e6;">
                 <td colspan="2"><strong>WARD TOTAL</strong></td>
@@ -731,7 +838,7 @@
                 <td class="text-center ${serverTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">
                     <strong>${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${formatNumber(serverTotals.avgVariationPercentage, 2)}%</strong>
                 </td>
-                <td></td>
+                <td colspan="2"></td>
             </tr>
         `;
         $('#tableFooter').html(footerHtml);
@@ -878,7 +985,8 @@
             'Calculated Area': item.calculated_area,
             'Area Variation': item.area_variation,
             'Variation %': item.variation_percentage,
-            'Assessment Count': item.assessment_count
+            'Assessment Count': item.assessment_count,
+            'Coordinates': typeof item.coordinates === 'object' ? JSON.stringify(item.coordinates) : (item.coordinates || '')
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
@@ -919,7 +1027,7 @@
         ws['!cols'] = [
             {wch:8}, {wch:14}, {wch:12}, {wch:8},
             {wch:10}, {wch:8}, {wch:14}, {wch:14},
-            {wch:14}, {wch:12}, {wch:14}
+            {wch:14}, {wch:12}, {wch:14}, {wch:20}
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, 'Ward_{{ $warddetail->ward_no ?? '' }}_Variations');
@@ -1075,6 +1183,22 @@
     .page-link:hover {
         color: #1679AB;
         background-color: #f8f9fa;
+    }
+
+    /* Make GIS ID clickable */
+    .table tbody td:first-child .badge {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .table tbody td:first-child .badge:hover {
+        transform: scale(1.05);
+        background-color: #1679AB !important;
+        color: white !important;
+    }
+
+    .table tbody td:first-child .badge:hover i {
+        color: white !important;
     }
 
     @keyframes fadeInUp {
