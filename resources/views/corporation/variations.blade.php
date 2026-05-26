@@ -222,7 +222,7 @@
                             <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Variation % <i class="fas fa-sort"></i></th>
                             <th class="text-center">Assessments</th>
                             <th class="text-center">Map View</th>
-                        </table>
+                        </tr>
                     </thead>
                     <tbody id="tableBody">
                         <tr><td colspan="12" class="text-center py-5">
@@ -261,44 +261,30 @@
 
 <script>
     // Define the projection systems
-    // UTM Zone 43N (India) - Adjust based on your location
-    // Common for India: UTM Zone 43N (EPSG:32643) or 44N (EPSG:32644)
-    // Based on your coordinates (around 8566253, 1225035), this appears to be UTM Zone 43N
     const utmProjection = '+proj=utm +zone=43 +datum=WGS84 +units=m +no_defs';
     const wgs84Projection = '+proj=longlat +datum=WGS84 +no_defs';
 
-    // Initialize proj4
     proj4.defs('EPSG:32643', utmProjection);
     proj4.defs('EPSG:4326', wgs84Projection);
 
-    // Function to convert UTM coordinates to Lat/Lng
     function convertUtmToLatLng(easting, northing) {
         try {
-            // Convert UTM to Lat/Lng
             const result = proj4('EPSG:32643', 'EPSG:4326', [easting, northing]);
-            return {
-                lat: result[1],
-                lng: result[0]
-            };
+            return { lat: result[1], lng: result[0] };
         } catch (error) {
             console.error('Conversion error:', error);
             return null;
         }
     }
 
-    // Parse coordinates from string format "[8566253.148241518,1225035.097863368]"
     function parseCoordinates(coordString) {
         if (!coordString) return null;
-
         try {
-            // Remove brackets and split
             let cleaned = coordString.replace(/[\[\]]/g, '');
             let parts = cleaned.split(',');
-
             if (parts.length >= 2) {
                 let easting = parseFloat(parts[0]);
                 let northing = parseFloat(parts[1]);
-
                 if (!isNaN(easting) && !isNaN(northing)) {
                     return { easting, northing };
                 }
@@ -311,8 +297,6 @@
 
     // Store ALL data from PHP
     let allData = @json($allDataJson);
-
-    // Parse if it's a string
     if (typeof allData === 'string') {
         allData = JSON.parse(allData);
     }
@@ -340,7 +324,6 @@
     let itemsPerPage = 50;
     let currentSort = { column: 'index', direction: 'asc' };
 
-    // Totals from server
     const serverTotals = {
         totalBuildings: {{ $totalBuildings }},
         totalSqfeet: {{ $totalSqfeet }},
@@ -351,8 +334,6 @@
     };
 
     $(document).ready(function() {
-        console.log('Total records loaded:', allData.length);
-        console.log('Sample record with lat/lng:', allData[0]);
         initializeFilters();
         applyFiltersAndRender();
     });
@@ -371,7 +352,11 @@
         });
 
         $('#clearFiltersBtn').click(function() {
-            $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').val('');
+            $('#gisidSearch').val('');
+            $('#floorsFilter').val('');
+            $('#variationTypeFilter').val('');
+            $('#variationMin').val('');
+            $('#variationMax').val('');
             currentPage = 1;
             applyFiltersAndRender();
         });
@@ -398,13 +383,11 @@
     function applyFiltersAndRender() {
         filteredData = [...allData];
 
-        // GIS ID filter
         const gisidSearch = $('#gisidSearch').val().toLowerCase().trim();
         if (gisidSearch) {
             filteredData = filteredData.filter(item => item.gisid.toLowerCase().includes(gisidSearch));
         }
 
-        // Floors filter
         const floorsFilter = $('#floorsFilter').val();
         if (floorsFilter) {
             filteredData = filteredData.filter(item => {
@@ -413,7 +396,6 @@
             });
         }
 
-        // Variation type filter
         const variationType = $('#variationTypeFilter').val();
         if (variationType) {
             filteredData = filteredData.filter(item => {
@@ -423,7 +405,6 @@
             });
         }
 
-        // Variation percentage range
         const variationMin = parseFloat($('#variationMin').val());
         if (!isNaN(variationMin)) {
             filteredData = filteredData.filter(item => item.variation_percentage >= variationMin);
@@ -434,33 +415,28 @@
             filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
         }
 
-        // Apply sorting
         filteredData.sort((a, b) => {
             let aVal = a[currentSort.column];
             let bVal = b[currentSort.column];
-
             if (typeof aVal === 'string') {
                 aVal = aVal.toLowerCase();
                 bVal = bVal.toLowerCase();
             }
-
             if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
             if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
             return 0;
         });
 
         $('#recordCount').text(filteredData.length + ' Records');
+        currentPage = 1;
         renderTable();
     }
 
-    // Function to open Google Maps with actual coordinates
     function openGoogleMaps(gisid, lat, lng) {
         if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
-            // Use actual coordinates if available
             const url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
             window.open(url, '_blank');
         } else {
-            // Fallback to GIS ID search
             const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
             window.open(url, '_blank');
         }
@@ -481,7 +457,6 @@
         });
         const filteredAvgVariation = filteredMisArea > 0 ? (filteredVariation / filteredMisArea) * 100 : 0;
 
-        // Build table body
         let html = '';
         if (pageData.length === 0) {
             html = '<tr><td colspan="12" class="text-center py-5">No records found</td></tr>';
@@ -531,7 +506,6 @@
 
         $('#tableBody').html(html);
 
-        // Build footer
         const footerHtml = `
             <tr style="border-top: 2px solid #dee2e6;">
                 <td colspan="2"><strong>FILTERED TOTAL</strong></td>
@@ -564,7 +538,6 @@
         `;
         $('#tableFooter').html(footerHtml);
 
-        // Render pagination
         renderPagination(totalPages);
     }
 
@@ -589,14 +562,12 @@
                 <ul class="pagination mb-0">
         `;
 
-        // Previous button
         paginationHtml += `
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">« Previous</a>
             </li>
         `;
 
-        // Page numbers
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -623,7 +594,6 @@
             paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
         }
 
-        // Next button
         paginationHtml += `
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                 <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next »</a>
@@ -662,9 +632,7 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
 
-        // Auto-size columns
-        const maxWidth = 20;
-        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: maxWidth }));
+        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 20 }));
 
         XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
     }
@@ -778,21 +746,17 @@
         .dashboard-content-area {
             padding: 15px;
         }
-
         .table {
             font-size: 0.75rem;
         }
-
         .table thead th,
         .table tbody td {
             padding: 8px 10px;
         }
-
         .btn-sm {
             padding: 3px 8px;
             font-size: 0.7rem;
         }
-
         .stat-icon {
             width: 40px;
             height: 40px;
@@ -804,12 +768,10 @@
         .btn, .pagination, #perPageSelect, .stat-card .btn, .filters-section {
             display: none !important;
         }
-
         .stat-card {
             break-inside: avoid;
             page-break-inside: avoid;
         }
-
         .table {
             font-size: 10pt;
         }
