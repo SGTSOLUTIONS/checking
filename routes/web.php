@@ -36,14 +36,15 @@ Route::prefix('corporation')->name('corporation.')->group(function () {
         Route::get('/analystics', [CommissionerController::class, 'Analystics'])->name('analystics');
 
         //map
-         Route::get('/ward/{ward_no}/details', [CommissionerController::class, 'wardDetails'])->name('ward.details');
-         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-        Route::post('/save-qc-data', [CorporationAuthController::class, 'saveQCData']);
+        Route::get('/ward/{ward_no}/details', [CommissionerController::class, 'wardDetails'])->name('ward.details');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        // Add this route to your web.php
+        Route::post('update-assessment-qc', [CommissionerController::class, 'updateAssessmentQcStatus'])->name('update.assessment.qc');
 
 
         //variation
-         Route::get('/variation/{ward_no}', [CommissionerController::class, 'viewVariations'])->name('ward.variation');
-         Route::get('/variations/export/{ward_no}', [CommissionerController::class, 'exportVariations'])->name('variations.export');
+        Route::get('/variation/{ward_no}', [CommissionerController::class, 'viewVariations'])->name('ward.variation');
+        Route::get('/variations/export/{ward_no}', [CommissionerController::class, 'exportVariations'])->name('variations.export');
     });
 });
 Route::get('/', function () {

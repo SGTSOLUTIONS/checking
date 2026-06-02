@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Corporation;
 use App\Models\Ward;
-use SebastianBergmann\CodeCoverage\Util\Percentage;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class CommissionerController extends Controller
 {
@@ -121,8 +122,6 @@ class CommissionerController extends Controller
                 $shopDataNotinMisCount = 0;
 
                 if (Schema::hasTable($shopTableName)) {
-
-
                     if (Schema::hasTable($shopDataTableName)) {
                         $shopDataCount = DB::table($shopDataTableName)->count();
                         $totalShopDataCount += $shopDataCount;
@@ -157,12 +156,10 @@ class CommissionerController extends Controller
             }
         }
 
-        // Calculate survey percentage
         $survey_percentage = $totalBuilding > 0
             ? round(($totalSurveyedBuilding / $totalBuilding) * 100, 1)
             : 0;
 
-        // Return view with all data
         return view('corporation.dashboard', [
             'corporation' => $corporation,
             'ward_count' => $ward_datas->count(),
@@ -180,7 +177,6 @@ class CommissionerController extends Controller
         ]);
     }
 
-    //analytics
     public function Analystics()
     {
         $user = Auth::guard('corporation')->user();
@@ -219,7 +215,6 @@ class CommissionerController extends Controller
             ? DB::table($misTableName)->count()
             : 0;
 
-        // Get paginated wards
         $paginatedWards = Ward::where('corporation_id', $corporation->id)
             ->where('status', 'active')
             ->orderBy('zone')
@@ -254,7 +249,6 @@ class CommissionerController extends Controller
             $shopTableName = "shop_corporation_{$corporation->id}";
             $shopDataTableName = "shopdata_{$corporation->id}_{$zone}_{$wardlist->ward_no}";
 
-            // Polygon Count
             if ($polygonsTableName && Schema::hasTable($polygonsTableName)) {
                 $polygonCount = DB::table($polygonsTableName)->count();
                 $totalBuilding += $polygonCount;
@@ -262,7 +256,6 @@ class CommissionerController extends Controller
                 $polygonCount = 0;
             }
 
-            // PolygonData Count (Unique GISID)
             if ($polygonDataTableName && Schema::hasTable($polygonDataTableName)) {
                 $polygonDataCount = DB::table($polygonDataTableName)
                     ->distinct('gisid')
@@ -273,7 +266,6 @@ class CommissionerController extends Controller
                 $polygonDataCount = 0;
             }
 
-            // PointData Count
             if ($pointDataTableName && Schema::hasTable($pointDataTableName)) {
                 $pointDataCount = DB::table($pointDataTableName)->count();
                 $totalSurveyedAssessment += $pointDataCount;
@@ -281,7 +273,6 @@ class CommissionerController extends Controller
                 $pointDataCount = 0;
             }
 
-            // Shop Count
             $shopCount = 0;
             $shopDataCount = 0;
             $shopDataInMisCount = 0;
@@ -322,12 +313,10 @@ class CommissionerController extends Controller
             ];
         }
 
-        // Calculate survey percentage
         $survey_percentage = $totalBuilding > 0
             ? round(($totalSurveyedBuilding / $totalBuilding) * 100, 1)
             : 0;
 
-        // Return view with all data
         return view('corporation.analystics', [
             'corporation' => $corporation,
             'ward_count' => $ward_datas->count(),
@@ -368,11 +357,6 @@ class CommissionerController extends Controller
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Polygon Data with Building Usage
-        |--------------------------------------------------------------------------
-        */
         $polygons = DB::table($polygonsTableName . ' as p')
             ->leftJoin(
                 $polygonDataTable . ' as pgd',
@@ -397,33 +381,18 @@ class CommissionerController extends Controller
             )
             ->get();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Point Data with Assessment and Usage
-        |--------------------------------------------------------------------------
-        */
         $pointDatas = DB::table($pointDataTable)
-            ->select('point_gisid', 'assessment', 'bill_usage as point_usage')
+            ->select('point_gisid', 'assessment', 'bill_usage as point_usage', 'qcsqfeet', 'qcusage', 'qc_name', 'qc_remarks', 'id')
             ->whereNotNull('assessment')
             ->get()
             ->groupBy('point_gisid');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Assessment List
-        |--------------------------------------------------------------------------
-        */
         $assessmentList = DB::table($pointDataTable)
             ->whereNotNull('assessment')
             ->pluck('assessment')
             ->unique()
             ->toArray();
 
-        /*
-        |--------------------------------------------------------------------------
-        | MIS Data with Tax Information (half_year_tax and balance)
-        |--------------------------------------------------------------------------
-        */
         $misData = DB::table($misTableName)
             ->whereIn('assessment', $assessmentList)
             ->select(
@@ -437,11 +406,6 @@ class CommissionerController extends Controller
             ->get()
             ->keyBy('assessment');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Process All Data
-        |--------------------------------------------------------------------------
-        */
         $allResults = [];
         $totalSqfeet = 0;
         $totalBuildings = 0;
@@ -458,8 +422,8 @@ class CommissionerController extends Controller
             $misBalance = 0;
             $assessmentCount = 0;
             $misUsage = null;
+            $qcData = [];
 
-            // Extract coordinates and convert from EPSG:3857 to EPSG:4326
             $lat = null;
             $lng = null;
 
@@ -479,8 +443,16 @@ class CommissionerController extends Controller
                     $misArea += (float) ($misRecord->plot_area ?? 0);
                     $misHalfYearTax += (float) ($misRecord->half_year_tax_value ?? 0);
                     $misBalance += (float) ($misRecord->balance_value ?? 0);
-                    $misUsage = $point->point_usage; // Get usage from point data
+                    $misUsage = $point->point_usage;
                 }
+
+                $qcData[] = [
+                    'id' => $point->id,
+                    'qcsqfeet' => $point->qcsqfeet,
+                    'qcusage' => $point->qcusage,
+                    'qc_name' => $point->qc_name,
+                    'qc_remarks' => $point->qc_remarks,
+                ];
             }
 
             $sqfeet = (float) ($polygon->sqfeet ?? 0);
@@ -489,9 +461,7 @@ class CommissionerController extends Controller
             $basement = (int) ($polygon->basement ?? 0);
             $surveyedUsage = trim($polygon->surveyed_usage ?? '');
 
-            // CORRECTED FORMULA: ((numberFloor + basement + (percentage/100)) * sqfeet)
             $calculatedArea = (($numberFloor + $basement + ($floorPercentage / 100)) * $sqfeet);
-
             $areaVariation = $calculatedArea - $misArea;
             $variationPercentage = 0;
 
@@ -499,36 +469,25 @@ class CommissionerController extends Controller
                 $variationPercentage = ($areaVariation / $misArea) * 100;
             }
 
-            // Check Usage Variation
-            $usageHasVariation = false;
             $usageVariationStatus = 'MATCH';
-            $surveyedUsageDisplay = $surveyedUsage ?: 'N/A';
-            $misUsageDisplay = $misUsage ?: 'N/A';
-
             if (!empty($surveyedUsage) && !empty($misUsage)) {
-                // Compare usage (case-insensitive)
                 if (strtolower(trim($surveyedUsage)) !== strtolower(trim($misUsage))) {
-                    $usageHasVariation = true;
                     $usageVariationStatus = 'VARIATION';
                     $usageVariationCount++;
                 }
             } elseif (!empty($surveyedUsage) && empty($misUsage)) {
-                $usageHasVariation = true;
                 $usageVariationStatus = 'MISSING IN MIS';
                 $usageVariationCount++;
             } elseif (empty($surveyedUsage) && !empty($misUsage)) {
-                $usageHasVariation = true;
                 $usageVariationStatus = 'MISSING IN SURVEY';
                 $usageVariationCount++;
             }
 
-            // Check Area Variation
-            $areaHasVariation = abs($variationPercentage) > 0.01; // More than 0.01% difference
+            $areaHasVariation = abs($variationPercentage) > 0.01;
             if ($areaHasVariation) {
                 $areaVariationCount++;
             }
 
-            // Add to totals (only if there's at least one assessment)
             if ($assessmentCount > 0) {
                 $totalBuildings++;
                 $totalSqfeet += $sqfeet;
@@ -544,8 +503,8 @@ class CommissionerController extends Controller
                 'number_floor' => $numberFloor,
                 'percentage' => $floorPercentage,
                 'basement' => $basement,
-                'surveyed_usage' => $surveyedUsageDisplay,
-                'mis_usage' => $misUsageDisplay,
+                'surveyed_usage' => $surveyedUsage ?: 'N/A',
+                'mis_usage' => $misUsage ?: 'N/A',
                 'usage_variation' => $usageVariationStatus,
                 'mis_plot_area' => round($misArea, 2),
                 'calculated_area' => round($calculatedArea, 2),
@@ -555,6 +514,7 @@ class CommissionerController extends Controller
                 'half_year_tax' => round($misHalfYearTax, 2),
                 'tax_balance' => round($misBalance, 2),
                 'assessment_count' => $assessmentCount,
+                'qc_data' => $qcData,
                 'lat' => $lat,
                 'lng' => $lng,
                 'coordinates' => $polygon->coordinates,
@@ -563,7 +523,6 @@ class CommissionerController extends Controller
 
         $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
 
-        // Summary statistics
         $summary = [
             'totalBuildings' => $totalBuildings,
             'totalSqfeet' => round($totalSqfeet, 2),
@@ -577,7 +536,6 @@ class CommissionerController extends Controller
             'usageVariationPercentage' => $totalBuildings > 0 ? round(($usageVariationCount / $totalBuildings) * 100, 2) : 0,
         ];
 
-        // Return ALL data as JSON for client-side filtering
         return view('corporation.variations', [
             'allDataJson' => json_encode($allResults),
             'warddetail' => $warddetail,
@@ -591,16 +549,97 @@ class CommissionerController extends Controller
         ]);
     }
 
-    /**
-     * Convert EPSG:3857 (Web Mercator) to EPSG:4326 (Latitude/Longitude)
-     *
-     * @param string $coordString Format: "[x,y]" where x and y are Web Mercator meters
-     * @return array|null ['lat' => latitude, 'lng' => longitude] or null if conversion fails
-     */
+    public function updateAssessmentQcStatus(Request $request)
+    {
+        try {
+            $user = Auth::guard('corporation')->user();
+
+            $assessmentId = $request->input('assessment_id');
+            $pointGisid = $request->input('point_gisid');
+            $wardNo = $request->input('ward_no');
+            $qcSqfeet = $request->input('qc_sqfeet');
+            $qcUsage = $request->input('qc_usage');
+            $qcName = $request->input('qc_name');
+            $qcRemarks = $request->input('qc_remarks');
+            $taxAmount = $request->input('tax_amount');
+            $balance = $request->input('balance');
+
+            $warddetail = Ward::where('corporation_id', $user->corporation_id)
+                ->where('ward_no', $wardNo)
+                ->first();
+
+            if (!$warddetail) {
+                return response()->json(['success' => false, 'message' => 'Ward not found']);
+            }
+
+            $zone = strtolower(trim($warddetail->zone));
+            $corp = (int) $warddetail->corporation_id;
+            $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
+
+            if (!$pointDataTable || !Schema::hasTable($pointDataTable)) {
+                return response()->json(['success' => false, 'message' => 'Point data table not found']);
+            }
+
+            $isQcCompleted = !empty($qcSqfeet) || !empty($qcUsage) || !empty($qcName);
+
+            $updateData = [
+                'qcsqfeet' => $qcSqfeet,
+                'qcusage' => $qcUsage,
+                'qc_name' => $qcName ?: $user->name,
+                'qc_remarks' => $qcRemarks,
+                'updated_at' => now(),
+            ];
+
+            if ($assessmentId) {
+                DB::table($pointDataTable)
+                    ->where('id', $assessmentId)
+                    ->update($updateData);
+
+                $assessment = DB::table($pointDataTable)
+                    ->where('id', $assessmentId)
+                    ->value('assessment');
+            } else {
+                DB::table($pointDataTable)
+                    ->where('point_gisid', $pointGisid)
+                    ->update($updateData);
+
+                $assessment = DB::table($pointDataTable)
+                    ->where('point_gisid', $pointGisid)
+                    ->value('assessment');
+            }
+
+            if (($taxAmount || $balance) && $assessment) {
+                $misTableName = "mis_corporation_{$corp}";
+                if (Schema::hasTable($misTableName)) {
+                    $misUpdateData = [];
+                    if ($taxAmount) $misUpdateData['half_year_tax'] = $taxAmount;
+                    if ($balance) $misUpdateData['balance'] = $balance;
+                    if (!empty($misUpdateData)) {
+                        DB::table($misTableName)
+                            ->where('assessment', $assessment)
+                            ->update($misUpdateData);
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'QC Status updated successfully',
+                'qc_completed' => $isQcCompleted
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('QC Update Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
     private function convert3857ToLatLng($coordString)
     {
         try {
-            // Parse the coordinates string
             $cleaned = trim($coordString, '[]');
             $parts = explode(',', $cleaned);
 
@@ -608,18 +647,14 @@ class CommissionerController extends Controller
                 return null;
             }
 
-            $x = floatval(trim($parts[0])); // Easting / X in Web Mercator
-            $y = floatval(trim($parts[1])); // Northing / Y in Web Mercator
+            $x = floatval(trim($parts[0]));
+            $y = floatval(trim($parts[1]));
 
             if (empty($x) || empty($y)) {
                 return null;
             }
 
-            // EPSG:3857 to EPSG:4326 conversion formulas
-            // Longitude = x / (R * pi/180) where R = 6378137
             $lng = $x / 6378137.0 * 180 / M_PI;
-
-            // Latitude = (pi/2 - 2 * atan(exp(-y / R))) * 180/pi
             $lat = (M_PI_2 - 2 * atan(exp(-$y / 6378137.0))) * 180 / M_PI;
 
             return [
@@ -627,15 +662,15 @@ class CommissionerController extends Controller
                 'lng' => round($lng, 8)
             ];
         } catch (Exception $e) {
-            \Log::error('3857 conversion error: ' . $e->getMessage());
+            Log::error('3857 conversion error: ' . $e->getMessage());
             return null;
         }
     }
 
     public function mapView($ward_no)
     {
-        $userId = Auth::guard('corporation')->user();
-        $warddetail = Ward::where('corporation_id', $userId->corporation_id)
+        $user = Auth::guard('corporation')->user();
+        $warddetail = Ward::where('corporation_id', $user->corporation_id)
             ->where('ward_no', $ward_no)
             ->first();
 
@@ -647,17 +682,14 @@ class CommissionerController extends Controller
         $wardNo = (int)$warddetail->ward_no;
         $corp = (int)$warddetail->corporation_id;
 
-        // Table names
         $polygonsTableName = "polygon_{$corp}_{$zone}_{$wardNo}";
         $pointsTableName = "point_{$corp}_{$zone}_{$wardNo}";
         $linesTableName = "line_{$corp}_{$zone}_{$wardNo}";
 
         $pointDataTable = $this->getPointDataTable($corp, $wardNo, $zone);
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
-
         $shopTableName = "shopdata_{$corp}_{$zone}_{$wardNo}";
 
-        // Point Data
         $pointDatas = DB::table($pointDataTable)
             ->select(
                 'id',
@@ -675,12 +707,13 @@ class CommissionerController extends Controller
                 'remarks',
                 'water_tax',
                 'zone',
+                'qcsqfeet',
                 'qcusage',
-                'qcsqfeet'
+                'qc_name',
+                'qc_remarks'
             )
             ->get();
 
-        // Polygon Data
         $polygonDatas = DB::table($polygonDataTable)
             ->select(
                 'id',
@@ -701,21 +734,15 @@ class CommissionerController extends Controller
             )
             ->get();
 
-        // Shop Data
         $shopDatas = DB::table($shopTableName)->get();
-
-        // Group shops by point_data_id
         $shopsGrouped = $shopDatas->groupBy('point_data_id');
 
-        // Attach shops into pointdata
         foreach ($pointDatas as $pointdata) {
             $pointdata->shops = $shopsGrouped[$pointdata->id] ?? collect();
         }
 
-        // Group pointdata by point_gisid
         $pointGrouped = collect($pointDatas)->groupBy('point_gisid');
 
-        // Attach pointdata into polygondata
         foreach ($polygonDatas as $polygondata) {
             $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
             $polygondata->total_points = count($polygondata->pointdata);
@@ -725,12 +752,10 @@ class CommissionerController extends Controller
                 });
         }
 
-        // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
             ? DB::table($polygonsTableName)->select('gisid', 'coordinates', 'sqfeet')->get()
             : [];
 
-        // Get lines (roads) - only needed fields
         $lines = Schema::hasTable($linesTableName)
             ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
             : [];
