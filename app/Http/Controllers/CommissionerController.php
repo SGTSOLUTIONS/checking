@@ -578,17 +578,17 @@ class CommissionerController extends Controller
         ];
 
         // Return ALL data as JSON for client-side filtering
-       return view('corporation.variations', [
-    'allDataJson' => json_encode($allResults),
-    'warddetail' => $warddetail,
-    'summary' => $summary,
-    'totalSqfeet' => round($totalSqfeet, 2),
-    'totalBuildings' => $totalBuildings,  // ✅ This is correct
-    'totalMisPlotArea' => round($totalMisPlotArea, 2),
-    'totalCalculatedArea' => round($totalCalculatedArea, 2),
-    'totalAreaVariation' => round($totalAreaVariation, 2),
-    'avgVariationPercentage' => round($avgVariationPercentage, 2),
-]);
+        return view('corporation.variations', [
+            'allDataJson' => json_encode($allResults),
+            'warddetail' => $warddetail,
+            'summary' => $summary,
+            'totalSqfeet' => round($totalSqfeet, 2),
+            'totalBuildings' => $totalBuildings,  // ✅ This is correct
+            'totalMisPlotArea' => round($totalMisPlotArea, 2),
+            'totalCalculatedArea' => round($totalCalculatedArea, 2),
+            'totalAreaVariation' => round($totalAreaVariation, 2),
+            'avgVariationPercentage' => round($avgVariationPercentage, 2),
+        ]);
     }
 
     /**
