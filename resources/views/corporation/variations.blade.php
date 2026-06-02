@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <!-- Statistics Cards -->
+        <!-- Statistics Cards (same as before) -->
         <div class="row g-4 mb-4">
             <div class="col-md-3 col-sm-6">
                 <div class="stat-card p-3 d-flex justify-content-between align-items-center">
@@ -101,62 +101,31 @@
             </div>
         </div>
 
-        <!-- Variation Summary Cards -->
-        <div class="row g-4 mb-4">
-            <!-- Area Variation Summary -->
-            <div class="col-md-6">
-                @php
-                    $areaVariationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
-                    $areaVariationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-                    $areaVariationText = $totalAreaVariation >= 0 ? 'Under-assessment' : 'Over-assessment';
-                @endphp
-                <div class="stat-card p-4" style="background: linear-gradient(135deg, {{ $totalAreaVariation >= 0 ? '#d4edda' : '#f8d7da' }} 0%, #ffffff 100%);">
+        <!-- Variation Summary Card -->
+        @php
+            $variationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
+            $variationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            $variationText = $totalAreaVariation >= 0 ? 'Under-assessment' : 'Over-assessment';
+        @endphp
+
+        <div class="stat-card p-4 mb-4" style="background: linear-gradient(135deg, {{ $totalAreaVariation >= 0 ? '#d4edda' : '#f8d7da' }} 0%, #ffffff 100%);">
+            <div class="row align-items-center">
+                <div class="col-md-8">
                     <div class="d-flex align-items-center">
                         <div class="stat-icon me-3" style="background: {{ $totalAreaVariation >= 0 ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)' }}">
-                            <i class="fas {{ $areaVariationIcon }} {{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}"></i>
+                            <i class="fas {{ $variationIcon }} {{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}"></i>
                         </div>
                         <div>
                             <h5 class="fw-bold mb-1" style="color:#102C57;">
-                                Area Variation:
+                                Total Area Variation:
                                 <span class="{{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}">
                                     {{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}
                                 </span>
                             </h5>
                             <p class="mb-0">
                                 <span class="badge {{ $totalAreaVariation >= 0 ? 'bg-success' : 'bg-danger' }} p-2">
-                                    <i class="fas {{ $areaVariationIcon }} me-1"></i>
-                                    {{ $areaVariationText }} ({{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average)
-                                </span>
-                                <span class="badge bg-secondary ms-2">
-                                    <i class="fas fa-chart-line me-1"></i>
-                                    {{ $summary['areaVariationPercentage'] ?? 0 }}% of buildings have variation
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Usage Variation Summary -->
-            <div class="col-md-6">
-                @php
-                    $usageVariationCount = $summary['usageVariationCount'] ?? 0;
-                    $usageVariationPercentage = $summary['usageVariationPercentage'] ?? 0;
-                @endphp
-                <div class="stat-card p-4" style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon me-3" style="background: rgba(255, 193, 7, 0.2);">
-                            <i class="fas fa-building text-warning"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-1" style="color:#102C57;">
-                                Usage Variation:
-                                <span class="text-warning">{{ number_format($usageVariationCount) }}</span>
-                            </h5>
-                            <p class="mb-0">
-                                <span class="badge bg-warning text-dark p-2">
-                                    <i class="fas fa-exchange-alt me-1"></i>
-                                    {{ number_format($usageVariationPercentage, 2) }}% of buildings have usage mismatch
+                                    <i class="fas {{ $variationIcon }} me-1"></i>
+                                    {{ $variationText }} ({{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average)
                                 </span>
                             </p>
                         </div>
@@ -178,7 +147,7 @@
             </div>
 
             <div class="row g-3">
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold small">GIS ID</label>
                     <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID...">
                 </div>
@@ -193,22 +162,11 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Area Variation</label>
-                    <select id="areaVariationFilter" class="form-select">
+                    <label class="form-label fw-semibold small">Variation Type</label>
+                    <select id="variationTypeFilter" class="form-select">
                         <option value="">All</option>
-                        <option value="positive">Positive (Under-assessment)</option>
-                        <option value="negative">Negative (Over-assessment)</option>
-                        <option value="match">Match (No Variation)</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Usage Variation</label>
-                    <select id="usageVariationFilter" class="form-select">
-                        <option value="">All</option>
-                        <option value="match">Match</option>
-                        <option value="variation">Variation</option>
-                        <option value="missing_mis">Missing in MIS</option>
-                        <option value="missing_survey">Missing in Survey</option>
+                        <option value="positive">Under-assessment (Positive)</option>
+                        <option value="negative">Over-assessment (Negative)</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -219,29 +177,11 @@
                     <label class="form-label fw-semibold small">Max Variation %</label>
                     <input type="number" id="variationMax" class="form-control" placeholder="Max %" step="any">
                 </div>
-                <div class="col-md-12 mt-2">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Half Year Tax Range</label>
-                            <div class="d-flex gap-2">
-                                <input type="number" id="taxMin" class="form-control" placeholder="Min Tax" step="any">
-                                <input type="number" id="taxMax" class="form-control" placeholder="Max Tax" step="any">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Balance Range</label>
-                            <div class="d-flex gap-2">
-                                <input type="number" id="balanceMin" class="form-control" placeholder="Min Balance" step="any">
-                                <input type="number" id="balanceMax" class="form-control" placeholder="Max Balance" step="any">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold small">&nbsp;</label>
-                            <button class="btn btn-primary w-100" id="applyFiltersBtn">
-                                <i class="fas fa-search"></i> Apply Filters
-                            </button>
-                        </div>
-                    </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold small">&nbsp;</label>
+                    <button class="btn btn-primary w-100" id="applyFiltersBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -276,22 +216,16 @@
                             <th class="sortable text-center" data-column="number_floor" style="cursor: pointer;">Floors <i class="fas fa-sort"></i></th>
                             <th class="sortable text-center" data-column="percentage" style="cursor: pointer;">Floor % <i class="fas fa-sort"></i></th>
                             <th class="sortable text-center" data-column="basement" style="cursor: pointer;">Basement <i class="fas fa-sort"></i></th>
-                            <th class="sortable" data-column="surveyed_usage" style="cursor: pointer;">Surveyed Usage <i class="fas fa-sort"></i></th>
-                            <th class="sortable" data-column="mis_usage" style="cursor: pointer;">MIS Usage <i class="fas fa-sort"></i></th>
-                            <th class="text-center">Usage Status</th>
                             <th class="sortable text-end" data-column="mis_plot_area" style="cursor: pointer;">MIS Area <i class="fas fa-sort"></i></th>
                             <th class="sortable text-end" data-column="calculated_area" style="cursor: pointer;">Calculated <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="area_variation" style="cursor: pointer;">Area Var. <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Var % <i class="fas fa-sort"></i></th>
-                            <th class="text-center">Area Status</th>
-                            <th class="sortable text-end" data-column="half_year_tax" style="cursor: pointer;">Half Year Tax <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="tax_balance" style="cursor: pointer;">Balance <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-end" data-column="area_variation" style="cursor: pointer;">Variation <i class="fas fa-sort"></i></th>
+                            <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Variation % <i class="fas fa-sort"></i></th>
                             <th class="text-center">Assessments</th>
                             <th class="text-center">Map View</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="18" class="text-center py-5">
+                        <tr><td colspan="12" class="text-center py-5">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -311,13 +245,7 @@
                 <i class="fas fa-info-circle fa-2x me-3" style="color:#1679AB;"></i>
                 <div>
                     <strong>Note:</strong>
-                    <ul class="mb-0 mt-1">
-                        <li>Click on <i class="fas fa-map-marker-alt"></i> <strong>GIS ID</strong> or <strong>View Map</strong> button to see the location on Google Maps.</li>
-                        <li><span class="badge bg-success">MATCH</span> - No variation detected</li>
-                        <li><span class="badge bg-danger">VARIATION</span> - Variation detected in area or usage</li>
-                        <li><span class="badge bg-warning text-dark">MISSING IN MIS</span> - Building usage not found in MIS records</li>
-                        <li><span class="badge bg-info">MISSING IN SURVEY</span> - MIS usage found but not in survey</li>
-                    </ul>
+                    Click on <i class="fas fa-map-marker-alt"></i> <strong>GIS ID</strong> or <strong>View Map</strong> button to see the location on Google Maps.
                 </div>
             </div>
         </div>
@@ -333,22 +261,31 @@
 
 <script>
     // Define the projection systems
+    // EPSG:3857 - Web Mercator (meters)
     const webMercator = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs +type=crs';
+    // EPSG:4326 - WGS84 (latitude/longitude)
     const wgs84 = '+proj=longlat +datum=WGS84 +no_defs +type=crs';
 
+    // Initialize proj4
     proj4.defs('EPSG:3857', webMercator);
     proj4.defs('EPSG:4326', wgs84);
 
+    // Function to convert EPSG:3857 to EPSG:4326
     function convert3857ToLatLng(x, y) {
         try {
+            // Convert from EPSG:3857 to EPSG:4326
             const result = proj4('EPSG:3857', 'EPSG:4326', [x, y]);
-            return { lng: result[0], lat: result[1] };
+            return {
+                lng: result[0], // longitude
+                lat: result[1]  // latitude
+            };
         } catch (error) {
             console.error('Conversion error:', error);
             return null;
         }
     }
 
+    // Parse coordinates from string format "[x,y]" where x,y are Web Mercator meters
     function parseCoordinates(coordString) {
         if (!coordString) return null;
         try {
@@ -370,10 +307,12 @@
     // Store ALL data from PHP
     let allData = @json($allDataJson);
 
+    // Parse if it's a string
     if (typeof allData === 'string') {
         allData = JSON.parse(allData);
     }
 
+    // Process each record to convert EPSG:3857 to Lat/Lng
     allData = allData.map(record => {
         const coords = parseCoordinates(record.coordinates);
         if (coords) {
@@ -396,6 +335,7 @@
     let itemsPerPage = 50;
     let currentSort = { column: 'index', direction: 'asc' };
 
+    // Totals from server
     const serverTotals = {
         totalBuildings: {{ $totalBuildings }},
         totalSqfeet: {{ $totalSqfeet }},
@@ -407,6 +347,9 @@
 
     $(document).ready(function() {
         console.log('Total records loaded:', allData.length);
+        if (allData.length > 0 && allData[0].lat) {
+            console.log('Sample converted coordinates - Lat:', allData[0].lat, 'Lng:', allData[0].lng);
+        }
         initializeFilters();
         applyFiltersAndRender();
     });
@@ -417,7 +360,7 @@
             applyFiltersAndRender();
         });
 
-        $('#gisidSearch, #floorsFilter, #areaVariationFilter, #usageVariationFilter, #variationMin, #variationMax, #taxMin, #taxMax, #balanceMin, #balanceMax').on('keypress', function(e) {
+        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax').on('keypress', function(e) {
             if (e.which === 13) {
                 currentPage = 1;
                 applyFiltersAndRender();
@@ -427,14 +370,9 @@
         $('#clearFiltersBtn').click(function() {
             $('#gisidSearch').val('');
             $('#floorsFilter').val('');
-            $('#areaVariationFilter').val('');
-            $('#usageVariationFilter').val('');
+            $('#variationTypeFilter').val('');
             $('#variationMin').val('');
             $('#variationMax').val('');
-            $('#taxMin').val('');
-            $('#taxMax').val('');
-            $('#balanceMin').val('');
-            $('#balanceMax').val('');
             currentPage = 1;
             applyFiltersAndRender();
         });
@@ -476,25 +414,12 @@
             });
         }
 
-        // Area Variation Type filter
-        const areaVariationType = $('#areaVariationFilter').val();
-        if (areaVariationType) {
+        // Variation type filter
+        const variationType = $('#variationTypeFilter').val();
+        if (variationType) {
             filteredData = filteredData.filter(item => {
-                if (areaVariationType === 'positive') return item.area_variation > 0;
-                if (areaVariationType === 'negative') return item.area_variation < 0;
-                if (areaVariationType === 'match') return item.area_variation_status === 'MATCH';
-                return true;
-            });
-        }
-
-        // Usage Variation filter
-        const usageVariationType = $('#usageVariationFilter').val();
-        if (usageVariationType) {
-            filteredData = filteredData.filter(item => {
-                if (usageVariationType === 'match') return item.usage_variation === 'MATCH';
-                if (usageVariationType === 'variation') return item.usage_variation === 'VARIATION';
-                if (usageVariationType === 'missing_mis') return item.usage_variation === 'MISSING IN MIS';
-                if (usageVariationType === 'missing_survey') return item.usage_variation === 'MISSING IN SURVEY';
+                if (variationType === 'positive') return item.area_variation > 0;
+                if (variationType === 'negative') return item.area_variation < 0;
                 return true;
             });
         }
@@ -508,28 +433,6 @@
         const variationMax = parseFloat($('#variationMax').val());
         if (!isNaN(variationMax)) {
             filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
-        }
-
-        // Half Year Tax range
-        const taxMin = parseFloat($('#taxMin').val());
-        if (!isNaN(taxMin)) {
-            filteredData = filteredData.filter(item => item.half_year_tax >= taxMin);
-        }
-
-        const taxMax = parseFloat($('#taxMax').val());
-        if (!isNaN(taxMax)) {
-            filteredData = filteredData.filter(item => item.half_year_tax <= taxMax);
-        }
-
-        // Balance range
-        const balanceMin = parseFloat($('#balanceMin').val());
-        if (!isNaN(balanceMin)) {
-            filteredData = filteredData.filter(item => item.tax_balance >= balanceMin);
-        }
-
-        const balanceMax = parseFloat($('#balanceMax').val());
-        if (!isNaN(balanceMax)) {
-            filteredData = filteredData.filter(item => item.tax_balance <= balanceMax);
         }
 
         // Apply sorting
@@ -552,38 +455,19 @@
         renderTable();
     }
 
+    // Function to open Google Maps with decimal coordinates
     function openGoogleMaps(gisid, lat, lng) {
         let url;
+
         if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            // Google Maps expects lat,lng in decimal degrees
             url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
         } else {
+            // Fallback to GIS ID search
             url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
         }
+
         window.open(url, '_blank');
-    }
-
-    function getUsageBadge(status) {
-        switch(status) {
-            case 'MATCH':
-                return '<span class="badge bg-success">MATCH</span>';
-            case 'VARIATION':
-                return '<span class="badge bg-danger">VARIATION</span>';
-            case 'MISSING IN MIS':
-                return '<span class="badge bg-warning text-dark">MISSING IN MIS</span>';
-            case 'MISSING IN SURVEY':
-                return '<span class="badge bg-info">MISSING IN SURVEY</span>';
-            default:
-                return '<span class="badge bg-secondary">N/A</span>';
-        }
-    }
-
-    function getAreaBadge(status, variation) {
-        if (status === 'MATCH') {
-            return '<span class="badge bg-success">MATCH</span>';
-        }
-        const icon = variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-        const text = variation >= 0 ? 'UNDER' : 'OVER';
-        return `<span class="badge bg-danger"><i class="fas ${icon} me-1"></i>${text}</span>`;
     }
 
     function renderTable() {
@@ -593,25 +477,18 @@
 
         // Calculate totals for filtered data
         let filteredSqfeet = 0, filteredMisArea = 0, filteredCalculated = 0, filteredVariation = 0;
-        let filteredTax = 0, filteredBalance = 0;
-        let areaVarCount = 0, usageVarCount = 0;
-
         filteredData.forEach(item => {
             filteredSqfeet += item.sqfeet;
             filteredMisArea += item.mis_plot_area;
             filteredCalculated += item.calculated_area;
             filteredVariation += item.area_variation;
-            filteredTax += item.half_year_tax;
-            filteredBalance += item.tax_balance;
-            if (item.area_variation_status === 'VARIATION') areaVarCount++;
-            if (item.usage_variation !== 'MATCH') usageVarCount++;
         });
         const filteredAvgVariation = filteredMisArea > 0 ? (filteredVariation / filteredMisArea) * 100 : 0;
 
         // Build table body
         let html = '';
         if (pageData.length === 0) {
-            html = '<tr><td colspan="18" class="text-center py-5">No records found</td></tr>';
+            html = '<tr><td colspan="12" class="text-center py-5">No records found</td></tr>';
         } else {
             pageData.forEach((item, idx) => {
                 const variationClass = item.area_variation >= 0 ? 'text-success' : 'text-danger';
@@ -632,9 +509,6 @@
                         <td class="text-center"><span class="badge bg-primary">${item.number_floor}</span></td>
                         <td class="text-center">${item.percentage}%</td>
                         <td class="text-center">${item.basement > 0 ? item.basement : '-'}</td>
-                        <td>${item.surveyed_usage}</td>
-                        <td>${item.mis_usage}</td>
-                        <td class="text-center">${getUsageBadge(item.usage_variation)}</td>
                         <td class="text-end">${item.mis_plot_area.toFixed(2)}</td>
                         <td class="text-end">${item.calculated_area.toFixed(2)}</td>
                         <td class="text-end ${variationClass}">
@@ -643,11 +517,6 @@
                         </td>
                         <td class="text-center ${variationClass}">
                             <strong>${item.variation_percentage >= 0 ? '+' : ''}${item.variation_percentage.toFixed(2)}%</strong>
-                        </td>
-                        <td class="text-center">${getAreaBadge(item.area_variation_status, item.area_variation)}</td>
-                        <td class="text-end">${item.half_year_tax.toFixed(2)}</td>
-                        <td class="text-end ${item.tax_balance > 0 ? 'text-danger' : 'text-success'}">
-                            ${item.tax_balance.toFixed(2)}
                         </td>
                         <td class="text-center">
                             <span class="badge ${item.assessment_count > 1 ? 'bg-info' : 'bg-secondary'}">${item.assessment_count}</span>
@@ -671,10 +540,7 @@
             <tr style="border-top: 2px solid #dee2e6; background-color: #f8f9fa;">
                 <td colspan="2"><strong>FILTERED TOTAL</strong></td>
                 <td class="text-end"><strong>${filteredSqfeet.toFixed(2)}</strong></td>
-                <td colspan="4"></td>
-                <td colspan="2">
-                    <strong>Usage Var: ${usageVarCount}</strong>
-                </td>
+                <td colspan="3"></td>
                 <td class="text-end"><strong>${filteredMisArea.toFixed(2)}</strong></td>
                 <td class="text-end"><strong>${filteredCalculated.toFixed(2)}</strong></td>
                 <td class="text-end ${filteredVariation >= 0 ? 'text-success' : 'text-danger'}">
@@ -683,16 +549,12 @@
                 <td class="text-center ${filteredAvgVariation >= 0 ? 'text-success' : 'text-danger'}">
                     <strong>${filteredAvgVariation >= 0 ? '+' : ''}${filteredAvgVariation.toFixed(2)}%</strong>
                 </td>
-                <td class="text-center"><strong>Area Var: ${areaVarCount}</strong></td>
-                <td class="text-end"><strong>${filteredTax.toFixed(2)}</strong></td>
-                <td class="text-end"><strong>${filteredBalance.toFixed(2)}</strong></td>
                 <td colspan="2"></td>
             </tr>
             <tr style="background: #e9ecef;">
                 <td colspan="2"><strong>WARD TOTAL</strong></td>
                 <td class="text-end"><strong>${serverTotals.totalSqfeet.toFixed(2)}</strong></td>
-                <td colspan="4"></td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
                 <td class="text-end"><strong>${serverTotals.totalMisPlotArea.toFixed(2)}</strong></td>
                 <td class="text-end"><strong>${serverTotals.totalCalculatedArea.toFixed(2)}</strong></td>
                 <td class="text-end ${serverTotals.totalAreaVariation >= 0 ? 'text-success' : 'text-danger'}">
@@ -701,7 +563,7 @@
                 <td class="text-center ${serverTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">
                     <strong>${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${serverTotals.avgVariationPercentage.toFixed(2)}%</strong>
                 </td>
-                <td colspan="5"></td>
+                <td colspan="2"></td>
             </tr>
         `;
         $('#tableFooter').html(footerHtml);
@@ -786,42 +648,32 @@
             'Floors': item.number_floor,
             'Floor %': item.percentage,
             'Basement': item.basement,
-            'Surveyed Usage': item.surveyed_usage,
-            'MIS Usage': item.mis_usage,
-            'Usage Variation': item.usage_variation,
             'MIS Plot Area': item.mis_plot_area,
             'Calculated Area': item.calculated_area,
             'Area Variation': item.area_variation,
             'Variation %': item.variation_percentage,
-            'Area Variation Status': item.area_variation_status,
-            'Half Year Tax': item.half_year_tax,
-            'Tax Balance': item.tax_balance,
             'Assessment Count': item.assessment_count,
             'Latitude': item.lat || '',
-            'Longitude': item.lng || ''
+            'Longitude': item.lng || '',
+            'Original Coordinates (3857)': item.coordinates
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
 
-        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 15 }));
+        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 20 }));
 
         XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
     }
 </script>
 
 <style>
+    /* Same styles as before */
     .dashboard-content-area {
         padding: 20px;
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
         min-height: 100vh;
-    }
-
-    /* Ensure content doesn't overlap with sidebar */
-    .dashboard-content-area {
-        margin-left: 0;
-        width: 100%;
     }
 
     .stat-card {
@@ -957,7 +809,7 @@
             page-break-inside: avoid;
         }
         .table {
-            font-size: 9pt;
+            font-size: 10pt;
         }
         .dashboard-content-area {
             background: white;
