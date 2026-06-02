@@ -812,11 +812,11 @@
 </script>
 
 <style>
-    .dashboard-content-area {
+    /* .dashboard-content-area {
         padding: 20px;
         background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
         min-height: 100vh;
-    }
+    } */
 
     .stat-card {
         background: rgba(255, 255, 255, 0.96);
