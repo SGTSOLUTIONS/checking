@@ -1,815 +1,791 @@
-{{-- resources/views/corporation/variations.blade.php --}}
+{{-- resources/views/corporation/analystics.blade.php --}}
 @extends('layouts.commissioner')
 
-@section('title', 'Building Variations - Ward ' . ($warddetail->ward_no ?? ''))
+@section('title', 'Analystics - ' . ($corporation->name ?? 'Tamil Nadu Municipal Corporation'))
 
 @section('content')
-<div class="dashboard-content-area">
-    <div class="animate__animated animate__fadeInUp">
 
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-            <h3 class="fw-bold text-white">
-                <i class="fas fa-chart-line me-2" style="color:#1679AB;"></i>
-                Building Variations - Ward {{ $warddetail->ward_no ?? '' }}
-            </h3>
-            <div>
-                <span class="badge bg-light text-dark p-2">
-                    <i class="fas fa-calendar-alt me-1"></i>
-                    {{ now()->format('d M Y') }}
-                </span>
-                <a href="{{ route('corporation.dashboard') }}" class="btn btn-sm btn-light ms-2">
-                    <i class="fas fa-arrow-left me-1"></i> Back
-                </a>
-            </div>
-        </div>
+    <div class="dashboard-content-area">
 
-        <!-- Ward Info Card -->
-        <div class="stat-card p-4 mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon me-3">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-1" style="color:#102C57;">Ward {{ $warddetail->ward_no ?? '' }}</h5>
-                            <p class="text-muted mb-0">
-                                <i class="fas fa-building me-1"></i> Zone: {{ ucfirst($warddetail->zone ?? 'N/A') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                    <span class="badge bg-primary p-2">
-                        <i class="fas fa-chart-line me-1"></i> Variation Analysis Report
-                    </span>
-                    <button onclick="window.print()" class="btn btn-sm btn-outline-primary ms-2">
-                        <i class="fas fa-print me-1"></i> Print
-                    </button>
-                    <button onclick="exportToExcel()" class="btn btn-sm btn-success ms-2">
-                        <i class="fas fa-file-excel me-1"></i> Export
-                    </button>
-                </div>
-            </div>
-        </div>
+        <div class="animate__animated animate__fadeInUp">
 
-        <!-- Statistics Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Buildings</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalBuildings) }}</h2>
-                        <small class="text-info"><i class="fas fa-building"></i> In this ward</small>
-                    </div>
-                    <div class="stat-icon"><i class="fas fa-building"></i></div>
-                </div>
-            </div>
-
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Total Sq. Feet</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalSqfeet, 2) }}</h2>
-                        <small class="text-info"><i class="fas fa-vector-square"></i> Built-up area</small>
-                    </div>
-                    <div class="stat-icon"><i class="fas fa-ruler-combined"></i></div>
-                </div>
-            </div>
-
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">MIS Plot Area</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalMisPlotArea, 2) }}</h2>
-                        <small class="text-warning"><i class="fas fa-database"></i> From MIS records</small>
-                    </div>
-                    <div class="stat-icon"><i class="fas fa-database"></i></div>
-                </div>
-            </div>
-
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card p-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Calculated Area</h6>
-                        <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($totalCalculatedArea, 2) }}</h2>
-                        <small class="text-danger"><i class="fas fa-calculator"></i> Based on formula</small>
-                    </div>
-                    <div class="stat-icon"><i class="fas fa-calculator"></i></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Variation Summary Card -->
-        @php
-            $variationColor = $totalAreaVariation >= 0 ? 'success' : 'danger';
-            $variationIcon = $totalAreaVariation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-            $variationText = $totalAreaVariation >= 0 ? 'Under-assessment' : 'Over-assessment';
-        @endphp
-
-        <div class="stat-card p-4 mb-4" style="background: linear-gradient(135deg, {{ $totalAreaVariation >= 0 ? '#d4edda' : '#f8d7da' }} 0%, #ffffff 100%);">
-            <div class="row align-items-center">
-                <div class="col-md-12">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon me-3" style="background: {{ $totalAreaVariation >= 0 ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)' }}">
-                            <i class="fas {{ $variationIcon }} {{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-1" style="color:#102C57;">
-                                Total Area Variation:
-                                <span class="{{ $totalAreaVariation >= 0 ? 'text-success' : 'text-danger' }}">
-                                    {{ $totalAreaVariation >= 0 ? '+' : '' }}{{ number_format($totalAreaVariation, 2) }}
-                                </span>
-                            </h5>
-                            <p class="mb-0">
-                                <span class="badge {{ $totalAreaVariation >= 0 ? 'bg-success' : 'bg-danger' }} p-2">
-                                    <i class="fas {{ $variationIcon }} me-1"></i>
-                                    {{ $variationText }} ({{ $avgVariationPercentage >= 0 ? '+' : '' }}{{ number_format($avgVariationPercentage, 2) }}% Average)
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters Section -->
-        <div class="stat-card p-4 mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                <h5 class="fw-bold mb-0">
-                    <i class="fas fa-filter me-2" style="color:#1679AB;"></i>
-                    Advanced Filters
-                </h5>
-                <button class="btn btn-sm btn-outline-secondary" id="clearFiltersBtn">
-                    <i class="fas fa-undo-alt me-1"></i> Clear All Filters
-                </button>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">GIS ID</label>
-                    <input type="text" id="gisidSearch" class="form-control" placeholder="Enter GIS ID...">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Floors</label>
-                    <select id="floorsFilter" class="form-select">
-                        <option value="">All</option>
-                        <option value="1">1 Floor</option>
-                        <option value="2">2 Floors</option>
-                        <option value="3">3 Floors</option>
-                        <option value="4">4+ Floors</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Variation Type</label>
-                    <select id="variationTypeFilter" class="form-select">
-                        <option value="">All</option>
-                        <option value="positive">Under-assessment (Positive)</option>
-                        <option value="negative">Over-assessment (Negative)</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Min Variation %</label>
-                    <input type="number" id="variationMin" class="form-control" placeholder="Min %" step="any">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Max Variation %</label>
-                    <input type="number" id="variationMax" class="form-control" placeholder="Max %" step="any">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold small">Tax/Balance Filter</label>
-                    <select id="taxBalanceFilter" class="form-select">
-                        <option value="">All</option>
-                        <option value="has_tax">Has Tax Due</option>
-                        <option value="no_tax">No Tax Due</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- Data Table -->
-        <div class="stat-card p-4">
+            <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-                <h4 class="fw-bold mb-0">
-                    <i class="fas fa-table me-2" style="color:#1679AB;"></i>
-                    Detailed Building Data
-                    <span class="badge bg-primary ms-2" id="recordCount">0 Records</span>
-                </h4>
-                <div class="mt-2 mt-sm-0">
-                    <label class="me-2">Show:</label>
-                    <select id="perPageSelect" class="form-select form-select-sm d-inline-block w-auto">
-                        <option value="10">10 per page</option>
-                        <option value="25">25 per page</option>
-                        <option value="50" selected>50 per page</option>
-                        <option value="100">100 per page</option>
-                        <option value="-1">All Records</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-hover" id="variationsTable">
-                    <thead>
-                        <tr>
-                            <th class="sortable" data-column="index" style="cursor: pointer;">S.No <i class="fas fa-sort"></i></th>
-                            <th class="sortable" data-column="gisid" style="cursor: pointer;">GIS ID <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="sqfeet" style="cursor: pointer;">Sq. Feet <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-center" data-column="number_floor" style="cursor: pointer;">Floors <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-center" data-column="percentage" style="cursor: pointer;">Floor % <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-center" data-column="basement" style="cursor: pointer;">Basement <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="mis_plot_area" style="cursor: pointer;">MIS Area <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="calculated_area" style="cursor: pointer;">Calculated <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="area_variation" style="cursor: pointer;">Variation <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-center" data-column="variation_percentage" style="cursor: pointer;">Var % <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="half_year_tax" style="cursor: pointer;">Half Year Tax <i class="fas fa-sort"></i></th>
-                            <th class="sortable text-end" data-column="tax_balance" style="cursor: pointer;">Balance <i class="fas fa-sort"></i></th>
-                            <th class="text-center">Assessments</th>
-                            <th class="text-center">Map View</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="14" class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading data...</p>
-                        </td></tr>
-                    </tbody>
-                    <tfoot id="tableFooter" style="background: #f8f9fa;"></tfoot>
-                </table>
-            </div>
-
-            <div id="pagination" class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2"></div>
-        </div>
-
-        <!-- Info Note -->
-        <div class="stat-card p-3 mt-4" style="background: #e7f3ff;">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-info-circle fa-2x me-3" style="color:#1679AB;"></i>
+                <h3 class="fw-bold text-white">
+                    <i class="fas fa-tachometer-alt me-2" style="color:#1679AB;"></i>
+                    Analystics Overview - {{ $corporation->name ?? '' }}
+                </h3>
                 <div>
-                    <strong>Note:</strong>
-                    Click on <i class="fas fa-map-marker-alt"></i> <strong>GIS ID</strong> or <strong>View Map</strong> button to see the location on Google Maps.
-                    <span class="ms-3"><span class="badge bg-success">Positive Variation</span> = Under-assessment (Building larger than MIS record)</span>
-                    <span class="ms-3"><span class="badge bg-danger">Negative Variation</span> = Over-assessment (Building smaller than MIS record)</span>
+                    <span class="badge bg-light text-dark p-2">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        {{ now()->format('d M Y') }}
+                    </span>
                 </div>
             </div>
-        </div>
 
+            <!-- Statistics Cards - Row 1 -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Buildings</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_building) }}</h2>
+                            <small class="text-success"><i class="fas fa-building"></i> Polygon records</small>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-building"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Surveyed Buildings</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_surveyed_building) }}
+                            </h2>
+                            <small class="text-info"><i class="fas fa-check-circle"></i> {{ $survey_percentage }}%
+                                coverage</small>
+                        </div>
+                        <div class="stat-icon bg-info-subtle"><i class="fas fa-clipboard-list text-info"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Surveyed Assessments</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_surveyed_assessment) }}
+                            </h2>
+                            <small class="text-warning"><i class="fas fa-file-alt"></i> Point data records</small>
+                        </div>
+                        <div class="stat-icon bg-warning-subtle"><i class="fas fa-chart-line text-warning"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">MIS Records</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_mis) }}</h2>
+                            <small class="text-danger"><i class="fas fa-database"></i> Total entries</small>
+                        </div>
+                        <div class="stat-icon bg-danger-subtle"><i class="fas fa-database text-danger"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards - Row 2 -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Wards</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ $ward_count }}</h2>
+                            <small class="text-success"><i class="fas fa-map-marked-alt"></i> Active wards</small>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-map-marked-alt"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Shops</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_shops) }}</h2>
+                            <small class="text-primary"><i class="fas fa-store"></i> Registered shops</small>
+                        </div>
+                        <div class="stat-icon bg-primary-subtle"><i class="fas fa-store text-primary"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Shop Data in MIS</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">{{ number_format($total_shop_data_in_mis) }}
+                            </h2>
+                            <small class="text-success"><i class="fas fa-link"></i> Matched records</small>
+                        </div>
+                        <div class="stat-icon bg-success-subtle"><i class="fas fa-check-double text-success"></i></div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card p-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Shop Data Not in MIS</h6>
+                            <h2 class="fw-bold mb-0" style="color:#102C57;">
+                                {{ number_format($total_shop_data_not_in_mis) }}</h2>
+                            <small class="text-danger"><i class="fas fa-unlink"></i> Unmatched records</small>
+                        </div>
+                        <div class="stat-icon bg-danger-subtle"><i class="fas fa-exclamation-triangle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual Ward Cards Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="stat-card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                            <h4 class="fw-bold mb-0">
+                                <i class="fas fa-building me-2" style="color:#1679AB;"></i>
+                                Ward-wise Detailed Information
+                            </h4>
+                        </div>
+
+                        <!-- Filter Section - Improved styling -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Ward Number:</label>
+                                <input type="text" class="form-control" id="filterward" name="filterward"
+                                    placeholder="Enter ward number...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Zone:</label>
+                                <input type="text" class="form-control" id="filterzone" name="filterzone"
+                                    placeholder="Enter zone name...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="text-dark fw-bold mb-2">Filter by Building Coverage (%):</label>
+                                <input type="number" id="filterBuildingCoverage" class="form-control"
+                                    placeholder="Enter coverage % (e.g., 75)">
+                                <small class="text-muted">Shows wards within ±3% of entered value</small>
+                            </div>
+                        </div>
+
+                        <!-- Results Counter -->
+                        <div class="mb-3">
+                            <span class="badge bg-primary p-2">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Showing <span id="resultCount">0</span> wards
+                            </span>
+                        </div>
+
+                        <!-- Ward Cards Grid -->
+                        <div class="row g-4" id="wardsContainer">
+                            <!-- Cards will be loaded here by JavaScript -->
+                        </div>
+
+                        <!-- Pagination -->
+                        @if ($wards_pagination->hasPages())
+                            <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
+                                <div class="mb-2 mb-sm-0">
+                                    <small class="text-muted">
+                                        Showing {{ $wards_pagination->firstItem() ?? 0 }} to
+                                        {{ $wards_pagination->lastItem() ?? 0 }} of {{ $wards_pagination->total() ?? 0 }}
+                                        wards
+                                    </small>
+                                </div>
+                                <div>
+                                    {{ $wards_pagination->appends(request()->query())->links() }}
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
+
 @endsection
 
 @push('scripts')
-<!-- Proj4js for EPSG:3857 to EPSG:4326 conversion -->
-<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const wards = @json($wards);
+            const $wardcontainer = $("#wardsContainer");
 
-<script>
-    // Define the projection systems
-    const webMercator = '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +no_defs +type=crs';
-    const wgs84 = '+proj=longlat +datum=WGS84 +no_defs +type=crs';
+            // Initial render
+            renderWards(wards);
+            updateResultCount(wards.length);
 
-    proj4.defs('EPSG:3857', webMercator);
-    proj4.defs('EPSG:4326', wgs84);
+            function renderWards(wardsArray) {
+                $wardcontainer.empty();
 
-    function convert3857ToLatLng(x, y) {
-        try {
-            const result = proj4('EPSG:3857', 'EPSG:4326', [x, y]);
-            return { lng: result[0], lat: result[1] };
-        } catch (error) {
-            console.error('Conversion error:', error);
-            return null;
-        }
-    }
-
-    function parseCoordinates(coordString) {
-        if (!coordString) return null;
-        try {
-            let cleaned = coordString.replace(/[\[\]]/g, '');
-            let parts = cleaned.split(',');
-            if (parts.length >= 2) {
-                let x = parseFloat(parts[0]);
-                let y = parseFloat(parts[1]);
-                if (!isNaN(x) && !isNaN(y)) {
-                    return { x, y };
+                if (wardsArray.length === 0) {
+                    $wardcontainer.append(`
+                    <div class="col-12">
+                        <div class="alert alert-info text-center py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                            <h5>No ward data available</h5>
+                            <p class="mb-0">No wards match your filter criteria.</p>
+                        </div>
+                    </div>
+                `);
+                    return;
                 }
-            }
-        } catch (e) {
-            console.error('Parse error:', e);
-        }
-        return null;
-    }
 
-    let allData = @json($allDataJson);
+                wardsArray.forEach(function(ward) {
+                    let buildingProgress = ward.total_buildings > 0 ?
+                        ((ward.surveyed_buildings / ward.total_buildings) * 100).toFixed(2) :
+                        0;
 
-    if (typeof allData === 'string') {
-        allData = JSON.parse(allData);
-    }
+                    let progressClass = buildingProgress >= 80 ? 'bg-success' :
+                        buildingProgress >= 50 ? 'bg-warning' : 'bg-danger';
 
-    allData = allData.map(record => {
-        const coords = parseCoordinates(record.coordinates);
-        if (coords) {
-            const latLng = convert3857ToLatLng(coords.x, coords.y);
-            if (latLng && !isNaN(latLng.lat) && !isNaN(latLng.lng)) {
-                record.lat = latLng.lat;
-                record.lng = latLng.lng;
-                record.hasValidCoords = true;
-            } else {
-                record.hasValidCoords = false;
-            }
-        } else {
-            record.hasValidCoords = false;
-        }
-        return record;
-    });
+                    let misMatchPercent = ward.shop_data_count > 0 ?
+                        ((ward.shop_data_in_mis_count / ward.shop_data_count) * 100).toFixed(2) :
+                        0;
 
-    let filteredData = [...allData];
-    let currentPage = 1;
-    let itemsPerPage = 50;
-    let currentSort = { column: 'index', direction: 'asc' };
+                    let card = `
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4 ward-card-item"
+                        data-zone="${(ward.zone || '').toLowerCase()}"
+                        data-ward="${ward.ward_no}"
+                        data-building-coverage="${buildingProgress}">
 
-    const serverTotals = {
-        totalBuildings: {{ $totalBuildings }},
-        totalSqfeet: {{ $totalSqfeet }},
-        totalMisPlotArea: {{ $totalMisPlotArea }},
-        totalCalculatedArea: {{ $totalCalculatedArea }},
-        totalAreaVariation: {{ $totalAreaVariation }},
-        avgVariationPercentage: {{ $avgVariationPercentage }}
-    };
+                        <div class="ward-card h-100">
 
-    $(document).ready(function() {
-        console.log('Total records loaded:', allData.length);
-        initializeFilters();
-        applyFiltersAndRender();
-    });
+                            <!-- Header -->
+                            <div class="ward-card-header d-flex justify-content-between align-items-start p-3"
+                                style="background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);">
 
-    function initializeFilters() {
-        $('#applyFiltersBtn').click(function() {
-            currentPage = 1;
-            applyFiltersAndRender();
-        });
+                                <div>
+                                    <h5 class="mb-0 text-white fw-bold">
+                                        Ward ${ward.ward_no}
+                                    </h5>
 
-        $('#gisidSearch, #floorsFilter, #variationTypeFilter, #variationMin, #variationMax, #taxBalanceFilter').on('keypress', function(e) {
-            if (e.which === 13) {
-                currentPage = 1;
-                applyFiltersAndRender();
-            }
-        });
+                                    <small class="text-white-50">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        ${ward.zone || 'N/A'} Zone
+                                    </small>
+                                </div>
 
-        $('#clearFiltersBtn').click(function() {
-            $('#gisidSearch').val('');
-            $('#floorsFilter').val('');
-            $('#variationTypeFilter').val('');
-            $('#variationMin').val('');
-            $('#variationMax').val('');
-            $('#taxBalanceFilter').val('');
-            currentPage = 1;
-            applyFiltersAndRender();
-        });
+                                <a href="/corporation/ward/${ward.ward_no}"
+                                    class="btn btn-sm btn-light">
 
-        $('#perPageSelect').change(function() {
-            const val = $(this).val();
-            itemsPerPage = val === '-1' ? filteredData.length : parseInt(val);
-            currentPage = 1;
-            renderTable();
-        });
+                                    <i class="fas fa-map-marked-alt"></i> View Map
+                                </a>
+                                <a href="/corporation/variation/${ward.ward_no}"
+                                    class="btn btn-sm btn-light">
 
-        $('.sortable').click(function() {
-            const column = $(this).data('column');
-            if (currentSort.column === column) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.column = column;
-                currentSort.direction = 'asc';
-            }
-            applyFiltersAndRender();
-        });
-    }
+                                    <i class="fas fa-map-marked-alt"></i> View Variation
+                                </a>
+                            </div>
 
-    function applyFiltersAndRender() {
-        filteredData = [...allData];
+                            <!-- Body -->
+                            <div class="ward-card-body p-3">
 
-        const gisidSearch = $('#gisidSearch').val().toLowerCase().trim();
-        if (gisidSearch) {
-            filteredData = filteredData.filter(item => item.gisid.toLowerCase().includes(gisidSearch));
-        }
+                                <!-- Buildings -->
+                                <div class="info-section mb-3">
 
-        const floorsFilter = $('#floorsFilter').val();
-        if (floorsFilter) {
-            filteredData = filteredData.filter(item => {
-                if (floorsFilter === '4') return item.number_floor >= 4;
-                return item.number_floor == floorsFilter;
-            });
-        }
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
 
-        const variationType = $('#variationTypeFilter').val();
-        if (variationType) {
-            filteredData = filteredData.filter(item => {
-                if (variationType === 'positive') return item.area_variation > 0;
-                if (variationType === 'negative') return item.area_variation < 0;
-                return true;
-            });
-        }
+                                        <h6 class="mb-0 fw-bold">
+                                            <i class="fas fa-building me-2" style="color:#1679AB;"></i>
+                                            Buildings
+                                        </h6>
 
-        const variationMin = parseFloat($('#variationMin').val());
-        if (!isNaN(variationMin)) {
-            filteredData = filteredData.filter(item => item.variation_percentage >= variationMin);
-        }
+                                        <span class="badge ${progressClass}">
+                                            ${buildingProgress}% Complete
+                                        </span>
+                                    </div>
 
-        const variationMax = parseFloat($('#variationMax').val());
-        if (!isNaN(variationMax)) {
-            filteredData = filteredData.filter(item => item.variation_percentage <= variationMax);
-        }
+                                    <div class="row g-2">
 
-        const taxBalanceFilter = $('#taxBalanceFilter').val();
-        if (taxBalanceFilter === 'has_tax') {
-            filteredData = filteredData.filter(item => item.tax_balance > 0);
-        } else if (taxBalanceFilter === 'no_tax') {
-            filteredData = filteredData.filter(item => item.tax_balance <= 0);
-        }
+                                        <div class="col-6">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Total</small>
+                                                <strong class="fs-4">${ward.total_buildings || 0}</strong>
+                                            </div>
+                                        </div>
 
-        filteredData.sort((a, b) => {
-            let aVal = a[currentSort.column];
-            let bVal = b[currentSort.column];
+                                        <div class="col-6">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Surveyed</small>
+                                                <strong class="fs-4">${ward.surveyed_buildings || 0}</strong>
+                                            </div>
+                                        </div>
 
-            if (typeof aVal === 'string') {
-                aVal = aVal.toLowerCase();
-                bVal = bVal.toLowerCase();
-            }
+                                    </div>
 
-            if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
-            if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
-            return 0;
-        });
+                                    <div class="progress mt-2" style="height:8px;">
+                                        <div class="progress-bar bg-info"
+                                            style="width:${buildingProgress}%">
+                                        </div>
+                                    </div>
 
-        $('#recordCount').text(filteredData.length + ' Records');
-        currentPage = 1;
-        renderTable();
-    }
+                                </div>
 
-    function openGoogleMaps(gisid, lat, lng) {
-        let url;
-        if (lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-            url = `https://www.google.com/maps?q=${lat},${lng}&z=18`;
-        } else {
-            url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Building ' + gisid)}`;
-        }
-        window.open(url, '_blank');
-    }
+                                <!-- Assessments -->
+                                <div class="info-section mb-3">
 
-    function renderTable() {
-        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-        const start = (currentPage - 1) * itemsPerPage;
-        const pageData = filteredData.slice(start, start + itemsPerPage);
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-clipboard-list me-2" style="color:#FFC107;"></i>
+                                        Assessments
+                                    </h6>
 
-        let filteredSqfeet = 0, filteredMisArea = 0, filteredCalculated = 0, filteredVariation = 0;
-        let filteredTax = 0, filteredBalance = 0;
+                                    <div class="info-item text-center p-2 bg-light rounded">
+                                        <small class="text-muted d-block">
+                                            Surveyed Assessments
+                                        </small>
 
-        filteredData.forEach(item => {
-            filteredSqfeet += item.sqfeet;
-            filteredMisArea += item.mis_plot_area;
-            filteredCalculated += item.calculated_area;
-            filteredVariation += item.area_variation;
-            filteredTax += item.half_year_tax || 0;
-            filteredBalance += item.tax_balance || 0;
-        });
-        const filteredAvgVariation = filteredMisArea > 0 ? (filteredVariation / filteredMisArea) * 100 : 0;
+                                        <strong class="fs-3">
+                                            ${ward.surveyed_assessment || 0}
+                                        </strong>
+                                    </div>
 
-        let html = '';
-        if (pageData.length === 0) {
-            html = '<tr><td colspan="14" class="text-center py-5">No records found</td></tr>';
-        } else {
-            pageData.forEach((item, idx) => {
-                const variationClass = item.area_variation >= 0 ? 'text-success' : 'text-danger';
-                const variationIcon = item.area_variation >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-                const hasValidCoords = item.hasValidCoords === true;
+                                </div>
 
-                html += `
-                    <tr>
-                        <td>${start + idx + 1}</td>
-                        <td>
-                            <a href="javascript:void(0)" onclick="openGoogleMaps('${item.gisid}', ${item.lat || 'null'}, ${item.lng || 'null'})"
-                               style="color: #1679AB; text-decoration: none; cursor: pointer;">
-                                <i class="fas fa-map-marker-alt me-1"></i>
-                                <strong>${item.gisid}</strong>
-                            </a>
-                        </td>
-                        <td class="text-end">${item.sqfeet.toFixed(2)}</td>
-                        <td class="text-center"><span class="badge bg-primary">${item.number_floor}</span></td>
-                        <td class="text-center">${item.percentage}%</td>
-                        <td class="text-center">${item.basement > 0 ? item.basement : '-'}</td>
-                        <td class="text-end">${item.mis_plot_area.toFixed(2)}</td>
-                        <td class="text-end">${item.calculated_area.toFixed(2)}</td>
-                        <td class="text-end ${variationClass}">
-                            <i class="fas ${variationIcon} me-1"></i>
-                            ${item.area_variation >= 0 ? '+' : ''}${item.area_variation.toFixed(2)}
-                        </td>
-                        <td class="text-center ${variationClass}">
-                            <strong>${item.variation_percentage >= 0 ? '+' : ''}${item.variation_percentage.toFixed(2)}%</strong>
-                        </td>
-                        <td class="text-end">${(item.half_year_tax || 0).toFixed(2)}</td>
-                        <td class="text-end ${item.tax_balance > 0 ? 'text-danger' : 'text-success'}">
-                            ${(item.tax_balance || 0).toFixed(2)}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge ${item.assessment_count > 1 ? 'bg-info' : 'bg-secondary'}">${item.assessment_count}</span>
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-sm ${hasValidCoords ? 'btn-primary' : 'btn-secondary'}"
-                                    onclick="openGoogleMaps('${item.gisid}', ${item.lat || 'null'}, ${item.lng || 'null'})"
-                                    ${!hasValidCoords ? 'disabled' : ''}>
-                                <i class="fas fa-map-marked-alt"></i> View Map
-                            </button>
-                        </td>
-                    </tr>
+                                <!-- Shops -->
+                                <div class="info-section mb-3">
+
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-store me-2" style="color:#28a745;"></i>
+                                        Shops Information
+                                    </h6>
+
+                                    <div class="row g-2">
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Total Shops</small>
+                                                <strong class="fs-5">${ward.shop_count || 0}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">Shop Data</small>
+                                                <strong class="fs-5">${ward.shop_data_count || 0}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-4">
+                                            <div class="info-item text-center p-2 bg-light rounded">
+                                                <small class="text-muted d-block">In MIS</small>
+                                                <strong class="fs-5 ${ward.shop_data_in_mis_count > 0 ? 'text-success' : 'text-danger'}">
+                                                    ${ward.shop_data_in_mis_count || 0}
+                                                </strong>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                                <!-- MIS -->
+                                <div class="info-section">
+
+                                    <div class="d-flex justify-content-between align-items-center p-2 rounded
+                                        ${misMatchPercent == 100 ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10'}">
+
+                                        <small class="fw-bold">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            MIS Status:
+                                        </small>
+
+                                        <span class="badge ${misMatchPercent == 100 ? 'bg-success' : 'bg-warning'}">
+                                            ${misMatchPercent}% Matched
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="ward-card-footer p-3 bg-light">
+
+                                <div class="d-flex justify-content-between align-items-center">
+
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        Last updated: ${new Date().toLocaleDateString()}
+                                    </small>
+
+                                    <a href="/corporation/ward/details/${ward.ward_no}"
+                                        class="btn btn-sm btn-outline-primary">
+
+                                        <i class="fas fa-chart-line"></i> Details
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
                 `;
+
+                    $wardcontainer.append(card);
+                });
+
+                // Add animation trigger
+                $('.ward-card-item').each(function(index) {
+                    $(this).css('animation-delay', (index * 0.05) + 's');
+                });
+            }
+
+            function updateResultCount(count) {
+                $("#resultCount").text(count);
+            }
+
+            function applyFilters() {
+                var filterward = $("#filterward").val().toLowerCase().trim();
+                var filterzone = $("#filterzone").val().toLowerCase().trim();
+                var filterBuildingCoverage = $("#filterBuildingCoverage").val();
+
+                var filteredWards = wards.filter(function(ward) {
+                    // Calculate building coverage %
+                    var buildingCoverage = ward.total_buildings > 0 ?
+                        (ward.surveyed_buildings / ward.total_buildings) * 100 : 0;
+
+                    // Ward filter - if empty, match all
+                    var wardMatch = true;
+                    if (filterward !== "") {
+                        wardMatch = ward.ward_no
+                            .toString()
+                            .toLowerCase()
+                            .includes(filterward);
+                    }
+
+                    // Zone filter - if empty, match all
+                    var zoneMatch = true;
+                    if (filterzone !== "") {
+                        zoneMatch = (ward.zone || '')
+                            .toString()
+                            .toLowerCase()
+                            .includes(filterzone);
+                    }
+
+                    // Building coverage filter - if empty, match all
+                    var buildingCoverageMatch = true;
+                    if (filterBuildingCoverage !== "" && !isNaN(parseFloat(filterBuildingCoverage))) {
+                        var targetCoverage = parseFloat(filterBuildingCoverage);
+                        buildingCoverageMatch = buildingCoverage >= (targetCoverage - 3) &&
+                            buildingCoverage <= (targetCoverage + 3);
+                    }
+
+                    return wardMatch && zoneMatch && buildingCoverageMatch;
+                });
+
+                renderWards(filteredWards);
+                updateResultCount(filteredWards.length);
+            }
+
+            // Debounce function to improve performance
+            function debounce(func, delay) {
+                let timeout;
+                return function() {
+                    const context = this;
+                    const args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            }
+
+            // Apply filters with debounce for better performance
+            const debouncedApplyFilters = debounce(applyFilters, 300);
+
+            // Event listeners
+            $("#filterward").on("keyup", debouncedApplyFilters);
+            $("#filterzone").on("keyup", debouncedApplyFilters);
+            $("#filterBuildingCoverage").on("keyup", debouncedApplyFilters);
+
+            // Optional: Add clear filters button functionality
+            $(".clear-filters").on("click", function() {
+                $("#filterward").val('');
+                $("#filterzone").val('');
+                $("#filterBuildingCoverage").val('');
+                applyFilters();
             });
-        }
+        });
+    </script>
 
-        $('#tableBody').html(html);
-
-        const footerHtml = `
-            <tr style="border-top: 2px solid #dee2e6; background-color: #f8f9fa;">
-                <td colspan="2"><strong>FILTERED TOTAL</strong></td>
-                <td class="text-end"><strong>${filteredSqfeet.toFixed(2)}</strong></td>
-                <td colspan="3"></td>
-                <td class="text-end"><strong>${filteredMisArea.toFixed(2)}</strong></td>
-                <td class="text-end"><strong>${filteredCalculated.toFixed(2)}</strong></td>
-                <td class="text-end ${filteredVariation >= 0 ? 'text-success' : 'text-danger'}">
-                    <strong>${filteredVariation >= 0 ? '+' : ''}${filteredVariation.toFixed(2)}</strong>
-                </td>
-                <td class="text-center ${filteredAvgVariation >= 0 ? 'text-success' : 'text-danger'}">
-                    <strong>${filteredAvgVariation >= 0 ? '+' : ''}${filteredAvgVariation.toFixed(2)}%</strong>
-                </td>
-                <td class="text-end"><strong>${filteredTax.toFixed(2)}</strong></td>
-                <td class="text-end"><strong>${filteredBalance.toFixed(2)}</strong></td>
-                <td colspan="2"></td>
-            </tr>
-            <tr style="background: #e9ecef;">
-                <td colspan="2"><strong>WARD TOTAL</strong></td>
-                <td class="text-end"><strong>${serverTotals.totalSqfeet.toFixed(2)}</strong></td>
-                <td colspan="3"></td>
-                <td class="text-end"><strong>${serverTotals.totalMisPlotArea.toFixed(2)}</strong></td>
-                <td class="text-end"><strong>${serverTotals.totalCalculatedArea.toFixed(2)}</strong></td>
-                <td class="text-end ${serverTotals.totalAreaVariation >= 0 ? 'text-success' : 'text-danger'}">
-                    <strong>${serverTotals.totalAreaVariation >= 0 ? '+' : ''}${serverTotals.totalAreaVariation.toFixed(2)}</strong>
-                </td>
-                <td class="text-center ${serverTotals.avgVariationPercentage >= 0 ? 'text-success' : 'text-danger'}">
-                    <strong>${serverTotals.avgVariationPercentage >= 0 ? '+' : ''}${serverTotals.avgVariationPercentage.toFixed(2)}%</strong>
-                </td>
-                <td colspan="3"></td>
-            </tr>
-        `;
-        $('#tableFooter').html(footerHtml);
-
-        renderPagination(totalPages);
-    }
-
-    function renderPagination(totalPages) {
-        if (totalPages <= 1 && filteredData.length <= itemsPerPage) {
-            $('#pagination').html(`
-                <div class="text-muted">
-                    Showing ${filteredData.length} of ${filteredData.length} records
-                </div>
-            `);
-            return;
-        }
-
-        const startRecord = (currentPage - 1) * itemsPerPage + 1;
-        const endRecord = Math.min(currentPage * itemsPerPage, filteredData.length);
-
-        let paginationHtml = `
-            <div class="text-muted">
-                Showing ${startRecord} to ${endRecord} of ${filteredData.length} records
-            </div>
-            <nav>
-                <ul class="pagination mb-0">
-        `;
-
-        paginationHtml += `
-            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">« Previous</a>
-            </li>
-        `;
-
-        const maxVisible = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-        if (endPage - startPage + 1 < maxVisible) {
-            startPage = Math.max(1, endPage - maxVisible + 1);
-        }
-
-        if (startPage > 1) {
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
-            if (startPage > 2) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            paginationHtml += `
-                <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
-                </li>
-            `;
-        }
-
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-            paginationHtml += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
-        }
-
-        paginationHtml += `
-            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Next »</a>
-            </li>
-        `;
-
-        paginationHtml += `</ul></nav>`;
-        $('#pagination').html(paginationHtml);
-    }
-
-    function changePage(page) {
-        if (page < 1 || page > Math.ceil(filteredData.length / itemsPerPage)) return;
-        currentPage = page;
-        renderTable();
-    }
-
-    function exportToExcel() {
-        const exportData = filteredData.map(item => ({
-            'S.No': item.index,
-            'GIS ID': item.gisid,
-            'Sq. Feet': item.sqfeet,
-            'Floors': item.number_floor,
-            'Floor %': item.percentage,
-            'Basement': item.basement,
-            'MIS Plot Area': item.mis_plot_area,
-            'Calculated Area': item.calculated_area,
-            'Area Variation': item.area_variation,
-            'Variation %': item.variation_percentage,
-            'Half Year Tax': item.half_year_tax || 0,
-            'Tax Balance': item.tax_balance || 0,
-            'Assessment Count': item.assessment_count,
-            'Latitude': item.lat || '',
-            'Longitude': item.lng || ''
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Building_Variations');
-
-        ws['!cols'] = Object.keys(exportData[0] || {}).map(() => ({ wch: 20 }));
-
-        XLSX.writeFile(wb, `Ward_${new Date().getTime()}_Building_Variations.xlsx`);
-    }
-</script>
-
-<style>
-    .dashboard-content-area {
-        padding: 20px;
-        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
-        min-height: 100vh;
-    }
-
-    .stat-card {
-        background: rgba(255, 255, 255, 0.96);
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-        border: none;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-    }
-
-    .stat-icon {
-        width: 55px;
-        height: 55px;
-        background: rgba(22, 121, 171, 0.1);
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        color: #1679AB;
-    }
-
-    .table {
-        margin-bottom: 0;
-        background-color: #ffffff;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .table thead th {
-        padding: 15px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
-        color: #ffffff !important;
-        border: none;
-        white-space: nowrap;
-    }
-
-    .table thead th i {
-        margin-left: 5px;
-        opacity: 0.7;
-    }
-
-    .table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .table tbody tr:hover {
-        background-color: rgba(22, 121, 171, 0.05);
-    }
-
-    .table tfoot td {
-        padding: 12px 15px;
-        font-weight: bold;
-    }
-
-    .btn-sm {
-        border-radius: 8px;
-        padding: 5px 12px;
-    }
-
-    .pagination {
-        margin-bottom: 0;
-    }
-
-    .page-link {
-        color: #102C57;
-        border-radius: 8px;
-        margin: 0 2px;
-        border: none;
-        padding: 8px 14px;
-    }
-
-    .page-item.active .page-link {
-        background-color: #1679AB;
-        border-color: #1679AB;
-        color: white;
-    }
-
-    .page-link:hover {
-        color: #1679AB;
-        background-color: #f8f9fa;
-    }
-
-    .badge {
-        padding: 6px 12px;
-        font-size: 12px;
-        font-weight: 500;
-        border-radius: 20px;
-    }
-
-    .form-label {
-        font-size: 0.85rem;
-        margin-bottom: 0.25rem;
-    }
-
-    @media (max-width: 768px) {
+    <style>
         .dashboard-content-area {
-            padding: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #102C57 0%, #1679AB 100%);
+            min-height: 100vh;
         }
-        .table {
-            font-size: 0.75rem;
-        }
-        .table thead th,
-        .table tbody td {
-            padding: 8px 10px;
-        }
-        .btn-sm {
-            padding: 3px 8px;
-            font-size: 0.7rem;
-        }
-        .stat-icon {
-            width: 40px;
-            height: 40px;
-            font-size: 18px;
-        }
-    }
 
-    @media print {
-        .btn, .pagination, #perPageSelect, .stat-card .btn, .filters-section, #clearFiltersBtn, #applyFiltersBtn {
-            display: none !important;
-        }
         .stat-card {
-            break-inside: avoid;
-            page-break-inside: avoid;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: none;
         }
-        .table {
-            font-size: 10pt;
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
         }
-        .dashboard-content-area {
+
+        .stat-icon {
+            width: 55px;
+            height: 55px;
+            background: rgba(22, 121, 171, 0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #1679AB;
+        }
+
+        /* Form Controls */
+        .form-control,
+        .form-select {
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #1679AB;
+            box-shadow: 0 0 0 0.2rem rgba(22, 121, 171, 0.25);
+        }
+
+        /* Ward Card Styles */
+        .ward-card {
             background: white;
-            padding: 10px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            opacity: 1;
+            visibility: visible;
         }
-    }
-</style>
+
+        .ward-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .ward-card-header {
+            color: white;
+        }
+
+        .ward-card-body {
+            background: white;
+        }
+
+        .ward-card-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .info-section {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding-bottom: 10px;
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-item {
+            transition: all 0.2s ease;
+        }
+
+        .info-item:hover {
+            transform: scale(1.02);
+            background: #e9ecef !important;
+        }
+
+        .progress {
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 20px;
+        }
+
+        /* Button Styles */
+        .btn-sm {
+            border-radius: 8px;
+            padding: 5px 12px;
+        }
+
+        .btn-outline-primary:hover {
+            background: #1679AB;
+            border-color: #1679AB;
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            margin-bottom: 0;
+        }
+
+        .page-link {
+            color: #102C57;
+            border-radius: 8px;
+            margin: 0 2px;
+            border: none;
+            padding: 8px 14px;
+        }
+
+        .page-item.active .page-link {
+            background-color: #1679AB;
+            border-color: #1679AB;
+            color: white;
+        }
+
+        .page-link:hover {
+            color: #1679AB;
+            background-color: #f8f9fa;
+        }
+
+        /* Card Entry Animation */
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ward-card-item {
+            animation: cardFadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        /* Responsive Design */
+        @media(max-width: 1200px) {
+            .ward-card-header h5 {
+                font-size: 1.1rem;
+            }
+
+            .info-item strong {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media(max-width: 768px) {
+            .dashboard-content-area {
+                padding: 15px;
+            }
+
+            .stat-card {
+                margin-bottom: 15px;
+            }
+
+            .ward-card {
+                margin-bottom: 15px;
+            }
+
+            .info-item strong {
+                font-size: 1rem;
+            }
+
+            .btn-sm {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+
+            .badge {
+                font-size: 10px;
+            }
+        }
+
+        @media(max-width: 576px) {
+            .ward-card-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .ward-card-header .btn {
+                width: 100%;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate__fadeInUp {
+            animation-name: fadeInUp;
+            animation-duration: 0.6s;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1679AB;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #102C57;
+        }
+
+        /* Hover Effects */
+        .ward-card .btn {
+            transition: all 0.2s ease;
+        }
+
+        .ward-card .btn:hover {
+            transform: translateX(3px);
+        }
+
+        /* Statistics Card Icons */
+        .stat-icon i {
+            font-size: 28px;
+        }
+
+        /* Progress Bar Colors */
+        .progress-bar.bg-info {
+            background-color: #1679AB !important;
+        }
+
+        /* Text Colors */
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-warning {
+            color: #ffc107 !important;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .text-primary {
+            color: #1679AB !important;
+        }
+
+        /* Label styling */
+        label {
+            font-size: 0.9rem;
+        }
+    </style>
 @endpush
