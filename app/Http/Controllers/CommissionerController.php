@@ -13,7 +13,6 @@ use SebastianBergmann\CodeCoverage\Util\Percentage;
 class CommissionerController extends Controller
 {
 
-
     public function dashboard()
     {
         $user = Auth::guard('corporation')->user();
@@ -180,6 +179,7 @@ class CommissionerController extends Controller
             'wards_per_zones' => $wards_per_zones,
         ]);
     }
+
     //analytics
     public function Analystics()
     {
@@ -224,7 +224,7 @@ class CommissionerController extends Controller
             ->where('status', 'active')
             ->orderBy('zone')
             ->orderBy('ward_no')
-            ->paginate(15); // 15 wards per page, you can adjust this number
+            ->paginate(15);
 
         $wards = [];
         $shopTableName = "shop_corporation_{$corporation->id}";
@@ -341,16 +341,14 @@ class CommissionerController extends Controller
             'total_shop_data_not_in_mis' => $totalShopDataNotInMis,
             'survey_percentage' => $survey_percentage,
             'wards' => $wards,
-            'wards_pagination' => $paginatedWards, // Add pagination object
+            'wards_pagination' => $paginatedWards,
             'wards_per_zones' => $wards_per_zones,
         ]);
     }
 
-
-
     public function viewVariations($ward_no)
     {
-        $user = Auth::user();
+        $user = Auth::guard('corporation')->user();
 
         $warddetail = Ward::where('corporation_id', $user->corporation_id)
             ->where('ward_no', $ward_no)
@@ -371,10 +369,10 @@ class CommissionerController extends Controller
         $polygonDataTable = $this->getPolygonDataTable($corp, $wardNo, $zone);
 
         /*
-    |--------------------------------------------------------------------------
-    | Polygon Data
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Polygon Data with Building Usage
+        |--------------------------------------------------------------------------
+        */
         $polygons = DB::table($polygonsTableName . ' as p')
             ->leftJoin(
                 $polygonDataTable . ' as pgd',
@@ -394,26 +392,27 @@ class CommissionerController extends Controller
                 'pd.coordinates',
                 'pgd.number_floor',
                 'pgd.percentage',
-                'pgd.basement'
+                'pgd.basement',
+                'pgd.building_usage as surveyed_usage'
             )
             ->get();
 
         /*
-    |--------------------------------------------------------------------------
-    | Point Data
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Point Data with Assessment and Usage
+        |--------------------------------------------------------------------------
+        */
         $pointDatas = DB::table($pointDataTable)
-            ->select('point_gisid', 'assessment')
+            ->select('point_gisid', 'assessment', 'bill_usage as point_usage')
             ->whereNotNull('assessment')
             ->get()
             ->groupBy('point_gisid');
 
         /*
-    |--------------------------------------------------------------------------
-    | Assessment List
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Assessment List
+        |--------------------------------------------------------------------------
+        */
         $assessmentList = DB::table($pointDataTable)
             ->whereNotNull('assessment')
             ->pluck('assessment')
@@ -421,33 +420,44 @@ class CommissionerController extends Controller
             ->toArray();
 
         /*
-    |--------------------------------------------------------------------------
-    | MIS Data
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | MIS Data with Tax Information (half_year_tax and balance)
+        |--------------------------------------------------------------------------
+        */
         $misData = DB::table($misTableName)
             ->whereIn('assessment', $assessmentList)
-            ->select('assessment', DB::raw('SUM(plot_area) as total_plot_area'))
-            ->groupBy('assessment')
+            ->select(
+                'assessment',
+                'plot_area',
+                'half_year_tax',
+                'balance',
+                DB::raw('COALESCE(half_year_tax, 0) as half_year_tax_value'),
+                DB::raw('COALESCE(balance, 0) as balance_value')
+            )
             ->get()
             ->keyBy('assessment');
 
         /*
-    |--------------------------------------------------------------------------
-    | Process All Data
-    |--------------------------------------------------------------------------
-    */
+        |--------------------------------------------------------------------------
+        | Process All Data
+        |--------------------------------------------------------------------------
+        */
         $allResults = [];
         $totalSqfeet = 0;
         $totalBuildings = 0;
         $totalMisPlotArea = 0;
         $totalCalculatedArea = 0;
         $totalAreaVariation = 0;
+        $areaVariationCount = 0;
+        $usageVariationCount = 0;
 
         foreach ($polygons as $index => $polygon) {
             $points = $pointDatas[$polygon->gisid] ?? collect();
             $misArea = 0;
+            $misHalfYearTax = 0;
+            $misBalance = 0;
             $assessmentCount = 0;
+            $misUsage = null;
 
             // Extract coordinates and convert from EPSG:3857 to EPSG:4326
             $lat = null;
@@ -463,13 +473,21 @@ class CommissionerController extends Controller
 
             foreach ($points as $point) {
                 $assessmentCount++;
-                $misArea += (float) ($misData[$point->assessment]->total_plot_area ?? 0);
+                $misRecord = $misData[$point->assessment] ?? null;
+
+                if ($misRecord) {
+                    $misArea += (float) ($misRecord->plot_area ?? 0);
+                    $misHalfYearTax += (float) ($misRecord->half_year_tax_value ?? 0);
+                    $misBalance += (float) ($misRecord->balance_value ?? 0);
+                    $misUsage = $point->point_usage; // Get usage from point data
+                }
             }
 
             $sqfeet = (float) ($polygon->sqfeet ?? 0);
             $floorPercentage = (float) ($polygon->percentage ?? 100);
             $numberFloor = (int) ($polygon->number_floor ?? 1);
             $basement = (int) ($polygon->basement ?? 0);
+            $surveyedUsage = trim($polygon->surveyed_usage ?? '');
 
             // CORRECTED FORMULA: ((numberFloor + basement + (percentage/100)) * sqfeet)
             $calculatedArea = (($numberFloor + $basement + ($floorPercentage / 100)) * $sqfeet);
@@ -479,6 +497,35 @@ class CommissionerController extends Controller
 
             if ($misArea > 0) {
                 $variationPercentage = ($areaVariation / $misArea) * 100;
+            }
+
+            // Check Usage Variation
+            $usageHasVariation = false;
+            $usageVariationStatus = 'MATCH';
+            $surveyedUsageDisplay = $surveyedUsage ?: 'N/A';
+            $misUsageDisplay = $misUsage ?: 'N/A';
+
+            if (!empty($surveyedUsage) && !empty($misUsage)) {
+                // Compare usage (case-insensitive)
+                if (strtolower(trim($surveyedUsage)) !== strtolower(trim($misUsage))) {
+                    $usageHasVariation = true;
+                    $usageVariationStatus = 'VARIATION';
+                    $usageVariationCount++;
+                }
+            } elseif (!empty($surveyedUsage) && empty($misUsage)) {
+                $usageHasVariation = true;
+                $usageVariationStatus = 'MISSING IN MIS';
+                $usageVariationCount++;
+            } elseif (empty($surveyedUsage) && !empty($misUsage)) {
+                $usageHasVariation = true;
+                $usageVariationStatus = 'MISSING IN SURVEY';
+                $usageVariationCount++;
+            }
+
+            // Check Area Variation
+            $areaHasVariation = abs($variationPercentage) > 0.01; // More than 0.01% difference
+            if ($areaHasVariation) {
+                $areaVariationCount++;
             }
 
             // Add to totals (only if there's at least one assessment)
@@ -497,10 +544,16 @@ class CommissionerController extends Controller
                 'number_floor' => $numberFloor,
                 'percentage' => $floorPercentage,
                 'basement' => $basement,
+                'surveyed_usage' => $surveyedUsageDisplay,
+                'mis_usage' => $misUsageDisplay,
+                'usage_variation' => $usageVariationStatus,
                 'mis_plot_area' => round($misArea, 2),
                 'calculated_area' => round($calculatedArea, 2),
                 'area_variation' => round($areaVariation, 2),
                 'variation_percentage' => round($variationPercentage, 2),
+                'area_variation_status' => $areaHasVariation ? 'VARIATION' : 'MATCH',
+                'half_year_tax' => round($misHalfYearTax, 2),
+                'tax_balance' => round($misBalance, 2),
                 'assessment_count' => $assessmentCount,
                 'lat' => $lat,
                 'lng' => $lng,
@@ -510,10 +563,25 @@ class CommissionerController extends Controller
 
         $avgVariationPercentage = $totalMisPlotArea > 0 ? ($totalAreaVariation / $totalMisPlotArea) * 100 : 0;
 
+        // Summary statistics
+        $summary = [
+            'totalBuildings' => $totalBuildings,
+            'totalSqfeet' => round($totalSqfeet, 2),
+            'totalMisPlotArea' => round($totalMisPlotArea, 2),
+            'totalCalculatedArea' => round($totalCalculatedArea, 2),
+            'totalAreaVariation' => round($totalAreaVariation, 2),
+            'avgVariationPercentage' => round($avgVariationPercentage, 2),
+            'areaVariationCount' => $areaVariationCount,
+            'usageVariationCount' => $usageVariationCount,
+            'areaVariationPercentage' => $totalBuildings > 0 ? round(($areaVariationCount / $totalBuildings) * 100, 2) : 0,
+            'usageVariationPercentage' => $totalBuildings > 0 ? round(($usageVariationCount / $totalBuildings) * 100, 2) : 0,
+        ];
+
         // Return ALL data as JSON for client-side filtering
         return view('corporation.variations', [
             'allDataJson' => json_encode($allResults),
             'warddetail' => $warddetail,
+            'summary' => $summary,
             'totalSqfeet' => round($totalSqfeet, 2),
             'totalBuildings' => $totalBuildings,
             'totalMisPlotArea' => round($totalMisPlotArea, 2),
@@ -564,82 +632,9 @@ class CommissionerController extends Controller
         }
     }
 
-
-    private function generateExcel($data, $ward, $summary)
-    {
-        $filename = "ward_{$ward->ward_no}_building_variations_" . date('Ymd_His') . ".xls";
-
-        header('Content-Type: application/vnd.ms-excel');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        echo '<html>';
-        echo '<head><meta charset="UTF-8">';
-        echo '<title>Ward ' . $ward->ward_no . ' Building Variations Report</title>';
-        echo '<style>';
-        echo 'th { background-color: #4472C4; color: white; border: 1px solid #000; padding: 8px; }';
-        echo 'td { border: 1px solid #ccc; padding: 6px; }';
-        echo '.summary-table { margin-bottom: 20px; border-collapse: collapse; width: 100%; }';
-        echo '.summary-table td { padding: 8px; }';
-        echo '.header { font-size: 18px; font-weight: bold; margin-bottom: 20px; }';
-        echo '.subheader { font-size: 14px; margin-bottom: 20px; color: #666; }';
-        echo '.variation-match { background-color: #C6EFCE; }';
-        echo '.variation-mismatch { background-color: #FFC7CE; }';
-        echo '</style></head><body>';
-
-        echo '<div class="header">';
-        echo '<h2>' . htmlspecialchars($summary['corporationName']) . '</h2>';
-        echo '<h3>Building Variation Report - ' . htmlspecialchars($summary['wardName']) . ' (' . htmlspecialchars($summary['zone']) . ' Zone)</h3>';
-        echo '</div>';
-        echo '<div class="subheader">Generated on: ' . date('d-m-Y H:i:s') . '<br></div>';
-
-        echo '<h3>Summary Statistics</h3>';
-        echo '<table class="summary-table" border="1" cellpadding="5" cellspacing="0">';
-        echo '<tr style="background-color: #E6E6E6;"><td width="50%"><strong>Total Buildings:</strong></td><td>' . $summary['totalBuildings'] . '</td></tr>';
-        echo '<tr><td><strong>Buildings with Area Variation:</strong></td><td>' . $summary['areaVariationCount'] . ' (' . round(($summary['areaVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
-        echo '<tr style="background-color: #E6E6E6;"><td><strong>Buildings with Usage Variation:</strong></td><td>' . $summary['usageVariationCount'] . ' (' . round(($summary['usageVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
-        echo '<tr><td><strong>Buildings with Negative Variation:</strong></td><td>' . $summary['negativeVariationCount'] . ' (' . round(($summary['negativeVariationCount'] / max(1, $summary['totalBuildings'])) * 100, 2) . '%)</td></tr>';
-        echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Building Area:</strong></td><td>' . number_format($summary['totalBuildingArea'], 2) . ' sq ft</td></tr>';
-        echo '<tr><td><strong>Total Assessment Area:</strong></td><td>' . number_format($summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
-        echo '<tr style="background-color: #E6E6E6;"><td><strong>Total Area Variation:</strong></td><td>' . number_format($summary['totalBuildingArea'] - $summary['totalAssessmentArea'], 2) . ' sq ft</td></tr>';
-        echo '</table><br><br>';
-
-        echo '<h3>Detailed Building Data</h3>';
-        echo '<table border="1" cellpadding="5" cellspacing="0">';
-
-        echo '<tr>';
-        foreach ($data[0] as $header) {
-            echo '<th>' . htmlspecialchars($header) . '</th>';
-        }
-        echo '</tr>';
-
-        for ($i = 1; $i < count($data); $i++) {
-            $row = $data[$i];
-            $rowClass = '';
-            if ($row[10] === 'VARIATION' || $row[12] === 'VARIATION') {
-                $rowClass = 'class="variation-mismatch"';
-            } elseif ($row[10] === 'MATCH' && $row[12] === 'MATCH') {
-                $rowClass = 'class="variation-match"';
-            }
-            echo '<tr ' . $rowClass . '>';
-            foreach ($row as $value) {
-                echo '<td>' . htmlspecialchars($value) . '</td>';
-            }
-            echo '</tr>';
-        }
-        echo '</table>';
-
-        echo '<br><br>';
-        echo '<table border="0" cellpadding="5">';
-        echo '<tr><td style="background-color: #C6EFCE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Match:</strong> No variations found</td></tr>';
-        echo '<tr><td style="background-color: #FFC7CE; border:1px solid #000;">&nbsp;&nbsp;&nbsp;&nbsp;</td><td><strong>Variation:</strong> Area or Usage mismatch detected</td></tr>';
-        echo '</table></body></html>';
-        exit;
-    }
-
     public function mapView($ward_no)
     {
-        $userId = Auth::user();
+        $userId = Auth::guard('corporation')->user();
         $warddetail = Ward::where('corporation_id', $userId->corporation_id)
             ->where('ward_no', $ward_no)
             ->first();
@@ -714,7 +709,6 @@ class CommissionerController extends Controller
 
         // Attach shops into pointdata
         foreach ($pointDatas as $pointdata) {
-
             $pointdata->shops = $shopsGrouped[$pointdata->id] ?? collect();
         }
 
@@ -723,19 +717,13 @@ class CommissionerController extends Controller
 
         // Attach pointdata into polygondata
         foreach ($polygonDatas as $polygondata) {
-
             $polygondata->pointdata = $pointGrouped[$polygondata->gisid] ?? collect();
-
-            // Optional statistics
             $polygondata->total_points = count($polygondata->pointdata);
-
             $polygondata->total_shops = collect($polygondata->pointdata)
                 ->sum(function ($point) {
                     return count($point->shops);
                 });
         }
-
-
 
         // Get polygons (buildings) - only needed fields
         $polygons = Schema::hasTable($polygonsTableName)
@@ -746,7 +734,6 @@ class CommissionerController extends Controller
         $lines = Schema::hasTable($linesTableName)
             ? DB::table($linesTableName)->select('gisid', 'coordinates')->get()
             : [];
-
 
         $ward = $warddetail;
         $points = DB::table($pointsTableName)->get();
